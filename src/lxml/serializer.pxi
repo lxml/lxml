@@ -1108,22 +1108,24 @@ cdef class _IncrementalFileWriter:
 
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
 
-    cdef _write_end_element(self, element_config):
+    cdef _write_end_element(self, element_config, bint cleanup_only=False):
         if self._status != WRITER_IN_ELEMENT:
             raise LxmlSyntaxError("not in an element")
         if not self._element_stack or self._element_stack[-1][:2] != element_config[:2]:
             raise LxmlSyntaxError("inconsistent exit action in context manager")
 
         name, prefix = self._element_stack.pop()[1:3]
-        tree.xmlOutputBufferWrite(self._c_out, 2, '</')
-        self._write_qname(name, prefix)
-        tree.xmlOutputBufferWrite(self._c_out, 1, '>')
+        if not cleanup_only:
+            tree.xmlOutputBufferWrite(self._c_out, 2, '</')
+            self._write_qname(name, prefix)
+            tree.xmlOutputBufferWrite(self._c_out, 1, '>')
 
         if not self._element_stack:
             self._status = WRITER_FINISHED
-        if not self._buffered:
-            tree.xmlOutputBufferFlush(self._c_out)
-        self._handle_error(self._c_out.error)
+        if not cleanup_only:
+            if not self._buffered:
+                tree.xmlOutputBufferFlush(self._c_out)
+            self._handle_error(self._c_out.error)
 
     cdef _find_prefix(self, bytes href, dict flat_namespaces_map, list new_namespaces):
         if href is None:
@@ -1203,6 +1205,7 @@ cdef class _IncrementalFileWriter:
             self._handle_error(self._c_out.error)
         if not self._buffered:
             tree.xmlOutputBufferFlush(self._c_out)
+            self._handle_error(self._c_out.error)
 
     def flush(self):
         """flush(self)
@@ -1211,6 +1214,7 @@ cdef class _IncrementalFileWriter:
         """
         assert self._c_out is not NULL
         tree.xmlOutputBufferFlush(self._c_out)
+        self._handle_error(self._c_out.error)
 
     cdef _close(self, bint raise_on_error):
         if raise_on_error:
@@ -1257,7 +1261,7 @@ cdef class _FileWriterElement:
         self._writer._write_start_element(self._element)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._writer._write_end_element(self._element)
+        self._writer._write_end_element(self._element, cleanup_only=exc_type is not None)
         self._writer._method = self._old_method
 
 @cython.final

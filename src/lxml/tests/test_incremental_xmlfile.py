@@ -367,6 +367,34 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         self.assertTrue(self._file.closed)
         self._file = None  # prevent closing in tearDown()
 
+    def test_write_fails(self):
+        class WriteError(Exception):
+            pass
+
+        class Writer(object):
+            def __init__(self, trigger):
+                self._trigger = trigger
+
+            def write(self, data):
+                if self._trigger in data:
+                    raise WriteError("FAILED: " + self._trigger.decode('utf8'))
+
+        for trigger in ['text', 'root', 'tag', 'noflush']:
+            try:
+                with etree.xmlfile(Writer(trigger.encode('utf8')), encoding='utf8') as xf:
+                    with xf.element('root'):
+                        xf.flush()
+                        with xf.element('tag'):
+                            xf.write('text')
+                            xf.flush()
+                            xf.write('noflush')
+                        xf.flush()
+                    xf.flush()
+            except WriteError as exc:
+                self.assertTrue('FAILED: ' + trigger in str(exc))
+            else:
+                self.assertTrue(False, "exception not raised for '%s'" % trigger)
+
 
 class HtmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):

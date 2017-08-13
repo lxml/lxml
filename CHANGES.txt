@@ -37,7 +37,10 @@ Bugs fixed
 
 * LP#1710429: Uninitialised variable usage in HTML diff.
 
-* LP#1465357: xmlfile.write() now accepts and ignores None as input argument.
+* LP#1415643: The closing tags context manager in ``xmlfile()`` could continue
+  to output end tags even after writing failed with an exception.
+
+* LP#1465357: ``xmlfile.write()`` now accepts and ignores None as input argument.
 
 * Compilation under Py3.7-pre failed due to a modified function signature.
 
