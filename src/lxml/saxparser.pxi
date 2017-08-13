@@ -233,9 +233,9 @@ cdef class _ParseEventsIterator:
         return self
 
     def __next__(self):
+        cdef int event_index = self._event_index
         events = self._events
-        event_index = self._event_index
-        if event_index * 2 >= len(events):
+        if event_index >= 2**10 or event_index * 2 >= len(events):
             if event_index:
                 # clean up from time to time
                 del events[:event_index]
