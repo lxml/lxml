@@ -129,9 +129,13 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     # may be a soup like '<meta><head><title>Hello</head><body>Hi
     # all<\p>'. In this example roots is a list containing meta, head
     # and body elements.
-    pre_root = beautiful_soup_tree.contents[:first_element_idx]
-    roots = beautiful_soup_tree.contents[first_element_idx:last_element_idx+1]
-    post_root = beautiful_soup_tree.contents[last_element_idx+1:]
+    if first_element_idx is None:
+        pre_root = post_root = []
+        roots = beautiful_soup_tree.contents
+    else:
+        pre_root = beautiful_soup_tree.contents[:first_element_idx]
+        roots = beautiful_soup_tree.contents[first_element_idx:last_element_idx+1]
+        post_root = beautiful_soup_tree.contents[last_element_idx+1:]
 
     # Reorganize so that there is one <html> root...
     if html_root is not None:

@@ -33,6 +33,8 @@ Bugs fixed
 
 * LP#1703810: ``etree.fromstring()`` failed to parse UTF-32 data with BOM.
 
+* LP#1567526: Empty and plain text input raised a TypeError in soupparser.
+
 * Compilation under Py3.7-pre failed due to a modified function signature.
 
 Other changes

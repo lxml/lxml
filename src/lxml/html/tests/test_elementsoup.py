@@ -25,6 +25,16 @@ if BS_INSTALLED:
             root = self.soupparser.fromstring(html)
             self.assertTrue(root.find('.//input').get('disabled') is not None)
 
+        def test_empty(self):
+            tree = self.soupparser.fromstring('')
+            res = b'''<html></html>'''
+            self.assertEqual(tostring(tree), res)
+
+        def test_text(self):
+            tree = self.soupparser.fromstring('huhu')
+            res = b'''<html>huhu</html>'''
+            self.assertEqual(tostring(tree), res)
+
         def test_body(self):
             html = '''<body><p>test</p></body>'''
             res = b'''<html><body><p>test</p></body></html>'''
