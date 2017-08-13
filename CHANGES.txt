@@ -35,6 +35,8 @@ Bugs fixed
 
 * LP#1567526: Empty and plain text input raised a TypeError in soupparser.
 
+* LP#1710429: Uninitialised variable usage in HTML diff.
+
 * Compilation under Py3.7-pre failed due to a modified function signature.
 
 Other changes

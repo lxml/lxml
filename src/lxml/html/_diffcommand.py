@@ -73,6 +73,7 @@ body_end_re = re.compile(
     r"</body.*?>", re.I|re.S)
     
 def split_body(html):
+    pre = post = ''
     match = body_start_re.search(html)
     if match:
         pre = html[:match.end()]
