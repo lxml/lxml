@@ -90,7 +90,9 @@ cdef class RelaxNG(_Validator):
 
         relaxng.xmlRelaxNGSetParserStructuredErrors(
             parser_ctxt, _receiveError, <void*>self._error_log)
+        _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGP)
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
+        _connectGenericErrorLog(None)
 
         relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
@@ -130,11 +132,13 @@ cdef class RelaxNG(_Validator):
             self._error_log.clear()
             relaxng.xmlRelaxNGSetValidStructuredErrors(
                 valid_ctxt, _receiveError, <void*>self._error_log)
+            _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGV)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
                 ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
+            _connectGenericErrorLog(None)
             relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
 
         if ret == -1:

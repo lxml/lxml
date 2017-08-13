@@ -17,15 +17,12 @@ def clear_error_log():
     """
     _getGlobalErrorLog().clear()
 
-# dummy function: no debug output at all
-cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
-    pass
 
 # setup for global log:
 
 cdef void _initThreadLogging():
     # disable generic error lines from libxml2
-    xmlerror.xmlSetGenericErrorFunc(NULL, <xmlerror.xmlGenericErrorFunc>_nullGenericErrorFunc)
+    _connectGenericErrorLog(None)
 
     # divert error messages to the global error log
     connectErrorLog(NULL)
@@ -612,15 +609,59 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
         log_handler = _getGlobalErrorLog()
     log_handler._receive(error)
 
+
 cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) nogil:
     # no Python objects here, may be called without thread context !
     if __DEBUG:
         _forwardError(c_log_handler, error)
 
+
 cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     # no Python objects here, may be called without thread context !
-    cdef xmlerror.xmlError c_error
     cdef cvarargs.va_list args
+    cvarargs.va_start(args, msg)
+    _receiveGenericError(c_log_handler, xmlerror.XML_FROM_XSLT, msg, args)
+    cvarargs.va_end(args)
+
+cdef void _receiveRelaxNGParseError(void* c_log_handler, char* msg, ...) nogil:
+    # no Python objects here, may be called without thread context !
+    cdef cvarargs.va_list args
+    cvarargs.va_start(args, msg)
+    _receiveGenericError(c_log_handler, xmlerror.XML_FROM_RELAXNGP, msg, args)
+    cvarargs.va_end(args)
+
+cdef void _receiveRelaxNGValidationError(void* c_log_handler, char* msg, ...) nogil:
+    # no Python objects here, may be called without thread context !
+    cdef cvarargs.va_list args
+    cvarargs.va_start(args, msg)
+    _receiveGenericError(c_log_handler, xmlerror.XML_FROM_RELAXNGV, msg, args)
+    cvarargs.va_end(args)
+
+# dummy function: no log output at all
+cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
+    pass
+
+
+cdef void _connectGenericErrorLog(log, int c_domain=-1):
+    cdef xmlerror.xmlGenericErrorFunc error_func = NULL
+    c_log = <void*>log
+    if c_domain == xmlerror.XML_FROM_XSLT:
+        error_func = <xmlerror.xmlGenericErrorFunc>_receiveXSLTError
+    elif c_domain == xmlerror.XML_FROM_RELAXNGP:
+        error_func = <xmlerror.xmlGenericErrorFunc>_receiveRelaxNGParseError
+    elif c_domain == xmlerror.XML_FROM_RELAXNGV:
+        error_func = <xmlerror.xmlGenericErrorFunc>_receiveRelaxNGValidationError
+
+    if log is None or error_func is NULL:
+        c_log = NULL
+        error_func = <xmlerror.xmlGenericErrorFunc>_nullGenericErrorFunc
+    xmlerror.xmlSetGenericErrorFunc(c_log, error_func)
+
+
+cdef void _receiveGenericError(void* c_log_handler, int c_domain,
+                               char* msg, cvarargs.va_list args) nogil:
+    # no Python objects here, may be called without thread context !
+    cdef xmlerror.xmlError c_error
     cdef char* c_text
     cdef char* c_message
     cdef char* c_element
@@ -637,7 +678,6 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     c_error.line = 0
 
     # parse "NAME %s" chunks from the format string
-    cvarargs.va_start(args, msg)
     c_name_pos = c_pos = msg
     format_count = 0
     while c_pos[0]:
@@ -669,7 +709,6 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
             if c_pos[1] != b'%':
                 c_name_pos = c_pos + 1
         c_pos += 1
-    cvarargs.va_end(args)
 
     c_message = NULL
     if c_text is NULL:
@@ -693,7 +732,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
         stdio.sprintf(c_message, "%s, element '%s'", c_text, c_element)
         c_error.message = c_message
 
-    c_error.domain = xmlerror.XML_FROM_XSLT
+    c_error.domain = c_domain
     c_error.code   = xmlerror.XML_ERR_OK    # what else?
     c_error.level  = xmlerror.XML_ERR_ERROR # what else?
     c_error.int2   = 0

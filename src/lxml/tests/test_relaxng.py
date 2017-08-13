@@ -80,6 +80,50 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertTrue([log for log in errors
                          if "not expect" in log.message])
 
+    def test_relaxng_generic_error(self):
+        tree_invalid = self.parse('''\
+        <test>
+          <reference id="my-ref">This is my unique ref.</reference>
+          <data ref="my-ref">Valid data</data>
+          <data ref="myref">Invalid data</data>
+        </test>
+        ''')
+        schema = self.parse('''\
+        <grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"
+                 xmlns="http://relaxng.org/ns/structure/1.0">
+          <define name="by-ref">
+            <data type="IDREF"/>
+          </define>
+          <start>
+            <element name="test">
+              <zeroOrMore>
+                <element name="reference">
+                  <attribute name="id">
+                    <data type="ID"/>
+                  </attribute>
+                  <text/>
+                </element>
+              </zeroOrMore>
+              <zeroOrMore>
+                <element name="data">
+                  <attribute name="ref">
+                    <data type="IDREF"/>
+                  </attribute>
+                  <text/>
+                </element>
+              </zeroOrMore>
+            </element>
+          </start>
+        </grammar>
+        ''')
+
+        schema = etree.RelaxNG(schema)
+        self.assertFalse(schema.validate(tree_invalid))
+        errors = schema.error_log
+        self.assertTrue(errors)
+        self.assertTrue([log for log in errors if "IDREF" in log.message])
+        self.assertTrue([log for log in errors if "myref" in log.message])
+
     def test_relaxng_invalid_schema(self):
         schema = self.parse('''\
 <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">

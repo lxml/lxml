@@ -36,6 +36,8 @@ Bugs fixed
 
 * LP#1703810: ``etree.fromstring()`` failed to parse UTF-32 data with BOM.
 
+* LP#1526522: Some RelaxNG errors were not reported in the error log.
+
 * LP#1567526: Empty and plain text input raised a TypeError in soupparser.
 
 * LP#1710429: Uninitialised variable usage in HTML diff.
