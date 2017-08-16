@@ -229,11 +229,22 @@ cdef class iterparse:
         return False
 
 
+cdef enum _IterwalkSkipStates:
+    IWSKIP_NEXT_IS_START
+    IWSKIP_SKIP_NEXT
+    IWSKIP_CAN_SKIP
+    IWSKIP_CANNOT_SKIP
+
+
 cdef class iterwalk:
     u"""iterwalk(self, element_or_tree, events=("end",), tag=None)
 
     A tree walker that generates events from an existing tree as if it
     was parsing XML data with ``iterparse()``.
+
+    After receiving a 'start' or 'start-ns' event, the children and
+    descendants of the current element can be excluded from iteration
+    by calling the ``skip_subtree()`` method.
     """
     cdef _MultiTagMatcher _matcher
     cdef list   _node_stack
@@ -241,6 +252,7 @@ cdef class iterwalk:
     cdef list   _events
     cdef object _pop_event
     cdef int    _event_filter
+    cdef _IterwalkSkipStates _skip_subtree
 
     def __init__(self, element_or_tree, events=(u"end",), tag=None):
         cdef _Element root
@@ -254,6 +266,7 @@ cdef class iterwalk:
         self._node_stack  = []
         self._events = []
         self._pop_event = self._events.pop
+        self._skip_subtree = IWSKIP_CANNOT_SKIP  # ignore all skip requests by default
 
         if self._event_filter:
             self._index = 0
@@ -271,7 +284,7 @@ cdef class iterwalk:
         cdef _Element next_node
         cdef int ns_count = 0
         if self._events:
-            return self._pop_event(0)
+            return self._next_event()
         if self._matcher is not None and self._index >= 0:
             node = self._node_stack[self._index][0]
             self._matcher.cacheTags(node._doc)
@@ -280,7 +293,12 @@ cdef class iterwalk:
         while self._index >= 0:
             node = self._node_stack[self._index][0]
 
-            c_child = _findChildForwards(node._c_node, 0)
+            if self._skip_subtree == IWSKIP_SKIP_NEXT:
+                c_child = NULL
+            else:
+                c_child = _findChildForwards(node._c_node, 0)
+            self._skip_subtree = IWSKIP_CANNOT_SKIP
+
             if c_child is not NULL:
                 # try children
                 next_node = _elementFactory(node._doc, c_child)
@@ -303,13 +321,33 @@ cdef class iterwalk:
                 self._node_stack.append( (next_node, ns_count) )
                 self._index += 1
             if self._events:
-                return self._pop_event(0)
+                return self._next_event()
         raise StopIteration
 
+    @cython.final
+    cdef _next_event(self):
+        if self._skip_subtree == IWSKIP_NEXT_IS_START:
+            if self._events[0][0] in ('start', 'start-ns'):
+                self._skip_subtree = IWSKIP_CAN_SKIP
+        return self._pop_event(0)
+
+    def skip_subtree(self):
+        """Prevent descending into the current subtree.
+        Instead, the next returned event will be the 'end' event of the current element
+        (if included), ignoring any children or descendants.
+
+        This has no effect right after an 'end' or 'end-ns' event.
+        """
+        if self._skip_subtree == IWSKIP_CAN_SKIP:
+            self._skip_subtree = IWSKIP_SKIP_NEXT
+
+    @cython.final
     cdef int _start_node(self, _Element node) except -1:
         cdef int ns_count
         if self._event_filter & PARSE_EVENT_FILTER_START_NS:
             ns_count = _appendStartNsEvents(node._c_node, self._events)
+            if self._events:
+                self._skip_subtree = IWSKIP_NEXT_IS_START
         elif self._event_filter & PARSE_EVENT_FILTER_END_NS:
             ns_count = _countNsDefs(node._c_node)
         else:
@@ -317,8 +355,10 @@ cdef class iterwalk:
         if self._event_filter & PARSE_EVENT_FILTER_START:
             if self._matcher is None or self._matcher.matches(node._c_node):
                 self._events.append( (u"start", node) )
+                self._skip_subtree = IWSKIP_NEXT_IS_START
         return ns_count
 
+    @cython.final
     cdef _Element _end_node(self):
         cdef _Element node
         cdef int i, ns_count
@@ -326,9 +366,9 @@ cdef class iterwalk:
         if self._event_filter & PARSE_EVENT_FILTER_END:
             if self._matcher is None or self._matcher.matches(node._c_node):
                 self._events.append( (u"end", node) )
-        if self._event_filter & PARSE_EVENT_FILTER_END_NS:
+        if self._event_filter & PARSE_EVENT_FILTER_END_NS and ns_count:
             event = (u"end-ns", None)
-            for i from 0 <= i < ns_count:
+            for i in range(ns_count):
                 self._events.append(event)
         return node
 

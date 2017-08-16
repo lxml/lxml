@@ -914,7 +914,7 @@ You can also use it to parse HTML input by passing ``html=True``.
 iterwalk
 --------
 
-A second extension over ElementTree is the ``iterwalk()`` function.
+For convenience, lxml also provides an ``iterwalk()`` function.
 It behaves exactly like ``iterparse()``, but works on Elements and
 ElementTrees.  Here is an example for a tree parsed by ``iterparse()``:
 
@@ -948,6 +948,35 @@ input again:
   end: element
   start: element
   end: element
+
+In order to avoid wasting time on uninteresting parts of the tree, the ``iterwalk``
+iterator can be instructed to skip over an entire subtree with its
+``.skip_subtree()`` method.
+
+.. sourcecode:: pycon
+
+  >>> root = etree.XML('''
+  ... <root>
+  ...   <a> <b /> </a>
+  ...   <c />
+  ... </root>
+  ... ''')
+
+  >>> context = etree.iterwalk(root, events=("start", "end"))
+
+  >>> for action, elem in context:
+  ...     print("%s: %s" % (action, elem.tag))
+  ...     if action == 'start' and elem.tag == 'a':
+  ...         context.skip_subtree()  # ignore <b>
+  start: root
+  start: a
+  end: a
+  start: c
+  end: c
+  end: root
+
+Note that ``.skip_subtree()`` only has an effect when handling ``start`` or
+``start-ns`` events.
 
 
 Python unicode strings

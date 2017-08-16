@@ -1212,6 +1212,71 @@ class ETreeOnlyTestCase(HelperTestCase):
             'value',
             root[0].get(attr_name))
 
+    def test_iterwalk_end_skip(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(_bytes('<a><b><c/></b><d><e/></d></a>'))
+
+        iterator = iterwalk(root)
+        tags = []
+        for event, elem in iterator:
+            tags.append(elem.tag)
+            # requesting a skip after an 'end' event should never have an effect
+            iterator.skip_subtree()
+
+        self.assertEqual(['c', 'b', 'e', 'd', 'a'], tags)
+
+    def test_iterwalk_start_end_skip(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(_bytes('<a><b><c/></b><d><e/></d></a>'))
+
+        iterator = iterwalk(root, events=('start', 'end'))
+        tags = []
+        for event, elem in iterator:
+            tags.append((event, elem.tag))
+            if elem.tag in ('b', 'e'):
+                # skipping should only have an effect on 'start', not on 'end'
+                iterator.skip_subtree()
+
+        self.assertEqual(
+            [('start', 'a'),
+             ('start', 'b'), ('end', 'b'),  # ignored child 'c'
+             ('start', 'd'),
+             ('start', 'e'), ('end', 'e'),
+             ('end', 'd'),
+             ('end', 'a')],
+            tags)
+
+    def test_iterwalk_ns_skip(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(_bytes(
+            '<a xmlns="ns1"><b xmlns="nsb"><c xmlns="ns2"/></b><d xmlns="ns2"><e/></d></a>'))
+
+        events = []
+        iterator = iterwalk(root, events=('start','start-ns','end-ns'))
+        for event, elem in iterator:
+            if event in ('start-ns', 'end-ns'):
+                events.append((event, elem))
+                if event == 'start-ns' and elem == ('', 'nsb'):
+                    events.append('skip')
+                    iterator.skip_subtree()
+            else:
+                events.append((event, elem.tag))
+
+        self.assertEqual(
+            [('start-ns', ('', 'ns1')),
+             ('start', '{ns1}a'),
+             ('start-ns', ('', 'nsb')),
+             'skip',
+             ('start', '{nsb}b'),
+             ('end-ns', None),
+             ('start-ns', ('', 'ns2')),
+             ('start', '{ns2}d'),
+             ('start', '{ns2}e'),
+             ('end-ns', None),
+             ('end-ns', None)
+             ],
+            events)
+
     def test_iterwalk_getiterator(self):
         iterwalk = self.etree.iterwalk
         root = self.etree.XML(_bytes('<a><b><d/></b><c/></a>'))
