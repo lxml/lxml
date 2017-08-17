@@ -248,9 +248,9 @@ cdef class iterwalk:
     """
     cdef _MultiTagMatcher _matcher
     cdef list   _node_stack
-    cdef int    _index
     cdef list   _events
     cdef object _pop_event
+    cdef int    _index
     cdef int    _event_filter
     cdef _IterwalkSkipStates _skip_subtree
 
