@@ -711,7 +711,7 @@ cdef class _XSLTResultTree(_ElementTree):
         Serialise the XSLT output to a file or file-like object.
 
         As opposed to the generic ``.write()`` method, ``.write_output()`` serialises
-        the result as defined by the ``<xslt:output>`` tag.
+        the result as defined by the ``<xsl:output>`` tag.
         """
         cdef _FilelikeWriter writer = None
         cdef _Document doc
