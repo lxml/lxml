@@ -20,7 +20,7 @@ Features added
 * ``RelaxNG.from_rnc_string()`` accepts a ``base_url`` argument to
   allow relative resource lookups.
 
-* The XSLT result object has a new method ``.write_result(file)`` that serialises
+* The XSLT result object has a new method ``.write_output(file)`` that serialises
   output data into a file according to the ``<xsl:output>`` configuration.
 
 Bugs fixed

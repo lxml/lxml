@@ -526,7 +526,7 @@ are not supported by Python will result in an error:
 
 While it is possible to use the ``.write()`` method (known from ``ElementTree``
 objects) to serialise the XSLT result into a file, it is better to use the
-``.write_result()`` method.  The latter knows about the ``<xsl:output>`` tag
+``.write_output()`` method.  The latter knows about the ``<xsl:output>`` tag
 and writes the expected data into the output file.
 
 .. sourcecode:: pycon
@@ -542,13 +542,13 @@ and writes the expected data into the output file.
   >>> transform = etree.XSLT(xslt_root)
 
   >>> result = transform(doc)
-  >>> result.write_result("output.txt.gz", compression=9)    # doctest: +SKIP
+  >>> result.write_output("output.txt.gz", compression=9)    # doctest: +SKIP
 
 ..
 
   >>> from io import BytesIO
   >>> out = BytesIO()
-  >>> result.write_result(out)
+  >>> result.write_output(out)
   >>> data = out.getvalue()
   >>> b'Text' in data
   True

@@ -204,18 +204,31 @@ class ETreeXSLTTestCase(HelperTestCase):
         yield data
         self.assertEqual(expected, data[0])
 
-    def test_xslt_write_result_bytesio(self):
+    def test_xslt_write_output_bytesio(self):
         with self._xslt_setup() as res:
             f = BytesIO()
-            res[0].write_result(f)
+            res[0].write_output(f)
             res[0] = f.getvalue().decode('UTF-16').replace('\n', '')
 
-    def test_xslt_write_result_file(self):
+    def test_xslt_write_output_failure(self):
+        class Writer(object):
+            def write(self, data):
+                raise ValueError("FAILED!")
+
+        try:
+            with self._xslt_setup() as res:
+                res[0].write_output(Writer())
+        except ValueError as exc:
+            self.assertTrue("FAILED!" in str(exc), exc)
+        else:
+            self.assertTrue(False, "exception not raised")
+
+    def test_xslt_write_output_file(self):
         with self._xslt_setup() as res:
             f = NamedTemporaryFile(delete=False)
             try:
                 try:
-                    res[0].write_result(f)
+                    res[0].write_output(f)
                 finally:
                     f.close()
                 with io.open(f.name, encoding='UTF-16') as f:
@@ -223,12 +236,12 @@ class ETreeXSLTTestCase(HelperTestCase):
             finally:
                 os.unlink(f.name)
 
-    def test_xslt_write_result_file_path(self):
+    def test_xslt_write_output_file_path(self):
         with self._xslt_setup() as res:
             f = NamedTemporaryFile(delete=False)
             try:
                 try:
-                    res[0].write_result(f.name, compression=9)
+                    res[0].write_output(f.name, compression=9)
                 finally:
                     f.close()
                 with gzip.GzipFile(f.name) as f:

@@ -697,7 +697,7 @@ cdef class _XSLTResultTree(_ElementTree):
     """The result of an XSLT evaluation.
 
     Use ``str()`` or ``bytes()`` (or ``unicode()`` in Python 2.x) to serialise to a string,
-    and the ``.write_result()`` method to write serialise to a file.
+    and the ``.write_output()`` method to write serialise to a file.
     """
     cdef XSLT _xslt
     cdef _Document _profile
@@ -705,14 +705,15 @@ cdef class _XSLTResultTree(_ElementTree):
     cdef Py_ssize_t _buffer_len
     cdef Py_ssize_t _buffer_refcnt
 
-    def write_result(self, file, *, compression=0):
-        """write_result(self, file, *, compression=0)
+    def write_output(self, file, *, compression=0):
+        """write_output(self, file, *, compression=0)
 
-        Serialise the XSLT result tree to a file or file-like object.
+        Serialise the XSLT output to a file or file-like object.
 
-        As opposed to the ``.write()`` method, ``.write_result()`` serialises the result
-        as defined by the ``<xslt:output>`` tag.
+        As opposed to the generic ``.write()`` method, ``.write_output()`` serialises
+        the result as defined by the ``<xslt:output>`` tag.
         """
+        cdef _FilelikeWriter writer = None
         cdef _Document doc
         cdef int r, c_compression
         cdef const_char* c_encoding = NULL
