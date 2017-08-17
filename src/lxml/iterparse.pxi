@@ -252,7 +252,7 @@ cdef class iterwalk:
     cdef object _pop_event
     cdef int    _index
     cdef int    _event_filter
-    cdef _IterwalkSkipStates _skip_subtree
+    cdef _IterwalkSkipStates _skip_state
 
     def __init__(self, element_or_tree, events=(u"end",), tag=None):
         cdef _Element root
@@ -266,7 +266,7 @@ cdef class iterwalk:
         self._node_stack  = []
         self._events = []
         self._pop_event = self._events.pop
-        self._skip_subtree = IWSKIP_CANNOT_SKIP  # ignore all skip requests by default
+        self._skip_state = IWSKIP_CANNOT_SKIP  # ignore all skip requests by default
 
         if self._event_filter:
             self._index = 0
@@ -293,11 +293,11 @@ cdef class iterwalk:
         while self._index >= 0:
             node = self._node_stack[self._index][0]
 
-            if self._skip_subtree == IWSKIP_SKIP_NEXT:
+            if self._skip_state == IWSKIP_SKIP_NEXT:
                 c_child = NULL
             else:
                 c_child = _findChildForwards(node._c_node, 0)
-            self._skip_subtree = IWSKIP_CANNOT_SKIP
+            self._skip_state = IWSKIP_CANNOT_SKIP
 
             if c_child is not NULL:
                 # try children
@@ -326,9 +326,9 @@ cdef class iterwalk:
 
     @cython.final
     cdef _next_event(self):
-        if self._skip_subtree == IWSKIP_NEXT_IS_START:
+        if self._skip_state == IWSKIP_NEXT_IS_START:
             if self._events[0][0] in ('start', 'start-ns'):
-                self._skip_subtree = IWSKIP_CAN_SKIP
+                self._skip_state = IWSKIP_CAN_SKIP
         return self._pop_event(0)
 
     def skip_subtree(self):
@@ -338,8 +338,8 @@ cdef class iterwalk:
 
         This has no effect right after an 'end' or 'end-ns' event.
         """
-        if self._skip_subtree == IWSKIP_CAN_SKIP:
-            self._skip_subtree = IWSKIP_SKIP_NEXT
+        if self._skip_state == IWSKIP_CAN_SKIP:
+            self._skip_state = IWSKIP_SKIP_NEXT
 
     @cython.final
     cdef int _start_node(self, _Element node) except -1:
@@ -347,7 +347,7 @@ cdef class iterwalk:
         if self._event_filter & PARSE_EVENT_FILTER_START_NS:
             ns_count = _appendStartNsEvents(node._c_node, self._events)
             if self._events:
-                self._skip_subtree = IWSKIP_NEXT_IS_START
+                self._skip_state = IWSKIP_NEXT_IS_START
         elif self._event_filter & PARSE_EVENT_FILTER_END_NS:
             ns_count = _countNsDefs(node._c_node)
         else:
@@ -355,7 +355,7 @@ cdef class iterwalk:
         if self._event_filter & PARSE_EVENT_FILTER_START:
             if self._matcher is None or self._matcher.matches(node._c_node):
                 self._events.append( (u"start", node) )
-                self._skip_subtree = IWSKIP_NEXT_IS_START
+                self._skip_state = IWSKIP_NEXT_IS_START
         return ns_count
 
     @cython.final
