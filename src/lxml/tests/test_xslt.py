@@ -244,7 +244,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0].write_output(f.name, compression=9)
                 finally:
                     f.close()
-                with gzip.GzipFile(f.name) as f:
+                with contextlib.closing(gzip.GzipFile(f.name)) as f:
                     res[0] = f.read().decode("UTF-16").replace('\n', '')
             finally:
                 os.unlink(f.name)
