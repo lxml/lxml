@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import fnmatch
+import os.path
 
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
@@ -14,6 +15,9 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+
+# make sure Cython finds include files in the project directory and not outside
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 import versioninfo
 import setupinfo
