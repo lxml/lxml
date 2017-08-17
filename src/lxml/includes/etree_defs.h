@@ -198,6 +198,8 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #define exsltStrXpathCtxtRegister(ctxt, prefix)
 #endif
 
+#define LXML_GET_XSLT_ENCODING(result_var, style) XSLT_GET_IMPORT_PTR(result_var, style, encoding)
+
 /* work around MSDEV 6.0 */
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)
 long _ftol( double ); //defined by VC6 C libs

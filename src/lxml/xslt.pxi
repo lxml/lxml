@@ -694,15 +694,57 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
 
 @cython.final
 cdef class _XSLTResultTree(_ElementTree):
+    """The result of an XSLT evaluation.
+
+    Use ``str()`` or ``bytes()`` (or ``unicode()`` in Python 2.x) to serialise to a string,
+    and the ``.write_result()`` method to write serialise to a file.
+    """
     cdef XSLT _xslt
     cdef _Document _profile
     cdef xmlChar* _buffer
     cdef Py_ssize_t _buffer_len
     cdef Py_ssize_t _buffer_refcnt
-    def __cinit__(self):
-        self._buffer = NULL
-        self._buffer_len = 0
-        self._buffer_refcnt = 0
+
+    def write_result(self, file, *, compression=0):
+        """write_result(self, file, *, compression=0)
+
+        Serialise the XSLT result tree to a file or file-like object.
+
+        As opposed to the ``.write()`` method, ``.write_result()`` serialises the result
+        as defined by the ``<xslt:output>`` tag.
+        """
+        cdef _Document doc
+        cdef int r, c_compression
+        cdef const_char* c_encoding = NULL
+        cdef tree.xmlOutputBuffer* c_buffer
+
+        if self._context_node is not None:
+            doc = self._context_node._doc
+        else:
+            doc = None
+        if doc is None:
+            doc = self._doc
+            if doc is None:
+                raise XSLTSaveError("No document to serialise")
+        c_compression = compression or 0
+        if _isString(file):
+            file_path = _encodeFilename(file)
+            c_filename = _cstr(file_path)
+            with nogil:
+                r = xslt.xsltSaveResultToFilename(
+                    c_filename, doc._c_doc, self._xslt._c_style, c_compression)
+        else:
+            xslt.LXML_GET_XSLT_ENCODING(c_encoding, self._xslt._c_style)
+            writer = _create_output_buffer(file, c_encoding, compression, &c_buffer, close=False)
+            if writer is None:
+                with nogil:
+                    r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
+            else:
+                r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
+        if writer is not None:
+            writer._exc_context._raise_if_stored()
+        if r == -1:
+            _raiseSerialisationError(xmlerror.XML_IO_UNKNOWN)
 
     cdef _saveToStringAndSize(self, xmlChar** s, int* l):
         cdef _Document doc

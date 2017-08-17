@@ -750,8 +750,9 @@ cdef int _serialise_node(tree.xmlOutputBuffer* c_buffer, const_xmlChar* c_doctyp
     return error_result
 
 
-cdef _create_output_buffer(f, const_char* c_enc, int compression,
-                           tree.xmlOutputBuffer** c_buffer_ret, bint close):
+cdef _FilelikeWriter _create_output_buffer(
+        f, const_char* c_enc, int c_compression,
+        tree.xmlOutputBuffer** c_buffer_ret, bint close):
     cdef tree.xmlOutputBuffer* c_buffer
     cdef _FilelikeWriter writer
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
@@ -762,12 +763,12 @@ cdef _create_output_buffer(f, const_char* c_enc, int compression,
         if _isString(f):
             filename8 = _encodeFilename(f)
             c_buffer = tree.xmlOutputBufferCreateFilename(
-                _cstr(filename8), enchandler, compression)
+                _cstr(filename8), enchandler, c_compression)
             if c_buffer is NULL:
                 return python.PyErr_SetFromErrno(IOError) # raises IOError
             writer = None
         elif hasattr(f, 'write'):
-            writer = _FilelikeWriter(f, compression=compression, close=close)
+            writer = _FilelikeWriter(f, compression=c_compression, close=close)
             c_buffer = writer._createOutputBuffer(enchandler)
         else:
             raise TypeError(

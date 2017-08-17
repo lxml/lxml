@@ -1,4 +1,4 @@
-from lxml.includes.tree cimport xmlDoc, xmlNode, xmlDict, xmlChar, const_xmlChar
+from lxml.includes.tree cimport xmlDoc, xmlNode, xmlDict, xmlChar, const_xmlChar, xmlOutputBuffer
 from lxml.includes.xmlerror cimport xmlGenericErrorFunc
 from lxml.includes.xpath cimport xmlXPathContext, xmlXPathFunction
 
@@ -44,6 +44,10 @@ cdef extern from "libxslt/xsltInternals.h":
 
     cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc) nogil
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet) nogil
+
+cdef extern from "libxslt/imports.h":
+    # actually defined in "etree_defs.h"
+    cdef void LXML_GET_XSLT_ENCODING(const_char* result_var, xsltStylesheet* style)
 
 cdef extern from "libxslt/extensions.h":
     ctypedef void (*xsltTransformFunction)(xsltTransformContext* ctxt,
@@ -103,6 +107,13 @@ cdef extern from "libxslt/xsltutils.h":
                                     int* doc_txt_len,
                                     xmlDoc* result,
                                     xsltStylesheet* style) nogil
+    cdef int xsltSaveResultToFilename(const_char *URL,
+                                      xmlDoc* result,
+                                      xsltStylesheet* style,
+                                      int compression) nogil
+    cdef int xsltSaveResultTo(xmlOutputBuffer* buf,
+                              xmlDoc* result,
+                              xsltStylesheet* style) nogil
     cdef xmlGenericErrorFunc xsltGenericError
     cdef void *xsltGenericErrorContext
     cdef void xsltSetGenericErrorFunc(

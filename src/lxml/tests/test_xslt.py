@@ -4,7 +4,14 @@
 Test cases related to XSLT processing
 """
 
-import unittest, copy, sys, os.path
+import io
+import sys
+import copy
+import gzip
+import os.path
+import unittest
+import contextlib
+from tempfile import NamedTemporaryFile
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -173,6 +180,61 @@ class ETreeXSLTTestCase(HelperTestCase):
         else:
             result = unicode(str(f.getvalue()), 'UTF-16').replace('\n', '')
         self.assertEqual(expected, result)
+
+    @contextlib.contextmanager
+    def _xslt_setup(self, encoding='UTF-16'):
+        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
+                                 ).decode("unicode_escape"))
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output encoding="%s"/>
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''' % encoding)
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        expected = _bytes("""\
+<?xml version="1.0" encoding="UTF-16"?>\
+<foo>\\uF8D2</foo>""").decode("unicode_escape")
+
+        data = [res]
+        yield data
+        self.assertEqual(expected, data[0])
+
+    def test_xslt_write_result_bytesio(self):
+        with self._xslt_setup() as res:
+            f = BytesIO()
+            res[0].write_result(f)
+            res[0] = f.getvalue().decode('UTF-16').replace('\n', '')
+
+    def test_xslt_write_result_file(self):
+        with self._xslt_setup() as res:
+            f = NamedTemporaryFile(delete=False)
+            try:
+                try:
+                    res[0].write_result(f)
+                finally:
+                    f.close()
+                with io.open(f.name, encoding='UTF-16') as f:
+                    res[0] = f.read().replace('\n', '')
+            finally:
+                os.unlink(f.name)
+
+    def test_xslt_write_result_file_path(self):
+        with self._xslt_setup() as res:
+            f = NamedTemporaryFile(delete=False)
+            try:
+                try:
+                    res[0].write_result(f.name, compression=9)
+                finally:
+                    f.close()
+                with gzip.GzipFile(f.name) as f:
+                    res[0] = f.read().decode("UTF-16").replace('\n', '')
+            finally:
+                os.unlink(f.name)
 
     def test_xslt_unicode(self):
         tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
