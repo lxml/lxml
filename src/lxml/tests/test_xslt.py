@@ -202,13 +202,13 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         data = [res]
         yield data
-        self.assertEqual(expected, data[0])
+        self.assertEqual(expected, data[0].replace('\n', ''))
 
     def test_xslt_write_output_bytesio(self):
         with self._xslt_setup() as res:
             f = BytesIO()
             res[0].write_output(f)
-            res[0] = f.getvalue().decode('UTF-16').replace('\n', '')
+            res[0] = f.getvalue().decode('UTF-16')
 
     def test_xslt_write_output_failure(self):
         class Writer(object):
@@ -232,7 +232,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                 finally:
                     f.close()
                 with io.open(f.name, encoding='UTF-16') as f:
-                    res[0] = f.read().replace('\n', '')
+                    res[0] = f.read()
             finally:
                 os.unlink(f.name)
 
@@ -245,7 +245,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                 finally:
                     f.close()
                 with contextlib.closing(gzip.GzipFile(f.name)) as f:
-                    res[0] = f.read().decode("UTF-16").replace('\n', '')
+                    res[0] = f.read().decode("UTF-16")
             finally:
                 os.unlink(f.name)
 
