@@ -745,7 +745,7 @@ cdef class _XSLTResultTree(_ElementTree):
         if writer is not None:
             writer._exc_context._raise_if_stored()
         if r == -1:
-            _raiseSerialisationError(xmlerror.XML_IO_UNKNOWN)
+            python.PyErr_SetFromErrno(XSLTSaveError)  # raises
 
     cdef _saveToStringAndSize(self, xmlChar** s, int* l):
         cdef _Document doc
