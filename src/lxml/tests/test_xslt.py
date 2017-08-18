@@ -11,6 +11,7 @@ import gzip
 import os.path
 import unittest
 import contextlib
+from textwrap import dedent
 from tempfile import NamedTemporaryFile
 
 this_dir = os.path.dirname(__file__)
@@ -29,8 +30,8 @@ try:
 except NameError: # Python 3
     basestring = str
 
-from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
-from common_imports import doctest, _bytes, _str, make_doctest, skipif
+from .common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
+from .common_imports import doctest, _bytes, _str, make_doctest, skipif
 
 class ETreeXSLTTestCase(HelperTestCase):
     """XSLT tests etree"""
@@ -105,104 +106,50 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
-    def test_xslt_utf8(self):
-        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
-                                 ).decode("unicode_escape"))
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output encoding="UTF-8"/>
-  <xsl:template match="/">
-    <foo><xsl:value-of select="/a/b/text()" /></foo>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        st = etree.XSLT(style)
-        res = st(tree)
-        expected = _bytes('''\
-<?xml version="1.0" encoding="UTF-8"?>
-<foo>\\uF8D2</foo>
-''').decode("unicode_escape")
-        if is_python3:
-            self.assertEqual(expected,
-                              str(bytes(res), 'UTF-8'))
-        else:
-            self.assertEqual(expected,
-                              unicode(str(res), 'UTF-8'))
-
-    def test_xslt_encoding(self):
-        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
-                                 ).decode("unicode_escape"))
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output encoding="UTF-16"/>
-  <xsl:template match="/">
-    <foo><xsl:value-of select="/a/b/text()" /></foo>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        st = etree.XSLT(style)
-        res = st(tree)
-        expected = _bytes('''\
-<?xml version="1.0" encoding="UTF-16"?>
-<foo>\\uF8D2</foo>
-''').decode("unicode_escape")
-        if is_python3:
-            self.assertEqual(expected,
-                              str(bytes(res), 'UTF-16'))
-        else:
-            self.assertEqual(expected,
-                              unicode(str(res), 'UTF-16'))
-
-    def test_xslt_encoding_override(self):
-        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
-                                 ).decode("unicode_escape"))
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output encoding="UTF-8"/>
-  <xsl:template match="/">
-    <foo><xsl:value-of select="/a/b/text()" /></foo>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        st = etree.XSLT(style)
-        res = st(tree)
-        expected = _bytes("""\
-<?xml version='1.0' encoding='UTF-16'?>\
-<foo>\\uF8D2</foo>""").decode("unicode_escape")
-
-        f = BytesIO()
-        res.write(f, encoding='UTF-16')
-        if is_python3:
-            result = str(f.getvalue(), 'UTF-16').replace('\n', '')
-        else:
-            result = unicode(str(f.getvalue()), 'UTF-16').replace('\n', '')
-        self.assertEqual(expected, result)
-
     @contextlib.contextmanager
-    def _xslt_setup(self, encoding='UTF-16'):
+    def _xslt_setup(
+            self, encoding='UTF-16', expected_encoding=None,
+            expected="""<?xml version="1.0" encoding="%(ENCODING)s"?><foo>\\uF8D2</foo>"""):
         tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
                                  ).decode("unicode_escape"))
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output encoding="%s"/>
+  <xsl:output encoding="%(ENCODING)s"/>
   <xsl:template match="/">
     <foo><xsl:value-of select="/a/b/text()" /></foo>
   </xsl:template>
-</xsl:stylesheet>''' % encoding)
+</xsl:stylesheet>''' % {'ENCODING': encoding})
 
         st = etree.XSLT(style)
         res = st(tree)
-        expected = _bytes("""\
-<?xml version="1.0" encoding="UTF-16"?>\
-<foo>\\uF8D2</foo>""").decode("unicode_escape")
+        expected = _bytes(dedent(expected).strip()).decode("unicode_escape").replace('\n', '') % {
+            'ENCODING': expected_encoding or encoding,
+        }
 
         data = [res]
         yield data
         self.assertEqual(expected, data[0].replace('\n', ''))
+
+    def test_xslt_utf8(self):
+        with self._xslt_setup(encoding='UTF-8') as res:
+            res[0] = unicode(bytes(res[0]), 'UTF-8')
+            assert 'UTF-8' in res[0]
+
+    def test_xslt_encoding(self):
+        with self._xslt_setup() as res:
+            res[0] = unicode(bytes(res[0]), 'UTF-16')
+            assert 'UTF-16' in res[0]
+
+    def test_xslt_encoding_override(self):
+        with self._xslt_setup(encoding='UTF-8', expected_encoding='UTF-16') as res:
+            f = BytesIO()
+            res[0].write(f, encoding='UTF-16')
+            if is_python3:
+                output = str(f.getvalue(), 'UTF-16')
+            else:
+                output = unicode(str(f.getvalue()), 'UTF-16')
+            res[0] = output.replace("'", '"')
 
     def test_xslt_write_output_bytesio(self):
         with self._xslt_setup() as res:
@@ -250,25 +197,12 @@ class ETreeXSLTTestCase(HelperTestCase):
                 os.unlink(f.name)
 
     def test_xslt_unicode(self):
-        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
-                                 ).decode("unicode_escape"))
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output encoding="UTF-16"/>
-  <xsl:template match="/">
-    <foo><xsl:value-of select="/a/b/text()" /></foo>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        st = etree.XSLT(style)
-        res = st(tree)
-        expected = _bytes('''\
-<?xml version="1.0"?>
-<foo>\\uF8D2</foo>
-''').decode("unicode_escape")
-        self.assertEqual(expected,
-                          unicode(res))
+        expected = '''
+            <?xml version="1.0"?>
+            <foo>\\uF8D2</foo>
+        '''
+        with self._xslt_setup(expected=expected) as res:
+            res[0] = unicode(res[0])
 
     def test_xslt_unicode_standalone(self):
         tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
