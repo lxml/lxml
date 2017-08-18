@@ -15,7 +15,7 @@ cdef class XSLTApplyError(XSLTError):
     """Error running an XSL transformation.
     """
 
-cdef class XSLTSaveError(XSLTError):
+class XSLTSaveError(XSLTError, SerialisationError):
     """Error serialising an XSLT result.
     """
 
