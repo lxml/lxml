@@ -1,3 +1,7 @@
+
+cdef object ET
+cdef object partial
+
 cdef class ElementMaker:
     cdef readonly dict _nsmap
     cdef readonly dict _typemap
