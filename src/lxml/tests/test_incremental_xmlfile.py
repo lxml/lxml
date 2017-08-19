@@ -219,6 +219,23 @@ class _XmlFileTestCaseBase(HelperTestCase):
             self.assertTrue(False, "exception not propagated")
         self.assertXml("<root><test>BEFORE</test></root>")
 
+    def test_generator_close_continues_closing(self):
+        def gen():
+            with etree.xmlfile(self._file) as xf:
+                with xf.element('root'):
+                    while True:
+                        content = (yield)
+                        with xf.element('entry'):
+                            xf.write(content)
+
+        g = gen()
+        next(g)
+        g.send('A')
+        g.send('B')
+        g.send('C')
+        g.close()
+        self.assertXml("<root><entry>A</entry><entry>B</entry><entry>C</entry></root>")
+
     def test_failure_preceding_text(self):
         try:
             with etree.xmlfile(self._file) as xf:
