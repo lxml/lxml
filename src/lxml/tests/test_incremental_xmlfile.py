@@ -4,10 +4,14 @@
 Tests for the incremental XML serialisation API.
 """
 
-from __future__ import with_statement, absolute_import
+from __future__ import absolute_import
 
+import io
+import os
+import sys
 import unittest
-import tempfile, os, sys
+import textwrap
+import tempfile
 
 from lxml.etree import LxmlSyntaxError
 
@@ -573,15 +577,104 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
         self.assertXml('<ns0:some_tag xmlns:ns0="some_ns"></ns0:some_tag>')
 
 
+class AsyncXmlFileTestCase(HelperTestCase):
+    def test_async_api(self):
+        out = io.BytesIO()
+        xf = etree.xmlfile(out)
+        scm = xf.__enter__()
+        acm = xf.__aenter__()
+        list(acm.__await__())  # fake await to avoid destructor warning
+
+        def api_of(obj):
+            return sorted(name for name in dir(scm) if not name.startswith('__'))
+
+        a_api = api_of(acm)
+
+        self.assertEqual(api_of(scm), api_of(acm))
+        self.assertTrue('write' in a_api)
+        self.assertTrue('element' in a_api)
+        self.assertTrue('method' in a_api)
+        self.assertTrue(len(a_api) > 5)
+
+    def _run_async(self, coro):
+        while True:
+            try:
+                coro.send(None)
+            except StopIteration as ex:
+                return ex.value
+
+    @skipIf(sys.version_info < (3, 5), "requires support for async-def (Py3.5+)")
+    def test_async(self):
+        code = textwrap.dedent("""\
+        async def test_async_xmlfile(close=True, buffered=True):
+            class Writer(object):
+                def __init__(self):
+                    self._data = []
+                    self._all_data = None
+                    self._calls = 0
+
+                async def write(self, data):
+                    self._calls += 1
+                    self._data.append(data)
+
+                async def close(self):
+                    assert self._all_data is None
+                    assert self._data is not None
+                    self._all_data = b''.join(self._data)
+                    self._data = None  # make writing fail afterwards
+
+            async def generate(out, close=True, buffered=True):
+                async with etree.xmlfile(out, close=close, buffered=buffered) as xf:
+                    async with xf.element('root'):
+                        await xf.write('root-text')
+                        async with xf.method('html'):
+                            await xf.write(etree.Element('img', src='http://huhu.org/'))
+                        await xf.flush()
+                        for i in range(3):
+                            async with xf.element('el'):
+                                await xf.write('text-%d' % i)
+
+            out = Writer()
+            await generate(out, close=close, buffered=buffered)
+            if not close:
+                await out.close()
+            assert out._data is None, out._data
+            return out._all_data, out._calls
+        """)
+        lns = {}
+        exec(code, globals(), lns)
+        test_async_xmlfile = lns['test_async_xmlfile']
+
+        expected = (
+            b'<root>root-text<img src="http://huhu.org/">'
+            b'<el>text-0</el><el>text-1</el><el>text-2</el></root>'
+        )
+
+        data, calls = self._run_async(test_async_xmlfile(close=True))
+        self.assertEqual(expected, data)
+        self.assertEqual(2, calls)  # only flush() and close()
+
+        data, calls = self._run_async(test_async_xmlfile(close=False))
+        self.assertEqual(expected, data)
+        self.assertEqual(2, calls)  # only flush() and close()
+
+        data, unbuffered_calls = self._run_async(test_async_xmlfile(buffered=False))
+        self.assertEqual(expected, data)
+        self.assertTrue(unbuffered_calls > calls, unbuffered_calls)
+
+
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(BytesIOXmlFileTestCase),
-                    unittest.makeSuite(TempXmlFileTestCase),
-                    unittest.makeSuite(TempPathXmlFileTestCase),
-                    unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
-                    unittest.makeSuite(HtmlFileTestCase),
-                    ])
+    suite.addTests([
+        unittest.makeSuite(BytesIOXmlFileTestCase),
+        unittest.makeSuite(TempXmlFileTestCase),
+        unittest.makeSuite(TempPathXmlFileTestCase),
+        unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
+        unittest.makeSuite(HtmlFileTestCase),
+        unittest.makeSuite(AsyncXmlFileTestCase),
+    ])
     return suite
+
 
 if __name__ == '__main__':
     print('to test use test.py %s' % __file__)

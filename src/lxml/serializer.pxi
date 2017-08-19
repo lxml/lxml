@@ -896,6 +896,7 @@ cdef class xmlfile:
     cdef object output_file
     cdef bytes encoding
     cdef _IncrementalFileWriter writer
+    cdef _AsyncIncrementalFileWriter async_writer
     cdef int compresslevel
     cdef bint close
     cdef bint buffered
@@ -922,6 +923,25 @@ cdef class xmlfile:
             old_writer, self.writer = self.writer, None
             raise_on_error = exc_type is None
             old_writer._close(raise_on_error)
+            if self.close:
+                self.output_file = None
+
+    async def __aenter__(self):
+        assert self.output_file is not None
+        if isinstance(self.output_file, basestring):
+            raise TypeError("Cannot asynchronously write to a plain file")
+        if not hasattr(self.output_file, 'write'):
+            raise TypeError("Output file needs an async .write() method")
+        self.async_writer = _AsyncIncrementalFileWriter(
+            self.output_file, self.encoding, self.compresslevel,
+            self.close, self.buffered, self.method)
+        return self.async_writer
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.async_writer is not None:
+            old_writer, self.async_writer = self.async_writer, None
+            raise_on_error = exc_type is None
+            await old_writer._close(raise_on_error)
             if self.close:
                 self.output_file = None
 
@@ -1247,6 +1267,115 @@ cdef class _IncrementalFileWriter:
                 self._target._exc_context._raise_if_stored()
             _raiseSerialisationError(error_result)
 
+
+@cython.final
+@cython.internal
+cdef class _AsyncDataWriter:
+    cdef list _data
+    def __cinit__(self):
+        self._data = []
+
+    cdef bytes collect(self):
+        data = b''.join(self._data)
+        del self._data[:]
+        return data
+
+    def write(self, data):
+        self._data.append(data)
+
+    def close(self):
+        pass
+
+
+@cython.final
+@cython.internal
+cdef class _AsyncIncrementalFileWriter:
+    cdef _IncrementalFileWriter _writer
+    cdef _AsyncDataWriter _buffer
+    cdef object _async_outfile
+    cdef int _flush_after_writes
+    cdef bint _should_close
+    cdef bint _buffered
+
+    def __cinit__(self, async_outfile, bytes encoding, int compresslevel, bint close,
+                  bint buffered, int method):
+        self._flush_after_writes = 20
+        self._async_outfile = async_outfile
+        self._should_close = close
+        self._buffered = buffered
+        self._buffer = _AsyncDataWriter()
+        self._writer = _IncrementalFileWriter(
+            self._buffer, encoding, compresslevel, close=True, buffered=False, method=method)
+
+    cdef bytes _flush(self):
+        if not self._buffered or len(self._buffer._data) > self._flush_after_writes:
+            return self._buffer.collect()
+        return None
+
+    async def flush(self):
+        self._writer.flush()
+        data = self._buffer.collect()
+        if data:
+            await self._async_outfile.write(data)
+
+    async def write_declaration(self, version=None, standalone=None, doctype=None):
+        self._writer.write_declaration(version, standalone, doctype)
+        data = self._flush()
+        if data:
+            await self._async_outfile.write(data)
+
+    async def write_doctype(self, doctype):
+        self._writer.write_doctype(doctype)
+        data = self._flush()
+        if data:
+            await self._async_outfile.write(data)
+
+    async def write(self, *args, with_tail=True, pretty_print=False, method=None):
+        self._writer.write(*args, with_tail=with_tail, pretty_print=pretty_print, method=method)
+        data = self._flush()
+        if data:
+            await self._async_outfile.write(data)
+
+    def method(self, method):
+        return self._writer.method(method)
+
+    def element(self, tag, attrib=None, nsmap=None, method=None, **_extra):
+        element_writer = self._writer.element(tag, attrib, nsmap, method, **_extra)
+        return _AsyncFileWriterElement(element_writer, self)
+
+    async def _close(self, bint raise_on_error):
+        self._writer._close(raise_on_error)
+        data = self._buffer.collect()
+        if data:
+            await self._async_outfile.write(data)
+        if self._should_close:
+            await self._async_outfile.close()
+
+
+@cython.final
+@cython.internal
+cdef class _AsyncFileWriterElement:
+    cdef _FileWriterElement _element_writer
+    cdef _AsyncIncrementalFileWriter _writer
+
+    def __cinit__(self, _FileWriterElement element_writer not None,
+                  _AsyncIncrementalFileWriter writer not None):
+        self._element_writer = element_writer
+        self._writer = writer
+
+    async def __aenter__(self):
+        self._element_writer.__enter__()
+        data = self._writer._flush()
+        if data:
+            await self._writer._async_outfile.write(data)
+
+    async def __aexit__(self, *args):
+        self._element_writer.__exit__(*args)
+        data = self._writer._flush()
+        if data:
+            await self._writer._async_outfile.write(data)
+
+
 @cython.final
 @cython.internal
 @cython.freelist(8)
@@ -1269,6 +1398,7 @@ cdef class _FileWriterElement:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._writer._write_end_element(self._element)
         self._writer._method = self._old_method
+
 
 @cython.final
 @cython.internal
@@ -1300,3 +1430,11 @@ cdef class _MethodChanger:
             raise LxmlSyntaxError("Method changed outside of context manager")
         self._writer._method = self._old_method
         self._exited = True
+
+    async def __aenter__(self):
+        # for your async convenience
+        return self.__enter__()
+
+    async def __aexit__(self, *args):
+        # for your async convenience
+        return self.__exit__(*args)

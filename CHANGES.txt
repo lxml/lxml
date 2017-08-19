@@ -14,6 +14,8 @@ Features added
 * The modules ``lxml.html.diff`` and ``lxml.html.clean`` are also
   compiled using Cython in order to speed them up.
 
+* ``xmlfile()`` supports async coroutines using ``async with`` and ``await``.
+
 * ``iterwalk()`` has a new method ``skip_subtree()`` that prevents walking into
   the descendants of the current element.
 

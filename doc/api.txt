@@ -558,6 +558,21 @@ Alternatively, if buffering is not desired at all, it can be disabled
 by passing the flag ``buffered=False`` into ``xmlfile()`` (also since
 lxml 3.4).
 
+Here is a similar example using an async coroutine in Py3.5 or later, which is
+supported since lxml 3.9.0.  The output stream is expected to have methods
+``async def write(self, data)`` and ``async def close(self)`` in this case.
+
+::
+
+    async def writer(out_stream, xml_messages):
+        async with xmlfile(out_stream) as xf:
+            async with xf.element('{http://etherx.jabber.org/streams}stream'):
+                 async for el in xml_messages:
+                      await xf.write(el)
+                      await xf.flush()
+
+    async_writer = writer(stream, async_message_stream)
+
 
 CDATA
 -----
