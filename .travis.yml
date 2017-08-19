@@ -1,5 +1,6 @@
 language: python
 
+sudo: false
 python:
   - 2.6
   - 2.7
@@ -30,5 +31,6 @@ matrix:
     - python: pypy3
 
 cache:
+  pip: true
   directories:
     - $HOME/.cache/pip
