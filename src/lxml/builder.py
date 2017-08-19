@@ -162,7 +162,7 @@ class ElementMaker(object):
         # initialize type map for this element factory
 
         if typemap:
-            typemap = typemap.copy()
+            typemap = dict(typemap)
         else:
             typemap = {}
 
@@ -197,25 +197,25 @@ class ElementMaker(object):
         self._typemap = typemap
 
     def __call__(self, tag, *children, **attrib):
-        get = self._typemap.get
+        typemap = self._typemap
 
         if self._namespace is not None and tag[0] != '{':
             tag = self._namespace + tag
         elem = self._makeelement(tag, nsmap=self._nsmap)
         if attrib:
-            get(dict)(elem, attrib)
+            typemap[dict](elem, attrib)
 
         for item in children:
             if callable(item):
                 item = item()
-            t = get(type(item))
+            t = typemap.get(type(item))
             if t is None:
                 if ET.iselement(item):
                     elem.append(item)
                     continue
                 for basetype in type(item).__mro__:
                     # See if the typemap knows of any of this type's bases.
-                    t = get(basetype)
+                    t = typemap.get(basetype)
                     if t is not None:
                         break
                 else:
@@ -223,12 +223,13 @@ class ElementMaker(object):
                                     (type(item).__name__, item))
             v = t(elem, item)
             if v:
-                get(type(v))(elem, v)
+                typemap.get(type(v))(elem, v)
 
         return elem
 
     def __getattr__(self, tag):
         return partial(self, tag)
+
 
 # create factory object
 E = ElementMaker()
