@@ -32,5 +32,3 @@ matrix:
 
 cache:
   pip: true
-  directories:
-    - $HOME/.cache/pip
