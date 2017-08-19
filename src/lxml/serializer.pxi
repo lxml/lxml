@@ -1109,21 +1109,26 @@ cdef class _IncrementalFileWriter:
 
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
 
-    cdef _write_end_element(self, element_config, bint cleanup_only=False):
+    cdef _write_end_element(self, element_config):
         if self._status != WRITER_IN_ELEMENT:
             raise LxmlSyntaxError("not in an element")
         if not self._element_stack or self._element_stack[-1][:2] != element_config[:2]:
             raise LxmlSyntaxError("inconsistent exit action in context manager")
 
+        # If previous write operations failed, the context manager exit might still call us.
+        # That is ok, but we stop writing closing tags and handling errors in that case.
+        # For all non-I/O errors, we continue writing closing tags if we can.
+        ok_to_write = self._c_out.error == xmlerror.XML_ERR_OK
+
         name, prefix = self._element_stack.pop()[1:3]
-        if not cleanup_only:
+        if ok_to_write:
             tree.xmlOutputBufferWrite(self._c_out, 2, '</')
             self._write_qname(name, prefix)
             tree.xmlOutputBufferWrite(self._c_out, 1, '>')
 
         if not self._element_stack:
             self._status = WRITER_FINISHED
-        if not cleanup_only:
+        if ok_to_write:
             if not self._buffered:
                 tree.xmlOutputBufferFlush(self._c_out)
             self._handle_error(self._c_out.error)
@@ -1262,7 +1267,7 @@ cdef class _FileWriterElement:
         self._writer._write_start_element(self._element)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._writer._write_end_element(self._element, cleanup_only=exc_type is not None)
+        self._writer._write_end_element(self._element)
         self._writer._method = self._old_method
 
 @cython.final

@@ -205,6 +205,20 @@ class _XmlFileTestCaseBase(HelperTestCase):
             self.assertXml("<test>toast<taste>")
         self.assertXml("<test>toast<taste></taste></test>")
 
+    def test_non_io_exception_continues_closing(self):
+        try:
+            with etree.xmlfile(self._file) as xf:
+                with xf.element('root'):
+                    with xf.element('test'):
+                        xf.write("BEFORE")
+                        raise TypeError("FAIL!")
+                    xf.write("AFTER")
+        except TypeError as exc:
+            self.assertTrue("FAIL" in str(exc), exc)
+        else:
+            self.assertTrue(False, "exception not propagated")
+        self.assertXml("<root><test>BEFORE</test></root>")
+
     def test_failure_preceding_text(self):
         try:
             with etree.xmlfile(self._file) as xf:
@@ -374,9 +388,12 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         class Writer(object):
             def __init__(self, trigger):
                 self._trigger = trigger
+                self._failed = False
 
             def write(self, data):
+                assert not self._failed, "write() called again after failure"
                 if self._trigger in data:
+                    self._failed = True
                     raise WriteError("FAILED: " + self._trigger.decode('utf8'))
 
         for trigger in ['text', 'root', 'tag', 'noflush']:
