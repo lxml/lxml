@@ -36,6 +36,7 @@ def webserver(app, port=0, host=None):
     finally:
         server.shutdown()
         server.server_close()
+    thread.join(timeout=1)
 
 
 try:
