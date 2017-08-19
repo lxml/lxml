@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-3.9.0 (2017-??-??)
+4.0.0 (2017-??-??)
 ==================
 
 Features added
@@ -11,8 +11,8 @@ Features added
 * The ElementPath implementation is now compiled using Cython,
   which speeds up the ``.find*()`` methods quite significantly.
 
-* The modules ``lxml.html.diff`` and ``lxml.html.clean`` are also
-  compiled using Cython in order to speed them up.
+* The modules ``lxml.builder``, ``lxml.html.diff`` and ``lxml.html.clean``
+  are also compiled using Cython in order to speed them up.
 
 * ``xmlfile()`` supports async coroutines using ``async with`` and ``await``.
 

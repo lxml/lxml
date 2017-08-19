@@ -559,7 +559,7 @@ by passing the flag ``buffered=False`` into ``xmlfile()`` (also since
 lxml 3.4).
 
 Here is a similar example using an async coroutine in Py3.5 or later, which is
-supported since lxml 3.9.0.  The output stream is expected to have methods
+supported since lxml 4.0.  The output stream is expected to have methods
 ``async def write(self, data)`` and ``async def close(self)`` in this case.
 
 ::
