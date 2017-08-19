@@ -527,14 +527,11 @@ like the instant messaging protocol
 
     def writer(out_stream):
         with xmlfile(out_stream) as xf:
-             with xf.element('{http://etherx.jabber.org/streams}stream'):
-                  try:
-                      while True:
-                          el = (yield)
-                          xf.write(el)
-                          xf.flush()
-                  except GeneratorExit:
-                      pass
+            with xf.element('{http://etherx.jabber.org/streams}stream'):
+                while True:
+                    el = (yield)
+                    xf.write(el)
+                    xf.flush()
 
     w = writer(stream)
     next(w)   # start writing (run up to 'yield')
