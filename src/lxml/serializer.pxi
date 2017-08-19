@@ -1251,10 +1251,10 @@ cdef class _IncrementalFileWriter:
 @cython.internal
 @cython.freelist(8)
 cdef class _FileWriterElement:
+    cdef _IncrementalFileWriter _writer
     cdef object _element
     cdef int _new_method
     cdef int _old_method
-    cdef _IncrementalFileWriter _writer
 
     def __cinit__(self, _IncrementalFileWriter writer not None, element_config, int method):
         self._writer = writer
@@ -1274,11 +1274,11 @@ cdef class _FileWriterElement:
 @cython.internal
 @cython.freelist(8)
 cdef class _MethodChanger:
+    cdef _IncrementalFileWriter _writer
     cdef int _new_method
     cdef int _old_method
     cdef bint _entered
     cdef bint _exited
-    cdef _IncrementalFileWriter _writer
 
     def __cinit__(self, _IncrementalFileWriter writer not None, int method):
         self._writer = writer
