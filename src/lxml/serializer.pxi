@@ -834,8 +834,8 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                     c_doc, NULL, exclusive, c_inclusive_ns_prefixes,
                     with_comments, c_buffer)
                 error = tree.xmlOutputBufferClose(c_buffer)
-            if bytes_count < 0:
-                error = bytes_count
+                if bytes_count < 0:
+                    error = bytes_count
         else:
             raise TypeError(u"File or filename expected, got '%s'" %
                             python._fqtypename(f).decode('UTF-8'))
