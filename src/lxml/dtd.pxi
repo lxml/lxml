@@ -384,7 +384,7 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
     cdef _ExceptionContext exc_context
     cdef _FileReaderContext dtd_parser
     cdef _ErrorLog error_log
-    cdef tree.xmlDtd* c_dtd
+    cdef tree.xmlDtd* c_dtd = NULL
     exc_context = _ExceptionContext()
     dtd_parser = _FileReaderContext(file, exc_context, None)
     error_log = _ErrorLog()

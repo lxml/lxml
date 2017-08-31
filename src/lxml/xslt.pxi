@@ -365,7 +365,7 @@ cdef class XSLT:
 
     def __init__(self, xslt_input, *, extensions=None, regexp=True,
                  access_control=None):
-        cdef xslt.xsltStylesheet* c_style
+        cdef xslt.xsltStylesheet* c_style = NULL
         cdef xmlDoc* c_doc
         cdef _Document doc
         cdef _Element root_node
@@ -716,7 +716,7 @@ cdef class _XSLTResultTree(_ElementTree):
         cdef _FilelikeWriter writer = None
         cdef _Document doc
         cdef int r, c_compression
-        cdef const_char* c_encoding = NULL
+        cdef const_xmlChar* c_encoding = NULL
         cdef tree.xmlOutputBuffer* c_buffer
 
         if self._context_node is not None:
@@ -736,7 +736,7 @@ cdef class _XSLTResultTree(_ElementTree):
                     c_filename, doc._c_doc, self._xslt._c_style, c_compression)
         else:
             xslt.LXML_GET_XSLT_ENCODING(c_encoding, self._xslt._c_style)
-            writer = _create_output_buffer(file, c_encoding, compression, &c_buffer, close=False)
+            writer = _create_output_buffer(file, <const_char*>c_encoding, compression, &c_buffer, close=False)
             if writer is None:
                 with nogil:
                     r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)

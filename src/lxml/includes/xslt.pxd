@@ -47,7 +47,7 @@ cdef extern from "libxslt/xsltInternals.h":
 
 cdef extern from "libxslt/imports.h":
     # actually defined in "etree_defs.h"
-    cdef void LXML_GET_XSLT_ENCODING(const_char* result_var, xsltStylesheet* style)
+    cdef void LXML_GET_XSLT_ENCODING(const_xmlChar* result_var, xsltStylesheet* style)
 
 cdef extern from "libxslt/extensions.h":
     ctypedef void (*xsltTransformFunction)(xsltTransformContext* ctxt,
