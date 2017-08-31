@@ -278,7 +278,7 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
         print('Using existing %s downloaded into %s (delete this file if you want to re-download the package)'
               % (name, dest_filename))
     else:
-        print('Downloading %s into %s' % (name, dest_filename))
+        print('Downloading %s into %s from %s' % (name, dest_filename, full_url))
         urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
         urlretrieve(full_url, dest_filename)
     return dest_filename
@@ -370,7 +370,9 @@ def configure_darwin_env(env_setup):
 def build_libxml2xslt(download_dir, build_dir,
                       static_include_dirs, static_library_dirs,
                       static_cflags, static_binaries,
-                      libxml2_version=None, libxslt_version=None, libiconv_version=None,
+                      libxml2_version=None,
+                      libxslt_version=None,
+                      libiconv_version=None,
                       zlib_version=None,
                       multicore=None):
     safe_mkdir(download_dir)
@@ -408,8 +410,15 @@ def build_libxml2xslt(download_dir, build_dir,
         '--with-iconv=%s' % prefix,
         '--with-zlib=%s' % prefix,
     ]
+
+    if not libxml2_version:
+        libxml2_version = os.path.basename(libxml2_dir).split('-', 1)[-1]
+
+    if tuple(map(tryint, libxml2_version.split('-', 1)[0].split('.'))) >= (2, 9, 5):
+        libxml2_configure_cmd.append('--without-lzma')  # can't currently build that
+
     try:
-        if libxml2_version and tuple(map(tryint, libxml2_version.split('.'))) >= (2,7,3):
+        if tuple(map(tryint, libxml2_version.split('-', 1)[0].split('.'))) >= (2, 7, 3):
             libxml2_configure_cmd.append('--enable-rebuild-docs=no')
     except Exception:
         pass # this isn't required, so ignore any errors
