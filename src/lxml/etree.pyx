@@ -98,6 +98,9 @@ import sys
 cdef object re
 import re
 
+cdef object partial
+from functools import partial
+
 cdef object islice
 from itertools import islice
 
