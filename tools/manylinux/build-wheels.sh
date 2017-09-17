@@ -8,6 +8,7 @@ REQUIREMENTS=/io/requirements.txt
 WHEELHOUSE=/io/wheelhouse
 SDIST=$1
 PACKAGE=$(basename ${SDIST%-*})
+SDIST_PREFIX=$(basename ${SDIST%%.tar.gz})
 
 build_wheel() {
     pybin="$1"
@@ -60,14 +61,13 @@ build_wheels() {
 
 repair_wheels() {
     # Bundle external shared libraries into the wheels
-    for whl in $WHEELHOUSE/*.whl; do
+    for whl in $WHEELHOUSE/${SDIST_PREFIX}-*.whl; do
         auditwheel repair $whl -w $WHEELHOUSE
     done
 }
 
 show_wheels() {
-    filename=${SDIST##*/}
-    ls -l $WHEELHOUSE/${filename%%.tar.gz}*
+    ls -l $WHEELHOUSE/${SDIST_PREFIX}-*.whl
 }
 
 prepare_system
