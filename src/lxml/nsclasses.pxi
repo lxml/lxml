@@ -85,7 +85,7 @@ cdef class _NamespaceRegistry:
 cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
     u"Dictionary-like registry for namespace implementation classes"
     def __setitem__(self, name, item):
-        if not python.PyType_Check(item) or not issubclass(item, ElementBase):
+        if not isinstance(item, type) or not issubclass(item, ElementBase):
             raise NamespaceRegistryError, \
                 u"Registered element classes must be subtypes of ElementBase"
         if name is not None:
