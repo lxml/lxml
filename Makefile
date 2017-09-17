@@ -52,6 +52,7 @@ wheel_manylinux32 wheel_manylinux64: dist/lxml-$(LXMLVERSION).tar.gz
 		-e LDFLAGS="$(LDFLAGS)" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
+		-e WHEELHOUSE=wheelhouse_$(subst wheel_,,$@) \
 		$(if $(patsubst %32,,$@),$(MANYLINUX_IMAGE_X86_64),$(MANYLINUX_IMAGE_686)) \
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 

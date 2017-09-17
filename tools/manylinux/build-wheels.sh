@@ -5,7 +5,7 @@ echo "Started $0 $@"
 
 set -e -x
 REQUIREMENTS=/io/requirements.txt
-WHEELHOUSE=/io/wheelhouse
+[ -n "$WHEELHOUSE" ] || WHEELHOUSE=wheelhouse
 SDIST=$1
 PACKAGE=$(basename ${SDIST%-*})
 SDIST_PREFIX=$(basename ${SDIST%%.tar.gz})
@@ -21,13 +21,13 @@ build_wheel() {
         ${pybin}/pip \
             wheel \
             "$source" \
-            -w $WHEELHOUSE
+            -w /io/$WHEELHOUSE
 }
 
 assert_importable() {
     # Install packages and test
     for PYBIN in /opt/python/*/bin/; do
-        ${PYBIN}/pip install $PACKAGE --no-index -f $WHEELHOUSE
+        ${PYBIN}/pip install $PACKAGE --no-index -f /io/$WHEELHOUSE
 
         (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
     done
@@ -61,13 +61,13 @@ build_wheels() {
 
 repair_wheels() {
     # Bundle external shared libraries into the wheels
-    for whl in $WHEELHOUSE/${SDIST_PREFIX}-*.whl; do
-        auditwheel repair $whl -w $WHEELHOUSE
+    for whl in /io/$WHEELHOUSE/${SDIST_PREFIX}-*.whl; do
+        auditwheel repair $whl -w /io/$WHEELHOUSE
     done
 }
 
 show_wheels() {
-    ls -l $WHEELHOUSE/${SDIST_PREFIX}-*.whl
+    ls -l /io/$WHEELHOUSE/${SDIST_PREFIX}-*.whl
 }
 
 prepare_system
