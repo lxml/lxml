@@ -219,10 +219,7 @@ cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
         def __set__(self, prefix):
             if prefix == '':
                 prefix = None # empty prefix
-            if prefix is None:
-                self._prefix_utf = None
-            else:
-                self._prefix_utf = _utf8(prefix)
+            self._prefix_utf = _utf8(prefix) if prefix is not None else None
             self._prefix = prefix
 
 cdef list _find_all_extension_prefixes():
