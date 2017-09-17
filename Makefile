@@ -43,7 +43,7 @@ require-cython:
 	@[ -n "$(PYTHON_WITH_CYTHON)" ] || { \
 	    echo "NOTE: missing Cython - please use this command to install it: $(PYTHON) -m pip install Cython"; false; }
 
-wheel_manylinux: wheel_manylinux64   # wheel_manylinux32
+wheel_manylinux: wheel_manylinux64 wheel_manylinux32
 
 wheel_manylinux32 wheel_manylinux64: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
