@@ -217,8 +217,7 @@ cdef public class ElementClassLookup [ type LxmlElementClassLookupType,
     Superclass of Element class lookups.
     """
     cdef _element_class_lookup_function _lookup_function
-    def __cinit__(self):
-        self._lookup_function = NULL # use default lookup
+
 
 cdef public class FallbackElementClassLookup(ElementClassLookup) \
          [ type LxmlFallbackElementClassLookupType,
