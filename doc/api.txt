@@ -571,6 +571,15 @@ supported since lxml 4.0.  The output stream is expected to have methods
                       await xf.write(el)
                       await xf.flush()
 
+
+    class DummyAsyncOut(object):
+        async def write(self, data):
+            print(data.decode('utf8'))
+
+        async def close(self):
+             pass
+
+    stream = DummyAsyncOut()
     async_writer = writer(stream, async_message_stream)
 
 
