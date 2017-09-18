@@ -26,7 +26,12 @@ except:
 # use pre-built libraries on Windows
 
 def download_and_extract_zlatkovic_binaries(destdir):
-    if sys.version_info < (3, 5):
+    if sys.maxsize > 2147483647:
+        arch = "win64"
+    else:
+        arch = "win32"
+
+    if sys.version_info < (3, 5) and arch != 'win64':
         url = 'ftp://ftp.zlatkovic.com/pub/libxml/'
         libs = dict(
             libxml2  = None,
@@ -41,10 +46,6 @@ def download_and_extract_zlatkovic_binaries(destdir):
                     assert fn.endswith('.win32.zip')
                     libs[libname] = fn
     else:
-        if sys.maxsize > 2147483647:
-            arch = "win64"
-        else:
-            arch = "win32"
         url = "https://github.com/mhils/libxml2-win-binaries/releases/download/lxml/"
         libs = dict(
             libxml2  = "libxml2-latest.{}.zip".format(arch),
