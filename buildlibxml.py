@@ -26,24 +26,21 @@ except:
 # use pre-built libraries on Windows
 
 def download_and_extract_windows_binaries(destdir):
-    arch = "win64" if sys.maxsize > 2**32 else "win32"
+    url = "https://github.com/mhils/libxml2-win-binaries/releases"
+    filenames = list(_list_dir_urllib(url))
 
-    if False and sys.version_info < (3, 5) and arch == 'win32':
-        url = 'ftp://ftp.zlatkovic.com/pub/libxml/'
-        filenames = remote_listdir(url)
-    else:
-        if sys.version_info < (3, 5):
-            arch = 'vs2008.' + arch
-        url = "https://github.com/mhils/libxml2-win-binaries/releases"
-        filenames = list(_list_dir_urllib(url))
-        release_path = "/download/%s/" % find_max_version(
-            "library release", filenames, re.compile(r"/releases/tag/([0-9.]+[0-9])$"))
-        filenames = [
-            filename.rsplit('/', 1)[1]
-            for filename in filenames
-            if release_path in filename
-        ]
-        url += release_path
+    release_path = "/download/%s/" % find_max_version(
+        "library release", filenames, re.compile(r"/releases/tag/([0-9.]+[0-9])$"))
+    url += release_path
+    filenames = [
+        filename.rsplit('/', 1)[1]
+        for filename in filenames
+        if release_path in filename
+    ]
+
+    arch = "win64" if sys.maxsize > 2**32 else "win32"
+    if sys.version_info < (3, 5):
+        arch = 'vs2008.' + arch
 
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
