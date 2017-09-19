@@ -26,15 +26,14 @@ except:
 # use pre-built libraries on Windows
 
 def download_and_extract_windows_binaries(destdir):
-    if sys.maxsize > 2147483647:
-        arch = "win64"
-    else:
-        arch = "win32"
+    arch = "win64" if sys.maxsize > 2**32 else "win32"
 
-    if sys.version_info < (3, 5) and arch != 'win64':
+    if False and sys.version_info < (3, 5) and arch == 'win32':
         url = 'ftp://ftp.zlatkovic.com/pub/libxml/'
         filenames = remote_listdir(url)
     else:
+        if sys.version_info < (3, 5):
+            arch = 'vs2008.' + arch
         url = "https://github.com/mhils/libxml2-win-binaries/releases"
         filenames = list(_list_dir_urllib(url))
         release_path = "/download/%s/" % find_max_version(
