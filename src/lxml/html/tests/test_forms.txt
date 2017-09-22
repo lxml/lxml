@@ -111,7 +111,7 @@ b'<input type="radio" name="radios" value="value1" id="value1">'
 ['value1', 'value2', 'value3']
 >>> select = f.inputs['select1']
 >>> print(select.value)
-None
+No value
 >>> select.value = ""
 >>> select.value
 ''

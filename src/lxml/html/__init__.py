@@ -1323,13 +1323,19 @@ class SelectElement(InputMixin, HtmlElement):
         """
         if self.multiple:
             return MultipleSelectOptions(self)
-        for el in _options_xpath(self):
-            if el.get('selected') is not None:
-                value = el.get('value')
-                if value is None:
-                    value = (el.text or '').strip()
-                return value
-        return None
+        options = _options_xpath(self)
+
+        try:
+            selected_option = next(el for el in reversed(options) if el.get('selected') is not None)
+        except StopIteration:
+            try:
+                selected_option = next(el for el in options if el.get('disabled') is None)
+            except StopIteration:
+                return None
+        value = selected_option.get('value')
+        if value is None:
+            value = (selected_option.text or '').strip()
+        return value
 
     @value.setter
     def value(self, value):

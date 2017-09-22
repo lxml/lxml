@@ -12,6 +12,12 @@ Features added
 
 * ElementPath allows spaces in predicates.
 
+* GH#255: ``SelectElement.value`` returns more standard-compliant and
+  browser-like defaults for non-multi-selects. If no option is selected, the
+  value of the first option is returned (instead of None). If multiple options
+  are selected, the value of the last one is returned (instead of that of the
+  first one). If no options are present (not standard-compliant)
+  ``SelectElement.value`` still returns ``None``.
 
 4.0.0 (2017-09-17)
 ==================
