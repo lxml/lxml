@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+4.1 (2017-??-??)
+==================
+
+Features added
+--------------
+
+* ElementPath supports text predicates for current node, like "[.='text']".
+
+* ElementPath allows spaces in predicates.
+
+
 4.0.0 (2017-09-17)
 ==================
 
