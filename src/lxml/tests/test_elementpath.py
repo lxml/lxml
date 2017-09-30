@@ -10,6 +10,18 @@ import unittest
 from .common_imports import etree, HelperTestCase
 
 
+def summarize(elem):
+    return elem.tag
+
+def summarize_list(seq):
+    return list(map(summarize, seq))
+
+def normalize_crlf(tree):
+    for elem in tree.getiterator():
+        if elem.text: elem.text = elem.text.replace("\r\n", "\n")
+        if elem.tail: elem.tail = elem.tail.replace("\r\n", "\n")
+
+
 class EtreeElementPathTestCase(HelperTestCase):
     etree = etree
     from lxml import _elementpath
@@ -30,10 +42,11 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertTrue(el.findall('b/c'))
         self.assertEqual(2, len(self._elementpath._cache))
 
-    def test_tokenizer(self):
-        def assert_tokens(tokens, path, namespaces=None):
-            self.assertEqual(tokens, list(self._elementpath.xpath_tokenizer(path, namespaces)))
+    def _assert_tokens(self, tokens, path, namespaces=None):
+        self.assertEqual(tokens, list(self._elementpath.xpath_tokenizer(path, namespaces)))
 
+    def test_tokenizer(self):
+        assert_tokens = self._assert_tokens
         assert_tokens(
             [('/', '')],
             '/',
@@ -56,6 +69,148 @@ class EtreeElementPathTestCase(HelperTestCase):
             '/x:a/y:b/c',
             {'x': 'nsx', 'y': 'nsy', None: 'nsnone'},
         )
+
+    def test_tokenizer_predicates(self):
+        assert_tokens = self._assert_tokens
+        assert_tokens(
+            [('', 'a'), ('[', ''), ('', 'b'), (']', '')],
+            'a[b]',
+        )
+        assert_tokens(
+            [('', 'a'), ('[', ''), ('', 'b'), ('=', ''), ('"abc"', ''), (']', '')],
+            'a[b="abc"]',
+        )
+        assert_tokens(
+            [('', 'a'), ('[', ''), ('.', ''), ('', ''), ('=', ''), ('', ''), ('"abc"', ''), (']', '')],
+            'a[. = "abc"]',
+        )
+
+    def test_find(self):
+        """
+        Test find methods (including xpath syntax).
+        Originally copied from 'selftest.py'.
+        """
+        elem = etree.XML("""
+        <body>
+          <tag class='a'>text</tag>
+          <tag class='b' />
+           <section>
+            <tag class='b' id='inner'>subtext</tag>
+           </section>
+        </body>
+        """)
+
+        self.assertEqual(elem.find("tag").tag,
+                         'tag')
+        self.assertEqual(etree.ElementTree(elem).find("tag").tag,
+                         'tag')
+        self.assertEqual(elem.find("section/tag").tag,
+                         'tag')
+        self.assertEqual(etree.ElementTree(elem).find("section/tag").tag,
+                         'tag')
+
+        self.assertEqual(elem.findtext("tag"),
+                         'text')
+        self.assertEqual(elem.findtext("tog"),
+                         None)
+        self.assertEqual(elem.findtext("tog", "default"),
+                         'default')
+        self.assertEqual(etree.ElementTree(elem).findtext("tag"),
+                         'text')
+        self.assertEqual(elem.findtext("section/tag"),
+                         'subtext')
+        self.assertEqual(etree.ElementTree(elem).findtext("section/tag"),
+                         'subtext')
+
+        self.assertEqual(summarize_list(elem.findall("tag")),
+                         ['tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall("*")),
+                         ['tag', 'tag', 'section'])
+        self.assertEqual(summarize_list(elem.findall(".//tag")),
+                         ['tag', 'tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall("section/tag")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("section//tag")),
+                         ['tag'])
+
+        self.assertEqual(summarize_list(elem.findall("section/*")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("section//*")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("section/.//*")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("*/*")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("*//*")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("*/tag")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("*/./tag")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall("./tag")),
+                         ['tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag")),
+                         ['tag', 'tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall("././tag")),
+                         ['tag', 'tag'])
+
+        self.assertEqual(summarize_list(elem.findall(".//tag[@class]")),
+                         ['tag', 'tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[ @class]")),
+                         ['tag', 'tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[@class ]")),
+                         ['tag', 'tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[  @class  ]")),
+                         ['tag', 'tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[@class='a']")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall('.//tag[@class="a"]')),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[@class='b']")),
+                         ['tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall('.//tag[@class="b"]')),
+                         ['tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall('.//tag[@class = "b"]')),
+                         ['tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[@id]")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall(".//section[tag]")),
+                         ['section'])
+        self.assertEqual(summarize_list(elem.findall(".//section[element]")),
+                         [])
+
+        self.assertEqual(summarize_list(elem.findall(".//section[tag='subtext']")),
+                         ['section'])
+        self.assertEqual(summarize_list(elem.findall(".//section[tag ='subtext']")),
+                         ['section'])
+        self.assertEqual(summarize_list(elem.findall(".//section[tag= 'subtext']")),
+                         ['section'])
+        self.assertEqual(summarize_list(elem.findall(".//section[tag = 'subtext']")),
+                         ['section'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[.='subtext']")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[. ='subtext']")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall('.//tag[.= "subtext"]')),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[. = 'subtext']")),
+                         ['tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[. = 'subtext ']")),
+                         [])
+        self.assertEqual(summarize_list(elem.findall(".//tag[.= ' subtext']")),
+                         [])
+
+        self.assertEqual(summarize_list(elem.findall("../tag")),
+                         [])
+        self.assertEqual(summarize_list(elem.findall("section/../tag")),
+                         ['tag', 'tag'])
+        self.assertEqual(summarize_list(etree.ElementTree(elem).findall("./tag")),
+                         ['tag', 'tag'])
+
+        # FIXME: ET's Path module handles this case incorrectly; this gives
+        # a warning in 1.3, and the behaviour will be modified in 1.4.
+        self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/tag")),
+                         ['tag', 'tag'])
 
 
 #class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
