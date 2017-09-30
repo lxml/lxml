@@ -7,6 +7,7 @@ Tests for the ElementPath implementation.
 from __future__ import absolute_import
 
 import unittest
+from copy import deepcopy
 from .common_imports import etree, HelperTestCase
 
 
@@ -94,9 +95,9 @@ class EtreeElementPathTestCase(HelperTestCase):
         <body>
           <tag class='a'>text</tag>
           <tag class='b' />
-           <section>
+          <section>
             <tag class='b' id='inner'>subtext</tag>
-           </section>
+          </section>
         </body>
         """)
 
@@ -210,6 +211,13 @@ class EtreeElementPathTestCase(HelperTestCase):
         # FIXME: ET's Path module handles this case incorrectly; this gives
         # a warning in 1.3, and the behaviour will be modified in 1.4.
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/tag")),
+                         ['tag', 'tag'])
+
+        # duplicate section => 2x tag matches
+        elem[1] = deepcopy(elem[2])
+        self.assertEqual(summarize_list(elem.findall(".//section[tag = 'subtext']")),
+                         ['section', 'section'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[. = 'subtext']")),
                          ['tag', 'tag'])
 
 
