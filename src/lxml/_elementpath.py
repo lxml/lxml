@@ -174,14 +174,21 @@ def prepare_predicate(next, token):
                     yield elem
                     break
         return select
-    if signature == "-='" and not re.match(r"-?\d+$", predicate[0]):
-        # [tag='value']
+    if signature == ".='" or (signature == "-='" and not re.match(r"-?\d+$", predicate[0])):
+        # [.='value'] or [tag='value']
         tag = predicate[0]
         value = predicate[-1]
-        def select(result):
-            for elem in result:
-                for e in elem.iterchildren(tag):
-                    if "".join(e.itertext()) == value:
+        if tag:
+            def select(result):
+                for elem in result:
+                    for e in elem.iterchildren(tag):
+                        if "".join(e.itertext()) == value:
+                            yield elem
+                            break
+        else:
+            def select(result):
+                for elem in result:
+                    if "".join(elem.itertext()) == value:
                         yield elem
                         break
         return select
