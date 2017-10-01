@@ -134,7 +134,7 @@ def prepare_predicate(next, token):
     # FIXME: replace with real parser!!! refs:
     # http://effbot.org/zone/simple-iterator-parser.htm
     # http://javascript.crockford.com/tdop/tdop.html
-    signature = []
+    signature = ''
     predicate = []
     while 1:
         token = next()
@@ -144,9 +144,9 @@ def prepare_predicate(next, token):
             continue
         if token[0] and token[0][:1] in "'\"":
             token = "'", token[0][1:-1]
-        signature.append(token[0] or "-")
+        signature += token[0] or "-"
         predicate.append(token[1])
-    signature = "".join(signature)
+
     # use signature to determine predicate type
     if signature == "@-":
         # [@attribute] predicate
