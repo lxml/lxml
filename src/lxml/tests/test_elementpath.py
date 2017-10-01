@@ -175,6 +175,8 @@ class EtreeElementPathTestCase(HelperTestCase):
                          ['tag', 'tag'])
         self.assertEqual(summarize_list(elem.findall(".//tag[@id]")),
                          ['tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[@class][@id]")),
+                         ['tag'])
         self.assertEqual(summarize_list(elem.findall(".//section[tag]")),
                          ['section'])
         self.assertEqual(summarize_list(elem.findall(".//section[element]")),
@@ -187,6 +189,8 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(summarize_list(elem.findall(".//section[tag= 'subtext']")),
                          ['section'])
         self.assertEqual(summarize_list(elem.findall(".//section[tag = 'subtext']")),
+                         ['section'])
+        self.assertEqual(summarize_list(elem.findall(".//section[  tag   =   'subtext'  ]")),
                          ['section'])
         self.assertEqual(summarize_list(elem.findall(".//tag[.='subtext']")),
                          ['tag'])
@@ -218,6 +222,8 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(summarize_list(elem.findall(".//section[tag = 'subtext']")),
                          ['section', 'section'])
         self.assertEqual(summarize_list(elem.findall(".//tag[. = 'subtext']")),
+                         ['tag', 'tag'])
+        self.assertEqual(summarize_list(elem.findall(".//tag[@class][@id]")),
                          ['tag', 'tag'])
 
 
