@@ -519,7 +519,7 @@ cdef class PythonElementClassLookup(FallbackElementClassLookup):
 
 cdef object _python_class_lookup(state, _Document doc, tree.xmlNode* c_node):
     cdef PythonElementClassLookup lookup
-    cdef _ReadOnlyElementProxy proxy
+    cdef _ReadOnlyProxy proxy
     lookup = <PythonElementClassLookup>state
 
     proxy = _newReadOnlyProxy(None, c_node)
