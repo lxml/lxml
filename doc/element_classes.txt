@@ -562,7 +562,7 @@ subclasses for elements of this namespace:
   >>> xml = ('<honk xmlns="http://hui.de/honk" honking="true">'
   ...        '<bla/><!--comment-->'
   ...        '</honk>')
-  >>> honk_element = etree.XML(xml, parser)
+  >>> honk_element = etree.fromstring(xml, parser)
 
   >>> print(type(honk_element))
   <class 'HonkElement'>
@@ -583,3 +583,33 @@ subclasses for elements of this namespace:
 
   >>> print(honk_element[1].text)  # uses fallback for non-elements
   comment
+
+Since lxml 4.1, the registration is more conveniently done with
+class decorators.  The namespace registry object is callable with
+a name (or ``None``) as argument and can then be used as decorator.
+
+.. sourcecode:: pycon
+
+  >>> honk_elements = lookup.get_namespace('http://hui.de/honk')
+
+  >>> @honk_elements(None)
+  ... class HonkNSElement(etree.ElementBase):
+  ...    def honk(self):
+  ...       return "HONK"
+
+If the class has the same name as the tag, you can also leave out the call
+and use the blank decorator instead:
+
+  >>> @honk_elements
+  ... class honkel(HonkNSElement):
+  ...    @property
+  ...    def honking(self):
+  ...       return self.get('honking') == 'true'
+
+  >>> xml = '<honkel xmlns="http://hui.de/honk" honking="true"><bla/><!--comment--></honkel>'
+  >>> honk_element = etree.fromstring(xml, parser)
+
+  >>> print(type(honk_element))
+  <class 'honkel'>
+  >>> print(type(honk_element[0]))
+  <class 'HonkNSElement'>
