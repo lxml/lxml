@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-4.1 (2017-??-??)
+4.1.0 (2017-10-13)
 ==================
 
 Features added
@@ -11,6 +11,19 @@ Features added
 * ElementPath supports text predicates for current node, like "[.='text']".
 
 * ElementPath allows spaces in predicates.
+
+* Custom Element classes and XPath functions can now be registered with a
+  decorator rather than explicit dict assignments.
+
+* Static Linux wheels are now built with link time optimisation (LTO) enabled.
+  This should have a beneficial impact on the overall performance by providing
+  a tighter compiler integration between lxml and libxml2/libxslt.
+
+Bugs fixed
+----------
+
+* LP#1722776: Requesting non-Element objects like comments from a document with
+  ``PythonElementClassLookup`` could fail with a TypeError.
 
 
 4.0.0 (2017-09-17)
