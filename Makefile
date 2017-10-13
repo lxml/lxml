@@ -48,8 +48,8 @@ wheel_manylinux: wheel_manylinux64 wheel_manylinux32
 wheel_manylinux32 wheel_manylinux64: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
-		-e CFLAGS="-O3 -g1 -mtune=generic -pipe -fPIC" \
-		-e LDFLAGS="$(LDFLAGS)" \
+		-e CFLAGS="-O3 -g1 -mtune=generic -pipe -fPIC -flto" \
+		-e LDFLAGS="$(LDFLAGS) -flto" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		-e WHEELHOUSE=wheelhouse_$(subst wheel_,,$@) \

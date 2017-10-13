@@ -250,7 +250,8 @@ the constructor.  While it accepts classes for ``element``, ``comment`` and
   >>> el.honking
   True
 
-  >>> root = etree.fromstring('<root honking="true"><!--comment--></root>', parser)
+  >>> root = etree.fromstring(
+  ...     '<root honking="true"><!--comment--></root>', parser)
   >>> root.honking
   True
   >>> print(root[0].text)
@@ -285,7 +286,8 @@ desired fallback lookup scheme to the constructor:
   >>> lookup = etree.ElementNamespaceClassLookup(fallback)
   >>> parser.set_element_class_lookup(lookup)
 
-  >>> root = etree.fromstring('<root honking="true"><!--comment--></root>', parser)
+  >>> root = etree.fromstring(
+  ...     '<root honking="true"><!--comment--></root>', parser)
   >>> root.honking
   True
   >>> print(root[0].text)
@@ -356,7 +358,8 @@ basis.  It allows you to implement a custom lookup scheme in a subclass:
   >>> parser = etree.XMLParser()
   >>> parser.set_element_class_lookup(MyLookup())
 
-  >>> root = etree.fromstring('<root honking="true"><!--comment--></root>', parser)
+  >>> root = etree.fromstring(
+  ...     '<root honking="true"><!--comment--></root>', parser)
   >>> root.honking
   True
   >>> print(root[0].text)
@@ -513,7 +516,9 @@ implementation:
 
 .. sourcecode:: pycon
 
-  >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/><!--comment--></honk>'
+  >>> xml = ('<honk xmlns="http://hui.de/honk" honking="true">'
+  ...        '<bla/><!--comment-->'
+  ...        '</honk>')
   >>> honk_element = etree.XML(xml, parser)
   >>> print(honk_element.honking)
   True
@@ -554,7 +559,9 @@ subclasses for elements of this namespace:
 
 .. sourcecode:: pycon
 
-  >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/><!--comment--></honk>'
+  >>> xml = ('<honk xmlns="http://hui.de/honk" honking="true">'
+  ...        '<bla/><!--comment-->'
+  ...        '</honk>')
   >>> honk_element = etree.fromstring(xml, parser)
 
   >>> print(type(honk_element))

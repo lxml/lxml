@@ -25,35 +25,34 @@ except:
 
 # use pre-built libraries on Windows
 
-def download_and_extract_zlatkovic_binaries(destdir):
+def download_and_extract_windows_binaries(destdir):
+    url = "https://github.com/mhils/libxml2-win-binaries/releases"
+    filenames = list(_list_dir_urllib(url))
+
+    release_path = "/download/%s/" % find_max_version(
+        "library release", filenames, re.compile(r"/releases/tag/([0-9.]+[0-9])$"))
+    url += release_path
+    filenames = [
+        filename.rsplit('/', 1)[1]
+        for filename in filenames
+        if release_path in filename
+    ]
+
+    arch = "win64" if sys.maxsize > 2**32 else "win32"
     if sys.version_info < (3, 5):
-        url = 'ftp://ftp.zlatkovic.com/pub/libxml/'
-        libs = dict(
-            libxml2  = None,
-            libxslt  = None,
-            zlib     = None,
-            iconv    = None,
-        )
-        for fn in ftp_listdir(url):
-            for libname in libs:
-                if fn.startswith(libname):
-                    assert libs[libname] is None, 'duplicate listings?'
-                    assert fn.endswith('.win32.zip')
-                    libs[libname] = fn
-    else:
-        if sys.maxsize > 2147483647:
-            arch = "win64"
-        else:
-            arch = "win32"
-        url = "https://github.com/mhils/libxml2-win-binaries/releases/download/lxml/"
-        libs = dict(
-            libxml2  = "libxml2-latest.{}.zip".format(arch),
-            libxslt  = "libxslt-latest.{}.zip".format(arch),
-            zlib     = "zlib-latest.{}.zip".format(arch),
-            iconv    = "iconv-latest.{}.zip".format(arch),
+        arch = 'vs2008.' + arch
+
+    libs = {}
+    for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
+        libs[libname] = "%s-%s.%s.zip" % (
+            libname,
+            find_max_version(libname, filenames),
+            arch,
         )
 
-    if not os.path.exists(destdir): os.makedirs(destdir)
+    if not os.path.exists(destdir):
+        os.makedirs(destdir)
+
     for libname, libfn in libs.items():
         srcfile = urljoin(url, libfn)
         destfile = os.path.join(destdir, libfn)
@@ -103,7 +102,7 @@ def unpack_zipfile(zipfn, destdir):
 
 def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs):
     assert sys.platform.startswith('win')
-    libs = download_and_extract_zlatkovic_binaries(download_dir)
+    libs = download_and_extract_windows_binaries(download_dir)
     for libname, path in libs.items():
         i = os.path.join(path, 'include')
         l = os.path.join(path, 'lib')
@@ -133,11 +132,11 @@ def _find_content_encoding(response, default='iso8859-1'):
     return charset
 
 
-def ftp_listdir(url):
-    assert url.lower().startswith('ftp://')
+def remote_listdir(url):
     try:
         return _list_dir_urllib(url)
     except IOError:
+        assert url.lower().startswith('ftp://')
         print("Requesting with urllib failed. Falling back to ftplib. Proxy argument will be ignored")
         return _list_dir_ftplib(url)
 
@@ -163,7 +162,7 @@ def _list_dir_urllib(url):
 
     data = data.decode(charset)
     if content_type and content_type.startswith('text/html'):
-        files = parse_html_ftplist(data)
+        files = parse_html_filelist(data)
     else:
         files = parse_text_ftplist(data)
     return files
@@ -186,8 +185,10 @@ def parse_text_ftplist(s):
             yield line.split(None, 8)[-1]
 
 
-def parse_html_ftplist(s):
-    re_href = re.compile(r'<a\s+(?:[^>]*?\s+)?href=["\'](.*?)[;\?"\']', re.I|re.M)
+def parse_html_filelist(s):
+    re_href = re.compile(
+        r'<a\s+(?:[^>]*\s+)?href=["\']([^;?"\']+?)[;?"\']',
+        re.I|re.M)
     links = set(re_href.findall(s))
     for link in links:
         if not link.endswith('/'):
@@ -233,28 +234,34 @@ def download_zlib(dest_dir, version):
                             version_re, filename, version=version)
 
 
+def find_max_version(libname, filenames, version_re=None):
+    if version_re is None:
+        version_re = re.compile(r'%s-([0-9.]+[0-9])' % libname)
+    versions = []
+    for fn in filenames:
+        match = version_re.search(fn)
+        if match:
+            version_string = match.group(1)
+            versions.append((tuple(map(tryint, version_string.split('.'))),
+                             version_string))
+    if not versions:
+        raise Exception(
+            "Could not find the most current version of %s from the files: %s" % (
+                libname, filenames))
+    versions.sort()
+    version_string = versions[-1][-1]
+    print('Latest version of %s is %s' % (libname, version_string))
+    return version_string
+
+
 def download_library(dest_dir, location, name, version_re, filename, version=None):
     if version is None:
         try:
             if location.startswith('ftp://'):
-                fns = ftp_listdir(location)
+                fns = remote_listdir(location)
             else:
                 fns = http_listfiles(location, filename.replace('%s', '(?:[0-9.]+[0-9])'))
-            versions = []
-            for fn in fns:
-                match = version_re.search(fn)
-                if match:
-                    version_string = match.group(1)
-                    versions.append((tuple(map(tryint, version_string.split('.'))),
-                                     version_string))
-            if versions:
-                versions.sort()
-                version = versions[-1][-1]
-                print('Latest version of %s is %s' % (name, version))
-            else:
-                raise Exception(
-                    "Could not find the most current version of the %s from the files: %s"
-                    % (name, fns))
+            version = find_max_version(name, fns, version_re)
         except IOError:
             # network failure - maybe we have the files already?
             latest = (0,0,0)
@@ -275,11 +282,12 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
     full_url = urljoin(location, filename)
     dest_filename = os.path.join(dest_dir, filename)
     if os.path.exists(dest_filename):
-        print('Using existing %s downloaded into %s (delete this file if you want to re-download the package)'
-              % (name, dest_filename))
+        print(('Using existing %s downloaded into %s '
+               '(delete this file if you want to re-download the package)') % (
+            name, dest_filename))
     else:
         print('Downloading %s into %s from %s' % (name, dest_filename, full_url))
-        urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
+        urlcleanup()  # work around FTP bug 27973 in Py2.7.12
         urlretrieve(full_url, dest_filename)
     return dest_filename
 
@@ -292,9 +300,8 @@ def unpack_tarball(tar_filename, dest):
         base_name = member.name.split('/')[0]
         if base_dir is None:
             base_dir = base_name
-        else:
-            if base_dir != base_name:
-                print('Unexpected path in %s: %s' % (tar_filename, base_name))
+        elif base_dir != base_name:
+            print('Unexpected path in %s: %s' % (tar_filename, base_name))
     tar.extractall(dest)
     tar.close()
     return os.path.join(dest, base_dir)
