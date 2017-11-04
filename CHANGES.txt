@@ -2,6 +2,12 @@
 lxml changelog
 ==============
 
+4.1.1 (2017-11-04)
+==================
+
+* Rebuild with Cython 0.27.3 to improve support for Py3.7.
+
+
 4.1.0 (2017-10-13)
 ==================
 
