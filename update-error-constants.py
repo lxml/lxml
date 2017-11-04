@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, absolute_import
+
 import sys, os, os.path, re, codecs
 
 BUILD_SOURCE_FILE = os.path.join("src", "lxml", "xmlerror.pxi")
@@ -115,13 +117,6 @@ pxd_result = []
 append_pxd = pxd_result.append
 
 append_pxd('cdef extern from "libxml/xmlerror.h":')
-append_pxi('''\
-# Constants are stored in tuples of strings, for which Cython generates very
-# efficient setup code.  To parse them, iterate over the tuples and parse each
-# line in each string independently.  Tuples of strings (instead of a plain
-# string) are required as some C-compilers of a certain well-known OS vendor
-# cannot handle strings that are a few thousand bytes in length.
-''')
 
 ctypedef_indent = ' '*4
 constant_indent = ctypedef_indent*2
@@ -131,10 +126,10 @@ for enum_name in ENUM_ORDER:
     pxi_name, prefix = ENUM_MAP[enum_name]
 
     append_pxd(ctypedef_indent + 'ctypedef enum %s:' % enum_name)
-    append_pxi('cdef object %s = (u"""\\' % pxi_name)
+    append_pxi('cdef object %s = """\\' % pxi_name)
 
     prefix_len = len(prefix)
-    length = 2 # each string ends with '\n\0'
+    length = 2  # each string ends with '\n\0'
     for name, val, descr in constants:
         if descr and descr != str(val):
             line = '%-50s = %7d # %s' % (name, val, descr)
@@ -145,15 +140,11 @@ for enum_name in ENUM_ORDER:
         if name[:prefix_len] == prefix and len(name) > prefix_len:
             name = name[prefix_len:]
         line = '%s=%d' % (name, val)
-        if length + len(line) >= 2040: # max string length in MSVC is 2048
-            append_pxi('""",')
-            append_pxi('u"""\\')
-            length = 2 # each string ends with '\n\0'
         append_pxi(line)
-        length += len(line) + 2 # + '\n\0'
+        length += len(line) + 2  # + '\n\0'
 
     append_pxd('')
-    append_pxi('""",)')
+    append_pxi('"""')
     append_pxi('')
 
 # write source files
