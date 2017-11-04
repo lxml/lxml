@@ -15,7 +15,7 @@ python:
 
 install:
     - pip install -U pip wheel
-    - pip install --install-option="--no-cython-compile" -r requirements.txt
+    - pip install $(if [ -z "${TRAVIS_PYTHON_VERSION##*-dev}" ]; then echo "--install-option=--no-cython-compile"; fi ) -r requirements.txt
     - pip install -U beautifulsoup4 cssselect html5lib
 
 script:
