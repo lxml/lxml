@@ -242,8 +242,8 @@ See the websites of lxml
 `3.4 <http://lxml.de/3.4/>`_,
 `3.5 <http://lxml.de/3.5/>`_,
 `3.6 <http://lxml.de/3.6/>`_,
-`3.7 <http://lxml.de/3.7/>`_
-`3.8 <http://lxml.de/3.8/>`_
+`3.7 <http://lxml.de/3.7/>`_,
+`3.8 <http://lxml.de/3.8/>`_,
 `4.0 <http://lxml.de/4.0/>`_
 
 ..
