@@ -52,7 +52,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
 
     try:
         needs_conversion = 0
-        if encoding is _unicode:
+        if encoding is unicode:
             needs_conversion = 1
         elif encoding is not None:
             # Python prefers lower case encoding names
@@ -68,7 +68,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
         if needs_conversion:
             text = python.PyUnicode_DecodeUTF8(
                 <const_char*>c_text, tree.xmlBufferLength(c_buffer), 'strict')
-            if encoding is not _unicode:
+            if encoding is not unicode:
                 encoding = _utf8(encoding)
                 text = python.PyUnicode_AsEncodedString(
                     text, encoding, 'strict')
@@ -99,7 +99,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
         return _textToString(element._c_node, encoding, with_tail)
-    if encoding is None or encoding is _unicode:
+    if encoding is None or encoding is unicode:
         c_enc = NULL
     else:
         encoding = _utf8(encoding)
@@ -137,7 +137,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
         _raiseSerialisationError(error_result)
 
     try:
-        if encoding is _unicode:
+        if encoding is unicode:
             result = (<unsigned char*>tree.xmlBufContent(
                 c_result_buffer))[:tree.xmlBufUse(c_result_buffer)].decode('UTF-8')
         else:

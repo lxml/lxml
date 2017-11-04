@@ -59,21 +59,6 @@ from libc cimport limits, stdio, stdlib
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 from libc.string cimport const_char
 
-try:
-    import __builtin__
-except ImportError:
-    # Python 3
-    import builtins as __builtin__
-
-cdef object _unicode
-try:
-    _unicode = __builtin__.unicode
-except AttributeError:
-    # Python 3
-    _unicode = __builtin__.str
-
-del __builtin__
-
 cdef object os_path_abspath
 from os.path import abspath as os_path_abspath
 
@@ -3332,12 +3317,12 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
         return _tostringC14N(element_or_tree, exclusive, with_comments, inclusive_ns_prefixes)
     if not with_comments:
         raise ValueError("Can only discard comments in C14N serialisation")
-    if encoding is _unicode or (encoding is not None and encoding.lower() == 'unicode'):
+    if encoding is unicode or (encoding is not None and encoding.lower() == 'unicode'):
         if xml_declaration:
             raise ValueError, \
                 u"Serialisation to unicode must not request an XML declaration"
         write_declaration = 0
-        encoding = _unicode
+        encoding = unicode
     elif xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
         write_declaration = encoding is not None and encoding.upper() not in \
@@ -3404,11 +3389,11 @@ def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
     on the tail text of children, which will always be serialised.
     """
     if isinstance(element_or_tree, _Element):
-        return _tostring(<_Element>element_or_tree, _unicode, doctype, method,
+        return _tostring(<_Element>element_or_tree, unicode, doctype, method,
                           0, 0, pretty_print, with_tail, -1)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         _unicode, doctype, method, 0, 1, pretty_print,
+                         unicode, doctype, method, 0, 1, pretty_print,
                          with_tail, -1)
     else:
         raise TypeError, u"Type '%s' cannot be serialized." % \
