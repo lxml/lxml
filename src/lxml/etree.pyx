@@ -63,10 +63,7 @@ cdef object os_path_abspath
 from os.path import abspath as os_path_abspath
 
 cdef object BytesIO, StringIO
-try:
-    from io import BytesIO, StringIO
-except (ImportError, AttributeError):
-    from StringIO import StringIO, StringIO as BytesIO
+from io import BytesIO, StringIO
 
 cdef object OrderedDict = None
 try:
