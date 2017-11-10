@@ -2,9 +2,9 @@
 
 cdef object inspect_getargspec
 try:
-    from inspect import getargspec as inspect_getargspec
-except ImportError:
     from inspect import getfullargspec as inspect_getargspec
+except ImportError:
+    from inspect import getargspec as inspect_getargspec
 
 
 class _TargetParserResult(Exception):
