@@ -80,6 +80,27 @@ cdef class _NamespaceRegistry:
     def clear(self):
         self._entries.clear()
 
+    def __call__(self, obj):
+        # Usage as decorator:
+        #   ns = lookup.get_namespace("...")
+        #   @ns('abc')
+        #   class element(ElementBase): pass
+        #
+        #   @ns
+        #   class elementname(ElementBase): pass
+
+        if obj is None or python._isString(obj):
+            # @ns(None) or @ns('tag')
+            return partial(self.__deco, obj)
+        # plain @ns decorator
+        self[obj.__name__] = obj
+        return obj
+
+    def __deco(self, name, obj):
+        self[name] = obj
+        return obj
+
+
 @cython.final
 @cython.internal
 cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
@@ -101,6 +122,19 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
 
     Element class lookup scheme that searches the Element class in the
     Namespace registry.
+
+    Usage:
+
+    >>> lookup = ElementNamespaceClassLookup()
+    >>> ns_elements = lookup.get_namespace("http://schema.org/Movie")
+
+    >>> @ns_elements
+    ... class movie(ElementBase):
+    ...     "Element implementation for 'movie' tag (using class name) in schema namespace."
+
+    >>> @ns_elements("movie")
+    ... class MovieElement(ElementBase):
+    ...     "Element implementation for 'movie' tag (explicit tag name) in schema namespace."
     """
     cdef dict _namespace_registries
     def __cinit__(self):
@@ -177,7 +211,20 @@ def FunctionNamespace(ns_uri):
     URI.
 
     Creates a new one if it does not yet exist. A function namespace
-    can only be used to register extension functions."""
+    can only be used to register extension functions.
+
+    Usage:
+
+    >>> ns_functions = FunctionNamespace("http://schema.org/Movie")
+
+    >>> @ns_functions  # uses function name
+    ... def add2(x):
+    ...     return x + 2
+
+    >>> @ns_functions("add3")  # uses explicit name
+    ... def add_three(x):
+    ...     return x + 3
+    """
     ns_utf = _utf8(ns_uri) if ns_uri else None
     try:
         return __FUNCTION_NAMESPACE_REGISTRIES[ns_utf]

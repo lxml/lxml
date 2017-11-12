@@ -78,6 +78,17 @@ the empty namespace (None):
 
 This registers the function `hello` with the name `hello` in the default
 namespace (None), and the function `loadsofargs` with the name `countargs`.
+
+Since lxml 4.1, it is preferred to use the ``FunctionNamespace`` as a decorator.
+Either pass an explicit function name (``@ns("countargs")``), or just use the
+bare decorator to register the function under its own name:
+
+.. sourcecode:: pycon
+
+  >>> @ns
+  ... def hello(context, a):
+  ...    return "Hello %s" % a
+
 Now we're going to create a document that we can run XPath expressions
 against:
 
@@ -99,8 +110,8 @@ Done. Now we can have XPath expressions call our new function:
   >>> print(root.xpath('countargs(., b, ./*)'))
   Got 3 arguments.
 
-Note how we call both a Python function (`hello`) and an XPath built-in
-function (`string`) in exactly the same way.  Normally, however, you would
+Note how we call both a Python function (``hello()``) and an XPath built-in
+function (``string()``) in exactly the same way.  Normally, however, you would
 want to separate the two in different namespaces.  The FunctionNamespace class
 allows you to do this:
 
@@ -108,6 +119,7 @@ allows you to do this:
 
   >>> ns = etree.FunctionNamespace('http://mydomain.org/myfunctions')
   >>> ns['hello'] = hello
+
   >>> prefixmap = {'f' : 'http://mydomain.org/myfunctions'}
   >>> print(root.xpath('f:hello(local-name(*))', namespaces=prefixmap))
   Hello b
@@ -125,6 +137,7 @@ register it with the namespace:
   >>> ns = etree.FunctionNamespace('http://mydomain.org/myother/functions')
   >>> ns.prefix = 'es'
   >>> ns['hello'] = ola
+
   >>> print(root.xpath('es:hello(local-name(*))'))
   Ola b
 
