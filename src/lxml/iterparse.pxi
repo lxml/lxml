@@ -25,9 +25,10 @@ cdef class iterparse:
     generated.
 
     The additional ``tag`` argument restricts the 'start' and 'end' events to
-    those elements that match the given tag.  By default, events are generated
-    for all elements.  Note that the 'start-ns' and 'end-ns' events are not
-    impacted by this restriction.
+    those elements that match the given tag.  The ``tag`` argument can also be
+    a sequence of tags to allow matching more than one tag.  By default,
+    events are generated for all elements.  Note that the 'start-ns' and
+    'end-ns' events are not impacted by this restriction.
 
     The other keyword arguments in the constructor are mainly based on the
     libxml2 parser configuration.  A DTD will also be loaded if validation or
@@ -241,6 +242,9 @@ cdef class iterwalk:
 
     A tree walker that generates events from an existing tree as if it
     was parsing XML data with ``iterparse()``.
+
+    Just as for ``iterparse()``, the ``tag`` argument can be a single tag or a
+    sequence of tags.
 
     After receiving a 'start' or 'start-ns' event, the children and
     descendants of the current element can be excluded from iteration

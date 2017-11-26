@@ -7,7 +7,7 @@ supports one-step parsing as well as step-by-step parsing using an
 event-driven API (currently only for XML).
 
 .. contents::
-.. 
+..
    1  Parsers
      1.1  Parser options
      1.2  Error log
@@ -908,6 +908,7 @@ The other event types can be activated with the ``events`` keyword argument:
 
 ``iterparse()`` also supports the ``tag`` argument for selective event
 iteration and several other parameters that control the parser setup.
+The ``tag`` argument can be a single tag or a sequence of tags.
 You can also use it to parse HTML input by passing ``html=True``.
 
 
