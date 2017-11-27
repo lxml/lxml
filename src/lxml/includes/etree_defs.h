@@ -302,7 +302,7 @@ static void* lxml_unpack_xmldoc_capsule(PyObject* capsule, int* is_owned) {
     return c_doc;
 }
 #else
-#  define lxml_unpack_xmldoc_capsule(capsule, is_owned)  (((capsule) || (is_owned)) ? NULL : NULL)
+#  define lxml_unpack_xmldoc_capsule(capsule, is_owned)  ((((void)capsule, 0) || ((void)is_owned, 0)) ? NULL : NULL)
 #endif
 
 /* Macro pair implementation of a depth first tree walker
