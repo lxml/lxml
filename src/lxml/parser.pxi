@@ -886,7 +886,7 @@ cdef class _BaseParser:
         if sax is not NULL and sax.initialized and sax.initialized != xmlparser.XML_SAX2_MAGIC:
             # need to extend SAX1 context to SAX2 to get proper error reports
             if <xmlparser.xmlSAXHandlerV1*>sax is &htmlparser.htmlDefaultSAXHandler:
-                sax = <xmlparser.xmlSAXHandler*> stdlib.malloc(sizeof(xmlparser.xmlSAXHandler))
+                sax = <xmlparser.xmlSAXHandler*> tree.xmlMalloc(sizeof(xmlparser.xmlSAXHandler))
                 if sax is NULL:
                     raise MemoryError()
                 cstring_h.memcpy(sax, &htmlparser.htmlDefaultSAXHandler,
