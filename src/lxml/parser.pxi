@@ -528,7 +528,15 @@ cdef class _ParserContext(_ResolverContext):
     def __dealloc__(self):
         if config.ENABLE_THREADING and self._lock is not NULL:
             python.PyThread_free_lock(self._lock)
+            self._lock = NULL
         if self._c_ctxt is not NULL:
+            if self._validator is not None:
+                # If the parser was not closed correctly (e.g. interrupted iterparse()),
+                # and the schema validator wasn't freed and cleaned up yet, the libxml2 SAX
+                # validator plug might still be in place, which will make xmlFreeParserCtxt()
+                # crash when trying to xmlFree() a static SAX handler.
+                # Thus, make sure we disconnect the handler interceptor here at the latest.
+                self._validator.disconnect()
             xmlparser.xmlFreeParserCtxt(self._c_ctxt)
 
     cdef _ParserContext _copy(self):

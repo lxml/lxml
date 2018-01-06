@@ -18,6 +18,9 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1737825: Crash at shutdown after an interrupted iterparse run with XMLSchema
+  validation.
+
 Other changes
 -------------
 

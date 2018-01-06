@@ -2787,6 +2787,17 @@ class _ETreeTestCaseBase(HelperTestCase):
             [('end', root[0]), ('end', root[1]), ('end', root)],
             events)
 
+    def test_iterparse_incomplete(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<a><b></b><c/></a>')
+
+        iterator = iterparse(f)
+        self.assertEqual(None,
+                          iterator.root)
+        event, element = next(iter(iterator))
+        self.assertEqual('end', event)
+        self.assertEqual('b', element.tag)
+
     def test_iterparse_file(self):
         iterparse = self.etree.iterparse
         iterator = iterparse(fileInTestDir("test.xml"))
