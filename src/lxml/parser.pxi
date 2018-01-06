@@ -3,13 +3,6 @@
 from lxml.includes cimport xmlparser
 from lxml.includes cimport htmlparser
 
-cdef class _ParserContext(_ResolverContext)
-cdef class _SaxParserContext(_ParserContext)
-cdef class _TargetParserContext(_SaxParserContext)
-cdef class _ParserSchemaValidationContext
-cdef class _Validator
-cdef class XMLSchema(_Validator)
-
 
 class ParseError(LxmlSyntaxError):
     """Syntax error while parsing an XML document.
