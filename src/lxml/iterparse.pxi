@@ -195,7 +195,7 @@ cdef class iterparse:
                     return next(self._events)
                 except StopIteration:
                     pass  # no events yet
-                except Exception, e:
+                except Exception as e:
                     self._error = e
                     self._close_source()
                     try:
