@@ -259,6 +259,23 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertEqual([('end', 'b'), ('end', 'a')],
                           events)
 
+    def test_xmlschema_iterparse_incomplete(self):
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        xml = BytesIO('<a><b></b></a>')
+        event, element = next(iter(etree.iterparse(xml, schema=schema)))
+        self.assertEqual('end', event)
+        self.assertEqual('b', element.tag)
+
     def test_xmlschema_iterparse_fail(self):
         schema = self.parse('''
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
