@@ -27,6 +27,7 @@ ElementTree_.
      1.8  How can I find out if an Element is a comment or PI?
      1.9  How can I map an XML tree into a dict of dicts?
      1.10 Why does lxml sometimes return 'str' values for text in Python 2?
+     1.11 Why do I get XInclude or DTD lookup failures on some systems but not on others?
    2  Installation
      2.1  Which version of libxml2 and libxslt should I use or require?
      2.2  Where are the binary builds?
@@ -389,6 +390,20 @@ as does ElementTree.  Since Python 3.3, Unicode strings containing
 only characters that can be encoded in ASCII or Latin-1 are generally
 as efficient as byte strings.  In older versions of Python 3, the
 above mentioned drawbacks apply.
+
+
+Why do I get XInclude or DTD lookup failures on some systems but not on others?
+-------------------------------------------------------------------------------
+
+To avoid network access, external resources are first looked up in
+`XML catalogues <https://www.oasis-open.org/committees/entity/spec.html>`_.
+Many systems have them installed by default, but some don't.
+On Linux systems, the default place to look is the index file
+``/etc/xml/catalog``, which most importantly provides a mapping from
+doctype IDs to locally installed DTD files.
+
+See the `libxml2 catalogue documentation <http://xmlsoft.org/catalog.html>`_
+for further information.
 
 
 Installation
