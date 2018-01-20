@@ -1778,7 +1778,8 @@ cdef class QName:
 
     Pass a tag name by itself or a namespace URI and a tag name to
     create a qualified name.  Alternatively, pass an Element to
-    extract its tag name.
+    extract its tag name.  ``None`` as first argument is ignored in
+    order to allow for generic 2-argument usage.
 
     The ``text`` property holds the qualified name in
     ``{namespace}tagname`` notation.  The ``namespace`` and
@@ -1786,8 +1787,8 @@ cdef class QName:
     name.
 
     You can pass QName objects wherever a tag name is expected.  Also,
-    setting Element text from a QName will resolve the namespace
-    prefix and set a qualified text value.  This is helpful in XML
+    setting Element text from a QName will resolve the namespace prefix
+    on assignment and set a qualified text value.  This is helpful in XML
     languages like SOAP or XML-Schema that use prefixed tag names in
     their text content.
     """
@@ -1795,6 +1796,9 @@ cdef class QName:
     cdef readonly unicode localname
     cdef readonly unicode namespace
     def __init__(self, text_or_uri_or_element, tag=None):
+        if text_or_uri_or_element is None:
+            # Allow None as no namespace.
+            text_or_uri_or_element, tag = tag, None
         if not _isString(text_or_uri_or_element):
             if isinstance(text_or_uri_or_element, _Element):
                 text_or_uri_or_element = (<_Element>text_or_uri_or_element).tag
@@ -1803,8 +1807,11 @@ cdef class QName:
                                        type(text_or_uri_or_element))
             elif isinstance(text_or_uri_or_element, QName):
                 text_or_uri_or_element = (<QName>text_or_uri_or_element).text
-            else:
+            elif text_or_uri_or_element is not None:
                 text_or_uri_or_element = unicode(text_or_uri_or_element)
+            else:
+                raise ValueError, (u"Invalid input tag of type %r" %
+                                   type(text_or_uri_or_element))
 
         ns_utf, tag_utf = _getNsTag(text_or_uri_or_element)
         if tag is not None:
@@ -1824,19 +1831,15 @@ cdef class QName:
         return self.text
     def __hash__(self):
         return hash(self.text)
-    def __richcmp__(one, other, int op):
+    def __richcmp__(self, other, int op):
         try:
-            if type(one) is QName:
-                one = (<QName>one).text
-            elif not isinstance(one, unicode):
-                one = unicode(one)
             if type(other) is QName:
                 other = (<QName>other).text
             elif not isinstance(other, unicode):
                 other = unicode(other)
         except (ValueError, UnicodeDecodeError):
             return NotImplemented
-        return python.PyObject_RichCompare(one, other, op)
+        return python.PyObject_RichCompare(self.text, other, op)
 
 
 cdef public class _ElementTree [ type LxmlElementTreeType,
@@ -2514,10 +2517,9 @@ cdef class _Attrib:
         c_href = <const_xmlChar*>NULL if ns is None else _xcstr(ns)
         return 1 if tree.xmlHasNsProp(c_node, _xcstr(tag), c_href) else 0
 
-    def __richcmp__(one, other, int op):
+    def __richcmp__(self, other, int op):
         try:
-            if not isinstance(one, dict):
-                one = dict(one)
+            one = dict(self.items())
             if not isinstance(other, dict):
                 other = dict(other)
         except (TypeError, ValueError):

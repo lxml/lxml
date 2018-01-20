@@ -179,7 +179,16 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_qname_empty(self):
         QName = self.etree.QName
         self.assertRaises(ValueError, QName, '')
+        self.assertRaises(ValueError, QName, None)
+        self.assertRaises(ValueError, QName, None, None)
         self.assertRaises(ValueError, QName, 'test', '')
+
+    def test_qname_none(self):
+        QName = self.etree.QName
+        q = QName(None, 'TAG')
+        self.assertEqual('TAG', q)
+        self.assertEqual('TAG', q.localname)
+        self.assertEqual(None, q.namespace)
 
     def test_qname_colon(self):
         QName = self.etree.QName
@@ -208,7 +217,10 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         qname2 = QName(a)
         self.assertEqual(a.tag, qname1.text)
+        self.assertEqual(a.tag, qname1)
         self.assertEqual(qname1.text, qname2.text)
+        self.assertEqual(qname1, qname2.text)
+        self.assertEqual(qname1.text, qname2)
         self.assertEqual(qname1, qname2)
 
     def test_qname_text_resolve(self):
