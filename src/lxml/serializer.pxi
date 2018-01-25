@@ -759,8 +759,8 @@ cdef _FilelikeWriter _create_output_buffer(
     cdef _FilelikeWriter writer
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
-        raise LookupError(u"unknown encoding: '%s'" %
-                          c_enc.decode('UTF-8') if c_enc is not NULL else u'')
+        raise LookupError(
+            f"unknown encoding: '{c_enc.decode('UTF-8') if c_enc is not NULL else u''}'")
     try:
         if _isString(f):
             filename8 = _encodeFilename(f)
