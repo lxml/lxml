@@ -147,7 +147,7 @@ cdef class XSLTExtension:
                 proxy.free_after_use()
             else:
                 raise TypeError, \
-                    u"unsupported XSLT result type: %d" % c_node.type
+                    f"unsupported XSLT result type: {c_node.type}"
             c_node = c_next
         return results
 
@@ -182,7 +182,7 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
             dict_result = python.PyDict_GetItem(
                 context._extension_elements, (c_uri, c_inst_node.name))
             if dict_result is NULL:
-                raise KeyError, u"extension element %s not found" % funicode(c_inst_node.name)
+                raise KeyError, f"extension element {funicode(c_inst_node.name)} not found"
             extension = <object>dict_result
 
             try:
@@ -206,7 +206,7 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
                     # this isn't easy to support using read-only
                     # nodes, as the smart-string factory must
                     # instantiate the parent proxy somehow...
-                    raise TypeError("Unsupported element type: %d" % c_context_node.type)
+                    raise TypeError(f"Unsupported element type: {c_context_node.type}")
                 else:
                     context_node  = _newReadOnlyProxy(self_node, c_context_node)
 

@@ -630,10 +630,9 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
             except UnicodeDecodeError:
                 # the filename may be in there => play it safe
                 message = (ctxt.lastError.message).decode('iso8859-1')
-            message = u"Error reading file '%s': %s" % (
-                filename, message.strip())
+            message = f"Error reading file '{filename}': {message.strip()}"
         else:
-            message = u"Error reading '%s'" % filename
+            message = f"Error reading '{filename}'"
         raise IOError, message
     elif error_log:
         raise error_log._buildParseException(
@@ -644,7 +643,7 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
         line = ctxt.lastError.line
         column = ctxt.lastError.int2
         if ctxt.lastError.line > 0:
-            message = u"line %d: %s" % (line, message)
+            message = f"line {line}: {message}"
         raise XMLSyntaxError(message, code, line, column, filename)
     else:
         raise XMLSyntaxError(None, xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0,
@@ -819,7 +818,7 @@ cdef class _BaseParser:
             encoding = _utf8(encoding)
             enchandler = tree.xmlFindCharEncodingHandler(_cstr(encoding))
             if enchandler is NULL:
-                raise LookupError, u"unknown encoding: '%s'" % encoding
+                raise LookupError, f"unknown encoding: '{encoding}'"
             tree.xmlCharEncCloseFunc(enchandler)
             self._default_encoding = encoding
 
@@ -1036,7 +1035,7 @@ cdef class _BaseParser:
                 else:
                     c_encoding = 'UCS-4LE'
             else:
-                assert False, "Illegal Unicode kind %d" % c_kind
+                assert False, f"Illegal Unicode kind {c_kind}"
         else:
             py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
             c_text = python.PyUnicode_AS_DATA(utext)
@@ -1855,7 +1854,7 @@ cdef _Document _parseDocument(source, _BaseParser parser, base_url):
     if hasattr(source, u'read'):
         return _parseFilelikeDocument(source, url, parser)
 
-    raise TypeError, u"cannot parse from '%s'" % python._fqtypename(source).decode('UTF-8')
+    raise TypeError, f"cannot parse from '{python._fqtypename(source).decode('UTF-8')}'"
 
 cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
     c_doc = _parseDocFromFile(url, parser)

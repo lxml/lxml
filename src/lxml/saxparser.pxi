@@ -34,7 +34,7 @@ cdef int _buildParseEventFilter(events) except -1:
         elif event == 'pi':
             event_filter |= PARSE_EVENT_FILTER_PI
         else:
-            raise ValueError, u"invalid event name '%s'" % event
+            raise ValueError, f"invalid event name '{event}'"
     return event_filter
 
 
@@ -752,8 +752,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         """
         element = self._handleSaxEnd(tag)
         assert self._last.tag == tag,\
-               u"end tag mismatch (expected %s, got %s)" % (
-                   self._last.tag, tag)
+            f"end tag mismatch (expected {self._last.tag}, got {tag})"
         return element
 
     def pi(self, target, data):

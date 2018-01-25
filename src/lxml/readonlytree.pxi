@@ -19,7 +19,7 @@ cdef class _ReadOnlyProxy:
         return 0
 
     cdef int _raise_unsupported_type(self) except -1:
-        raise TypeError("Unsupported node type: %d" % self._c_node.type)
+        raise TypeError(f"Unsupported node type: {self._c_node.type}")
 
     cdef void free_after_use(self):
         u"""Should the xmlNode* be freed when releasing the proxy?
@@ -57,7 +57,7 @@ cdef class _ReadOnlyProxy:
                 else:
                     return funicode(self._c_node.content)
             elif self._c_node.type == tree.XML_ENTITY_REF_NODE:
-                return u'&%s;' % funicode(self._c_node.name)
+                return f'&{funicode(self._c_node.name)};'
             else:
                 self._raise_unsupported_type()
         
@@ -263,12 +263,12 @@ cdef class _ReadOnlyEntityProxy(_ReadOnlyProxy):
         def __set__(self, value):
             value_utf = _utf8(value)
             if u'&' in value or u';' in value:
-                raise ValueError(u"Invalid entity name '%s'" % value)
+                raise ValueError(f"Invalid entity name '{value}'")
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
     property text:
         def __get__(self):
-            return u'&%s;' % funicode(self._c_node.name)
+            return f'&{funicode(self._c_node.name)};'
 
 
 @cython.internal
@@ -328,7 +328,7 @@ cdef _ReadOnlyProxy _newReadOnlyProxy(
                          tree.XML_ENTITY_REF_NODE):
         el = _ReadOnlyProxy.__new__(_ReadOnlyProxy)
     else:
-        raise TypeError("Unsupported element type: %d" % c_node.type)
+        raise TypeError(f"Unsupported element type: {c_node.type}")
     el._c_node = c_node
     _initReadOnlyProxy(el, source_proxy)
     return el
@@ -387,7 +387,7 @@ cdef class _OpaqueDocumentWrapper(_OpaqueNodeWrapper):
             if tree.xmlDocGetRootElement(<tree.xmlDoc*>self._c_node) is not NULL:
                 raise ValueError, u"cannot append, document already has a root element"
         elif c_node.type not in (tree.XML_PI_NODE, tree.XML_COMMENT_NODE):
-            raise TypeError, u"unsupported element type for top-level node: %d" % c_node.type
+            raise TypeError, f"unsupported element type for top-level node: {c_node.type}"
         c_node = _copyNodeToDoc(c_node, <tree.xmlDoc*>self._c_node)
         c_next = c_node.next
         tree.xmlAddChild(self._c_node, c_node)
@@ -462,7 +462,7 @@ cdef class _ModifyContentOnlyEntityProxy(_ModifyContentOnlyProxy):
         def __set__(self, value):
             value = _utf8(value)
             assert u'&' not in value and u';' not in value, \
-                u"Invalid entity name '%s'" % value
+                f"Invalid entity name '{value}'"
             c_text = _xcstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
 
@@ -518,7 +518,7 @@ cdef _ReadOnlyProxy _newAppendOnlyProxy(
     elif c_node.type == tree.XML_COMMENT_NODE:
         el = _ModifyContentOnlyProxy.__new__(_ModifyContentOnlyProxy)
     else:
-        raise TypeError("Unsupported element type: %d" % c_node.type)
+        raise TypeError(f"Unsupported element type: {c_node.type}")
     el._c_node = c_node
     _initReadOnlyProxy(el, source_proxy)
     return el
@@ -532,7 +532,7 @@ cdef xmlNode* _roNodeOf(element) except NULL:
     elif isinstance(element, _OpaqueNodeWrapper):
         c_node = (<_OpaqueNodeWrapper>element)._c_node
     else:
-        raise TypeError, u"invalid argument type %s" % type(element)
+        raise TypeError, f"invalid argument type {type(element)}"
 
     if c_node is NULL:
         raise TypeError, u"invalid element"
@@ -547,7 +547,7 @@ cdef xmlNode* _nonRoNodeOf(element) except NULL:
     elif isinstance(element, _OpaqueNodeWrapper):
         c_node = (<_OpaqueNodeWrapper>element)._c_node
     else:
-        raise TypeError, u"invalid argument type %s" % type(element)
+        raise TypeError, f"invalid argument type {type(element)}"
 
     if c_node is NULL:
         raise TypeError, u"invalid element"

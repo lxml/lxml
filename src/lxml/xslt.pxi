@@ -113,7 +113,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
 cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
                                          xslt.xsltLoadType c_type) with gil:
     try:
-        message = u"Cannot resolve URI %s" % _decodeFilename(c_uri)
+        message = f"Cannot resolve URI {_decodeFilename(c_uri)}"
         if c_type == xslt.XSLT_LOAD_DOCUMENT:
             exception = XSLTApplyError(message)
         else:
@@ -382,7 +382,7 @@ cdef class XSLT:
         # make sure we always have a stylesheet URL
         if c_doc.URL is NULL:
             doc_url_utf = python.PyUnicode_AsASCIIString(
-                u"string://__STRING__XSLT__/%d.xslt" % id(self))
+                f"string://__STRING__XSLT__/{id(self)}.xslt")
             c_doc.URL = tree.xmlStrdup(_xcstr(doc_url_utf))
 
         self._error_log = _ErrorLog()
@@ -586,11 +586,11 @@ cdef class XSLT:
                 error = self._error_log.last_error
                 if error is not None and error.message:
                     if error.line > 0:
-                        message = u"%s, line %d" % (error.message, error.line)
+                        message = f"{error.message}, line {error.line}"
                     else:
                         message = error.message
                 elif error is not None and error.line > 0:
-                    message = u"Error applying stylesheet, line %d" % error.line
+                    message = f"Error applying stylesheet, line {error.line}"
                 else:
                     message = u"Error applying stylesheet"
                 raise XSLTApplyError(message, self._error_log)
@@ -959,7 +959,7 @@ cdef class _XSLTProcessingInstruction(PIBase):
         elif u'"' in value or u'>' in value:
             raise ValueError, u"Invalid URL, must not contain '\"' or '>'"
         else:
-            attrib = u' href="%s"' % value
+            attrib = f' href="{value}"'
         text = u' ' + self.text
         if _FIND_PI_HREF(text):
             self.text = _REPLACE_PI_HREF(attrib, text)

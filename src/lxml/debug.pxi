@@ -53,7 +53,7 @@ cdef class _MemDebug:
 
         f = stdio.fopen(output_file, "w")
         if f is NULL:
-            raise IOError("Failed to create file %s" % output_file.decode(sys.getfilesystemencoding()))
+            raise IOError(f"Failed to create file {output_file.decode(sys.getfilesystemencoding())}")
         try:
             if byte_count is None:
                 tree.xmlMemDisplay(f)
@@ -82,7 +82,7 @@ cdef class _MemDebug:
 
         f = stdio.fopen(output_file, "w")
         if f is NULL:
-            raise IOError("Failed to create file %s" % output_file.decode(sys.getfilesystemencoding()))
+            raise IOError(f"Failed to create file {output_file.decode(sys.getfilesystemencoding())}")
         try:
             tree.xmlMemShow(f, block_count if block_count is not None else tree.xmlMemBlocks())
         finally:

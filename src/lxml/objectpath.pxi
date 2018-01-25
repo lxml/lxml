@@ -190,8 +190,8 @@ cdef _find_object_path(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len
         if default_value is not _NO_DEFAULT:
             return default_value
         else:
-            raise ValueError(u"root element does not match: need %s, got %s" %
-                             (cetree.namespacedNameFromNsName(c_href, c_name), root.tag))
+            raise ValueError(
+                f"root element does not match: need {cetree.namespacedNameFromNsName(c_href, c_name)}, got {root.tag}")
 
     while c_node is not NULL:
         c_path_len -= 1
@@ -216,7 +216,7 @@ cdef _find_object_path(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len
         return default_value
     else:
         tag = cetree.namespacedNameFromNsName(c_href, c_name)
-        raise AttributeError, u"no such child: " + tag
+        raise AttributeError, f"no such child: {tag}"
 
 
 cdef _create_object_path(_Element root, _ObjectPath* c_path,
@@ -238,8 +238,8 @@ cdef _create_object_path(_Element root, _ObjectPath* c_path,
     if c_href is NULL or c_href[0] == c'\0':
         c_href = tree._getNs(c_node)
     if not cetree.tagMatches(c_node, c_href, c_name):
-        raise ValueError(u"root element does not match: need %s, got %s" %
-                         (cetree.namespacedNameFromNsName(c_href, c_name), root.tag))
+        raise ValueError(
+            f"root element does not match: need {cetree.namespacedNameFromNsName(c_href, c_name)}, got {root.tag}")
 
     while c_path_len > 1:
         c_path_len -= 1
@@ -324,7 +324,7 @@ cdef int _recursive_build_descendant_paths(tree.xmlNode* c_node,
             tags[tag] = 1
         else:
             tags[tag] = count + 1
-            tag += u'[%d]' % count
+            tag += f'[{count}]'
         path.append(tag)
         _recursive_build_descendant_paths(c_child, path, path_list)
         del path[-1]

@@ -38,11 +38,9 @@ cdef _Document _documentOrRaise(object input):
     elif isinstance(input, _Document):
         doc = <_Document>input
     else:
-        raise TypeError, u"Invalid input object: %s" % \
-            python._fqtypename(input).decode('utf8')
+        raise TypeError, f"Invalid input object: {python._fqtypename(input).decode('utf8')}"
     if doc is None:
-        raise ValueError, u"Input object has no document: %s" % \
-            python._fqtypename(input).decode('utf8')
+        raise ValueError, f"Input object has no document: {python._fqtypename(input).decode('utf8')}"
     _assertValidDoc(doc)
     return doc
 
@@ -60,12 +58,10 @@ cdef _Element _rootNodeOrRaise(object input):
     elif isinstance(input, _Document):
         node = (<_Document>input).getroot()
     else:
-        raise TypeError, u"Invalid input object: %s" % \
-            python._fqtypename(input).decode('utf8')
+        raise TypeError, f"Invalid input object: {python._fqtypename(input).decode('utf8')}"
     if (node is None or not node._c_node or
             node._c_node.type != tree.XML_ELEMENT_NODE):
-        raise ValueError, u"Input object is not an XML element: %s" % \
-            python._fqtypename(input).decode('utf8')
+        raise ValueError, f"Input object is not an XML element: {python._fqtypename(input).decode('utf8')}"
     _assertValidNode(node)
     return node
 
@@ -291,8 +287,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     cdef bint is_html
     cdef xmlNs* c_ns
     if attrib is not None and not hasattr(attrib, u'items'):
-        raise TypeError, u"Invalid attribute dictionary: %s" % \
-            python._fqtypename(attrib).decode('utf8')
+        raise TypeError, f"Invalid attribute dictionary: {python._fqtypename(attrib).decode('utf8')}"
     if not attrib and not extra:
         return  # nothing to do
     is_html = doc._parser._for_html
@@ -1170,8 +1165,8 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
         # *replacing* children stepwise with list => check size!
         seqlength = len(elements)
         if seqlength != slicelength:
-            raise ValueError, u"attempt to assign sequence of size %d " \
-                u"to extended slice of size %d" % (seqlength, slicelength)
+            raise ValueError, f"attempt to assign sequence of size {seqlength} " \
+                f"to extended slice of size {slicelength}"
 
     if c_node is NULL:
         # no children yet => add all elements straight away
@@ -1628,33 +1623,28 @@ cdef bint _characterReferenceIsValid(const_xmlChar* c_name):
 
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError(u"Invalid tag name %r" %
-                         (<bytes>tag_utf).decode('utf8'))
+        raise ValueError(f"Invalid tag name {(<bytes>tag_utf).decode('utf8')!r}")
     return 0
 
 cdef int _htmlTagValidOrRaise(tag_utf) except -1:
     if not _pyHtmlNameIsValid(tag_utf):
-        raise ValueError(u"Invalid HTML tag name %r" %
-                         (<bytes>tag_utf).decode('utf8'))
+        raise ValueError(f"Invalid HTML tag name {(<bytes>tag_utf).decode('utf8')!r}")
     return 0
 
 cdef int _attributeValidOrRaise(name_utf) except -1:
     if not _pyXmlNameIsValid(name_utf):
-        raise ValueError(u"Invalid attribute name %r" %
-                         (<bytes>name_utf).decode('utf8'))
+        raise ValueError(f"Invalid attribute name {(<bytes>name_utf).decode('utf8')!r}")
     return 0
 
 cdef int _prefixValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError(u"Invalid namespace prefix %r" %
-                         (<bytes>tag_utf).decode('utf8'))
+        raise ValueError(f"Invalid namespace prefix {(<bytes>tag_utf).decode('utf8')!r}")
     return 0
 
 cdef int _uriValidOrRaise(uri_utf) except -1:
     cdef uri.xmlURI* c_uri = uri.xmlParseURI(_cstr(uri_utf))
     if c_uri is NULL:
-        raise ValueError(u"Invalid namespace URI %r" %
-                         (<bytes>uri_utf).decode('utf8'))
+        raise ValueError(f"Invalid namespace URI {(<bytes>uri_utf).decode('utf8')!r}")
     uri.xmlFreeURI(c_uri)
     return 0
 

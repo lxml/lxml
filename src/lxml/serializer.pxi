@@ -14,6 +14,7 @@ cdef enum _OutputMethods:
     OUTPUT_METHOD_HTML
     OUTPUT_METHOD_TEXT
 
+
 cdef int _findOutputMethod(method) except -1:
     if method is None:
         return OUTPUT_METHOD_XML
@@ -24,7 +25,8 @@ cdef int _findOutputMethod(method) except -1:
         return OUTPUT_METHOD_HTML
     if method == "text":
         return OUTPUT_METHOD_TEXT
-    raise ValueError(u"unknown output method %r" % method)
+    raise ValueError(f"unknown output method {method!r}")
+
 
 cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
     cdef bint needs_conversion
@@ -115,7 +117,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
     if enchandler is NULL and c_enc is not NULL:
         if encoding is not None:
             encoding = encoding.decode('UTF-8')
-        raise LookupError, u"unknown encoding: '%s'" % encoding
+        raise LookupError, f"unknown encoding: '{encoding}'"
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
     if c_buffer is NULL:
         tree.xmlCharEncCloseFunc(enchandler)
@@ -193,7 +195,7 @@ cdef _raiseSerialisationError(int error_result):
         raise MemoryError()
     message = ErrorTypes._getName(error_result)
     if message is None:
-        message = u"unknown error %d" % error_result
+        message = f"unknown error {error_result}"
     raise SerialisationError, message
 
 ############################################################
@@ -590,7 +592,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
                 l = 1
 
             if ((l == 1) or (not tree.xmlIsCharQ(val))):
-                raise ValueError("Invalid character: %X" % val)
+                raise ValueError(f"Invalid character: {val:X}")
 
             # We could do multiple things here. Just save
             # as a char ref
@@ -758,7 +760,7 @@ cdef _FilelikeWriter _create_output_buffer(
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
         raise LookupError(u"unknown encoding: '%s'" %
-                          c_enc.decode(u'UTF-8') if c_enc is not NULL else u'')
+                          c_enc.decode('UTF-8') if c_enc is not NULL else u'')
     try:
         if _isString(f):
             filename8 = _encodeFilename(f)
@@ -772,8 +774,7 @@ cdef _FilelikeWriter _create_output_buffer(
             c_buffer = writer._createOutputBuffer(enchandler)
         else:
             raise TypeError(
-                u"File or filename expected, got '%s'" %
-                python._fqtypename(f).decode('UTF-8'))
+                f"File or filename expected, got '{python._fqtypename(f).decode('UTF-8')}'")
     except:
         tree.xmlCharEncCloseFunc(enchandler)
         raise
@@ -837,8 +838,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                 if bytes_count < 0:
                     error = bytes_count
         else:
-            raise TypeError(u"File or filename expected, got '%s'" %
-                            python._fqtypename(f).decode('UTF-8'))
+            raise TypeError(f"File or filename expected, got '{python._fqtypename(f).decode('UTF-8')}'")
     finally:
         _destroyFakeDoc(c_base_doc, c_doc)
         if c_inclusive_ns_prefixes is not NULL:
@@ -1227,7 +1227,8 @@ cdef class _IncrementalFileWriter:
                         self._status = WRITER_FINISHED
 
             elif content is not None:
-                raise TypeError("got invalid input value of type %s, expected string or Element" % type(content))
+                raise TypeError(
+                    f"got invalid input value of type {type(content)}, expected string or Element")
             self._handle_error(self._c_out.error)
         if not self._buffered:
             tree.xmlOutputBufferFlush(self._c_out)

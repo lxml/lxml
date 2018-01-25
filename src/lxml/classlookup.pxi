@@ -92,7 +92,7 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                 last_child = child()
                 _appendChild(self, last_child)
             else:
-                raise TypeError, "Invalid child type: %r" % type(child)
+                raise TypeError, f"Invalid child type: {type(child)!r}"
 
 cdef class CommentBase(_Comment):
     u"""All custom Comment classes must inherit from this one.
@@ -173,9 +173,9 @@ cdef class EntityBase(_Entity):
         c_name = _xcstr(name_utf)
         if c_name[0] == c'#':
             if not _characterReferenceIsValid(c_name + 1):
-                raise ValueError, u"Invalid character reference: '%s'" % name
+                raise ValueError, f"Invalid character reference: '{name}'"
         elif not _xmlNameIsValid(c_name):
-            raise ValueError, u"Invalid entity reference: '%s'" % name
+            raise ValueError, f"Invalid entity reference: '{name}'"
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
         self._c_node = _createEntity(c_doc, c_name)
@@ -196,12 +196,11 @@ cdef int _validateNodeClass(xmlNode* c_node, cls) except -1:
     elif c_node.type == tree.XML_PI_NODE:
         expected = PIBase
     else:
-        assert 0, u"Unknown node type: %s" % c_node.type
+        assert 0, f"Unknown node type: {c_node.type}"
 
     if not (isinstance(cls, type) and issubclass(cls, expected)):
         raise TypeError(
-            "result of class lookup must be subclass of %s, got %s"
-            % (type(expected), type(cls)))
+            f"result of class lookup must be subclass of {type(expected)}, got {type(cls)}")
     return 0
 
 
@@ -334,7 +333,7 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
         else:
             return (<ElementDefaultClassLookup>state).pi_class
     else:
-        assert 0, u"Unknown node type: %s" % c_node.type
+        assert 0, f"Unknown node type: {c_node.type}"
 
 
 ################################################################################

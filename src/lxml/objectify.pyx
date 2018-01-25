@@ -238,8 +238,7 @@ cdef class ObjectifiedElement(ElementBase):
         # properties are looked up /after/ __setattr__, so we must emulate them
         if tag == u'text' or tag == u'pyval':
             # read-only !
-            raise TypeError, u"attribute '%s' of '%s' objects is not writable" % \
-                            (tag, _typename(self))
+            raise TypeError, f"attribute '{tag}' of '{_typename(self)}' objects is not writable"
         elif tag == u'tail':
             cetree.setTailText(self._c_node, value)
             return
@@ -547,8 +546,7 @@ cdef _setSlice(sliceobject, _Element target, items):
     # sanity check - raise what a list would raise
     if c_step != 1 and len(del_items) != len(new_items):
         raise ValueError, \
-            u"attempt to assign sequence of size %d to extended slice of size %d" % (
-            len(new_items), len(del_items))
+            f"attempt to assign sequence of size {len(new_items)} to extended slice of size {len(del_items)}"
 
     # replace existing items
     pos = 0
@@ -848,7 +846,7 @@ cpdef bint __parseBool(s) except -1:
         return False
     value = __parseBoolAsInt(s)
     if value == -1:
-        raise ValueError, u"Invalid boolean value: '%s'" % s
+        raise ValueError, f"Invalid boolean value: '{s}'"
     return value
 
 cdef inline int __parseBoolAsInt(text) except -2:
@@ -1254,8 +1252,7 @@ cdef class ElementMaker:
         if makeelement is not None:
             if not callable(makeelement):
                 raise TypeError(
-                    "argument of 'makeelement' parameter must be callable, got %s" %
-                    type(makeelement))
+                    f"argument of 'makeelement' parameter must be callable, got {type(makeelement)}")
             self._makeelement = makeelement
         else:
             self._makeelement = None
@@ -1325,8 +1322,7 @@ cdef object _dump(_Element element, int indent):
                 value = None
             else:
                 value = repr(value)
-    result = u"%s%s = %s [%s]\n" % (indentstr, element.tag,
-                                    value, _typename(element))
+    result = f"{indentstr}{element.tag} = {value} [{_typename(element)}]\n"
     xsi_ns    = u"{%s}" % XML_SCHEMA_INSTANCE_NS
     pytype_ns = u"{%s}" % PYTYPE_NAMESPACE
     for name, value in cetree.iterattributes(element, 3):
@@ -1337,7 +1333,7 @@ cdef object _dump(_Element element, int indent):
                 else:
                     name = name.replace(pytype_ns, u'py:')
             name = name.replace(xsi_ns, u'xsi:')
-        result += u"%s  * %s = %r\n" % (indentstr, name, value)
+        result += f"{indentstr}  * {name} = {value!r}\n"
 
     indent += 1
     for child in element.iterchildren():

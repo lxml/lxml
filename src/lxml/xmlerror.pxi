@@ -244,9 +244,9 @@ cdef class _BaseErrorLog:
         filename = self._first_error.filename
         if line > 0:
             if column > 0:
-                message = u"%s, line %d, column %d" % (message, line, column)
+                message = f"{message}, line {line}, column {column}"
             else:
-                message = u"%s, line %d" % (message, line)
+                message = f"{message}, line {line}"
         return exctype(message, code, line, column, filename)
 
     @cython.final
@@ -261,10 +261,9 @@ cdef class _BaseErrorLog:
             message = default_message
         if self._first_error.line > 0:
             if self._first_error.column > 0:
-                message = u"%s, line %d, column %d" % (
-                    message, self._first_error.line, self._first_error.column)
+                message = f"{message}, line {self._first_error.line}, column {self._first_error.column}"
             else:
-                message = u"%s, line %d" % (message, self._first_error.line)
+                message = f"{message}, line {self._first_error.line}"
         return message
 
 cdef class _ListErrorLog(_BaseErrorLog):

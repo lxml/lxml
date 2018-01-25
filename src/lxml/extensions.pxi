@@ -581,7 +581,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
                 else:
                     if context is None or doc is None:
                         raise XPathResultError, \
-                              u"Non-Element values not supported at this point - got %r" % value
+                              f"Non-Element values not supported at this point - got {value!r}"
                     # support strings by appending text nodes to an Element
                     if isinstance(value, unicode):
                         value = _utf8(value)
@@ -604,13 +604,12 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
                         xpath.xmlXPathNodeSetAdd(resultSet, c_node)
                     else:
                         raise XPathResultError, \
-                              u"This is not a supported node-set result: %r" % value
+                              f"This is not a supported node-set result: {value!r}"
         except:
             xpath.xmlXPathFreeNodeSet(resultSet)
             raise
     else:
-        raise XPathResultError, u"Unknown return type: %s" % \
-            python._fqtypename(obj).decode('utf8')
+        raise XPathResultError, f"Unknown return type: {python._fqtypename(obj).decode('utf8')}"
     return xpath.xmlXPathWrapNodeSet(resultSet)
 
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
@@ -640,7 +639,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     elif xpathObj.type == xpath.XPATH_XSLT_TREE:
         return _createNodeSetResult(xpathObj, doc, context)
     else:
-        raise XPathResultError, u"Unknown xpath result %s" % unicode(xpathObj.type)
+        raise XPathResultError, f"Unknown xpath result {xpathObj.type}"
 
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
                                  _BaseContext context):
@@ -690,7 +689,7 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
         pass
     else:
         raise NotImplementedError, \
-            u"Not yet implemented result node type: %d" % c_node.type
+            f"Not yet implemented result node type: {c_node.type}"
 
 cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
     u"""Free the XPath object, but *never* free the *content* of node sets.
@@ -862,9 +861,8 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt,
             _extension_function_call(context, function, ctxt, nargs)
         else:
             xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)
-            context._exc._store_exception(
-                XPathFunctionError(u"XPath function '%s' not found" %
-                _namespacedNameFromNsName(rctxt.functionURI, rctxt.function)))
+            context._exc._store_exception(XPathFunctionError(
+                f"XPath function '{_namespacedNameFromNsName(rctxt.functionURI, rctxt.function)}' not found"))
     except:
         # may not be the right error, but we need to tell libxml2 *something*
         xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)

@@ -568,7 +568,7 @@ cdef _Document _adoptForeignDoc(xmlDoc* c_doc, _BaseParser parser=None, bint is_
         doc_type = c_doc.type
         if is_owned:
             tree.xmlFreeDoc(c_doc)
-        raise ValueError("Illegal document provided: expected XML or HTML, found %s" % doc_type)
+        raise ValueError(f"Illegal document provided: expected XML or HTML, found {doc_type}")
 
     cdef xmlNode* c_node = <xmlNode*>c_doc
 

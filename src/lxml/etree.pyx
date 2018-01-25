@@ -553,7 +553,7 @@ cdef class DocInfo:
             if value is not None:
                 match = _find_invalid_public_id_characters(value)
                 if match:
-                    raise ValueError('Invalid character(s) %r in public_id.' % match.group(0))
+                    raise ValueError, f'Invalid character(s) {match.group(0)!r} in public_id.'
                 value = _utf8(value)
                 c_value = tree.xmlStrdup(_xcstr(value))
                 if not c_value:
@@ -647,23 +647,20 @@ cdef class DocInfo:
                 # contains both a single quote and a double quote, XML
                 # standard is being violated.
                 if '"' in system_url:
-                    quoted_system_url = u"'%s'" % system_url
+                    quoted_system_url = f"'{system_url}'"
                 else:
-                    quoted_system_url = u'"%s"' % system_url
+                    quoted_system_url = f'"{system_url}"'
             if public_id:
                 if system_url:
-                    return u'<!DOCTYPE %s PUBLIC "%s" %s>' % (
-                        root_name, public_id, quoted_system_url)
+                    return f'<!DOCTYPE {root_name} PUBLIC "{public_id}" {quoted_system_url}>'
                 else:
-                    return u'<!DOCTYPE %s PUBLIC "%s">' % (
-                        root_name, public_id)
+                    return f'<!DOCTYPE {root_name} PUBLIC "{public_id}">'
             elif system_url:
-                return u'<!DOCTYPE %s SYSTEM %s>' % (
-                    root_name, quoted_system_url)
+                return f'<!DOCTYPE {root_name} SYSTEM {quoted_system_url}>'
             elif self._doc.hasdoctype():
-                return u'<!DOCTYPE %s>' % root_name
+                return f'<!DOCTYPE {root_name}>'
             else:
-                return u""
+                return u''
 
     property internalDTD:
         u"Returns a DTD validator based on the internal subset of the document."
@@ -772,7 +769,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # item deletion
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError, u"index out of range: %d" % x
+                raise IndexError, f"index out of range: {x}"
             _removeText(c_node.next)
             _removeNode(self._doc, c_node)
 
@@ -1757,7 +1754,7 @@ cdef class _Entity(__ContentOnlyElement):
             _assertValidNode(self)
             value_utf = _utf8(value)
             if b'&' in value_utf or b';' in value_utf:
-                raise ValueError(u"Invalid entity name '%s'" % value)
+                raise ValueError, f"Invalid entity name '{value}'"
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
     property text:
@@ -1765,7 +1762,7 @@ cdef class _Entity(__ContentOnlyElement):
         # entity value ?
         def __get__(self):
             _assertValidNode(self)
-            return u'&%s;' % funicode(self._c_node.name)
+            return f'&{funicode(self._c_node.name)};'
 
     def __repr__(self):
         return "&%s;" % strrepr(self.name)
@@ -1803,15 +1800,13 @@ cdef class QName:
             if isinstance(text_or_uri_or_element, _Element):
                 text_or_uri_or_element = (<_Element>text_or_uri_or_element).tag
                 if not _isString(text_or_uri_or_element):
-                    raise ValueError, (u"Invalid input tag of type %r" %
-                                       type(text_or_uri_or_element))
+                    raise ValueError, f"Invalid input tag of type {type(text_or_uri_or_element)!r}"
             elif isinstance(text_or_uri_or_element, QName):
                 text_or_uri_or_element = (<QName>text_or_uri_or_element).text
             elif text_or_uri_or_element is not None:
                 text_or_uri_or_element = unicode(text_or_uri_or_element)
             else:
-                raise ValueError, (u"Invalid input tag of type %r" %
-                                   type(text_or_uri_or_element))
+                raise ValueError, f"Invalid input tag of type {type(text_or_uri_or_element)!r}"
 
         ns_utf, tag_utf = _getNsTag(text_or_uri_or_element)
         if tag is not None:
@@ -2118,7 +2113,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                         count += 1
                 c_node = c_node.prev
             if count:
-                tag = '%s[%d]' % (tag, count+1)
+                tag = f'{tag}[{count+1}]'
             else:
                 # use tag[1] if there are following siblings with the same tag
                 c_node = c_element.next
@@ -2416,8 +2411,7 @@ cdef class _Attrib:
 
     def pop(self, key, *default):
         if len(default) > 1:
-            raise TypeError, u"pop expected at most 2 arguments, got %d" % (
-                len(default)+1)
+            raise TypeError, f"pop expected at most 2 arguments, got {len(default)+1}"
         _assertValidNode(self._element)
         result = _getAttributeValue(self._element, key, None)
         if result is None:
@@ -3037,14 +3031,14 @@ def ProcessingInstruction(target, text=None):
     target = _utf8(target)
     _tagValidOrRaise(target)
     if target.lower() == b'xml':
-        raise ValueError("Invalid PI name '%s'" % target)
+        raise ValueError, f"Invalid PI name '{target}'"
 
     if text is None:
         text = b''
     else:
         text = _utf8(text)
         if b'?>' in text:
-            raise ValueError("PI text must not contain '?>'")
+            raise ValueError, "PI text must not contain '?>'"
 
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
@@ -3073,7 +3067,7 @@ cdef class CDATA:
     def __cinit__(self, data):
         _utf8_data = _utf8(data)
         if b']]>' in _utf8_data:
-            raise ValueError("']]>' not allowed inside CDATA")
+            raise ValueError, "']]>' not allowed inside CDATA"
         self._utf8_data = _utf8_data
 
 
@@ -3093,9 +3087,9 @@ def Entity(name):
     c_name = _xcstr(name_utf)
     if c_name[0] == c'#':
         if not _characterReferenceIsValid(c_name + 1):
-            raise ValueError, u"Invalid character reference: '%s'" % name
+            raise ValueError, f"Invalid character reference: '{name}'"
     elif not _xmlNameIsValid(c_name):
-        raise ValueError, u"Invalid entity reference: '%s'" % name
+        raise ValueError, f"Invalid entity reference: '{name}'"
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createEntity(c_doc, c_name)
@@ -3348,8 +3342,8 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
                          encoding, doctype, method, write_declaration, 1,
                          pretty_print, with_tail, is_standalone)
     else:
-        raise TypeError, u"Type '%s' cannot be serialized." % \
-            python._fqtypename(element_or_tree).decode('utf8')
+        raise TypeError, f"Type '{python._fqtypename(element_or_tree).decode('utf8')}' cannot be serialized."
+
 
 
 def tostringlist(element_or_tree, *args, **kwargs):
@@ -3395,8 +3389,7 @@ def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
                          unicode, doctype, method, 0, 1, pretty_print,
                          with_tail, -1)
     else:
-        raise TypeError, u"Type '%s' cannot be serialized." % \
-            type(element_or_tree)
+        raise TypeError, f"Type '{type(element_or_tree)}' cannot be serialized."
 
 
 def parse(source, _BaseParser parser=None, *, base_url=None):
