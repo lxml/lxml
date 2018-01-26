@@ -385,9 +385,15 @@ def check_min_version(version, min_version, error_name):
     return True
 
 
+def get_library_version(config_tool):
+    is_pkgconfig = "pkg-config" in config_tool
+    return run_command(config_tool,
+                       "--modversion" if is_pkgconfig else "--version")
+
+
 def get_library_versions():
-    xml2_version = run_command(find_xml2_config(), "--version")
-    xslt_version = run_command(find_xslt_config(), "--version")
+    xml2_version = get_library_version(find_xml2_config())
+    xslt_version = get_library_version(find_xslt_config())
     return xml2_version, xslt_version
 
 
