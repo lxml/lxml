@@ -50,7 +50,7 @@ def strip_attributes(tree_or_element, *attribute_names):
     if not attribute_names:
         return
 
-    matcher = _MultiTagMatcher(attribute_names)
+    matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, attribute_names)
     matcher.cacheTags(element._doc)
     if matcher.rejectsAllAttributes():
         return
@@ -102,7 +102,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
     if not tag_names:
         return
 
-    matcher = _MultiTagMatcher(tag_names)
+    matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag_names)
     matcher.cacheTags(doc)
     if matcher.rejectsAll():
         return
@@ -172,7 +172,7 @@ def strip_tags(tree_or_element, *tag_names):
     if not tag_names:
         return
 
-    matcher = _MultiTagMatcher(tag_names)
+    matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag_names)
     matcher.cacheTags(doc)
     if matcher.rejectsAll():
         return

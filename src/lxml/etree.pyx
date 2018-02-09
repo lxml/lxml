@@ -2644,10 +2644,6 @@ cdef class _MultiTagMatcher:
     cdef int _node_types
 
     def __cinit__(self, tags):
-        self._cached_tags = NULL
-        self._cached_size = 0
-        self._tag_count = 0
-        self._node_types = 0
         self._py_tags = []
         self.initTagMatch(tags)
 
@@ -2780,7 +2776,7 @@ cdef class _ElementMatchIterator:
 
     @cython.final
     cdef _initTagMatcher(self, tags):
-        self._matcher = _MultiTagMatcher(tags)
+        self._matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tags)
 
     def __iter__(self):
         return self
@@ -2876,7 +2872,7 @@ cdef class ElementDepthFirstIterator:
         _assertValidNode(node)
         self._top_node  = node
         self._next_node = node
-        self._matcher = _MultiTagMatcher(tag)
+        self._matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag)
         self._matcher.cacheTags(node._doc)
         if not inclusive or not self._matcher.matches(node._c_node):
             # find start node (this cannot raise StopIteration, self._next_node != None)

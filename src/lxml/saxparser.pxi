@@ -179,7 +179,7 @@ cdef class _SaxParserContext(_ParserContext):
         if not self._event_filter or tag is None or tag == '*':
             self._matcher = None
         else:
-            self._matcher = _MultiTagMatcher(tag)
+            self._matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag)
 
     cdef int startDocument(self, xmlDoc* c_doc) except -1:
         try:

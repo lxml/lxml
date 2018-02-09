@@ -266,7 +266,7 @@ cdef class iterwalk:
         if tag is None or tag == '*':
             self._matcher = None
         else:
-            self._matcher = _MultiTagMatcher(tag)
+            self._matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag)
         self._node_stack  = []
         self._events = []
         self._pop_event = self._events.pop
