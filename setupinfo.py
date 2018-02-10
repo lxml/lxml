@@ -347,9 +347,8 @@ def define_macros():
         macros.append(('LXML_UNICODE_STRINGS', '1'))
     if OPTION_WITH_COVERAGE:
         macros.append(('CYTHON_TRACE_NOGIL', '1'))
-    # Explicitly enable showing C lines in tracebacks.
-    # There is also a bug in Cython 0.27.[01] that suggests a compile time setting.
-    macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1'))
+    # Disable showing C lines in tracebacks, unless explicitly requested.
+    macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1' if OPTION_WITH_CLINES else '0'))
     return macros
 
 _ERROR_PRINTED = False
@@ -473,6 +472,7 @@ OPTION_WITH_CYTHON = has_option('with-cython')
 OPTION_WITH_CYTHON_GDB = has_option('cython-gdb')
 OPTION_WITH_REFNANNY = has_option('with-refnanny')
 OPTION_WITH_COVERAGE = has_option('with-coverage')
+OPTION_WITH_CLINES = has_option('with-clines')
 if OPTION_WITHOUT_CYTHON:
     CYTHON_INSTALLED = False
 OPTION_STATIC = staticbuild or has_option('static')
