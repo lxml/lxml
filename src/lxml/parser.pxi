@@ -221,7 +221,8 @@ cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
     cdef tree.xmlCharEncoding enc
     enc = tree.xmlDetectCharEncoding(buffer, size)
     if enc == tree.XML_CHAR_ENCODING_UTF16LE:
-        if size >= 4 and (buffer[0] == '\xFF' and buffer[1] == '\xFE' and
+        if size >= 4 and (buffer[0] == <const_xmlChar>'\xFF' and
+                          buffer[1] == <const_xmlChar>'\xFE' and
                           buffer[2] == 0 and buffer[3] == 0):
             return "UTF-32LE"  # according to BOM
         else:
