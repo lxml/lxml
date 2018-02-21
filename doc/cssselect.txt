@@ -13,6 +13,14 @@ It translates CSS selectors to XPath 1.0 expressions that can be used with
 lxml's XPath engine.  ``lxml.cssselect`` adds a few convenience shortcuts into
 that package.
 
+To install ``cssselect``, run
+
+::
+
+    pip install cssselect
+
+lxml will then import and use it automatically.
+
 
 .. _XPath: xpathxslt.html#xpath
 .. _ObjectPath: objectify.html#objectpath
