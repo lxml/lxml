@@ -1290,6 +1290,9 @@ class TextareaElement(InputMixin, HtmlElement):
     @value.setter
     def value(self, value):
         del self[:]
+        maxlength = self.get('maxlength')
+        if maxlength and len(value) > int(maxlength):
+            raise ValueError("Value %r exceeds maxlength %r" % (value, maxlength))
         self.text = value
 
     @value.deleter
@@ -1647,6 +1650,12 @@ class InputElement(InputMixin, HtmlElement):
                 if isinstance(value, basestring):
                     self.set('value', value)
         else:
+            maxlength = self.get('maxlength')
+            if maxlength and self.type in \
+                    ['text', 'email', 'search', 'password', 'tel', 'url'] and \
+                    len(value) > int(maxlength):
+                raise ValueError("Value %r exceeds maxlength %r" % (value, maxlength))
+
             self.set('value', value)
 
     @value.deleter

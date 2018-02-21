@@ -3,14 +3,14 @@
 >>> h = fromstring('''<html><body>
 ... <form action="test">
 ...   <input type="hidden" name="hidden_field" value="hidden_value">
-...   <input type="text" name="text_field" value="text_value">
+...   <input type="text" name="text_field" value="text_value" maxlength="9">
 ...   <input type="checkbox" name="single_checkbox">
 ...   <input type="checkbox" name="single_checkbox2" value="good">
 ...   <input type="checkbox" name="check_group" value="1">
 ...   <input type="checkbox" name="check_group" value="2" checked>
 ...   <input type="checkbox" name="check_group" value="3" checked>
 ...   <input type="checkbox" name="check_group" value="4">
-...   <textarea name="textarea_field">some text</textarea>
+...   <textarea name="textarea_field" maxlength="9">some text</textarea>
 ...   <label for="value1">value 1</label>
 ...     <input type="radio" name="radios" value="value1" id="value1">
 ...   <label for="value2">value 2</label>
@@ -221,3 +221,13 @@ some <b>text<br>content</b> with tags
 abc<br>def
 >>> len(ta)
 0
+
+>>> f.fields['text_field'] = "swordfish"
+>>> f.fields['text_field'] = "swordfish2"
+Traceback (most recent call last):
+    ...
+ValueError: Value 'swordfish2' exceeds maxlength '9'
+>>> textarea.value = "swordfish2"
+Traceback (most recent call last):
+    ...
+ValueError: Value 'swordfish2' exceeds maxlength '9'
