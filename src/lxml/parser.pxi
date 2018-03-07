@@ -1653,6 +1653,8 @@ cdef class HTMLParser(_FeedParser):
     - compact            - save memory for short text content (default: True)
     - default_doctype    - add a default doctype even if it is not found in the HTML (default: True)
     - collect_ids        - use a hash table of XML IDs for fast access (default: True)
+    - huge_tree          - disable security restrictions and support very deep trees
+                           and very long text content (only affects libxml2 2.7+)
 
     Other keyword arguments:
 
@@ -1667,7 +1669,7 @@ cdef class HTMLParser(_FeedParser):
                  remove_comments=False, remove_pis=False, strip_cdata=True,
                  no_network=True, target=None, XMLSchema schema=None,
                  recover=True, compact=True, default_doctype=True,
-                 collect_ids=True):
+                 collect_ids=True, huge_tree=False):
         cdef int parse_options
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
@@ -1680,6 +1682,8 @@ cdef class HTMLParser(_FeedParser):
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
         if not default_doctype:
             parse_options = parse_options ^ htmlparser.HTML_PARSE_NODEFDTD
+        if huge_tree:
+            parse_options = parse_options | xmlparser.XML_PARSE_HUGE
 
         _BaseParser.__init__(self, parse_options, 1, schema,
                              remove_comments, remove_pis, strip_cdata,
