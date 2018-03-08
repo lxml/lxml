@@ -1633,7 +1633,7 @@ cdef class HTMLParser(_FeedParser):
     u"""HTMLParser(self, encoding=None, remove_blank_text=False, \
                    remove_comments=False, remove_pis=False, strip_cdata=True, \
                    no_network=True, target=None, schema: XMLSchema =None, \
-                   recover=True, compact=True, collect_ids=True)
+                   recover=True, compact=True, collect_ids=True, huge_tree=False)
 
     The HTML parser.
 
