@@ -15,6 +15,9 @@ Features added
   first one).  If no options are present (not standard-compliant)
   ``SelectElement.value`` still returns ``None``.
 
+* GH#261: The ``HTMLParser()`` now supports the ``huge_tree`` option.
+  Patch by stranac.
+
 Bugs fixed
 ----------
 
