@@ -157,14 +157,17 @@ cdef class _ResolverRegistry:
     def __repr__(self):
         return repr(self._resolvers)
 
+
 @cython.internal
 cdef class _ResolverContext(_ExceptionContext):
     cdef _ResolverRegistry _resolvers
     cdef _TempStore _storage
 
-    cdef void clear(self):
+    cdef int clear(self) except -1:
         _ExceptionContext.clear(self)
         self._storage.clear()
+        return 0
+
 
 cdef _initResolverContext(_ResolverContext context,
                           _ResolverRegistry resolvers):

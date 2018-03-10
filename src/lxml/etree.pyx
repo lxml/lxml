@@ -281,20 +281,28 @@ cdef class _TempStore:
         del self._storage[:]
         return 0
 
+
 # class for temporarily storing exceptions raised in extensions
 @cython.internal
 cdef class _ExceptionContext:
     cdef object _exc_info
-    cdef void clear(self):
+    cdef int clear(self) except -1:
         self._exc_info = None
+        return 0
 
     cdef void _store_raised(self):
-        self._exc_info = sys.exc_info()
+        try:
+            self._exc_info = sys.exc_info()
+        except BaseException as e:
+            self._store_exception(e)
+        finally:
+            return  # and swallow any further exceptions
 
-    cdef void _store_exception(self, exception):
+    cdef int _store_exception(self, exception) except -1:
         self._exc_info = (exception, None, None)
+        return 0
 
-    cdef bint _has_raised(self):
+    cdef bint _has_raised(self) except -1:
         return self._exc_info is not None
 
     cdef int _raise_if_stored(self) except -1:

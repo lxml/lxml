@@ -110,6 +110,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
     finally:
         return c_return_doc  # and swallow any further exceptions
 
+
 cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
                                          xslt.xsltLoadType c_type) with gil:
     try:
@@ -121,6 +122,9 @@ cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
         (<_XSLTResolverContext>context)._store_exception(exception)
     except BaseException as e:
         (<_XSLTResolverContext>context)._store_exception(e)
+    finally:
+        return  # and swallow any further exceptions
+
 
 cdef xmlDoc* _xslt_doc_loader(const_xmlChar* c_uri, tree.xmlDict* c_dict,
                               int parse_options, void* c_ctxt,

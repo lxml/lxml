@@ -217,7 +217,7 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
                 context._extension_element_proxy = None
                 if self_node is not None:
                     _freeReadOnlyProxies(self_node)
-        except Exception, e:
+        except Exception as e:
             try:
                 e = unicode(e).encode(u"UTF-8")
             except:
