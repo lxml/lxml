@@ -628,10 +628,11 @@ cdef class XSLT:
                                        <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
-        with nogil:
+        with self._error_log, nogil:
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
         return c_result
+
 
 cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
                               dict parameters, const_char*** params_ptr):
