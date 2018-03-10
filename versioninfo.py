@@ -59,15 +59,20 @@ def create_version_h():
         parts[0] += '.0'
     lxml_version = '-'.join(parts).replace('a', '.alpha').replace('b', '.beta')
 
-    version_h = open(
-        os.path.join(get_base_dir(), 'src', 'lxml', 'includes', 'lxml-version.h'),
-        'w')
-    version_h.write('''\
+    file_path = os.path.join(get_base_dir(), 'src', 'lxml', 'includes', 'lxml-version.h')
+
+    # Avoid changing file timestamp if content didn't change.
+    if os.path.isfile(file_path):
+        with open(file_path, 'r') as version_h:
+            if ('"%s"' % lxml_version) in version_h.read(100):
+                return
+
+    with open(file_path, 'w') as version_h:
+        version_h.write('''\
 #ifndef LXML_VERSION_STRING
 #define LXML_VERSION_STRING "%s"
 #endif
 ''' % lxml_version)
-    version_h.close()
 
 
 def get_base_dir():
