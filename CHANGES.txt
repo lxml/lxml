@@ -21,6 +21,8 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1551797: Some XSLT messages were not captured by the transform error log.
+
 * LP#1737825: Crash at shutdown after an interrupted iterparse run with XMLSchema
   validation.
 

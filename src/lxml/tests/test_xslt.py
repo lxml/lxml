@@ -264,7 +264,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertRaises(etree.XSLTParseError,
                           etree.XSLT, style)
 
-    def _test_xslt_error_log(self):
+    def test_xslt_parsing_error_log(self):
         tree = self.parse('<a/>')
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
@@ -275,7 +275,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                           etree.XSLT, style)
         exc = None
         try:
-            etree.XSLT(tree)
+            etree.XSLT(style)
         except etree.XSLTParseError as e:
             exc = e
         else:
@@ -283,6 +283,37 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertTrue(exc is not None)
         self.assertTrue(len(exc.error_log))
         for error in exc.error_log:
+            self.assertTrue(':ERROR:XSLT:' in str(error))
+
+    def test_xslt_apply_error_log(self):
+        tree = self.parse('<a/>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:template match="a">
+        <xsl:copy>
+            <xsl:message terminate="yes">FAIL</xsl:message>
+        </xsl:copy>
+    </xsl:template>
+</xsl:stylesheet>''')
+        self.assertRaises(etree.XSLTApplyError,
+                          etree.XSLT(style), tree)
+
+        transform = etree.XSLT(style)
+        exc = None
+        try:
+            transform(tree)
+        except etree.XSLTApplyError as e:
+            exc = e
+        else:
+            self.assertFalse(True, "XSLT processing should have failed but didn't")
+
+        self.assertTrue(exc is not None)
+        self.assertTrue(len(exc.error_log))
+        self.assertEqual(len(transform.error_log), len(exc.error_log))
+        for error in exc.error_log:
+            self.assertTrue(':ERROR:XSLT:' in str(error))
+        for error in transform.error_log:
             self.assertTrue(':ERROR:XSLT:' in str(error))
 
     def test_xslt_parameters(self):

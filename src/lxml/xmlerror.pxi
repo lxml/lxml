@@ -3,6 +3,9 @@
 from lxml.includes cimport xmlerror
 from lxml cimport cvarargs
 
+DEF GLOBAL_ERROR_LOG = u"_GlobalErrorLog"
+DEF XSLT_ERROR_LOG = u"_XSLTErrorLog"
+
 # module level API functions
 
 def clear_error_log():
@@ -15,20 +18,18 @@ def clear_error_log():
     and this function will only clear the global error log of the
     current thread.
     """
-    _getGlobalErrorLog().clear()
+    _getThreadErrorLog(GLOBAL_ERROR_LOG).clear()
 
 
 # setup for global log:
 
 cdef void _initThreadLogging():
-    # disable generic error lines from libxml2
+    # Disable generic error lines from libxml2.
     _connectGenericErrorLog(None)
 
-    # divert error messages to the global error log
-    connectErrorLog(NULL)
+    # Divert XSLT error messages to the global XSLT error log instead of stderr.
+    xslt.xsltSetGenericErrorFunc(NULL, <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
 
-cdef void connectErrorLog(void* log):
-    xslt.xsltSetGenericErrorFunc(log, <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
 
 # Logging classes
 
@@ -201,7 +202,7 @@ cdef class _BaseErrorLog:
         entry._setError(error)
         is_error = error.level == xmlerror.XML_ERR_ERROR or \
                    error.level == xmlerror.XML_ERR_FATAL
-        global_log = _getGlobalErrorLog()
+        global_log = _getThreadErrorLog(GLOBAL_ERROR_LOG)
         if global_log is not self:
             global_log.receive(entry)
             if is_error:
@@ -220,7 +221,7 @@ cdef class _BaseErrorLog:
         entry._setGeneric(domain, type, level, line, message, filename)
         is_error = level == xmlerror.XML_ERR_ERROR or \
                    level == xmlerror.XML_ERR_FATAL
-        global_log = _getGlobalErrorLog()
+        global_log = _getThreadErrorLog(GLOBAL_ERROR_LOG)
         if global_log is not self:
             global_log.receive(entry)
             if is_error:
@@ -381,6 +382,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         """
         return self.filter_from_level(ErrorLevels.WARNING)
 
+
 @cython.final
 @cython.internal
 cdef class _ErrorLogContext:
@@ -391,6 +393,34 @@ cdef class _ErrorLogContext:
     """
     cdef xmlerror.xmlStructuredErrorFunc old_error_func
     cdef void* old_error_context
+    cdef xmlerror.xmlGenericErrorFunc old_xslt_error_func
+    cdef void* old_xslt_error_context
+    cdef _BaseErrorLog old_xslt_error_log
+
+    cdef int push_error_log(self, _BaseErrorLog log) except -1:
+        self.old_error_func = xmlerror.xmlStructuredError
+        self.old_error_context = xmlerror.xmlStructuredErrorContext
+        xmlerror.xmlSetStructuredErrorFunc(
+            <void*>log, <xmlerror.xmlStructuredErrorFunc>_receiveError)
+
+        # xslt.xsltSetGenericErrorFunc() is not thread-local => keep error log in TLS
+        self.old_xslt_error_func = xslt.xsltGenericError
+        self.old_xslt_error_context = xslt.xsltGenericErrorContext
+        self.old_xslt_error_log = _getThreadErrorLog(XSLT_ERROR_LOG)
+        _setThreadErrorLog(XSLT_ERROR_LOG, log)
+        xslt.xsltSetGenericErrorFunc(
+            NULL, <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
+        return 0
+
+    cdef int pop_error_log(self) except -1:
+        xmlerror.xmlSetStructuredErrorFunc(
+            self.old_error_context, self.old_error_func)
+        xslt.xsltSetGenericErrorFunc(
+            self.old_xslt_error_context, self.old_xslt_error_func)
+        _setThreadErrorLog(XSLT_ERROR_LOG, self.old_xslt_error_log)
+        self.old_xslt_error_log= None
+        return 0
+
 
 cdef class _ErrorLog(_ListErrorLog):
     cdef list _logContexts
@@ -414,18 +444,14 @@ cdef class _ErrorLog(_ListErrorLog):
         del self._entries[:]
 
         cdef _ErrorLogContext context = _ErrorLogContext.__new__(_ErrorLogContext)
-        context.old_error_func = xmlerror.xmlStructuredError
-        context.old_error_context = xmlerror.xmlStructuredErrorContext
+        context.push_error_log(self)
         self._logContexts.append(context)
-        xmlerror.xmlSetStructuredErrorFunc(
-            <void*>self, <xmlerror.xmlStructuredErrorFunc>_receiveError)
         return 0
 
     @cython.final
     cdef int disconnect(self) except -1:
         cdef _ErrorLogContext context = self._logContexts.pop()
-        xmlerror.xmlSetStructuredErrorFunc(
-            context.old_error_context, context.old_error_func)
+        context.pop_error_log()
         return 0
 
     cpdef clear(self):
@@ -553,35 +579,39 @@ cdef class PyErrorLog(_BaseErrorLog):
 # thread-local, global list log to collect error output messages from
 # libxml2/libxslt
 
-cdef _BaseErrorLog __GLOBAL_ERROR_LOG
-__GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
+cdef _BaseErrorLog __GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
 
-cdef _BaseErrorLog _getGlobalErrorLog():
-    u"""Retrieve the global error log of this thread."""
+
+cdef _BaseErrorLog _getThreadErrorLog(name):
+    u"""Retrieve the current error log with name 'name' of this thread."""
     cdef python.PyObject* thread_dict
     thread_dict = python.PyThreadState_GetDict()
     if thread_dict is NULL:
         return __GLOBAL_ERROR_LOG
     try:
-        return (<object>thread_dict)[u"_GlobalErrorLog"]
+        return (<object>thread_dict)[name]
     except KeyError:
-        log = (<object>thread_dict)[u"_GlobalErrorLog"] = \
+        log = (<object>thread_dict)[name] = \
               _RotatingErrorLog(__MAX_LOG_SIZE)
         return log
 
-cdef _setGlobalErrorLog(_BaseErrorLog log):
+
+cdef _setThreadErrorLog(name, _BaseErrorLog log):
     u"""Set the global error log of this thread."""
     cdef python.PyObject* thread_dict
     thread_dict = python.PyThreadState_GetDict()
     if thread_dict is NULL:
-        global __GLOBAL_ERROR_LOG
-        __GLOBAL_ERROR_LOG = log
+        if name == GLOBAL_ERROR_LOG:
+            global __GLOBAL_ERROR_LOG
+            __GLOBAL_ERROR_LOG = log
     else:
-        (<object>thread_dict)[u"_GlobalErrorLog"] = log
+        (<object>thread_dict)[name] = log
+
 
 cdef __copyGlobalErrorLog():
     u"Helper function for properties in exceptions."
-    return _getGlobalErrorLog().copy()
+    return _getThreadErrorLog(GLOBAL_ERROR_LOG).copy()
+
 
 def use_global_python_log(PyErrorLog log not None):
     u"""use_global_python_log(log)
@@ -596,7 +626,7 @@ def use_global_python_log(PyErrorLog log not None):
     Since lxml 2.2, the global error log is local to a thread and this
     function will only set the global error log of the current thread.
     """
-    _setGlobalErrorLog(log)
+    _setThreadErrorLog(GLOBAL_ERROR_LOG, log)
 
 
 # local log functions: forward error to logger object
@@ -604,8 +634,10 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
     cdef _BaseErrorLog log_handler
     if c_log_handler is not NULL:
         log_handler = <_BaseErrorLog>c_log_handler
+    elif error.domain == xmlerror.XML_FROM_XSLT:
+        log_handler = _getThreadErrorLog(XSLT_ERROR_LOG)
     else:
-        log_handler = _getGlobalErrorLog()
+        log_handler = _getThreadErrorLog(GLOBAL_ERROR_LOG)
     log_handler._receive(error)
 
 
