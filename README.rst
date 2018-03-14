@@ -8,6 +8,7 @@ For an introduction and further documentation, see `doc/main.txt`_.
 
 For installation information, see `INSTALL.txt`_.
 
+For issue tracker, see https://launchpad.net/lxml.
 
 Support the project
 -------------------
