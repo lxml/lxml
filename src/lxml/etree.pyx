@@ -1386,7 +1386,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         siblings in reverse document order, i.e. starting right before
         the current element and going backwards.
 
-        Can be restricted to find only elements with a specific tag,
+        Can be restricted to find only elements with specific tags,
         see `iter`.
         """
         if tag is not None:
@@ -1398,7 +1398,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Iterate over the ancestors of this element (from parent to parent).
 
-        Can be restricted to find only elements with a specific tag,
+        Can be restricted to find only elements with specific tags,
         see `iter`.
         """
         if tag is not None:
@@ -1412,7 +1412,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         As opposed to ``el.iter()``, this iterator does not yield the element
         itself.  The returned elements can be restricted to find only elements
-        with a specific tag, see `iter`.
+        with specific tags, see `iter`.
         """
         if tag is not None:
             tags += (tag,)
@@ -1425,7 +1425,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         As opposed to using normal iteration on this element, the returned
         elements can be reversed with the 'reversed' keyword and restricted
-        to find only elements with a specific tag, see `iter`.
+        to find only elements with specific tags, see `iter`.
         """
         if tag is not None:
             tags += (tag,)
@@ -1450,7 +1450,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         document order (depth first pre-order), starting with this
         element.
 
-        Can be restricted to find only elements with a specific tag,
+        Can be restricted to find only elements with specific tags,
         see `iter`.
 
         :deprecated: Note that this method is deprecated as of
@@ -1471,7 +1471,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Iterate over all elements in the subtree in document order (depth
         first pre-order), starting with this element.
 
-        Can be restricted to find only elements with a specific tag:
+        Can be restricted to find only elements with specific tags:
         pass ``"{ns}localname"`` as tag. Either or both of ``ns`` and
         ``localname`` can be ``*`` for a wildcard; ``ns`` can be empty
         for no namespace. ``"localname"`` is equivalent to ``"{}localname"``
@@ -1481,8 +1481,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
 
-        Passing more than one tag will let the iterator return all elements
-        matching any of these tags, in document order.
+        Passing multiple tags (or a sequence of tags) instead of a single tag
+        will let the iterator return all elements matching any of these tags,
+        in document order.
         """
         if tag is not None:
             tags += (tag,)
@@ -1493,7 +1494,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Iterates over the text content of a subtree.
 
-        You can pass a tag name to restrict text content to specific elements,
+        You can pass tag names to restrict text content to specific elements,
         see `iter`.
 
         You can set the ``with_tail`` keyword argument to ``False`` to skip
@@ -2147,7 +2148,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         Returns a sequence or iterator of all elements in document order
         (depth first pre-order), starting with the root element.
 
-        Can be restricted to find only elements with a specific tag,
+        Can be restricted to find only elements with specific tags,
         see `_Element.iter`.
 
         :deprecated: Note that this method is deprecated as of
@@ -2173,7 +2174,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         of the root element (comments or processing instructions) are not
         returned by the iterator.
 
-        Can be restricted to find only elements with a specific tag,
+        Can be restricted to find only elements with specific tags,
         see `_Element.iter`.
         """
         root = self.getroot()
