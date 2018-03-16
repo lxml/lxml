@@ -1188,6 +1188,40 @@ class ETreeOnlyTestCase(HelperTestCase):
              ('start', root[1]), ('end', root[1]), ('end', root)],
             events)
 
+    def test_iterwalk_start_tags(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(_bytes('<a><b></b><c/><b><d/></b></a>'))
+
+        iterator = iterwalk(root, events=('start',), tag='b')
+        events = list(iterator)
+        self.assertEqual(
+            [('start', root[0]), ('start', root[2])],
+            events)
+
+    def test_iterwalk_start_end_tags(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(_bytes('<a><b></b><c/><b><d/></b></a>'))
+
+        iterator = iterwalk(root, events=('start', 'end'), tag='b')
+        events = list(iterator)
+        self.assertEqual(
+            [('start', root[0]), ('end', root[0]), ('start', root[2]), ('end', root[2])],
+            events)
+
+    def test_iterwalk_start_end_tags_with_root(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(_bytes('<a><b></b><c/><b><d/></b></a>'))
+
+        iterator = iterwalk(root, events=('start', 'end'), tag=('b', 'a'))
+        events = list(iterator)
+        self.assertEqual(
+            [('start', root),
+             ('start', root[0]), ('end', root[0]),
+             ('start', root[2]), ('end', root[2]),
+             ('end', root),
+             ],
+            events)
+
     def test_iterwalk_clear(self):
         iterwalk = self.etree.iterwalk
         root = self.etree.XML(_bytes('<a><b></b><c/></a>'))

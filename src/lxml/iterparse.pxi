@@ -274,6 +274,8 @@ cdef class iterwalk:
 
         if self._event_filter:
             self._index = 0
+            if self._matcher is not None and self._event_filter & PARSE_EVENT_FILTER_START:
+                self._matcher.cacheTags(root._doc)
             ns_count = self._start_node(root)
             self._node_stack.append( (root, ns_count) )
         else:
