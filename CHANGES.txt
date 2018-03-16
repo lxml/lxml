@@ -11,7 +11,7 @@ Bugs fixed
 * LP#1755825: ``iterwalk()`` failed to return the 'start' event for the initial
   element if a tag selector is used.
 
-* LP#1756314: Failure to import in PyPy due to a missing library symbol.
+* LP#1756314: Failure to import 4.2.0 into PyPy due to a missing library symbol.
 
 
 4.2.0 (2018-03-13)
