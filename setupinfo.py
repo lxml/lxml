@@ -124,6 +124,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
         ])
     _library_dirs = _prefer_reldirs(base_dir, library_dirs(static_library_dirs))
     _cflags = cflags(static_cflags)
+    _ldflags = []
+    if sys.platform == 'darwin':
+        _ldflags.extend(['-isysroot', get_xcode_isysroot()])
     _define_macros = define_macros()
     _libraries = libraries()
 
@@ -162,6 +165,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 sources = [main_module_source],
                 depends = find_dependencies(module),
                 extra_compile_args = _cflags,
+                extra_link_args = _ldflags,
                 extra_objects = static_binaries,
                 define_macros = _define_macros,
                 include_dirs = _include_dirs,
@@ -398,6 +402,10 @@ def flags(option):
         if flag not in flag_list:
             flag_list.append(flag)
     return flag_list
+
+
+def get_xcode_isysroot():
+    return run_command('xcrun', '--show-sdk-path')
 
 XSLT_CONFIG = None
 XML2_CONFIG = None
