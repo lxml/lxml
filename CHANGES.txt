@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-4.2.1 (2018-??-??)
+4.2.1 (2018-03-21)
 ==================
 
 Bugs fixed
@@ -12,6 +12,8 @@ Bugs fixed
   element if a tag selector is used.
 
 * LP#1756314: Failure to import 4.2.0 into PyPy due to a missing library symbol.
+
+* LP#1727864, GH#258: Add "-isysroot" linker option on MacOS as needed by XCode 9.
 
 
 4.2.0 (2018-03-13)
