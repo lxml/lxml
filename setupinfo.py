@@ -124,9 +124,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
         ])
     _library_dirs = _prefer_reldirs(base_dir, library_dirs(static_library_dirs))
     _cflags = cflags(static_cflags)
-    _ldflags = []
-    if sys.platform == 'darwin':
-        _ldflags.extend(['-isysroot', get_xcode_isysroot()])
+    _ldflags = ['-isysroot', get_xcode_isysroot()] if sys.platform == 'darwin' else None
     _define_macros = define_macros()
     _libraries = libraries()
 
