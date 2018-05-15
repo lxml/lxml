@@ -60,10 +60,15 @@ developer version using::
 
   hg clone git+ssh://git@github.com/lxml/lxml.git lxml
 
+Or, using git::
+
+  git clone ssh://git@github.com/lxml/lxml.git lxml
+
 This will create a directory ``lxml`` and download the source into it,
 including the complete development history.  Don't be afraid, the
-download is fairly quick.  You can also browse the `lxml repository`_
-through the web.
+repository download is fairly quick.  You can also browse the
+`lxml repository`_ through the web or download a ZIP archive with the
+`latest master branch <https://github.com/lxml/lxml/archive/master.zip>`_.
 
 .. _Github: https://github.com/lxml/
 .. _Mercurial: http://mercurial.selenic.com/
