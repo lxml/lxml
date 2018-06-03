@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+4.2.2 (2018-??-??)
+==================
+
+Bugs fixed
+----------
+
+* GH#266: Fix sporadic crash during GC when parse-time schema validation is used
+  and the parser participates in a reference cycle.
+  Original patch by Julien Greard.
+
+
 4.2.1 (2018-03-21)
 ==================
 

@@ -508,6 +508,7 @@ xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_r
 ## Parsers
 ############################################################
 
+@cython.no_gc_clear  # May have to call "self._validator.disconnect()" on dealloc.
 @cython.internal
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
@@ -531,7 +532,7 @@ cdef class _ParserContext(_ResolverContext):
             python.PyThread_free_lock(self._lock)
             self._lock = NULL
         if self._c_ctxt is not NULL:
-            if self._validator is not None:
+            if <void*>self._validator is not NULL and self._validator is not None:
                 # If the parser was not closed correctly (e.g. interrupted iterparse()),
                 # and the schema validator wasn't freed and cleaned up yet, the libxml2 SAX
                 # validator plug might still be in place, which will make xmlFreeParserCtxt()
