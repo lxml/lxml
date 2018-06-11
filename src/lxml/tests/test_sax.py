@@ -87,6 +87,8 @@ class ETreeSaxTestCase(HelperTestCase):
                          dom.firstChild.localName)
         self.assertEqual('blaA',
                          dom.firstChild.namespaceURI)
+        self.assertEqual(None,
+                         dom.firstChild.prefix)
 
         children = dom.firstChild.childNodes
         self.assertEqual('ab',
@@ -95,6 +97,33 @@ class ETreeSaxTestCase(HelperTestCase):
                          children[1].namespaceURI)
         self.assertEqual('ba',
                          children[2].nodeValue)
+
+    def test_sax_to_pulldom_multiple_namespaces(self):
+        tree = self.parse('<a xmlns="blaA" xmlns:a="blaA"></a>')
+        handler = pulldom.SAX2DOM()
+        sax.saxify(tree, handler)
+        dom = handler.document
+
+        # With multiple prefix definitions, the node should keep the one
+        # that was actually used, even if the others also are valid.
+        self.assertEqual('a',
+                         dom.firstChild.localName)
+        self.assertEqual('blaA',
+                         dom.firstChild.namespaceURI)
+        self.assertEqual(None,
+                         dom.firstChild.prefix)
+
+        tree = self.parse('<a:a xmlns="blaA" xmlns:a="blaA"></a:a>')
+        handler = pulldom.SAX2DOM()
+        sax.saxify(tree, handler)
+        dom = handler.document
+
+        self.assertEqual('a',
+                         dom.firstChild.localName)
+        self.assertEqual('blaA',
+                         dom.firstChild.namespaceURI)
+        self.assertEqual('a',
+                         dom.firstChild.prefix)
 
     def test_element_sax(self):
         tree = self.parse('<a><b/></a>')
@@ -127,6 +156,37 @@ class ETreeSaxTestCase(HelperTestCase):
                          root.tag)
         self.assertEqual(0,
                          len(root))
+
+    def test_element_sax_ns_prefix(self):
+        # The name of the prefix should be preserved
+        tree = self.parse('<a:a xmlns:a="blaA"><b/><c:c xmlns:c="blaC">'
+                          '<d/></c:c></a:a>')
+        a = tree.getroot()
+
+        self.assertEqual(b'<a:a xmlns:a="blaA"><b/><c:c xmlns:c="blaC">'
+                         b'<d/></c:c></a:a>',
+                         self._saxify_serialize(a))
+
+    def test_element_sax_default_ns_prefix(self):
+        # Default prefixes should also not get a generated prefix
+        tree = self.parse('<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
+                          '<d/></c:c></a>')
+        a = tree.getroot()
+
+        self.assertEqual(b'<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
+                         b'<d/></c:c></a>',
+                         self._saxify_serialize(a))
+
+    def test_element_sax_unknown_ns_prefix(self):
+        # Make an element with an unregister prefix
+        tree = self.parse('<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
+                          '<d/></c:c></a>')
+        a = tree.getroot()
+        a.append(a.makeelement('{blaE}e'))
+
+        self.assertEqual(b'<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
+                         b'<d/></c:c><ns0:e xmlns:ns0="blaE"/></a>',
+                         self._saxify_serialize(a))
 
     def test_etree_sax_handler_default_ns(self):
         handler = sax.ElementTreeContentHandler()

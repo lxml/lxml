@@ -12,6 +12,10 @@ Bugs fixed
   and the parser participates in a reference cycle.
   Original patch by Julien Greard.
 
+* ElementTreeProducer no longer ignores the namespace prefixes that were available
+  in the element tree, and now only generates nsXX prefixes if undefined prefixes
+  are encountered.
+
 
 4.2.1 (2018-03-21)
 ==================

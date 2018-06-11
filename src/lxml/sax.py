@@ -200,7 +200,15 @@ class ElementTreeProducer(object):
                 content_handler.characters(element.tail)
             return
 
+        # Get a new copy in this call, so changes doesn't propagate upwards
+        prefixes = prefixes.copy()
         new_prefixes = []
+        for prefix, ns_uri in element.nsmap.items():
+            if prefixes.get(prefix) != ns_uri:
+                # New or updated namespace
+                new_prefixes.append( (prefix, ns_uri) )
+                prefixes[prefix] = ns_uri
+
         build_qname = self._build_qname
         attribs = element.items()
         if attribs:
@@ -210,13 +218,13 @@ class ElementTreeProducer(object):
                 attr_ns_tuple = _getNsTag(attr_ns_name)
                 attr_values[attr_ns_tuple] = value
                 attr_qnames[attr_ns_tuple] = build_qname(
-                    attr_ns_tuple[0], attr_ns_tuple[1], prefixes, new_prefixes)
+                    attr_ns_tuple[0], attr_ns_tuple[1], prefixes, None)
             sax_attributes = self._attr_class(attr_values, attr_qnames)
         else:
             sax_attributes = self._empty_attributes
 
         ns_uri, local_name = _getNsTag(tag)
-        qname = build_qname(ns_uri, local_name, prefixes, new_prefixes)
+        qname = build_qname(ns_uri, local_name, prefixes, element.prefix)
 
         for prefix, uri in new_prefixes:
             content_handler.startPrefixMapping(prefix, uri)
@@ -232,14 +240,19 @@ class ElementTreeProducer(object):
         if element.tail:
             content_handler.characters(element.tail)
 
-    def _build_qname(self, ns_uri, local_name, prefixes, new_prefixes):
+    def _build_qname(self, ns_uri, local_name, prefixes, preferred):
         if ns_uri is None:
             return local_name
-        try:
-            prefix = prefixes[ns_uri]
-        except KeyError:
-            prefix = prefixes[ns_uri] = 'ns%02d' % len(prefixes)
-            new_prefixes.append( (prefix, ns_uri) )
+
+        if preferred in prefixes and prefixes[preferred] == ns_uri:
+            prefix = preferred
+        else:
+            # Pick the first matching prefix
+            prefix = [pfx for pfx, uri in prefixes.items() if uri == ns_uri][0]
+
+        if prefix is None:
+            # Default namespace
+            return local_name
         return prefix + ':' + local_name
 
 def saxify(element_or_tree, content_handler):
