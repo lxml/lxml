@@ -28,6 +28,7 @@ ElementTree_.
      1.9  How can I map an XML tree into a dict of dicts?
      1.10 Why does lxml sometimes return 'str' values for text in Python 2?
      1.11 Why do I get XInclude or DTD lookup failures on some systems but not on others?
+     1.12 How do namespaces work in lxml?
    2  Installation
      2.1  Which version of libxml2 and libxslt should I use or require?
      2.2  Where are the binary builds?
@@ -404,6 +405,12 @@ doctype IDs to locally installed DTD files.
 
 See the `libxml2 catalogue documentation <http://xmlsoft.org/catalog.html>`_
 for further information.
+
+
+How do namespaces work in lxml?
+-------------------------------
+
+The same as in ElementTree.  See the `tutorial <tutorial.html#namespaces>`_.
 
 
 Installation
