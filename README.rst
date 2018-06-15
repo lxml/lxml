@@ -22,6 +22,8 @@ distributions, e.g. for Linux or MacOS-X.
 Most people who use lxml do so because they like using it.
 You can show us that you like it by blogging about your experience
 with it and linking to the project website.
+Jetbrains supports the lxml project by donating free licenses of their
+`PyCharm IDE <https://www.jetbrains.com/pycharm/>`_.
 
 If you are using lxml for your work and feel like giving a bit of
 your own benefit back to support the project, consider sending us
