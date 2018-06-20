@@ -12,6 +12,9 @@ Bugs fixed
   and the parser participates in a reference cycle.
   Original patch by Julien Greard.
 
+* GH#265: lxml no longer links against zlib as a shared library, only on static builds.
+  Patch by Nehal J Wani.
+
 
 4.2.1 (2018-03-21)
 ==================
