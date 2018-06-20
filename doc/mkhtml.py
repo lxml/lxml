@@ -266,7 +266,7 @@ def publish(dirname, lxml_path, release):
     ElementTree(sitemap).write(os.path.join(dirname, 'sitemap.html'))
 
     # integrate sitemap into the menu
-    SubElement(SubElement(menu_div[-1], 'li'), 'a', href='http://lxml.de/sitemap.html').text = 'Sitemap'
+    SubElement(SubElement(menu_div[-1], 'li'), 'a', href='/sitemap.html').text = 'Sitemap'
 
     # integrate menu into web pages
     for tree, basename, outpath in trees.itervalues():

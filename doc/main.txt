@@ -170,9 +170,9 @@ documentation for offline use, take the source archive and copy the
 ``doc/html`` directory out of the source tree, or use the
 `PDF documentation`_.
 
-The latest installable developer sources should usually be available from the
-`build server <http://lxml.de/build/>`_.  It's also possible to check out
-the latest development version of lxml from github directly, using a command
+The latest `installable developer sources <https://github.com/lxml/lxml/archive/master.zip>`_
+are available from Github.  It's also possible to check out
+the latest development version of lxml from Github directly, using a command
 like this (assuming you use hg and have hg-git installed)::
 
   hg clone git+ssh://git@github.com/lxml/lxml.git lxml
@@ -245,6 +245,7 @@ See the websites of lxml
 `3.7 <http://lxml.de/3.7/>`_,
 `3.8 <http://lxml.de/3.8/>`_,
 `4.0 <http://lxml.de/4.0/>`_
+`4.1 <http://lxml.de/4.1/>`_
 
 ..
    and the `latest in-development version <http://lxml.de/dev/>`_.
@@ -263,14 +264,6 @@ See the websites of lxml
 
 * `lxml 3.8.0`_, released 2017-06-03 (`changes for 3.8.0`_)
 
-* `lxml 3.7.3`_, released 2017-02-18 (`changes for 3.7.3`_)
-
-* `lxml 3.7.2`_, released 2017-01-08 (`changes for 3.7.2`_)
-
-* `lxml 3.7.1`_, released 2016-12-22 (`changes for 3.7.1`_)
-
-* `lxml 3.7.0`_, released 2016-12-10 (`changes for 3.7.0`_)
-
 * `older releases <http://lxml.de/3.7/#old-versions>`_
 
 .. _`lxml 4.2.1`: /files/lxml-4.2.1.tgz
@@ -279,15 +272,6 @@ See the websites of lxml
 .. _`lxml 4.1.0`: /files/lxml-4.1.0.tgz
 .. _`lxml 4.0.0`: /files/lxml-4.0.0.tgz
 .. _`lxml 3.8.0`: /files/lxml-3.8.0.tgz
-.. _`lxml 3.7.3`: /files/lxml-3.7.3.tgz
-.. _`lxml 3.7.2`: /files/lxml-3.7.2.tgz
-.. _`lxml 3.7.1`: /files/lxml-3.7.1.tgz
-.. _`lxml 3.7.0`: /files/lxml-3.7.0.tgz
-.. _`lxml 3.6.4`: /files/lxml-3.6.4.tgz
-.. _`lxml 3.6.3`: /files/lxml-3.6.3.tgz
-.. _`lxml 3.6.2`: /files/lxml-3.6.2.tgz
-.. _`lxml 3.6.1`: /files/lxml-3.6.1.tgz
-.. _`lxml 3.6.0`: /files/lxml-3.6.0.tgz
 
 .. _`changes for 4.2.1`: /changes-4.2.1.html
 .. _`changes for 4.2.0`: /changes-4.2.0.html
@@ -295,12 +279,3 @@ See the websites of lxml
 .. _`changes for 4.1.0`: /changes-4.1.0.html
 .. _`changes for 4.0.0`: /changes-4.0.0.html
 .. _`changes for 3.8.0`: /changes-3.8.0.html
-.. _`changes for 3.7.3`: /changes-3.7.3.html
-.. _`changes for 3.7.2`: /changes-3.7.2.html
-.. _`changes for 3.7.1`: /changes-3.7.1.html
-.. _`changes for 3.7.0`: /changes-3.7.0.html
-.. _`changes for 3.6.4`: /changes-3.6.4.html
-.. _`changes for 3.6.3`: /changes-3.6.3.html
-.. _`changes for 3.6.2`: /changes-3.6.2.html
-.. _`changes for 3.6.1`: /changes-3.6.1.html
-.. _`changes for 3.6.0`: /changes-3.6.0.html
