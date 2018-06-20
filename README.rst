@@ -13,8 +13,8 @@ For issue tracker, see https://bugs.launchpad.net/lxml
 Support the project
 -------------------
 
-lxml has been downloaded from the `Python Package Index`_ more than
-two million times and is also available directly in many package
+lxml has been downloaded from the `Python Package Index`_
+millions of times and is also available directly in many package
 distributions, e.g. for Linux or MacOS-X.
 
 .. _`Python Package Index`: https://pypi.python.org/pypi/lxml
