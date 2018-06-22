@@ -45,16 +45,18 @@ build_wheels() {
     test -e "$SDIST" && source="$SDIST" || source=
     FIRST=
     SECOND=
+    THIRD=
     for PYBIN in /opt/python/*/bin; do
         # Install build requirements if we need them and file exists
         test -n "$source" -o ! -e "$REQUIREMENTS" \
             || ${PYBIN}/pip install -r "$REQUIREMENTS"
 
         build_wheel "$PYBIN" "$source" &
-        SECOND=$!
+        THIRD=$!
 
         [ -z "$FIRST" ] || wait ${FIRST}
         FIRST=$SECOND
+        SECOND=$THIRD
     done
     wait
 }
