@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* The module ``lxml.sax`` is compiled using Cython in order to speed it up.
+
+
 4.2.2 (2018-06-22)
 ==================
 
