@@ -2,8 +2,6 @@ version: 1.0.{build}
 
 environment:
   matrix:
-  - python: 26
-  - python: 26-x64
   - python: 27
   - python: 27-x64
   - python: 33
@@ -14,6 +12,8 @@ environment:
   - python: 35-x64
   - python: 36
   - python: 36-x64
+  - python: 37
+  - python: 37-x64
 
 install:
     - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
