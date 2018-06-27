@@ -28,4 +28,3 @@ build_script:
 test: off
 test_script:
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
-
