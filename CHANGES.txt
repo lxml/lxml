@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+4.2.3 (2018-06-27)
+==================
+
+Bugs fixed
+----------
+
+* Reverted GH#265: lxml links against zlib as a shared library again.
+
+
 4.2.2 (2018-06-22)
 ==================
 

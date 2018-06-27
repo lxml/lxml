@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 4.2.2`_, released 2018-06-22
-(`changes for 4.2.2`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 4.2.3`_, released 2018-06-27
+(`changes for 4.2.3`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -250,7 +250,9 @@ See the websites of lxml
 ..
    and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-4.2.2.pdf
+.. _`PDF documentation`: lxmldoc-4.2.3.pdf
+
+* `lxml 4.2.3`_, released 2018-06-27 (`changes for 4.2.3`_)
 
 * `lxml 4.2.2`_, released 2018-06-22 (`changes for 4.2.2`_)
 
@@ -268,6 +270,7 @@ See the websites of lxml
 
 * `older releases <http://lxml.de/3.7/#old-versions>`_
 
+.. _`lxml 4.2.3`: /files/lxml-4.2.3.tgz
 .. _`lxml 4.2.2`: /files/lxml-4.2.2.tgz
 .. _`lxml 4.2.1`: /files/lxml-4.2.1.tgz
 .. _`lxml 4.2.0`: /files/lxml-4.2.0.tgz
@@ -276,6 +279,7 @@ See the websites of lxml
 .. _`lxml 4.0.0`: /files/lxml-4.0.0.tgz
 .. _`lxml 3.8.0`: /files/lxml-3.8.0.tgz
 
+.. _`changes for 4.2.3`: /changes-4.2.3.html
 .. _`changes for 4.2.2`: /changes-4.2.2.html
 .. _`changes for 4.2.0`: /changes-4.2.0.html
 .. _`changes for 4.1.1`: /changes-4.1.1.html
