@@ -51,7 +51,7 @@ build_wheels() {
         test -n "$source" -o ! -e "$REQUIREMENTS" \
             || ${PYBIN}/pip install -r "$REQUIREMENTS"
 
-        echo "Starting build with $($PYBIN -V)"
+        echo "Starting build with $($PYBIN/python -V)"
         build_wheel "$PYBIN" "$source" &
         THIRD=$!
 
