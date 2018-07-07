@@ -120,6 +120,14 @@ setup.py to make sure the right config is found::
 
   python setup.py build --with-xslt-config=/path/to/xslt-config
 
+There are also env vars to allow overriding the config tool::
+
+  env XML2_CONFIG=/path/to/xml2-config python build
+
+You may also use ``pkg-config`` as the tools::
+
+  env XSLT_CONFIG="pkg-config libxslt" python setup.py build
+
 If this doesn't help, you may have to add the location of the header
 files to the include path like::
 
