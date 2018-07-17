@@ -14,6 +14,11 @@ python:
   - pypy
   - pypy3
 
+env:
+  matrix:
+    - STATIC_DEPS=true
+    - STATIC_DEPS=false
+
 install:
     - pip install -U pip wheel
     - pip install $(if [ -z "${TRAVIS_PYTHON_VERSION##*-dev}" ]; then echo "--install-option=--no-cython-compile"; fi ) -r requirements.txt
