@@ -204,7 +204,7 @@ def tryint(s):
 
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9])')
+    version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
     filename = 'libxml2-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxml2',
                             version_re, filename, version=version)
@@ -212,7 +212,7 @@ def download_libxml2(dest_dir, version=None):
 
 def download_libxslt(dest_dir, version=None):
     """Downloads libxslt, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9])')
+    version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
     filename = 'libxslt-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxslt',
                             version_re, filename, version=version)
@@ -236,7 +236,7 @@ def download_zlib(dest_dir, version):
 
 def find_max_version(libname, filenames, version_re=None):
     if version_re is None:
-        version_re = re.compile(r'%s-([0-9.]+[0-9])' % libname)
+        version_re = re.compile(r'%s-([0-9.]+[0-9](?:-[abrc0-9]+)?)' % libname)
     versions = []
     for fn in filenames:
         match = version_re.search(fn)
