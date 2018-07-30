@@ -435,11 +435,8 @@ def build_libxml2xslt(download_dir, build_dir,
     libxslt_configure_cmd = configure_cmd + [
         '--without-python',
         '--with-libxml-prefix=%s' % prefix,
-        ]
-    if sys.platform in ('darwin',):
-        libxslt_configure_cmd += [
-            '--without-crypto',
-            ]
+        '--without-crypto',
+    ]
     cmmi(libxslt_configure_cmd, libxslt_dir, multicore, **call_setup)
 
     # collect build setup for lxml
