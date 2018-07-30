@@ -155,21 +155,22 @@ def ext_modules(static_include_dirs, static_library_dirs,
 
     result = []
     for module, src_file in zip(modules, module_files):
+        is_py = module in COMPILED_MODULES
         main_module_source = src_file + (
-            '.c' if not use_cython else '.py' if module in COMPILED_MODULES else '.pyx')
+            '.c' if not use_cython else '.py' if is_py else '.pyx')
         result.append(
             Extension(
                 module,
                 sources = [main_module_source],
                 depends = find_dependencies(module),
                 extra_compile_args = _cflags,
-                extra_link_args = _ldflags,
-                extra_objects = static_binaries,
+                extra_link_args = None if is_py else _ldflags,
+                extra_objects = None if is_py else static_binaries,
                 define_macros = _define_macros,
                 include_dirs = _include_dirs,
-                library_dirs = _library_dirs,
-                runtime_library_dirs = runtime_library_dirs,
-                libraries = _libraries,
+                library_dirs = None if is_py else _library_dirs,
+                runtime_library_dirs = None if is_py else runtime_library_dirs,
+                libraries = None if is_py else _libraries,
             ))
     if CYTHON_INSTALLED and OPTION_WITH_CYTHON_GDB:
         for ext in result:
