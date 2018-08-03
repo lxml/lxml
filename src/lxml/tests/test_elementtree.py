@@ -1599,6 +1599,38 @@ class _ETreeTestCaseBase(HelperTestCase):
             _bytes('<a><d></d><b></b><e></e><c></c></a>'),
             a)
 
+    def test_insert_name_interning(self):
+        # See GH#268 / LP#1773749.
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        # Use unique names to make sure they are new in the tag name dict.
+        import uuid
+        names = dict((k, 'tag-' + str(uuid.uuid4())) for k in 'abcde')
+
+        a = Element(names['a'])
+        b = SubElement(a, names['b'])
+        c = SubElement(a, names['c'])
+        d = Element(names['d'])
+        a.insert(0, d)
+
+        self.assertEqual(
+            d,
+            a[0])
+
+        self.assertXML(
+            _bytes('<%(a)s><%(d)s></%(d)s><%(b)s></%(b)s><%(c)s></%(c)s></%(a)s>' % names),
+            a)
+
+        e = Element(names['e'])
+        a.insert(2, e)
+        self.assertEqual(
+            e,
+            a[2])
+        self.assertXML(
+            _bytes('<%(a)s><%(d)s></%(d)s><%(b)s></%(b)s><%(e)s></%(e)s><%(c)s></%(c)s></%(a)s>' % names),
+            a)
+
     def test_insert_beyond_index(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
