@@ -917,7 +917,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if c_node is NULL:
             _appendChild(self, element)
             return
-        c_source_doc = c_node.doc
+        c_source_doc = element._c_node.doc
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
