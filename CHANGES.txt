@@ -5,6 +5,12 @@ lxml changelog
 4.2.4 (2018-08-03)
 ==================
 
+Features added
+--------------
+
+* GH#259: Allow using ``pkg-config`` for build configuration.
+  Patch by Patrick Griffis.
+
 Bugs fixed
 ----------
 
