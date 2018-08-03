@@ -285,6 +285,7 @@ See the websites of lxml
 .. _`changes for 4.2.4`: /changes-4.2.4.html
 .. _`changes for 4.2.3`: /changes-4.2.3.html
 .. _`changes for 4.2.2`: /changes-4.2.2.html
+.. _`changes for 4.2.1`: /changes-4.2.1.html
 .. _`changes for 4.2.0`: /changes-4.2.0.html
 .. _`changes for 4.1.1`: /changes-4.1.1.html
 .. _`changes for 4.1.0`: /changes-4.1.0.html
