@@ -2,6 +2,11 @@ language: python
 dist: trusty
 sudo: false
 
+cache:
+  pip: true
+  directories:
+    - $HOME/.ccache
+
 python:
   - 2.7
   - 3.3
@@ -14,6 +19,10 @@ python:
 
 env:
   global:
+    - USE_CCACHE=1
+    - CCACHE_SLOPPINESS=pch_defines,time_macros
+    - CCACHE_COMPRESS=1
+    - CCACHE_MAXSIZE=70M
     - LIBXSLT_VERSION=1.1.32
   matrix:
     - STATIC_DEPS=true
@@ -29,6 +38,11 @@ matrix:
       dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
       env: STATIC_DEPS=false
+  exclude:
+    - python: pypy
+      env: STATIC_DEPS=true
+    - python: pypy3
+      env: STATIC_DEPS=true
 
 install:
     - pip install -U pip wheel
