@@ -8,11 +8,12 @@ cache:
     - $HOME/.ccache
 
 python:
+  - 3.7
   - 2.7
-  - 3.3
-  - 3.4
-  - 3.5
   - 3.6
+  - 3.5
+  - 3.4
+  - 3.3
   - 3.8-dev
   - pypy
   - pypy3
@@ -23,6 +24,7 @@ env:
     - CCACHE_SLOPPINESS=pch_defines,time_macros
     - CCACHE_COMPRESS=1
     - CCACHE_MAXSIZE=70M
+    - PATH="/usr/lib/ccache:$PATH"
     - LIBXSLT_VERSION=1.1.32
   matrix:
     - STATIC_DEPS=true
@@ -38,6 +40,14 @@ matrix:
       dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
       env: STATIC_DEPS=false
+    - python: 3.8-dev
+      dist: xenial  # Required for Python 3.7+
+      sudo: true    # travis-ci/travis-ci#9069
+      env: STATIC_DEPS=true
+    - python: 3.8-dev
+      dist: xenial  # Required for Python 3.7+
+      sudo: true    # travis-ci/travis-ci#9069
+      env: STATIC_DEPS=false
   exclude:
     - python: pypy
       env: STATIC_DEPS=true
@@ -49,6 +59,8 @@ install:
     - pip install $(if [ -z "${TRAVIS_PYTHON_VERSION##*-dev}" ]; then echo "--install-option=--no-cython-compile"; fi ) -r requirements.txt
     - pip install -U beautifulsoup4 cssselect html5lib
 
+before_script: ccache -s || true
+
 script:
   - CFLAGS="-O0 -g -fPIC" python -u setup.py build_ext --inplace $(if [ -n "${TRAVIS_PYTHON_VERSION##2.*}" -a -n "${TRAVIS_PYTHON_VERSION##3.[34]*}" ]; then echo -n " -j7 "; fi )
   - CFLAGS="-O0 -g -fPIC" PYTHONUNBUFFERED=x make test
@@ -58,6 +70,3 @@ matrix:
     - python: 3.8-dev
     - python: pypy
     - python: pypy3
-
-cache:
-  pip: true
