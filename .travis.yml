@@ -63,5 +63,5 @@ install:
 before_script: ccache -s || true
 
 script:
-  - CFLAGS="-O0 -g -fPIC" python -u setup.py build_ext --inplace $(if [ -n "${TRAVIS_PYTHON_VERSION##2.*}" -a -n "${TRAVIS_PYTHON_VERSION##3.[34]*}" ]; then echo -n " -j7 "; fi )
-  - CFLAGS="-O0 -g -fPIC" PYTHONUNBUFFERED=x make test
+  - CFLAGS="-O0 -g -fPIC" CC="ccache gcc" python -u setup.py build_ext --inplace $(if [ -n "${TRAVIS_PYTHON_VERSION##2.*}" -a -n "${TRAVIS_PYTHON_VERSION##3.[34]*}" ]; then echo -n " -j7 "; fi )
+  - CFLAGS="-O0 -g -fPIC" CC="ccache gcc" PYTHONUNBUFFERED=x make test
