@@ -1,6 +1,6 @@
 language: python
-dist: trusty
-sudo: false
+dist: xenial  # Required for Python 3.7
+sudo: true    # travis-ci/travis-ci#9069
 
 python:
   - 2.7
