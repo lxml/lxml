@@ -61,8 +61,7 @@ install:
     - pip install $(if [ -z "${TRAVIS_PYTHON_VERSION##*-dev}" ]; then echo "--install-option=--no-cython-compile"; fi ) -r requirements.txt
     - pip install -U beautifulsoup4 cssselect html5lib
 
-before_script: ccache -s || true
-
 script:
   - CFLAGS="-O0 -g -fPIC" CC="ccache gcc" python -u setup.py build_ext --inplace $(if [ -n "${TRAVIS_PYTHON_VERSION##2.*}" -a -n "${TRAVIS_PYTHON_VERSION##3.[34]*}" ]; then echo -n " -j7 "; fi )
-  - CFLAGS="-O0 -g -fPIC" CC="ccache gcc" PYTHONUNBUFFERED=x make test
+  - ccache -s || true
+  - CFLAGS="-O0 -g -fPIC" PYTHONUNBUFFERED=x make test
