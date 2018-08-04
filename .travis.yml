@@ -7,17 +7,6 @@ cache:
   directories:
     - $HOME/.ccache
 
-python:
-  - 3.7
-  - 2.7
-  - 3.6
-  - 3.5
-  - 3.4
-  - 3.3
-  - 3.8-dev
-  - pypy
-  - pypy3
-
 env:
   global:
     - USE_CCACHE=1
@@ -32,6 +21,13 @@ env:
 
 matrix:
   include:
+    - python: 2.7
+    - python: 3.6
+    - python: 3.5
+    - python: 3.4
+    - python: 3.3
+    - python: pypy
+    - python: pypy3
     - python: 3.7
       dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
