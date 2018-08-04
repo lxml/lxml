@@ -15,19 +15,29 @@ env:
     - CCACHE_MAXSIZE=70M
     - PATH="/usr/lib/ccache:$PATH"
     - LIBXSLT_VERSION=1.1.32
-  matrix:
-    - STATIC_DEPS=true
-    - STATIC_DEPS=false
 
 matrix:
   include:
     - python: 2.7
+      env: STATIC_DEPS=true
+    - python: 2.7
+      env: STATIC_DEPS=false
     - python: 3.6
+      env: STATIC_DEPS=true
+    - python: 3.6
+      env: STATIC_DEPS=false
     - python: 3.5
+      env: STATIC_DEPS=true
+    - python: 3.5
+      env: STATIC_DEPS=false
     - python: 3.4
+      env: STATIC_DEPS=true
+    - python: 3.4
+      env: STATIC_DEPS=false
     - python: 3.3
-    - python: pypy
-    - python: pypy3
+      env: STATIC_DEPS=true
+    - python: 3.3
+      env: STATIC_DEPS=false
     - python: 3.7
       dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
@@ -44,11 +54,10 @@ matrix:
       dist: xenial  # Required for Python 3.7+
       sudo: true    # travis-ci/travis-ci#9069
       env: STATIC_DEPS=false
-  exclude:
     - python: pypy
-      env: STATIC_DEPS=true
+      env: STATIC_DEPS=false
     - python: pypy3
-      env: STATIC_DEPS=true
+      env: STATIC_DEPS=false
 
 install:
     - pip install -U pip wheel
