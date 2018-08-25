@@ -3929,9 +3929,9 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertTrue(hasattr(element, 'tail'))
         self._check_string(element.tag)
         self._check_mapping(element.attrib)
-        if element.text != None:
+        if element.text is not None:
             self._check_string(element.text)
-        if element.tail != None:
+        if element.tail is not None:
             self._check_string(element.tail)
         
     def _check_string(self, string):
