@@ -514,7 +514,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             last = worker_class(last.out_queue, item_count, **kwargs)
             last.setDaemon(True)
             last.start()
-        return (in_queue, start, last)
+        return in_queue, start, last
 
     def test_thread_pipeline_thread_parse(self):
         item_count = self.item_count

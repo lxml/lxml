@@ -11,7 +11,7 @@ def exec_(code, glob):
     if sys.version_info[0] >= 3:
         exec(code, glob)
     else:
-        exec("exec code in glob")
+        exec "exec code in glob"
 
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
@@ -223,7 +223,7 @@ class TreeBenchMark(object):
                 for i in range(20 * TREE_FACTOR):
                     SubElement(el, tag).tail = text
         t = current_time() - t
-        return (root, t)
+        return root, t
 
     def _setup_tree2(self, text, attributes):
         "tree with 520 * TREE_FACTOR 2nd level and 26 3rd level children"
@@ -239,7 +239,7 @@ class TreeBenchMark(object):
                 for ch2 in atoz:
                     SubElement(el, "{cdefg}%s00001" % ch2).tail = text
         t = current_time() - t
-        return (root, t)
+        return root, t
 
     def _setup_tree3(self, text, attributes):
         "tree of depth 8 + TREE_FACTOR with 3 children per node"
@@ -255,7 +255,7 @@ class TreeBenchMark(object):
             child.text = text
             child.tail = text
         t = current_time() - t
-        return (root, t)
+        return root, t
 
     def _setup_tree4(self, text, attributes):
         "small tree with 26 2nd level and 2 3rd level children"
@@ -269,7 +269,7 @@ class TreeBenchMark(object):
             SubElement(el, "{cdefg}a00001", attributes).tail = text
             SubElement(el, "{cdefg}z00000", attributes).tail = text
         t = current_time() - t
-        return (root, t)
+        return root, t
 
     def benchmarks(self):
         """Returns a list of all benchmarks.
@@ -350,7 +350,7 @@ def buildSuites(benchmark_class, etrees, selected):
                               if match(b[0]) ] ]
                        for bs in benchmarks ]
 
-    return (benchmark_suites, benchmarks)
+    return benchmark_suites, benchmarks
 
 def build_treeset_name(trees, tn, an, serialized, children):
     text = {0:'-', 1:'S', 2:'U'}[tn]

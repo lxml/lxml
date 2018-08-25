@@ -418,15 +418,15 @@ cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val):
     out[0] = 'x'
     out += 1
 
-    if (val < 0x10):
+    if val < 0x10:
         ptr = out
-    elif (val < 0x100):
+    elif val < 0x100:
         ptr = out + 1
-    elif (val < 0x1000):
+    elif val < 0x1000:
         ptr = out + 2
-    elif (val < 0x10000):
+    elif val < 0x10000:
         ptr = out + 3
-    elif (val < 0x100000):
+    elif val < 0x100000:
         ptr = out + 4
     else:
         ptr = out + 5
@@ -495,56 +495,56 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
         return
 
     base = cur = <const char*>string
-    while (cur[0] != 0):
-        if (cur[0] == '\n'):
-            if (base != cur):
+    while cur[0] != 0:
+        if cur[0] == '\n':
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 5, "&#10;")
             cur += 1
             base = cur
 
-        elif (cur[0] == '\r'):
-            if (base != cur):
+        elif cur[0] == '\r':
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 5, "&#13;")
             cur += 1
             base = cur
 
-        elif (cur[0] == '\t'):
-            if (base != cur):
+        elif cur[0] == '\t':
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 4, "&#9;")
             cur += 1
             base = cur
 
-        elif (cur[0] == '"'):
-            if (base != cur):
+        elif cur[0] == '"':
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 6, "&quot;")
             cur += 1
             base = cur
 
-        elif (cur[0] == '<'):
-            if (base != cur):
+        elif cur[0] == '<':
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 4, "&lt;")
             cur += 1
             base = cur
 
-        elif (cur[0] == '>'):
-            if (base != cur):
+        elif cur[0] == '>':
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 4, "&gt;")
             cur += 1
             base = cur
-        elif (cur[0] == '&'):
-            if (base != cur):
+        elif cur[0] == '&':
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 5, "&amp;")
@@ -553,23 +553,23 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
 
         elif (<const unsigned char>cur[0] >= 0x80) and (cur[1] != 0):
 
-            if (base != cur):
+            if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             ucur = <const unsigned char *>cur
 
-            if (ucur[0] < 0xC0):
+            if ucur[0] < 0xC0:
                 # invalid UTF-8 sequence
                 val = ucur[0]
                 l = 1
 
-            elif (ucur[0] < 0xE0):
+            elif ucur[0] < 0xE0:
                 val = (ucur[0]) & 0x1F
                 val <<= 6
                 val |= (ucur[1]) & 0x3F
                 l = 2
 
-            elif ((ucur[0] < 0xF0) and (ucur[2] != 0)):
+            elif (ucur[0] < 0xF0) and (ucur[2] != 0):
                 val = (ucur[0]) & 0x0F
                 val <<= 6
                 val |= (ucur[1]) & 0x3F
@@ -577,7 +577,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
                 val |= (ucur[2]) & 0x3F
                 l = 3
 
-            elif ((ucur[0] < 0xF8) and (ucur[2] != 0) and (ucur[3] != 0)):
+            elif (ucur[0] < 0xF8) and (ucur[2] != 0) and (ucur[3] != 0):
                 val = (ucur[0]) & 0x07
                 val <<= 6
                 val |= (ucur[1]) & 0x3F
@@ -591,7 +591,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
                 val = ucur[0]
                 l = 1
 
-            if ((l == 1) or (not tree.xmlIsCharQ(val))):
+            if (l == 1) or (not tree.xmlIsCharQ(val)):
                 raise ValueError(f"Invalid character: {val:X}")
 
             # We could do multiple things here. Just save
@@ -604,7 +604,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
         else:
             cur += 1
 
-    if (base != cur):
+    if base != cur:
         tree.xmlOutputBufferWrite(buf, cur - base, base)
 
 

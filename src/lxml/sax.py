@@ -25,7 +25,7 @@ def _getNsTag(tag):
     if tag[0] == '{':
         return tuple(tag[1:].split('}', 1))
     else:
-        return (None, tag)
+        return None, tag
 
 
 class ElementTreeContentHandler(ContentHandler):

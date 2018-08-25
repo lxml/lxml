@@ -385,7 +385,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             root_name = None
         else:
             root_name = funicode(c_root_node.name)
-        return (root_name, public_id, sys_url)
+        return root_name, public_id, sys_url
 
     @cython.final
     cdef getxmlinfo(self):
@@ -399,7 +399,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             encoding = None
         else:
             encoding = funicode(c_doc.encoding)
-        return (version, encoding)
+        return version, encoding
 
     @cython.final
     cdef isstandalone(self):

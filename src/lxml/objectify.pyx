@@ -76,7 +76,7 @@ PYTYPE_ATTRIBUTE = None
 cdef unicode TREE_PYTYPE_NAME = u"TREE"
 
 cdef tuple _unicodeAndUtf8(s):
-    return (s, python.PyUnicode_AsUTF8String(s))
+    return s, python.PyUnicode_AsUTF8String(s)
 
 def set_pytype_attribute_tag(attribute_tag=None):
     u"""set_pytype_attribute_tag(attribute_tag=None)
@@ -159,7 +159,7 @@ cdef class ObjectifiedElement(ElementBase):
 
     # pickle support for objectified Element
     def __reduce__(self):
-        return (fromstring, (etree.tostring(self),))
+        return fromstring, (etree.tostring(self),)
 
     property text:
         def __get__(self):
@@ -1359,7 +1359,7 @@ cdef _setupPickle(elementTreeReduceFunction):
                    elementTreeReduceFunction, __unpickleElementTree)
 
 def pickleReduceElementTree(obj):
-    return (__unpickleElementTree, (etree.tostring(obj),))
+    return __unpickleElementTree, (etree.tostring(obj),)
 
 _setupPickle(pickleReduceElementTree)
 del pickleReduceElementTree

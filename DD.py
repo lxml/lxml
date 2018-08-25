@@ -555,7 +555,7 @@ class DD(object):
         if self.minimize:
             (t, csub) = self.test_and_resolve(csub, [], c, direction)
             if t == self.FAIL:
-                return (t, csub)
+                return t, csub
 
         if self.maximize:
             csubbar = self.__listminus(self.CC, csub)
@@ -577,7 +577,7 @@ class DD(object):
             else:
                 t = self.UNRESOLVED
 
-        return (t, csub)
+        return t, csub
 
 
     # Delta Debugging (new ISSTA version)
@@ -746,7 +746,7 @@ class DD(object):
             if n > len(c):
                 # No further minimizing
                 print("dd: done")
-                return (c, c1, c2)
+                return c, c1, c2
 
             self.report_progress(c, "dd")
 
@@ -827,7 +827,7 @@ class DD(object):
                 if n >= len(c):
                     # No further minimizing
                     print("dd: done")
-                    return (c, c1, c2)
+                    return c, c1, c2
 
                 next_n = min(len(c), n * 2)
                 print("dd: increase granularity to %d" % next_n)

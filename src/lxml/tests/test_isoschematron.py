@@ -269,7 +269,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assertTrue(
             isinstance(schematron.validation_report, etree._ElementTree),
             'expected a validation report result tree, got: %s' %
-            (schematron.validation_report))
+            schematron.validation_report)
 
         schematron = isoschematron.Schematron(schema, store_report=False)
         self.assertTrue(schematron(tree_valid), schematron.error_log)
@@ -277,7 +277,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assertTrue(not valid)
         self.assertTrue(schematron.validation_report is None,
             'validation reporting switched off, still: %s' %
-            (schematron.validation_report))
+                        schematron.validation_report)
 
     def test_schematron_store_schematron(self):
         schema = self.parse('''\

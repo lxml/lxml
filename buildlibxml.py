@@ -457,4 +457,4 @@ def build_libxml2xslt(download_dir, build_dir,
         for filename in listdir
         if lib in filename and filename.endswith('.a')]
 
-    return (xml2_config, xslt_config)
+    return xml2_config, xslt_config

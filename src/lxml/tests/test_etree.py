@@ -697,7 +697,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         def name(event, el):
             if event == 'pi':
-                return (el.target, el.text)
+                return el.target, el.text
             else:
                 return el.tag
 

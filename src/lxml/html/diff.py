@@ -621,7 +621,7 @@ def fixup_chunks(chunks):
                     % (cur_word, result, chunk, chunks))
                 cur_word.post_tags.append(chunk)
         else:
-            assert(0)
+            assert 0
 
     if not result:
         return [token('', pre_tags=tag_accum)]
