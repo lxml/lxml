@@ -823,51 +823,37 @@ def xpath_tokenizer(p):
 #
 # xinclude tests (samples from appendix C of the xinclude specification)
 
-XINCLUDE = {}
-
-XINCLUDE["C1.xml"] = """\
+XINCLUDE = {"C1.xml": """\
 <?xml version='1.0'?>
 <document xmlns:xi="http://www.w3.org/2001/XInclude">
   <p>120 Mz is adequate for an average home user.</p>
   <xi:include href="disclaimer.xml"/>
 </document>
-"""
-
-XINCLUDE["disclaimer.xml"] = """\
+""", "disclaimer.xml": """\
 <?xml version='1.0'?>
 <disclaimer>
   <p>The opinions represented herein represent those of the individual
   and should not be interpreted as official policy endorsed by this
   organization.</p>
 </disclaimer>
-"""
-
-XINCLUDE["C2.xml"] = """\
+""", "C2.xml": """\
 <?xml version='1.0'?>
 <document xmlns:xi="http://www.w3.org/2001/XInclude">
   <p>This document has been accessed
   <xi:include href="count.txt" parse="text"/> times.</p>
 </document>
-"""
-
-XINCLUDE["count.txt"] = "324387"
-
-XINCLUDE["C3.xml"] = """\
+""", "count.txt": "324387", "C3.xml": """\
 <?xml version='1.0'?>
 <document xmlns:xi="http://www.w3.org/2001/XInclude">
   <p>The following is the source of the "data.xml" resource:</p>
   <example><xi:include href="data.xml" parse="text"/></example>
 </document>
-"""
-
-XINCLUDE["data.xml"] = """\
+""", "data.xml": """\
 <?xml version='1.0'?>
 <data>
   <item><![CDATA[Brooks & Shields]]></item>
 </data>
-"""
-
-XINCLUDE["C5.xml"] = """\
+""", "C5.xml": """\
 <?xml version='1.0'?>
 <div xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="example.txt" parse="text">
@@ -878,15 +864,14 @@ XINCLUDE["C5.xml"] = """\
     </xi:fallback>
   </xi:include>
 </div>
-"""
-
-XINCLUDE["default.xml"] = """\
+""", "default.xml": """\
 <?xml version='1.0'?>
 <document xmlns:xi="http://www.w3.org/2001/XInclude">
   <p>Example.</p>
   <xi:include href="samples/simple.xml"/>
 </document>
-"""
+"""}
+
 
 def xinclude_loader(href, parse="xml", encoding=None):
     try:
