@@ -1102,8 +1102,8 @@ cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
         tree.xmlAddPrevSibling(c_target, c_copy)
         c_sibling = c_sibling.next
     while c_sibling.next != NULL and \
-            (c_sibling.next.type == tree.XML_PI_NODE or \
-                 c_sibling.next.type == tree.XML_COMMENT_NODE):
+            (c_sibling.next.type == tree.XML_PI_NODE or
+             c_sibling.next.type == tree.XML_COMMENT_NODE):
         c_sibling = c_sibling.next
         c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
         if c_copy is NULL:
