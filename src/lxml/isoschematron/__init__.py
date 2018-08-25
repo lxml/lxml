@@ -232,11 +232,17 @@ class Schematron(_etree._Validator):
     _validation_errors = ASSERTS_ONLY
 
     def __init__(self, etree=None, file=None, include=True, expand=True,
-                 include_params={}, expand_params={}, compile_params={},
+                 include_params=None, expand_params=None, compile_params=None,
                  store_schematron=False, store_xslt=False, store_report=False,
                  phase=None, error_finder=ASSERTS_ONLY):
         super(Schematron, self).__init__()
 
+        if include_params is None:
+            include_params = {}
+        if expand_params is None:
+            expand_params = {}
+        if compile_params is None:
+            compile_params = {}
         self._store_report = store_report
         self._schematron = None
         self._validator_xslt = None

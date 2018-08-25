@@ -428,9 +428,11 @@ class DD(object):
 
 
     # Delta Debugging (old ESEC/FSE version)
-    def old_dd(self, c, r = [], n = 2):
+    def old_dd(self, c, r=None, n = 2):
         """Return the failure-inducing subset of C"""
 
+        if r is None:
+            r = []
         assert self.test([]) == dd.PASS
         assert self.test(c)  == dd.FAIL
 
