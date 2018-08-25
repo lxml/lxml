@@ -447,7 +447,7 @@ class DD(object):
     def _old_dd(self, c, r, n):
         """Stub to overload in subclasses"""
 
-        if r == []:
+        if not r:
             assert self.test([]) == self.PASS
             assert self.test(c)  == self.FAIL
         else:
@@ -498,7 +498,7 @@ class DD(object):
 
 
                 doubled =  self.__listintersect(cbar, cs[i])
-                if doubled != []:
+                if doubled:
                     cs[i] = self.__listminus(cs[i], doubled)
 
 
@@ -661,7 +661,7 @@ class DD(object):
                     t, cbars[i] = self.test_mix(cbars[i], c, self.ADD)
 
                     doubled = self.__listintersect(cbars[i], cs[i])
-                    if doubled != []:
+                    if doubled:
                         cs[i] = self.__listminus(cs[i], doubled)
 
                     if t == self.FAIL:
@@ -864,7 +864,7 @@ if __name__ == '__main__':
             return self.PASS
 
         def _test_b(self, c):
-            if c == []:
+            if not c:
                 return self.PASS
             if 1 in c and 2 in c and 3 in c and 4 in c and \
                5 in c and 6 in c and 7 in c and 8 in c:
