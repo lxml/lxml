@@ -6,8 +6,8 @@
 #ifndef PY_VERSION_HEX
 #  error the development package of Python (header files etc.) is not installed correctly
 #else
-#  if PY_VERSION_HEX < 0x02060000 || PY_MAJOR_VERSION >= 3 && PY_VERSION_HEX < 0x03020000
-#  error this version of lxml requires Python 2.6, 2.7, 3.2 or later
+#  if PY_VERSION_HEX < 0x02070000 || PY_MAJOR_VERSION >= 3 && PY_VERSION_HEX < 0x03030000
+#  error this version of lxml requires Python 2.7, 3.3 or later
 #  endif
 #endif
 
@@ -262,8 +262,6 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
         (((c_node)->ns == 0) ? 0 : ((c_node)->ns->href))
 
 
-/* PyCapsule was added in Py2.7 */
-#if PY_VERSION_HEX >= 0x02070000
 #include "string.h"
 static void* lxml_unpack_xmldoc_capsule(PyObject* capsule, int* is_owned) {
     xmlDoc *c_doc;
@@ -301,9 +299,6 @@ static void* lxml_unpack_xmldoc_capsule(PyObject* capsule, int* is_owned) {
     }
     return c_doc;
 }
-#else
-#  define lxml_unpack_xmldoc_capsule(capsule, is_owned)  ((((void)capsule, 0) || ((void)is_owned, 0)) ? NULL : NULL)
-#endif
 
 /* Macro pair implementation of a depth first tree walker
  *

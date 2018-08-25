@@ -2621,9 +2621,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
     suite.addTests(doctest.DocTestSuite(objectify))
-    if sys.version_info >= (2,4):
-        suite.addTests(
-            [make_doctest('../../../doc/objectify.txt')])
+    suite.addTests([make_doctest('../../../doc/objectify.txt')])
     return suite
 
 if __name__ == '__main__':

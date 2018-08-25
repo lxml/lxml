@@ -7,23 +7,9 @@ except ImportError:                     # python 3
 import sys
 import tempfile
 import unittest
-try:
-    from unittest import skipUnless
-except ImportError:
-    # sys.version < (2, 7)
-    def skipUnless(condition, reason):
-        return lambda f: condition and f or None
+from unittest import skipUnless
 
-if sys.version_info < (2,6):
-    class NamedTemporaryFile(object):
-        def __init__(self, delete=True, **kwargs):
-            self._tmpfile = tempfile.NamedTemporaryFile(**kwargs)
-        def close(self):
-            self._tmpfile.flush()
-        def __getattr__(self, name):
-            return getattr(self._tmpfile, name)
-else:
-    NamedTemporaryFile = tempfile.NamedTemporaryFile
+NamedTemporaryFile = tempfile.NamedTemporaryFile
 
 from lxml.builder import ElementMaker
 from lxml.etree import Element, ElementTree, ParserError

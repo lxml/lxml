@@ -14,8 +14,6 @@ DOC_NAME = b'libxml2:xmlDoc'
 DESTRUCTOR_NAME = b'destructor:xmlFreeDoc'
 
 
-@skipIf(sys.version_info[:2] < (2, 7),
-        'Not supported for python < 2.7')
 class ExternalDocumentTestCase(HelperTestCase):
     def setUp(self):
         import ctypes

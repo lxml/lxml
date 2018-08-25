@@ -15,16 +15,7 @@ from common_imports import etree, ElementTree, _str, _bytes
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 from common_imports import read_file, write_to_file, BytesIO
 
-if sys.version_info < (2,6):
-    class NamedTemporaryFile(object):
-        def __init__(self, delete=True, **kwargs):
-            self._tmpfile = tempfile.NamedTemporaryFile(**kwargs)
-        def close(self):
-            self._tmpfile.flush()
-        def __getattr__(self, name):
-            return getattr(self._tmpfile, name)
-else:
-    NamedTemporaryFile = tempfile.NamedTemporaryFile
+NamedTemporaryFile = tempfile.NamedTemporaryFile
 
 
 class _IOTestCaseBase(HelperTestCase):

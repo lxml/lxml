@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Web IO test cases that need Python 2.5+ (wsgiref)
+Web IO test cases (wsgiref)
 """
 
 from __future__ import with_statement

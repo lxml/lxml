@@ -27,11 +27,6 @@ except NameError:
     # Python 3
     unicode = str
 try:
-    bytes
-except NameError:
-    # Python < 2.6
-    bytes = str
-try:
     basestring
 except NameError:
     basestring = (str, bytes)

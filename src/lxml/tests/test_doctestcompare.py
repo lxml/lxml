@@ -123,8 +123,7 @@ class DoctestCompareTest(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    if sys.version_info >= (2,4):
-        suite.addTests([unittest.makeSuite(DoctestCompareTest)])
+    suite.addTests([unittest.makeSuite(DoctestCompareTest)])
     return suite
 
 
