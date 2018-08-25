@@ -4101,7 +4101,7 @@ class _XMLPullParserTest(unittest.TestCase):
 
     def test_events_sequence(self):
         # Test that events can be some sequence that's not just a tuple or list
-        eventset = set(['end', 'start'])
+        eventset = {'end', 'start'}
         parser = self.etree.XMLPullParser(events=eventset)
         self._feed(parser, "<foo>bar</foo>")
         self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])

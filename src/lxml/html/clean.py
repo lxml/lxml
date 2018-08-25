@@ -207,7 +207,7 @@ class Cleaner(object):
     safe_attrs = defs.safe_attrs
     add_nofollow = False
     host_whitelist = ()
-    whitelist_tags = set(['iframe', 'embed'])
+    whitelist_tags = {'iframe', 'embed'}
 
     def __init__(self, **kw):
         for name, value in kw.items():
