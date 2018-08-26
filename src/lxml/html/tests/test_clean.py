@@ -73,7 +73,6 @@ class CleanerTest(unittest.TestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([make_doctest('test_clean.txt')])
-    if LIBXML_VERSION >= (2,6,31):
-        suite.addTests([make_doctest('test_clean_embed.txt')])
+    suite.addTests([make_doctest('test_clean_embed.txt')])
     suite.addTests(unittest.makeSuite(CleanerTest))
     return suite

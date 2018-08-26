@@ -1503,42 +1503,41 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml = '<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
         self.assertRaises(_LocalException, parse, BytesIO(xml), parser)
 
-    if etree.LIBXML_VERSION > (2,6,20):
-        def test_entity_parse(self):
-            parse = self.etree.parse
-            tostring = self.etree.tostring
-            parser = self.etree.XMLParser(resolve_entities=False)
-            Entity = self.etree.Entity
+    def test_entity_parse(self):
+        parse = self.etree.parse
+        tostring = self.etree.tostring
+        parser = self.etree.XMLParser(resolve_entities=False)
+        Entity = self.etree.Entity
 
-            xml = _bytes('<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>')
-            tree = parse(BytesIO(xml), parser)
-            root = tree.getroot()
-            self.assertEqual(root[0].tag, Entity)
-            self.assertEqual(root[0].text, "&myentity;")
-            self.assertEqual(root[0].tail, None)
-            self.assertEqual(root[0].name, "myentity")
+        xml = _bytes('<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>')
+        tree = parse(BytesIO(xml), parser)
+        root = tree.getroot()
+        self.assertEqual(root[0].tag, Entity)
+        self.assertEqual(root[0].text, "&myentity;")
+        self.assertEqual(root[0].tail, None)
+        self.assertEqual(root[0].name, "myentity")
 
-            self.assertEqual(_bytes('<doc>&myentity;</doc>'),
-                              tostring(root))
+        self.assertEqual(_bytes('<doc>&myentity;</doc>'),
+                          tostring(root))
 
-        def test_entity_restructure(self):
-            xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
-                <root>
-                  <child1/>
-                  <child2/>
-                  <child3>&nbsp;</child3>
-                </root>''')
+    def test_entity_restructure(self):
+        xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
+            <root>
+              <child1/>
+              <child2/>
+              <child3>&nbsp;</child3>
+            </root>''')
 
-            parser = self.etree.XMLParser(resolve_entities=False)
-            root = etree.fromstring(xml, parser)
-            self.assertEqual([ el.tag for el in root ],
-                              ['child1', 'child2', 'child3'])
+        parser = self.etree.XMLParser(resolve_entities=False)
+        root = etree.fromstring(xml, parser)
+        self.assertEqual([ el.tag for el in root ],
+                          ['child1', 'child2', 'child3'])
 
-            root[0] = root[-1]
-            self.assertEqual([ el.tag for el in root ],
-                              ['child3', 'child2'])
-            self.assertEqual(root[0][0].text, '&nbsp;')
-            self.assertEqual(root[0][0].name, 'nbsp')
+        root[0] = root[-1]
+        self.assertEqual([ el.tag for el in root ],
+                          ['child3', 'child2'])
+        self.assertEqual(root[0][0].text, '&nbsp;')
+        self.assertEqual(root[0][0].name, 'nbsp')
 
     def test_entity_append(self):
         Entity = self.etree.Entity
