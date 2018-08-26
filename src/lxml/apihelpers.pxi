@@ -273,7 +273,7 @@ cdef _iter_attrib(attrib):
     # attrib will usually be a plain unordered dict
     if type(attrib) is dict:
         return sorted(attrib.items())
-    elif isinstance(attrib, _Attrib) or (isinstance(attrib, OrderedDict)):
+    elif isinstance(attrib, (_Attrib, OrderedDict)):
         return attrib.items()
     else:
         # assume it's an unordered mapping of some kind
