@@ -9,8 +9,6 @@ import tempfile
 import unittest
 from unittest import skipUnless
 
-NamedTemporaryFile = tempfile.NamedTemporaryFile
-
 from lxml.builder import ElementMaker
 from lxml.etree import Element, ElementTree, ParserError
 from lxml.html import html_parser, XHTML_NAMESPACE
@@ -304,7 +302,7 @@ class Test_parse(unittest.TestCase):
         return parse(*args, **kwargs)
 
     def make_temp_file(self, contents=''):
-        tmpfile = NamedTemporaryFile(delete=False)
+        tmpfile = tempfile.NamedTemporaryFile(delete=False)
         try:
             tmpfile.write(contents.encode('utf8'))
             tmpfile.flush()
