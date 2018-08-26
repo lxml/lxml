@@ -440,9 +440,9 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
 
     def test_void_elements(self):
         # http://www.w3.org/TR/html5/syntax.html#elements-0
-        void_elements = {"area", "base", "br", "col", "embed", "hr", "img",
-                         "input", "keygen", "link", "meta", "param", "source",
-                         "track", "wbr"}
+        void_elements = {
+            "area", "base", "br", "col", "embed", "hr", "img", "input",
+            "keygen", "link", "meta", "param", "source", "track", "wbr"}
 
         # FIXME: These don't get serialized as void elements.
         void_elements.difference_update([
