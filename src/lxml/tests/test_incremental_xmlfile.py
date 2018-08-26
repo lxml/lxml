@@ -82,7 +82,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
         tree = self._parse_file()
         self.assertTrue(tree is not None)
         self.assertEqual(100, len(tree.getroot()))
-        self.assertEqual({'test'}, set(el.tag for el in tree.getroot()))
+        self.assertEqual({'test'}, {el.tag for el in tree.getroot()})
 
     def test_namespace_nsmap(self):
         with etree.xmlfile(self._file) as xf:
