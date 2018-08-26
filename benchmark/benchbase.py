@@ -11,7 +11,7 @@ def exec_(code, glob):
     if sys.version_info[0] >= 3:
         exec(code, glob)
     else:
-        exec "exec code in glob"
+        exec("exec code in glob")
 
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
