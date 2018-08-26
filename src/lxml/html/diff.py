@@ -799,7 +799,6 @@ def _move_el_inside_block(el, tag):
         if _contains_block_level_tag(child):
             break
     else:
-        import sys
         # No block-level tags in any child
         children_tag = etree.Element(tag)
         children_tag.text = el.text

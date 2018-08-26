@@ -105,6 +105,5 @@ def translate_all(dir):
             translate_file(fn)
         
 if __name__ == '__main__':
-    import sys
     translate_all(os.path.join(os.path.dirname(__file__), 'feedparser-data'))
 

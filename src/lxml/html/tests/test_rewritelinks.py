@@ -1,4 +1,4 @@
-import unittest, sys
+import unittest
 from lxml.tests.common_imports import make_doctest
 
 def test_suite():

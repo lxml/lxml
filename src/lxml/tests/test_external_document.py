@@ -5,10 +5,9 @@ Test cases related to direct loading of external libxml2 documents
 
 from __future__ import absolute_import
 
-import sys
 import unittest
 
-from .common_imports import HelperTestCase, etree, skipIf
+from .common_imports import HelperTestCase, etree
 
 DOC_NAME = b'libxml2:xmlDoc'
 DESTRUCTOR_NAME = b'destructor:xmlFreeDoc'

@@ -1,6 +1,5 @@
-import unittest, sys
+import unittest
 from lxml.tests.common_imports import make_doctest
-import lxml.html
 
 def test_suite():
     suite = unittest.TestSuite()

@@ -1,6 +1,5 @@
-import unittest, sys
+import unittest
 from lxml.tests.common_imports import make_doctest
-from lxml.etree import LIBXML_VERSION
 
 import lxml.html
 from lxml.html.clean import Cleaner, clean_html
