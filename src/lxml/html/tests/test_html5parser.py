@@ -328,7 +328,7 @@ class Test_parse(unittest.TestCase):
             try:
                 tmpfile.close()
             finally:
-                os.unlink(tempfile.name)
+                os.unlink(tmpfile.name)
             raise
 
     def test_with_file_object(self):
