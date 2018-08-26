@@ -538,10 +538,10 @@ _avoid_hosts = [
 
 _avoid_classes = ['nolink']
 
-def autolink(el, link_regexes=None,
-             avoid_elements=None,
-             avoid_hosts=None,
-             avoid_classes=None):
+def autolink(el, link_regexes=_link_regexes,
+             avoid_elements=_avoid_elements,
+             avoid_hosts=_avoid_hosts,
+             avoid_classes=_avoid_classes):
     """
     Turn any URLs into links.
 
@@ -556,14 +556,6 @@ def autolink(el, link_regexes=None,
     If you pass in an element, the element's tail will not be
     substituted, only the contents of the element.
     """
-    if link_regexes is None:
-        link_regexes = _link_regexes
-    if avoid_elements is None:
-        avoid_elements = _avoid_elements
-    if avoid_hosts is None:
-        avoid_hosts = _avoid_hosts
-    if avoid_classes is None:
-        avoid_classes = _avoid_classes
     if el.tag in avoid_elements:
         return
     class_name = el.get('class')
@@ -668,8 +660,8 @@ _avoid_word_break_elements = ['pre', 'textarea', 'code']
 _avoid_word_break_classes = ['nobreak']
 
 def word_break(el, max_width=40,
-               avoid_elements=None,
-               avoid_classes=None,
+               avoid_elements=_avoid_word_break_elements,
+               avoid_classes=_avoid_word_break_classes,
                break_character=unichr(0x200b)):
     """
     Breaks any long words found in the body of the text (not attributes).
@@ -686,10 +678,6 @@ def word_break(el, max_width=40,
     """
     # Character suggestion of &#8203 comes from:
     #   http://www.cs.tut.fi/~jkorpela/html/nobr.html
-    if avoid_elements is None:
-        avoid_elements = _avoid_word_break_elements
-    if avoid_classes is None:
-        avoid_classes = _avoid_word_break_classes
     if el.tag in _avoid_word_break_elements:
         return
     class_name = el.get('class')
