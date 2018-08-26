@@ -823,7 +823,8 @@ def xpath_tokenizer(p):
 #
 # xinclude tests (samples from appendix C of the xinclude specification)
 
-XINCLUDE = {"C1.xml": """\
+XINCLUDE = {
+    "C1.xml": """\
 <?xml version='1.0'?>
 <document xmlns:xi="http://www.w3.org/2001/XInclude">
   <p>120 Mz is adequate for an average home user.</p>
@@ -836,7 +837,8 @@ XINCLUDE = {"C1.xml": """\
   and should not be interpreted as official policy endorsed by this
   organization.</p>
 </disclaimer>
-""", "C2.xml": """\
+""",
+    "C2.xml": """\
 <?xml version='1.0'?>
 <document xmlns:xi="http://www.w3.org/2001/XInclude">
   <p>This document has been accessed
@@ -853,7 +855,8 @@ XINCLUDE = {"C1.xml": """\
 <data>
   <item><![CDATA[Brooks & Shields]]></item>
 </data>
-""", "C5.xml": """\
+""",
+    "C5.xml": """\
 <?xml version='1.0'?>
 <div xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="example.txt" parse="text">
@@ -864,7 +867,8 @@ XINCLUDE = {"C1.xml": """\
     </xi:fallback>
   </xi:include>
 </div>
-""", "default.xml": """\
+""",
+    "default.xml": """\
 <?xml version='1.0'?>
 <document xmlns:xi="http://www.w3.org/2001/XInclude">
   <p>Example.</p>
