@@ -19,7 +19,7 @@ def XMLID(text, parser=None, *, base_url=None):
     dic = {}
     for elem in _find_id_attributes(root):
         dic[elem.get(u'id')] = elem
-    return (root, dic)
+    return root, dic
 
 def XMLDTDID(text, parser=None, *, base_url=None):
     u"""XMLDTDID(text, parser=None, base_url=None)
@@ -37,9 +37,9 @@ def XMLDTDID(text, parser=None, *, base_url=None):
     root = XML(text, parser, base_url=base_url)
     # xml:id spec compatible implementation: use DTD ID attributes from libxml2
     if root._doc._c_doc.ids is NULL:
-        return (root, {})
+        return root, {}
     else:
-        return (root, _IDDict(root))
+        return root, _IDDict(root)
 
 def parseid(source, parser=None, *, base_url=None):
     u"""parseid(source, parser=None)
@@ -53,7 +53,7 @@ def parseid(source, parser=None, *, base_url=None):
     """
     cdef _Document doc
     doc = _parseDocument(source, parser, base_url)
-    return (_elementTreeFactory(doc, None), _IDDict(doc))
+    return _elementTreeFactory(doc, None), _IDDict(doc)
 
 cdef class _IDDict:
     u"""IDDict(self, etree)

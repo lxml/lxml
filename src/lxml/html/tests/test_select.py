@@ -39,7 +39,7 @@ class SelectTest(unittest.TestCase):
     def test_multiple_select_value_multiple_selected_options(self):
         self.assertEqual(
             self._evaluate_select([('a', True), ('b', True)], multiple=True),
-            set(['a', 'b']))
+            {'a', 'b'})
 
 
 def test_suite():

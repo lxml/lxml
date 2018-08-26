@@ -192,8 +192,7 @@ children.  Using the tree defined above, we get:
   >>> [ child.tag for child in root ]
   ['a', 'b', 'c', 'd']
 
-To iterate in the opposite direction, use the builtin ``reversed()`` function
-that exists in Python 2.4 and later.
+To iterate in the opposite direction, use the builtin ``reversed()`` function.
 
 Tree traversal should use the ``element.iter()`` method:
 
@@ -251,7 +250,7 @@ The most common way to traverse an XML tree is depth-first, which
 traverses the tree in document order.  This is implemented by the
 ``.iter()`` method.  While there is no dedicated method for
 breadth-first traversal, it is almost as simple if you use the
-``collections.deque`` type that is available in Python 2.4 and later.
+``collections.deque`` type.
 
 .. sourcecode:: pycon
 

@@ -82,7 +82,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
         tree = self._parse_file()
         self.assertTrue(tree is not None)
         self.assertEqual(100, len(tree.getroot()))
-        self.assertEqual(set(['test']), set(el.tag for el in tree.getroot()))
+        self.assertEqual({'test'}, {el.tag for el in tree.getroot()})
 
     def test_namespace_nsmap(self):
         with etree.xmlfile(self._file) as xf:
@@ -440,11 +440,9 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
 
     def test_void_elements(self):
         # http://www.w3.org/TR/html5/syntax.html#elements-0
-        void_elements = set([
-            "area", "base", "br", "col", "embed", "hr", "img",
-            "input", "keygen", "link", "meta", "param",
-            "source", "track", "wbr"
-        ])
+        void_elements = {
+            "area", "base", "br", "col", "embed", "hr", "img", "input",
+            "keygen", "link", "meta", "param", "source", "track", "wbr"}
 
         # FIXME: These don't get serialized as void elements.
         void_elements.difference_update([

@@ -729,7 +729,7 @@ some ideas to try.
 
 The most simple way to reduce the diversity is by using XSLT
 parameters that you pass at call time to configure the stylesheets.
-The ``partial()`` function in the ``functools`` module of Python 2.5
+The ``partial()`` function in the ``functools`` module
 may come in handy here.  It allows you to bind a set of keyword
 arguments (i.e. stylesheet parameters) to a reference of a callable
 stylesheet.  The same works for instances of the ``XPath()``

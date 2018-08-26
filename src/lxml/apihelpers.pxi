@@ -247,7 +247,7 @@ cdef _iter_nsmap(nsmap):
     if len(nsmap) <= 1:
         return nsmap.items()
     # nsmap will usually be a plain unordered dict => avoid type checking overhead
-    if OrderedDict is not None and type(nsmap) is not dict and isinstance(nsmap, OrderedDict):
+    if type(nsmap) is not dict and isinstance(nsmap, OrderedDict):
         return nsmap.items()  # keep existing order
     if None not in nsmap:
         return sorted(nsmap.items())
@@ -273,8 +273,7 @@ cdef _iter_attrib(attrib):
     # attrib will usually be a plain unordered dict
     if type(attrib) is dict:
         return sorted(attrib.items())
-    elif isinstance(attrib, _Attrib) or (
-            OrderedDict is not None and isinstance(attrib, OrderedDict)):
+    elif isinstance(attrib, (_Attrib, OrderedDict)):
         return attrib.items()
     else:
         # assume it's an unordered mapping of some kind
@@ -1103,8 +1102,8 @@ cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
         tree.xmlAddPrevSibling(c_target, c_copy)
         c_sibling = c_sibling.next
     while c_sibling.next != NULL and \
-            (c_sibling.next.type == tree.XML_PI_NODE or \
-                 c_sibling.next.type == tree.XML_COMMENT_NODE):
+            (c_sibling.next.type == tree.XML_PI_NODE or
+             c_sibling.next.type == tree.XML_COMMENT_NODE):
         c_sibling = c_sibling.next
         c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
         if c_copy is NULL:

@@ -105,10 +105,10 @@ class OutcomeCache(object):
         # Let K0 be the largest element in TAIL such that K0 <= C[START]
         k0 = None
         for k in self.tail.keys():
-            if (k0 == None or k > k0) and k <= c[start]:
+            if (k0 is None or k > k0) and k <= c[start]:
                 k0 = k
 
-        if k0 != None:
+        if k0 is not None:
             return self.tail[k0].lookup_superset(c, start)
         
         return None
@@ -130,20 +130,20 @@ class OutcomeCache(object):
 def oc_test():
     oc = OutcomeCache()
 
-    assert oc.lookup([1, 2, 3]) == None
+    assert oc.lookup([1, 2, 3]) is None
     oc.add([1, 2, 3], 4)
     assert oc.lookup([1, 2, 3]) == 4
-    assert oc.lookup([1, 2, 3, 4]) == None
+    assert oc.lookup([1, 2, 3, 4]) is None
 
-    assert oc.lookup([5, 6, 7]) == None
+    assert oc.lookup([5, 6, 7]) is None
     oc.add([5, 6, 7], 8)
     assert oc.lookup([5, 6, 7]) == 8
     
-    assert oc.lookup([]) == None
+    assert oc.lookup([]) is None
     oc.add([], 0)
     assert oc.lookup([]) == 0
     
-    assert oc.lookup([1, 2]) == None
+    assert oc.lookup([1, 2]) is None
     oc.add([1, 2], 3)
     assert oc.lookup([1, 2]) == 3
     assert oc.lookup([1, 2, 3]) == 4
@@ -154,21 +154,21 @@ def oc_test():
     assert oc.lookup_superset([5, 6]) == 8
     assert oc.lookup_superset([6, 7]) == 8
     assert oc.lookup_superset([7]) == 8
-    assert oc.lookup_superset([]) != None
+    assert oc.lookup_superset([]) is not None
 
-    assert oc.lookup_superset([9]) == None
-    assert oc.lookup_superset([7, 9]) == None
-    assert oc.lookup_superset([-5, 1]) == None
-    assert oc.lookup_superset([1, 2, 3, 9]) == None
-    assert oc.lookup_superset([4, 5, 6, 7]) == None
+    assert oc.lookup_superset([9]) is None
+    assert oc.lookup_superset([7, 9]) is None
+    assert oc.lookup_superset([-5, 1]) is None
+    assert oc.lookup_superset([1, 2, 3, 9]) is None
+    assert oc.lookup_superset([4, 5, 6, 7]) is None
 
     assert oc.lookup_subset([]) == 0
     assert oc.lookup_subset([1, 2, 3]) == 4
     assert oc.lookup_subset([1, 2, 3, 4]) == 4
-    assert oc.lookup_subset([1, 3]) == None
+    assert oc.lookup_subset([1, 3]) is None
     assert oc.lookup_subset([1, 2]) == 3
 
-    assert oc.lookup_subset([-5, 1]) == None
+    assert oc.lookup_subset([-5, 1]) is None
     assert oc.lookup_subset([-5, 1, 2]) == 3
     assert oc.lookup_subset([-5]) == 0
 
@@ -291,7 +291,7 @@ class DD(object):
         # If we had this test before, return its result
         if self.cache_outcomes:
             cached_result = self.outcome_cache.lookup(c)
-            if cached_result != None:
+            if cached_result is not None:
                 return cached_result
 
         if self.monotony:
@@ -387,7 +387,7 @@ class DD(object):
             self.__resolving = 1
             csubr = self.resolve(csubr, c, direction)
 
-            if csubr == None:
+            if csubr is None:
                 # Nothing left to resolve
                 break
             
@@ -406,7 +406,7 @@ class DD(object):
             t = self.test(csubr)
 
         self.__resolving = 0
-        if csubr == None:
+        if csubr is None:
             return self.UNRESOLVED, initial_csub
 
         # assert t == self.PASS or t == self.FAIL
@@ -447,7 +447,7 @@ class DD(object):
     def _old_dd(self, c, r, n):
         """Stub to overload in subclasses"""
 
-        if r == []:
+        if not r:
             assert self.test([]) == self.PASS
             assert self.test(c)  == self.FAIL
         else:
@@ -498,7 +498,7 @@ class DD(object):
 
 
                 doubled =  self.__listintersect(cbar, cs[i])
-                if doubled != []:
+                if doubled:
                     cs[i] = self.__listminus(cs[i], doubled)
 
 
@@ -553,7 +553,7 @@ class DD(object):
         if self.minimize:
             (t, csub) = self.test_and_resolve(csub, [], c, direction)
             if t == self.FAIL:
-                return (t, csub)
+                return t, csub
 
         if self.maximize:
             csubbar = self.__listminus(self.CC, csub)
@@ -575,7 +575,7 @@ class DD(object):
             else:
                 t = self.UNRESOLVED
 
-        return (t, csub)
+        return t, csub
 
 
     # Delta Debugging (new ISSTA version)
@@ -661,7 +661,7 @@ class DD(object):
                     t, cbars[i] = self.test_mix(cbars[i], c, self.ADD)
 
                     doubled = self.__listintersect(cbars[i], cs[i])
-                    if doubled != []:
+                    if doubled:
                         cs[i] = self.__listminus(cs[i], doubled)
 
                     if t == self.FAIL:
@@ -744,7 +744,7 @@ class DD(object):
             if n > len(c):
                 # No further minimizing
                 print("dd: done")
-                return (c, c1, c2)
+                return c, c1, c2
 
             self.report_progress(c, "dd")
 
@@ -825,7 +825,7 @@ class DD(object):
                 if n >= len(c):
                     # No further minimizing
                     print("dd: done")
-                    return (c, c1, c2)
+                    return c, c1, c2
 
                 next_n = min(len(c), n * 2)
                 print("dd: increase granularity to %d" % next_n)
@@ -864,7 +864,7 @@ if __name__ == '__main__':
             return self.PASS
 
         def _test_b(self, c):
-            if c == []:
+            if not c:
                 return self.PASS
             if 1 in c and 2 in c and 3 in c and 4 in c and \
                5 in c and 6 in c and 7 in c and 8 in c:

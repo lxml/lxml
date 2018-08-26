@@ -65,11 +65,8 @@ from os.path import abspath as os_path_abspath
 cdef object BytesIO, StringIO
 from io import BytesIO, StringIO
 
-cdef object OrderedDict = None
-try:
-    from collections import OrderedDict
-except ImportError:
-    pass
+cdef object OrderedDict
+from collections import OrderedDict
 
 cdef object _elementpath
 from lxml import _elementpath
@@ -91,7 +88,7 @@ cdef object ITER_EMPTY = iter(())
 try:
     from collections.abc import MutableMapping  # Py3.3+
 except ImportError:
-    from collections import MutableMapping  # Py2.6+
+    from collections import MutableMapping  # Py2.7
 
 class _ImmutableMapping(MutableMapping):
     def __getitem__(self, key):
@@ -388,7 +385,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             root_name = None
         else:
             root_name = funicode(c_root_node.name)
-        return (root_name, public_id, sys_url)
+        return root_name, public_id, sys_url
 
     @cython.final
     cdef getxmlinfo(self):
@@ -402,7 +399,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             encoding = None
         else:
             encoding = funicode(c_doc.encoding)
-        return (version, encoding)
+        return version, encoding
 
     @cython.final
     cdef isstandalone(self):
@@ -3437,7 +3434,6 @@ def adopt_external_document(capsule, _BaseParser parser=None):
 
     This allows external libraries to build XML/HTML trees using libxml2
     and then pass them efficiently into lxml for further processing.
-    Requires Python 2.7 or later.
 
     If a ``parser`` is provided, it will be used for configuring the
     lxml document.  No parsing will be done.
@@ -3461,9 +3457,6 @@ def adopt_external_document(capsule, _BaseParser parser=None):
     If no copy is made, later modifications of the tree outside of lxml
     should not be attempted after transferring the ownership.
     """
-    if python.PY_VERSION_HEX < 0x02070000:
-        raise NotImplementedError("PyCapsule usage requires Python 2.7+")
-
     cdef xmlDoc* c_doc
     cdef bint is_owned = False
     c_doc = <xmlDoc*> python.lxml_unpack_xmldoc_capsule(capsule, &is_owned)

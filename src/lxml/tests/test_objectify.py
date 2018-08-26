@@ -462,7 +462,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual([root.c1],
                           list(iter(root.c1)))
         self.assertEqual([root.c1.c2[0], root.c1.c2[1], root.c1.c2[2]],
-                          list(iter((root.c1.c2))))
+                         list(iter(root.c1.c2)))
 
     def test_class_lookup(self):
         root = self.XML(xml_str)
@@ -2621,9 +2621,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
     suite.addTests(doctest.DocTestSuite(objectify))
-    if sys.version_info >= (2,4):
-        suite.addTests(
-            [make_doctest('../../../doc/objectify.txt')])
+    suite.addTests([make_doctest('../../../doc/objectify.txt')])
     return suite
 
 if __name__ == '__main__':

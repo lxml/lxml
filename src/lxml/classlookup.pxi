@@ -196,7 +196,7 @@ cdef int _validateNodeClass(xmlNode* c_node, cls) except -1:
     elif c_node.type == tree.XML_PI_NODE:
         expected = PIBase
     else:
-        assert 0, f"Unknown node type: {c_node.type}"
+        assert False, f"Unknown node type: {c_node.type}"
 
     if not (isinstance(cls, type) and issubclass(cls, expected)):
         raise TypeError(
@@ -333,7 +333,7 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
         else:
             return (<ElementDefaultClassLookup>state).pi_class
     else:
-        assert 0, f"Unknown node type: {c_node.type}"
+        assert False, f"Unknown node type: {c_node.type}"
 
 
 ################################################################################

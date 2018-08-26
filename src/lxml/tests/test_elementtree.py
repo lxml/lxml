@@ -3929,9 +3929,9 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertTrue(hasattr(element, 'tail'))
         self._check_string(element.tag)
         self._check_mapping(element.attrib)
-        if element.text != None:
+        if element.text is not None:
             self._check_string(element.text)
-        if element.tail != None:
+        if element.tail is not None:
             self._check_string(element.tail)
         
     def _check_string(self, string):
@@ -4101,7 +4101,7 @@ class _XMLPullParserTest(unittest.TestCase):
 
     def test_events_sequence(self):
         # Test that events can be some sequence that's not just a tuple or list
-        eventset = set(['end', 'start'])
+        eventset = {'end', 'start'}
         parser = self.etree.XMLPullParser(events=eventset)
         self._feed(parser, "<foo>bar</foo>")
         self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])

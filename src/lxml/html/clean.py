@@ -27,11 +27,6 @@ except NameError:
     # Python 3
     unicode = str
 try:
-    bytes
-except NameError:
-    # Python < 2.6
-    bytes = str
-try:
     basestring
 except NameError:
     basestring = (str, bytes)
@@ -212,7 +207,7 @@ class Cleaner(object):
     safe_attrs = defs.safe_attrs
     add_nofollow = False
     host_whitelist = ()
-    whitelist_tags = set(['iframe', 'embed'])
+    whitelist_tags = {'iframe', 'embed'}
 
     def __init__(self, **kw):
         for name, value in kw.items():
