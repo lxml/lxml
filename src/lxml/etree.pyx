@@ -65,7 +65,7 @@ from os.path import abspath as os_path_abspath
 cdef object BytesIO, StringIO
 from io import BytesIO, StringIO
 
-cdef object OrderedDict = None
+cdef object OrderedDict
 from collections import OrderedDict
 
 cdef object _elementpath
