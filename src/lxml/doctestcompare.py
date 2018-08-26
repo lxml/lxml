@@ -209,9 +209,12 @@ class LXMLOutputChecker(OutputChecker):
             else:
                 return value
         html = parser is html_fromstring
-        diff_parts = ['Expected:', self.format_doc(want_doc, html, 2),
-                      'Got:', self.format_doc(got_doc, html, 2),
-                      'Diff:', self.collect_diff(want_doc, got_doc, html, 2)]
+        diff_parts = ['Expected:',
+                      self.format_doc(want_doc, html, 2),
+                      'Got:',
+                      self.format_doc(got_doc, html, 2),
+                      'Diff:',
+                      self.collect_diff(want_doc, got_doc, html, 2)]
         return '\n'.join(diff_parts)
 
     def html_empty_tag(self, el, html=True):
