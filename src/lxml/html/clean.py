@@ -8,9 +8,10 @@ import re
 import copy
 try:
     from urlparse import urlsplit
+    from urllib import unquote_plus
 except ImportError:
     # Python 3
-    from urllib.parse import urlsplit
+    from urllib.parse import urlsplit, unquote_plus
 from lxml import etree
 from lxml.html import defs
 from lxml.html import fromstring, XHTML_NAMESPACE
@@ -482,7 +483,7 @@ class Cleaner(object):
 
     def _remove_javascript_link(self, link):
         # links like "j a v a s c r i p t:" might be interpreted in IE
-        new = _substitute_whitespace('', link)
+        new = _substitute_whitespace('', unquote_plus(link))
         if _is_javascript_scheme(new):
             # FIXME: should this be None to delete?
             return ''
