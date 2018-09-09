@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+4.2.5 (2018-09-09)
+==================
+
+Bugs fixed
+----------
+
+* Javascript URLs that used URL escaping were not removed by the HTML cleaner.
+  Security problem found by Omar Eissa.
+
+
 4.2.4 (2018-08-03)
 ==================
 

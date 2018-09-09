@@ -24,12 +24,16 @@ build_wheel() {
             -w /io/$WHEELHOUSE
 }
 
-assert_importable() {
+run_tests() {
     # Install packages and test
     for PYBIN in /opt/python/*/bin/; do
         ${PYBIN}/pip install $PACKAGE --no-index -f /io/$WHEELHOUSE
 
+        # check import as a quick test
         (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
+
+        # run tests
+        (cd $HOME; ${PYBIN}/python /io/test.py)
     done
 }
 
@@ -76,5 +80,5 @@ show_wheels() {
 prepare_system
 build_wheels
 repair_wheels
-assert_importable
+run_tests
 show_wheels
