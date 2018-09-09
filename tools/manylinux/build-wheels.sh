@@ -31,9 +31,6 @@ run_tests() {
 
         # check import as a quick test
         (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
-
-        # run tests
-        (cd $HOME; ${PYBIN}/python /io/test.py)
     done
 }
 
