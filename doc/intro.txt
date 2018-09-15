@@ -25,7 +25,7 @@ fast, thrilling, powerful, and your code might fail in some horrible way that
 you really shouldn't have to worry about when writing Python code.  lxml
 combines the power of libxml2 with the ease of use of Python.
 
-.. _`a quote by Mark Pilgrim`: http://diveintomark.org/archives/2004/02/18/libxml2
+.. _`a quote by Mark Pilgrim`: https://web.archive.org/web/20110902041836/http://diveintomark.org/archives/2004/02/18/libxml2
 
 
 Aims
