@@ -137,7 +137,8 @@ def remote_listdir(url):
         return _list_dir_urllib(url)
     except IOError:
         assert url.lower().startswith('ftp://')
-        print("Requesting with urllib failed. Falling back to ftplib. Proxy argument will be ignored")
+        print("Requesting with urllib failed. Falling back to ftplib. "
+              "Proxy argument will be ignored for %s" % url)
         return _list_dir_ftplib(url)
 
 
