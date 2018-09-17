@@ -68,6 +68,18 @@ class CleanerTest(unittest.TestCase):
         s = lxml.html.fromstring('<invalid tag>child</another>')
         self.assertEqual('child', clean_html(s).text_content())
 
+    def test_clean_javascript(self):
+        cleaner = Cleaner()
+        js = '<a href="javascrip%0at:alert(xxx)">test clean_html</a>'
+        self.assertEqual(
+            cleaner.clean_html(js), '<a href="">test clean_html</a>')
+        js = '<a href="j a v a s c r i p t:alert(xxx)">test clean_html</a>'
+        self.assertEqual(
+            cleaner.clean_html(js), '<a href="">test clean_html</a>')
+        # correct
+        js = '<a href="www.google.com">test clean_html</a>'
+        self.assertEqual(cleaner.clean_html(js), js)
+
 
 def test_suite():
     suite = unittest.TestSuite()

@@ -465,7 +465,7 @@ class Cleaner(object):
         bad = []
         self._kill_elements(
             doc, lambda el: _conditional_comment_re.search(el.text),
-            etree.Comment)                
+            etree.Comment)
 
     def _kill_elements(self, doc, condition, iterate=None):
         bad = []
@@ -476,8 +476,10 @@ class Cleaner(object):
             el.drop_tree()
 
     def _remove_javascript_link(self, link):
+        from urllib.parse import unquote
         # links like "j a v a s c r i p t:" might be interpreted in IE
-        new = _substitute_whitespace('', link)
+        # links like "javascrip%0at:alert()" will be interpreted
+        new = _substitute_whitespace('', unquote(link))
         if _is_javascript_scheme(new):
             # FIXME: should this be None to delete?
             return ''
@@ -640,7 +642,7 @@ def _link_text(text, link_regexes, avoid_hosts, factory):
         links.append(anchor)
         text = text[end:]
     return leading_text, links
-                
+
 def autolink_html(html, *args, **kw):
     result_type = type(html)
     if isinstance(html, basestring):
@@ -733,4 +735,4 @@ def _insert_break(word, width, break_character):
         word = word[len(start):]
     result += word
     return result
-    
+
