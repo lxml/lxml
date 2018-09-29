@@ -53,6 +53,8 @@
 # you, if needed.
 ##
 
+from __future__ import absolute_import
+
 import re
 
 xpath_tokenizer_re = re.compile(

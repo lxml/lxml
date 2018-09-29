@@ -37,6 +37,8 @@
 The ``E`` Element factory for generating XML documents.
 """
 
+from __future__ import absolute_import
+
 import lxml.etree as ET
 
 from functools import partial

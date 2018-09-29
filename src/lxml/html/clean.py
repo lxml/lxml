@@ -4,6 +4,8 @@ Removes unwanted tags and content.  See the `Cleaner` class for
 details.
 """
 
+from __future__ import absolute_import
+
 import re
 import copy
 try:

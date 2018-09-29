@@ -3,9 +3,21 @@ lxml changelog
 ==============
 
 4.3.0 (2018-??-??)
+==================
+
 Features added
 --------------
+
 * The module ``lxml.sax`` is compiled using Cython in order to speed it up.
+
+
+4.2.6 (2018-??-??)
+==================
+
+Bugs fixed
+----------
+
+* Import warnings in Python 3.6+ were resolved.
 
 
 4.2.5 (2018-09-09)
