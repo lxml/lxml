@@ -10,6 +10,8 @@ the SAX events of an ElementTree against a SAX ContentHandler.
 See http://codespeak.net/lxml/sax.html
 """
 
+from __future__ import absolute_import
+
 from xml.sax.handler import ContentHandler
 from lxml import etree
 from lxml.etree import ElementTree, SubElement

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import difflib
 from lxml import etree
 from lxml.html import fragment_fromstring
