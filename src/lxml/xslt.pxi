@@ -526,16 +526,8 @@ cdef class XSLT:
         # anyway.
         if transform_ctxt.dict is not NULL:
             xmlparser.xmlDictFree(transform_ctxt.dict)
-        if kw:
-            # parameter values are stored in the dict
-            # => avoid unnecessarily cluttering the global dict
-            transform_ctxt.dict = xmlparser.xmlDictCreateSub(self._c_style.doc.dict)
-            if transform_ctxt.dict is NULL:
-                xslt.xsltFreeTransformContext(transform_ctxt)
-                raise MemoryError()
-        else:
-            transform_ctxt.dict = self._c_style.doc.dict
-            xmlparser.xmlDictReference(transform_ctxt.dict)
+        transform_ctxt.dict = self._c_style.doc.dict
+        xmlparser.xmlDictReference(transform_ctxt.dict)
 
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
