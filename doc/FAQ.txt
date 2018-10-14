@@ -218,8 +218,8 @@ not take advantage of lxml's enhanced feature set.
   a query framework for XML/HTML, similar to jQuery for JavaScript
 * `python-docx <http://github.com/mikemaccana/python-docx>`_,
   a package for handling Microsoft's Word OpenXML format
-* `Rambler <http://beta.rambler.ru/srch?query=python+lxml&searchtype=web>`_,
-  a meta search engine that aggregates different data sources
+* `Rambler <https://www.rambler.ru/>`_,
+  news aggregator on Runet
 * `rdfadict <http://pypi.python.org/pypi/rdfadict>`_,
   an RDFa parser with a simple dictionary-like interface.
 * `xupdate-processor <http://pypi.python.org/pypi/xupdate-processor>`_,
