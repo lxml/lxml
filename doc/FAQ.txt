@@ -219,7 +219,7 @@ not take advantage of lxml's enhanced feature set.
 * `python-docx <http://github.com/mikemaccana/python-docx>`_,
   a package for handling Microsoft's Word OpenXML format
 * `Rambler <https://www.rambler.ru/>`_,
-  the biggest news aggregator on Runet (TNS Web Index)
+  news aggregator on Runet
 * `rdfadict <http://pypi.python.org/pypi/rdfadict>`_,
   an RDFa parser with a simple dictionary-like interface.
 * `xupdate-processor <http://pypi.python.org/pypi/xupdate-processor>`_,
