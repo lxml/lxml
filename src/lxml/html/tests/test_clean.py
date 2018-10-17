@@ -1,6 +1,5 @@
-import unittest, sys
+import unittest
 from lxml.tests.common_imports import make_doctest
-from lxml.etree import LIBXML_VERSION
 
 import lxml.html
 from lxml.html.clean import Cleaner, clean_html
@@ -72,9 +71,7 @@ class CleanerTest(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    if sys.version_info >= (2,4):
-        suite.addTests([make_doctest('test_clean.txt')])
-        if LIBXML_VERSION >= (2,6,31):
-            suite.addTests([make_doctest('test_clean_embed.txt')])
+    suite.addTests([make_doctest('test_clean.txt')])
+    suite.addTests([make_doctest('test_clean_embed.txt')])
     suite.addTests(unittest.makeSuite(CleanerTest))
     return suite

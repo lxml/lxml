@@ -2,7 +2,64 @@
 lxml changelog
 ==============
 
-4.2.2 (2018-??-??)
+4.3.0 (2018-??-??)
+==================
+
+Features added
+--------------
+
+* The module ``lxml.sax`` is compiled using Cython in order to speed it up.
+
+* ElementTreeProducer no longer ignores the namespace prefixes that were available
+  in the element tree, and now only generates nsXX prefixes if undefined prefixes
+  are encountered.
+
+4.2.6 (2018-??-??)
+==================
+
+Bugs fixed
+----------
+
+* Import warnings in Python 3.6+ were resolved.
+
+
+4.2.5 (2018-09-09)
+==================
+
+Bugs fixed
+----------
+
+* Javascript URLs that used URL escaping were not removed by the HTML cleaner.
+  Security problem found by Omar Eissa.
+
+
+4.2.4 (2018-08-03)
+==================
+
+Features added
+--------------
+
+* GH#259: Allow using ``pkg-config`` for build configuration.
+  Patch by Patrick Griffis.
+
+Bugs fixed
+----------
+
+* LP#1773749, GH#268: Crash when moving an element to another document with
+  ``Element.insert()``.
+  Patch by Alexander Weggerle.
+
+
+4.2.3 (2018-06-27)
+==================
+
+Bugs fixed
+----------
+
+* Reverted GH#265: lxml links against zlib as a shared library again.
+
+
+4.2.2 (2018-06-22)
 ==================
 
 Bugs fixed
@@ -12,9 +69,8 @@ Bugs fixed
   and the parser participates in a reference cycle.
   Original patch by Julien Greard.
 
-* ElementTreeProducer no longer ignores the namespace prefixes that were available
-  in the element tree, and now only generates nsXX prefixes if undefined prefixes
-  are encountered.
+* GH#265: lxml no longer links against zlib as a shared library, only on static builds.
+  Patch by Nehal J Wani.
 
 
 4.2.1 (2018-03-21)

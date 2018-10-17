@@ -38,7 +38,7 @@ def pygments_directive(name, arguments, options, content, lineno,
                        content_offset, block_text, state, state_machine):
     try:
         lexer = get_lexer_by_name(arguments[0])
-    except ValueError, e:
+    except ValueError:
         # no lexer found - use the text one instead of an exception
         lexer = TextLexer()
     # take an arbitrary option if more than one is given

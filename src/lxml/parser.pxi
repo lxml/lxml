@@ -628,10 +628,10 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                 <bytes>filename, len(<bytes>filename))
         if ctxt.lastError.message is not NULL:
             try:
-                message = (ctxt.lastError.message).decode('utf-8')
+                message = ctxt.lastError.message.decode('utf-8')
             except UnicodeDecodeError:
                 # the filename may be in there => play it safe
-                message = (ctxt.lastError.message).decode('iso8859-1')
+                message = ctxt.lastError.message.decode('iso8859-1')
             message = f"Error reading file '{filename}': {message.strip()}"
         else:
             message = f"Error reading '{filename}'"
@@ -640,7 +640,7 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
         raise error_log._buildParseException(
             XMLSyntaxError, u"Document is not well formed")
     elif ctxt.lastError.message is not NULL:
-        message = (ctxt.lastError.message).strip()
+        message = ctxt.lastError.message.strip()
         code = ctxt.lastError.code
         line = ctxt.lastError.line
         column = ctxt.lastError.int2

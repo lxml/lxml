@@ -24,19 +24,18 @@ build_wheel() {
             -w /io/$WHEELHOUSE
 }
 
-assert_importable() {
+run_tests() {
     # Install packages and test
     for PYBIN in /opt/python/*/bin/; do
         ${PYBIN}/pip install $PACKAGE --no-index -f /io/$WHEELHOUSE
 
+        # check import as a quick test
         (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
     done
 }
 
 prepare_system() {
     #yum install -y zlib-devel
-    # Remove Python 2.6 symlinks
-    rm -f /opt/python/cp26*
     echo "Python versions found: $(cd /opt/python && echo cp* | sed -e 's|[^ ]*-||g')"
 }
 
@@ -45,16 +44,19 @@ build_wheels() {
     test -e "$SDIST" && source="$SDIST" || source=
     FIRST=
     SECOND=
+    THIRD=
     for PYBIN in /opt/python/*/bin; do
         # Install build requirements if we need them and file exists
         test -n "$source" -o ! -e "$REQUIREMENTS" \
             || ${PYBIN}/pip install -r "$REQUIREMENTS"
 
+        echo "Starting build with $($PYBIN/python -V)"
         build_wheel "$PYBIN" "$source" &
-        SECOND=$!
+        THIRD=$!
 
         [ -z "$FIRST" ] || wait ${FIRST}
         FIRST=$SECOND
+        SECOND=$THIRD
     done
     wait
 }
@@ -73,5 +75,5 @@ show_wheels() {
 prepare_system
 build_wheels
 repair_wheels
-assert_importable
+run_tests
 show_wheels

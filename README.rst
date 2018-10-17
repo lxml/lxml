@@ -13,8 +13,8 @@ For issue tracker, see https://bugs.launchpad.net/lxml
 Support the project
 -------------------
 
-lxml has been downloaded from the `Python Package Index`_ more than
-two million times and is also available directly in many package
+lxml has been downloaded from the `Python Package Index`_
+millions of times and is also available directly in many package
 distributions, e.g. for Linux or MacOS-X.
 
 .. _`Python Package Index`: https://pypi.python.org/pypi/lxml
@@ -35,18 +35,23 @@ Notice below, at the bottom of this page.  Thank you for your support.
 
 .. _Donate: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R56JE3VCPDA9N
 
-Please `contact Stefan Behnel`_ for other ways to support the lxml project,
+Please `contact Stefan Behnel <http://consulting.behnel.de/>`_
+for other ways to support the lxml project,
 as well as commercial consulting, customisations and trainings on lxml and
 fast Python XML processing.
 
-.. |Donate| image:: http://lxml.de/paypal_btn_donateCC_LG.png
+.. |Donate| image:: https://lxml.de/paypal_btn_donateCC_LG.png
             :width: 160
             :height: 47
             :alt: Donate to the lxml project
 
-.. _`contact Stefan Behnel`: http://consulting.behnel.de/
 .. _`doc/main.txt`: http://lxml.de/
 .. _`INSTALL.txt`: http://lxml.de/installation.html
+
+`Travis-CI <https://travis-ci.org/>`_ and `AppVeyor <https://www.appveyor.com/>`_
+support the lxml project with their build and CI servers.
+Jetbrains supports the lxml project by donating free licenses of their
+`PyCharm IDE <https://www.jetbrains.com/pycharm/>`_.
 
 
 Legal Notice for Donations

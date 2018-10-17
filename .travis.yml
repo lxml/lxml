@@ -1,18 +1,59 @@
-language: python
+os: linux
 dist: trusty
 sudo: false
 
+language: python
+
+cache:
+  pip: true
+  directories:
+    - $HOME/.ccache
+
 python:
-  - 2.6
   - 2.7
-  - 3.3
-  - 3.4
-  - 3.5
   - 3.6
-  - 3.7-dev
-  - 3.8-dev
-  - pypy
-  - pypy3
+  - 3.5
+  - 3.4
+
+env:
+  global:
+    - USE_CCACHE=1
+    - CCACHE_SLOPPINESS=pch_defines,time_macros
+    - CCACHE_COMPRESS=1
+    - CCACHE_MAXSIZE=70M
+    - PATH="/usr/lib/ccache:$PATH"
+    - LIBXSLT_VERSION=1.1.32
+  matrix:
+    - STATIC_DEPS=true
+    - STATIC_DEPS=false
+
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial    # Required for Python 3.7
+      sudo: required  # travis-ci/travis-ci#9069
+      env: STATIC_DEPS=true
+    - python: 3.7
+      dist: xenial    # Required for Python 3.7
+      sudo: required  # travis-ci/travis-ci#9069
+      env: STATIC_DEPS=false
+    - python: 3.8-dev
+      dist: xenial    # Required for Python 3.7
+      sudo: required  # travis-ci/travis-ci#9069
+      env: STATIC_DEPS=true
+    - python: 3.8-dev
+      dist: xenial    # Required for Python 3.7
+      sudo: required  # travis-ci/travis-ci#9069
+      env: STATIC_DEPS=false
+    - python: pypy
+      env: STATIC_DEPS=false
+    - python: pypy3
+      env: STATIC_DEPS=false
+  allow_failures:
+    - python: 3.7  # Currently needed to avoid waiting forever for the build.
+    - python: 3.8-dev
+    - python: pypy
+    - python: pypy3
 
 install:
     - pip install -U pip wheel
@@ -20,14 +61,6 @@ install:
     - pip install -U beautifulsoup4 cssselect html5lib
 
 script:
-  - CFLAGS="-O0 -g" python -u setup.py build_ext --inplace $(if [ -n "${TRAVIS_PYTHON_VERSION##2.*}" -a -n "${TRAVIS_PYTHON_VERSION##3.[34]*}" ]; then echo -n " -j7 "; fi )
-  - CFLAGS="-O0 -g" PYTHONUNBUFFERED=x make test
-
-matrix:
-  allow_failures:
-    - python: 3.8-dev
-    - python: pypy
-    - python: pypy3
-
-cache:
-  pip: true
+  - CFLAGS="-O0 -g -fPIC" CC="ccache gcc" python -u setup.py build_ext --inplace $(if [ -n "${TRAVIS_PYTHON_VERSION##2.*}" -a -n "${TRAVIS_PYTHON_VERSION##3.[34]*}" ]; then echo -n " -j7 "; fi )
+  - ccache -s || true
+  - CFLAGS="-O0 -g -fPIC" PYTHONUNBUFFERED=x make test

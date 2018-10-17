@@ -102,9 +102,9 @@ def check_element(element):
         print("no tail member")
     check_string(element.tag)
     check_mapping(element.attrib)
-    if element.text != None:
+    if element.text is not None:
         check_string(element.text)
-    if element.tail != None:
+    if element.tail is not None:
         check_string(element.tail)
 
 def check_element_tree(tree):

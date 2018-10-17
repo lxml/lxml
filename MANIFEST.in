@@ -9,7 +9,7 @@ include src/lxml/*.c src/lxml/html/*.c
 recursive-include src *.pyx *.pxd *.pxi *.py
 recursive-include src/lxml lxml.etree.h lxml.etree_api.h etree.h etree_api.h etree_defs.h lxml_endian.h
 recursive-include src/lxml/isoschematron *.rng *.xsl *.txt
-recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd *.xsd *.sch *.html
+recursive-include src/lxml/tests *.rng *.rnc *.xslt *.xml *.dtd *.xsd *.sch *.html
 recursive-include src/lxml/html/tests *.data *.txt
 recursive-include samples *.xml
 recursive-include benchmark *.py

@@ -7,8 +7,8 @@ import os.path
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
 
-if sys.version_info < (2, 6) or sys.version_info[:2] in [(3, 0), (3, 1)]:
-    print("This lxml version requires Python 2.6, 2.7, 3.2 or later.")
+if sys.version_info < (2, 7) or sys.version_info[:2] in [(3, 0), (3, 1), (3, 2), (3, 3)]:
+    print("This lxml version requires Python 2.7, 3.4 or later.")
     sys.exit(1)
 
 try:
@@ -223,10 +223,8 @@ an appropriate version of Cython installed.
     'License :: OSI Approved :: BSD License',
     'Programming Language :: Cython',
     'Programming Language :: Python :: 2',
-    'Programming Language :: Python :: 2.6',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.3',
     'Programming Language :: Python :: 3.4',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',

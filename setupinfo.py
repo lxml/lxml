@@ -14,7 +14,13 @@ except ImportError:
     CYTHON_INSTALLED = False
 
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
-COMPILED_MODULES = ["lxml.builder", "lxml._elementpath", "lxml.html.diff", "lxml.html.clean"]
+COMPILED_MODULES = [
+    "lxml.builder",
+    "lxml._elementpath",
+    "lxml.html.diff",
+    "lxml.html.clean",
+    "lxml.sax",
+]
 HEADER_FILES = ['etree.h', 'etree_api.h']
 
 if hasattr(sys, 'pypy_version_info') or (
@@ -155,21 +161,22 @@ def ext_modules(static_include_dirs, static_library_dirs,
 
     result = []
     for module, src_file in zip(modules, module_files):
+        is_py = module in COMPILED_MODULES
         main_module_source = src_file + (
-            '.c' if not use_cython else '.py' if module in COMPILED_MODULES else '.pyx')
+            '.c' if not use_cython else '.py' if is_py else '.pyx')
         result.append(
             Extension(
                 module,
                 sources = [main_module_source],
                 depends = find_dependencies(module),
                 extra_compile_args = _cflags,
-                extra_link_args = _ldflags,
-                extra_objects = static_binaries,
+                extra_link_args = None if is_py else _ldflags,
+                extra_objects = None if is_py else static_binaries,
                 define_macros = _define_macros,
                 include_dirs = _include_dirs,
-                library_dirs = _library_dirs,
-                runtime_library_dirs = runtime_library_dirs,
-                libraries = _libraries,
+                library_dirs = None if is_py else _library_dirs,
+                runtime_library_dirs = None if is_py else runtime_library_dirs,
+                libraries = None if is_py else _libraries,
             ))
     if CYTHON_INSTALLED and OPTION_WITH_CYTHON_GDB:
         for ext in result:
@@ -268,7 +275,7 @@ def libraries():
     standard_libs = []
     if 'linux' in sys.platform:
         standard_libs.append('rt')
-    if OPTION_STATIC:
+    if not OPTION_BUILD_LIBXML2XSLT:
         standard_libs.append('z')
     standard_libs.append('m')
 
@@ -385,9 +392,15 @@ def check_min_version(version, min_version, error_name):
     return True
 
 
+def get_library_version(config_tool):
+    is_pkgconfig = "pkg-config" in config_tool
+    return run_command(config_tool,
+                       "--modversion" if is_pkgconfig else "--version")
+
+
 def get_library_versions():
-    xml2_version = run_command(find_xml2_config(), "--version")
-    xslt_version = run_command(find_xslt_config(), "--version")
+    xml2_version = get_library_version(find_xml2_config())
+    xslt_version = get_library_version(find_xslt_config())
     return xml2_version, xslt_version
 
 

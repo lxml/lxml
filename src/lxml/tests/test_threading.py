@@ -130,7 +130,7 @@ class ThreadingTestCase(HelperTestCase):
     <xsl:template match="tag" />
     <!-- extend time for parsing + transform -->
 ''' + '\n'.join('<xsl:template match="tag%x" />' % i for i in range(200)) + '''
-    <xsl:foo />
+    <xsl:UnExpectedElement />
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTParseError,
                           etree.XSLT, style)
@@ -153,9 +153,10 @@ class ThreadingTestCase(HelperTestCase):
             self.assertTrue(len(log))
             if last_log is not None:
                 self.assertEqual(len(last_log), len(log))
-            self.assertEqual(4, len(log))
+            self.assertTrue(len(log) >= 2, len(log))
             for error in log:
-                self.assertTrue(':ERROR:XSLT:' in str(error))
+                self.assertTrue(':ERROR:XSLT:' in str(error), str(error))
+            self.assertTrue(any('UnExpectedElement' in str(error) for error in log), log)
             last_log = log
 
     def test_thread_xslt_apply_error_log(self):
@@ -513,7 +514,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             last = worker_class(last.out_queue, item_count, **kwargs)
             last.setDaemon(True)
             last.start()
-        return (in_queue, start, last)
+        return in_queue, start, last
 
     def test_thread_pipeline_thread_parse(self):
         item_count = self.item_count

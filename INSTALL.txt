@@ -41,7 +41,7 @@ see below.
 Requirements
 ------------
 
-You need Python 2.6 or later.
+You need Python 2.7 or 3.4+.
 
 Unless you are using a static binary distribution (e.g. from a
 Windows binary installer), lxml requires libxml2 and libxslt to

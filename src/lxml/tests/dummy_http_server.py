@@ -1,5 +1,5 @@
 """
-Simple HTTP request dumper for tests in Python 2.5+.
+Simple HTTP request dumper for tests.
 """
 
 import sys

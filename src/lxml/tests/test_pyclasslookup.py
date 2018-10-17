@@ -5,7 +5,7 @@ Tests specific to the Python based class lookup.
 """
 
 
-import unittest, operator, os.path, sys
+import unittest, os.path, sys
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
