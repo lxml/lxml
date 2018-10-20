@@ -61,7 +61,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
             encoding = encoding.lower()
             if encoding not in (u'utf8', u'utf-8'):
                 if encoding == u'ascii':
-                    if isutf8(c_text):
+                    if isutf8l(c_text, tree.xmlBufferLength(c_buffer)):
                         # will raise a decode error below
                         needs_conversion = 1
                 else:
