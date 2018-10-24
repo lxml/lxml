@@ -10,6 +10,11 @@ Bugs fixed
 
 * Import warnings in Python 3.6+ were resolved.
 
+Bugs fixed
+----------
+
+* LP#1799755: Fix a DeprecationWarning in Py3.7+.
+
 
 4.2.5 (2018-09-09)
 ==================
