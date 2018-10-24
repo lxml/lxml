@@ -1,4 +1,8 @@
-from collections import MutableSet
+try:
+    from collections.abc import MutableSet
+except ImportError:
+    from collections import MutableSet
+
 
 class SetMixin(MutableSet):
 

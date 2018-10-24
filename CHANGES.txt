@@ -10,6 +10,11 @@ Features added
 
 * The module ``lxml.sax`` is compiled using Cython in order to speed it up.
 
+Bugs fixed
+----------
+
+* LP#1799755: Fix a DeprecationWarning in Py3.7+.
+
 
 4.2.6 (2018-??-??)
 ==================
