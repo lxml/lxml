@@ -273,16 +273,16 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     int standalone) nogil:
     if version is NULL:
         version = <unsigned char*>"1.0"
-    tree.xmlOutputBufferWrite(c_buffer, 15, "<?xml version='")
+    tree.xmlOutputBufferWrite(c_buffer, 15, '''<?xml version="''')
     tree.xmlOutputBufferWriteString(c_buffer, <const_char*>version)
-    tree.xmlOutputBufferWrite(c_buffer, 12, "' encoding='")
+    tree.xmlOutputBufferWrite(c_buffer, 12, '''" encoding="''')
     tree.xmlOutputBufferWriteString(c_buffer, encoding)
     if standalone == 0:
-        tree.xmlOutputBufferWrite(c_buffer, 20, "' standalone='no'?>\n")
+        tree.xmlOutputBufferWrite(c_buffer, 20, '''" standalone="no"?>\n''')
     elif standalone == 1:
-        tree.xmlOutputBufferWrite(c_buffer, 21, "' standalone='yes'?>\n")
+        tree.xmlOutputBufferWrite(c_buffer, 21, '''" standalone="yes"?>\n''')
     else:
-        tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
+        tree.xmlOutputBufferWrite(c_buffer, 4, '''"?>\n''')
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             xmlDoc* c_doc, const_xmlChar* c_root_name,
