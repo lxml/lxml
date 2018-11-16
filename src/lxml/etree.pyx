@@ -3274,9 +3274,9 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     declaration by default.
 
     You can also serialise to a Unicode string without declaration by
-    passing the ``unicode`` function as encoding (or ``str`` in Py3),
-    or the name 'unicode'.  This changes the return value from a byte
-    string to an unencoded unicode string.
+    passing the name ``'unicode'`` as encoding (or the ``str`` function
+    in Py3 or ``unicode`` in Py2).  This changes the return value from
+    a byte string to an unencoded unicode string.
 
     The keyword argument 'pretty_print' (bool) enables formatted XML.
 
