@@ -179,19 +179,19 @@ class ElementTreeProducer(object):
                 siblings.append(sibling)
                 sibling = sibling.getprevious()
             for sibling in siblings[::-1]:
-                self._recursive_saxify(sibling, {})
+                self._recursive_saxify(sibling)
 
-        self._recursive_saxify(element, {})
+        self._recursive_saxify(element)
 
         if hasattr(element, 'getnext'):
             sibling = element.getnext()
             while getattr(sibling, 'tag', None) is ProcessingInstruction:
-                self._recursive_saxify(sibling, {})
+                self._recursive_saxify(sibling)
                 sibling = sibling.getnext()
 
         self._content_handler.endDocument()
 
-    def _recursive_saxify(self, element, prefixes):
+    def _recursive_saxify(self, element):
         content_handler = self._content_handler
         tag = element.tag
         if tag is Comment or tag is ProcessingInstruction:
@@ -202,14 +202,14 @@ class ElementTreeProducer(object):
                 content_handler.characters(element.tail)
             return
 
-        # Get a new copy in this call, so changes doesn't propagate upwards
-        prefixes = prefixes.copy()
+        # Get a new copy in this call, so changes don't propagate upwards
         new_prefixes = []
-        for prefix, ns_uri in element.nsmap.items():
-            if prefixes.get(prefix) != ns_uri:
-                # New or updated namespace
-                new_prefixes.append( (prefix, ns_uri) )
-                prefixes[prefix] = ns_uri
+        parent_nsmap = getattr(element.getparent(), 'nsmap', {})
+        if element.nsmap != parent_nsmap:
+            # There has been updates to the namespace
+            for prefix, ns_uri in element.nsmap.items():
+                if parent_nsmap.get(prefix) != ns_uri:
+                    new_prefixes.append( (prefix, ns_uri) )
 
         build_qname = self._build_qname
         attribs = element.items()
@@ -220,13 +220,13 @@ class ElementTreeProducer(object):
                 attr_ns_tuple = _getNsTag(attr_ns_name)
                 attr_values[attr_ns_tuple] = value
                 attr_qnames[attr_ns_tuple] = build_qname(
-                    attr_ns_tuple[0], attr_ns_tuple[1], prefixes, None)
+                    attr_ns_tuple[0], attr_ns_tuple[1], element.nsmap, -1)
             sax_attributes = self._attr_class(attr_values, attr_qnames)
         else:
             sax_attributes = self._empty_attributes
 
         ns_uri, local_name = _getNsTag(tag)
-        qname = build_qname(ns_uri, local_name, prefixes, element.prefix)
+        qname = build_qname(ns_uri, local_name, element.nsmap, element.prefix)
 
         for prefix, uri in new_prefixes:
             content_handler.startPrefixMapping(prefix, uri)
@@ -235,22 +235,31 @@ class ElementTreeProducer(object):
         if element.text:
             content_handler.characters(element.text)
         for child in element:
-            self._recursive_saxify(child, prefixes)
+            self._recursive_saxify(child)
         content_handler.endElementNS((ns_uri, local_name), qname)
         for prefix, uri in new_prefixes:
             content_handler.endPrefixMapping(prefix)
         if element.tail:
             content_handler.characters(element.tail)
 
-    def _build_qname(self, ns_uri, local_name, prefixes, preferred):
+    def _build_qname(self, ns_uri, local_name, prefixes, preferred_prefix):
         if ns_uri is None:
             return local_name
 
-        if preferred in prefixes and prefixes[preferred] == ns_uri:
-            prefix = preferred
+        if prefixes.get(preferred_prefix) == ns_uri:
+            prefix = preferred_prefix
         else:
-            # Pick the first matching prefix
-            prefix = [pfx for pfx, uri in prefixes.items() if uri == ns_uri][0]
+            # Pick the first matching prefix:
+            for pfx in sorted(prefixes, key=str):
+                if prefixes[pfx] == ns_uri:
+                    prefix = pfx
+                    if pfx is None and preferred_prefix == -1:
+                        # If preferred_prefix is -1, that's a flag to say
+                        # that we want a prefix, any prefix, and only
+                        # accept the default prefix if no other is
+                        # available
+                        continue
+                    break
 
         if prefix is None:
             # Default namespace

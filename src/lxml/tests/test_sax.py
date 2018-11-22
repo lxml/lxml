@@ -13,6 +13,7 @@ if this_dir not in sys.path:
 from common_imports import HelperTestCase, make_doctest, BytesIO, _bytes
 from lxml import sax
 from xml.dom import pulldom
+from xml.sax.handler import ContentHandler
 
 
 class ETreeSaxTestCase(HelperTestCase):
@@ -157,37 +158,6 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEqual(0,
                          len(root))
 
-    def test_element_sax_ns_prefix(self):
-        # The name of the prefix should be preserved
-        tree = self.parse('<a:a xmlns:a="blaA"><b/><c:c xmlns:c="blaC">'
-                          '<d/></c:c></a:a>')
-        a = tree.getroot()
-
-        self.assertEqual(b'<a:a xmlns:a="blaA"><b/><c:c xmlns:c="blaC">'
-                         b'<d/></c:c></a:a>',
-                         self._saxify_serialize(a))
-
-    def test_element_sax_default_ns_prefix(self):
-        # Default prefixes should also not get a generated prefix
-        tree = self.parse('<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
-                          '<d/></c:c></a>')
-        a = tree.getroot()
-
-        self.assertEqual(b'<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
-                         b'<d/></c:c></a>',
-                         self._saxify_serialize(a))
-
-    def test_element_sax_unknown_ns_prefix(self):
-        # Make an element with an unregister prefix
-        tree = self.parse('<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
-                          '<d/></c:c></a>')
-        a = tree.getroot()
-        a.append(a.makeelement('{blaE}e'))
-
-        self.assertEqual(b'<a xmlns="blaA"><b/><c:c xmlns:c="blaC">'
-                         b'<d/></c:c><ns0:e xmlns:ns0="blaE"/></a>',
-                         self._saxify_serialize(a))
-
     def test_etree_sax_handler_default_ns(self):
         handler = sax.ElementTreeContentHandler()
         handler.startDocument()
@@ -327,9 +297,118 @@ class ETreeSaxTestCase(HelperTestCase):
         return f.getvalue().replace(_bytes('\n'), _bytes(''))
 
 
+class SimpleContentHandler(ContentHandler, object):
+    """A SAX content handler that just stores the events"""
+
+    def __init__(self):
+        self.sax_events = []
+        super(SimpleContentHandler, self).__init__()
+
+    def startDocument(self):
+        self.sax_events.append(('startDocument',))
+
+    def endDocument(self):
+        self.sax_events.append(('endDocument',))
+
+    def startPrefixMapping(self, prefix, uri):
+        self.sax_events.append(('startPrefixMapping', prefix, uri))
+
+    def endPrefixMapping(self, prefix):
+        self.sax_events.append(('endPrefixMapping', prefix))
+
+    def startElement(self, name, attrs):
+        self.sax_events.append(('startElement', name, dict(attrs)))
+
+    def endElement(self, name):
+        self.sax_events.append(('endElement', name))
+
+    def startElementNS(self, name, qname, attrs):
+        self.sax_events.append(('startElementNS', name, qname, attrs._qnames))
+
+    def endElementNS(self, name, qname):
+        self.sax_events.append(('endElementNS', name, qname))
+
+    def characters(self, content):
+        self.sax_events.append(('characters', content))
+
+    def ignorableWhitespace(self, whitespace):
+        self.sax_events.append(('ignorableWhitespace', whitespace))
+
+    def processingInstruction(self, target, data):
+        self.sax_events.append(('processingInstruction', target, data))
+
+    def skippedEntity(self, name):
+        self.sax_events.append(('skippedEntity', name))
+
+
+class NSPrefixSaxTestCase(HelperTestCase):
+    """Testing that namespaces generate the right SAX events"""
+
+    def _saxify(self, tree):
+        handler = SimpleContentHandler()
+        sax.ElementTreeProducer(tree, handler).saxify()
+        return handler.sax_events
+
+    def test_element_sax_ns_prefix(self):
+        # The name of the prefix should be preserved, if the uri is unique
+        tree = self.parse('<a:a xmlns:a="blaA" xmlns:c="blaC">'
+                          '<d a:attr="value" c:attr="value" /></a:a>')
+        a = tree.getroot()
+
+        self.assertEqual(
+            [('startElementNS', ('blaA', 'a'), 'a:a', {}),
+             ('startElementNS', (None, 'd'), 'd',
+              {('blaA', 'attr'): 'a:attr', ('blaC', 'attr'): 'c:attr'}),
+             ('endElementNS', (None, 'd'), 'd'),
+             ('endElementNS', ('blaA', 'a'), 'a:a'),
+            ],
+            self._saxify(a)[3:7])
+
+    def test_element_sax_default_ns_prefix(self):
+        # Default prefixes should also not get a generated prefix
+        tree = self.parse('<a xmlns="blaA"><b attr="value" /></a>')
+        a = tree.getroot()
+
+        self.assertEqual(
+            [('startDocument',),
+             # NS prefix should be None:
+             ('startPrefixMapping', None, 'blaA'),
+             ('startElementNS', ('blaA', 'a'), 'a', {}),
+             # Attribute prefix should be None:
+             ('startElementNS', ('blaA', 'b'), 'b', {(None, 'attr'): 'attr'}),
+             ('endElementNS', ('blaA', 'b'), 'b'),
+             ('endElementNS', ('blaA', 'a'), 'a'),
+             # Prefix should be None again:
+             ('endPrefixMapping', None),
+             ('endDocument',)],
+            self._saxify(a))
+
+        # Except for attributes, if there is both a default namespace
+        # and a named namespace with the same uri
+        tree = self.parse('<a xmlns="bla" xmlns:a="bla">'
+                          '<b a:attr="value" /></a>')
+        a = tree.getroot()
+
+        self.assertEqual(
+            ('startElementNS', ('bla', 'b'), 'b', {('bla', 'attr'): 'a:attr'}),
+            self._saxify(a)[4])
+
+    def test_element_sax_twin_ns_prefix(self):
+        # Make an element with an doubly registered uri
+        tree = self.parse('<a xmlns:b="bla" xmlns:c="bla">'
+                          '<d c:attr="attr" /></a>')
+        a = tree.getroot()
+
+        self.assertEqual(
+            # It should get the b prefix in this case
+            ('startElementNS', (None, 'd'), 'd', {('bla', 'attr'): 'b:attr'}),
+            self._saxify(a)[4])
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeSaxTestCase)])
+    suite.addTests([unittest.makeSuite(NSPrefixSaxTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/sax.txt')])
     return suite
