@@ -63,8 +63,8 @@ svrl_validation_errors = _etree.XPath(
 
 
 # RelaxNG validator for schematron schemas
-schematron_schema_valid = _etree.RelaxNG(_etree.parse(
-    os.path.join(_resources_dir, 'rng', 'iso-schematron.rng')))
+schematron_schema_valid = _etree.RelaxNG(
+    file=os.path.join(_resources_dir, 'rng', 'iso-schematron.rng'))
 
 
 def stylesheet_params(**kwargs):
