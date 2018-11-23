@@ -10,7 +10,8 @@ Features added
 
 * The module ``lxml.sax`` is compiled using Cython in order to speed it up.
 
-* Updated ISO-Schematron implementation to 2013 version (now MIT licensed).
+* Updated ISO-Schematron implementation to 2013 version (now MIT licensed)
+  and the corresponding schema to the 2016 version (with optional "properties").
 
 Bugs fixed
 ----------
