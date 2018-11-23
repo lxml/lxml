@@ -83,7 +83,10 @@
           <optional>
             <ref name="diagnostics"/>
           </optional>
-          <ref name="properties"/>
+          <optional>
+            <!-- edited (lxml): required in standard, optional here (since it can be empty anyway) -->
+            <ref name="properties"/>
+          </optional>
         </group>
       </interleave>
     </element>
