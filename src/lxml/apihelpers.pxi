@@ -1340,14 +1340,50 @@ cdef int _addSibling(_Element element, _Element sibling, bint as_next) except -1
     moveNodeToDocument(element._doc, c_source_doc, c_node)
     return 0
 
-cdef inline int isutf8(const_xmlChar* s):
+cdef inline bint isutf8(const_xmlChar* s):
     cdef xmlChar c = s[0]
     while c != c'\0':
         if c & 0x80:
-            return 1
+            return True
         s += 1
         c = s[0]
-    return 0
+    return False
+
+cdef bint isutf8l(const_xmlChar* s, size_t length):
+    """
+    Search for non-ASCII characters in the string, knowing its length in advance.
+    """
+    cdef int i
+    cdef unsigned long non_ascii_mask
+    cdef const unsigned long *lptr = <const unsigned long*> s
+
+    cdef const unsigned long *end = lptr + length // sizeof(unsigned long)
+    if length >= sizeof(non_ascii_mask):
+        # Build constant 0x80808080... mask (and let the C compiler fold it).
+        non_ascii_mask = 0
+        for i in range(sizeof(non_ascii_mask) // 2):
+            non_ascii_mask = (non_ascii_mask << 16) | 0x8080
+
+        # Advance to long-aligned character before we start reading longs.
+        while (<size_t>s) % sizeof(unsigned long) and s < <const_xmlChar *>end:
+            if s[0] & 0x80:
+                return True
+            s += 1
+
+        # Read one long at a time
+        lptr = <const unsigned long*> s
+        while lptr < end:
+            if lptr[0] & non_ascii_mask:
+                return True
+            lptr += 1
+        s = <const_xmlChar *>lptr
+
+    while s < (<const_xmlChar *>end + length % sizeof(unsigned long)):
+        if s[0] & 0x80:
+            return True
+        s += 1
+
+    return False
 
 cdef int _is_valid_xml_ascii(bytes pystring):
     """Check if a string is XML ascii content."""
@@ -1411,7 +1447,7 @@ cdef object funicode(const_xmlChar* s):
         spos += 1
     slen = spos - s
     if spos[0] != c'\0':
-        slen += tree.xmlStrlen(spos)
+        slen += cstring_h.strlen(<const char*> spos)
     if is_non_ascii:
         return s[:slen].decode('UTF-8')
     return <bytes>s[:slen]
@@ -1520,7 +1556,7 @@ cdef object _encodeFilenameUTF8(object filename):
     if filename is None:
         return None
     elif isinstance(filename, bytes):
-        if not isutf8(<bytes>filename):
+        if not isutf8l(<bytes>filename, len(<bytes>filename)):
             # plain ASCII!
             return filename
         c_filename = _cstr(<bytes>filename)
@@ -1657,7 +1693,7 @@ cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
         return python.PyUnicode_FromFormat("{%s}%s", href, name)
     else:
         s = python.PyBytes_FromFormat("{%s}%s", href, name)
-        if python.IS_PYPY and (python.LXML_UNICODE_STRINGS or isutf8(_xcstr(s))):
+        if python.IS_PYPY and (python.LXML_UNICODE_STRINGS or isutf8l(s, len(s))):
             return (<bytes>s).decode('utf8')
         else:
             return s

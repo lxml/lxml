@@ -14,6 +14,11 @@ Features added
   point to the same URI, the first prefix in alphabetical order is used
   for attributes.
 
+Bugs fixed
+----------
+
+* LP#1799755: Fix a DeprecationWarning in Py3.7+.
+
 
 4.2.6 (2018-??-??)
 ==================

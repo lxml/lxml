@@ -46,7 +46,6 @@ import re
 from functools import partial
 
 try:
-    # while unnecessary, importing from 'collections.abc' is the right way to do it
     from collections.abc import MutableMapping, MutableSet
 except ImportError:
     from collections import MutableMapping, MutableSet
