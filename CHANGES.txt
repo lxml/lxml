@@ -14,6 +14,9 @@ Features added
   point to the same URI, the first prefix in alphabetical order is used
   for attributes.
 
+* Updated ISO-Schematron implementation to 2013 version (now MIT licensed)
+  and the corresponding schema to the 2016 version (with optional "properties").
+
 Bugs fixed
 ----------
 

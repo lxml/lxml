@@ -1,8 +1,8 @@
-ISO SCHEMATRON 2009
+ISO SCHEMATRON 2010
 
 XSLT implementation by Rick Jelliffe with assistance from members of Schematron-love-in maillist.
 
-2009-03-18
+2010-04-21
 
 Two distributions are available. One is for XSLT1 engines. 
 The other is for XSLT2 engines, such as SAXON 9.
@@ -13,6 +13,7 @@ This version of Schematron splits the process into a pipeline of several differe
 1) First, preprocess your Schematron schema with iso_dsdl_include.xsl.  
 This is a macro processor to assemble the schema from various parts. 
 If your schema is not in separate parts, you can skip this stage.
+This stage also generates error messages for some common XPath syntax problems.
 
 2) Second, preprocess the output from stage 1 with iso_abstract_expand.xsl.  
 This is a macro processor to convert abstract patterns to real patterns. 
@@ -22,7 +23,7 @@ stage.
 3) Third, compile the Schematron schema into an XSLT script. 
 This will typically use iso_svrl_for_xslt1.xsl or iso_svrl_for_xslt2.xsl 
 (which in turn invoke iso_schematron_skeleton_for_xslt1.xsl or iso_schematron_skeleton_for_saxon.xsl)
-However, other "meta-styleseets" are also in common use; the principle of operation is the same.
+However, other "meta-stylesheets" are also in common use; the principle of operation is the same.
 If your schema uses Schematron phases, supply these as command line/invocation parameters
 to this process.
 

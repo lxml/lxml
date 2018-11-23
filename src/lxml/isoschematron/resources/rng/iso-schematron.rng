@@ -1,9 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright © ISO/IEC 2015 -->
 <!--
-         (c) International Organization for Standardization 2005. 
-        Permission to copy in any form is granted for use with conforming 
-        SGML systems and applications as defined in ISO 8879, 
-        provided this notice is included in all copies.
+  The following permission notice and disclaimer shall be included in all
+  copies of this XML schema ("the Schema"), and derivations of the Schema:
+  
+  Permission is hereby granted, free of charge in perpetuity, to any
+  person obtaining a copy of the Schema, to use, copy, modify, merge and
+  distribute free of charge, copies of the Schema for the purposes of
+  developing, implementing, installing and using software based on the
+  Schema, and to permit persons to whom the Schema is furnished to do so,
+  subject to the following conditions:
+  
+  THE SCHEMA IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SCHEMA OR THE USE OR
+  OTHER DEALINGS IN THE SCHEMA.
+  
+  In addition, any modified copy of the Schema shall include the following
+  notice:
+  
+  "THIS SCHEMA HAS BEEN MODIFIED FROM THE SCHEMA DEFINED IN ISO/IEC 19757-3,
+  AND SHOULD NOT BE INTERPRETED AS COMPLYING WITH THAT STANDARD".
 -->
 <grammar ns="http://purl.oclc.org/dsdl/schematron" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
   <start>
@@ -63,6 +83,10 @@
           <optional>
             <ref name="diagnostics"/>
           </optional>
+          <optional>
+            <!-- edited (lxml): required in standard, optional here (since it can be empty anyway) -->
+            <ref name="properties"/>
+          </optional>
         </group>
       </interleave>
     </element>
@@ -102,6 +126,11 @@
       </optional>
       <optional>
         <attribute name="diagnostics">
+          <data type="IDREFS"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="properties">
           <data type="IDREFS"/>
         </attribute>
       </optional>
@@ -178,9 +207,14 @@
   </define>
   <define name="extends">
     <element name="extends">
-      <attribute name="rule">
-        <data type="IDREF"/>
-      </attribute>
+      <choice>
+        <attribute name="rule">
+          <data type="IDREF"/>
+        </attribute>
+        <attribute name="href">
+          <ref name="uriValue"/>
+        </attribute>
+      </choice>
       <ref name="foreign-empty"/>
     </element>
   </define>
@@ -189,9 +223,14 @@
       <attribute name="name">
         <ref name="nameValue"/>
       </attribute>
-      <attribute name="value">
-        <data type="string" datatypeLibrary=""/>
-      </attribute>
+      <choice>
+        <attribute name="value">
+          <data type="string" datatypeLibrary=""/>
+        </attribute>
+        <oneOrMore>
+          <ref name="foreign-element"/>
+        </oneOrMore>
+      </choice>
     </element>
   </define>
   <define name="name">
@@ -257,6 +296,11 @@
   </define>
   <define name="pattern">
     <element name="pattern">
+      <optional>
+        <attribute name="documents">
+          <ref name="pathValue"/>
+        </attribute>
+      </optional>
       <ref name="rich"/>
       <interleave>
         <ref name="foreign"/>
@@ -367,6 +411,41 @@
       </interleave>
     </element>
   </define>
+  <define name="properties">
+    <element name="properties">
+      <zeroOrMore>
+        <ref name="property"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="property">
+    <element name="property">
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <optional>
+        <attribute name="role">
+          <ref name="roleValue"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="scheme"/>
+      </optional>
+      <interleave>
+        <ref name="foreign"/>
+        <zeroOrMore>
+          <choice>
+            <text/>
+            <ref name="name"/>
+            <ref name="value-of"/>
+            <ref name="emph"/>
+            <ref name="dir"/>
+            <ref name="span"/>
+          </choice>
+        </zeroOrMore>
+      </interleave>
+    </element>
+  </define>
   <define name="report">
     <element name="report">
       <attribute name="test">
@@ -384,6 +463,11 @@
       </optional>
       <optional>
         <attribute name="diagnostics">
+          <data type="IDREFS"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="properties">
           <data type="IDREFS"/>
         </attribute>
       </optional>
@@ -434,6 +518,7 @@
                 <ref name="assert"/>
                 <ref name="report"/>
                 <ref name="extends"/>
+                <ref name="p"/>
               </choice>
             </oneOrMore>
           </group>
@@ -459,6 +544,7 @@
                 <ref name="assert"/>
                 <ref name="report"/>
                 <ref name="extends"/>
+                <ref name="p"/>
               </choice>
             </oneOrMore>
           </group>
@@ -501,6 +587,7 @@
       <attribute name="href">
         <ref name="uriValue"/>
       </attribute>
+      <ref name="foreign-empty"/>
     </element>
   </define>
   <define name="rich">
