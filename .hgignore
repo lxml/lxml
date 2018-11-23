@@ -17,6 +17,7 @@ src/lxml/objectify.c
 src/lxml/lxml.objectify.c
 
 build/
+libs/
 dist/
 wheelhouse/
 wheels/
