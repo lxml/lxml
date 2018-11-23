@@ -8,6 +8,7 @@ cache:
   pip: true
   directories:
     - $HOME/.ccache
+    - libs
 
 python:
   - 2.7
