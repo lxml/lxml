@@ -179,19 +179,19 @@ class ElementTreeProducer(object):
                 siblings.append(sibling)
                 sibling = sibling.getprevious()
             for sibling in siblings[::-1]:
-                self._recursive_saxify(sibling)
+                self._recursive_saxify(sibling, {})
 
-        self._recursive_saxify(element)
+        self._recursive_saxify(element, {})
 
         if hasattr(element, 'getnext'):
             sibling = element.getnext()
             while getattr(sibling, 'tag', None) is ProcessingInstruction:
-                self._recursive_saxify(sibling)
+                self._recursive_saxify(sibling, {})
                 sibling = sibling.getnext()
 
         self._content_handler.endDocument()
 
-    def _recursive_saxify(self, element):
+    def _recursive_saxify(self, element, parent_nsmap):
         content_handler = self._content_handler
         tag = element.tag
         if tag is Comment or tag is ProcessingInstruction:
@@ -202,12 +202,11 @@ class ElementTreeProducer(object):
                 content_handler.characters(element.tail)
             return
 
-        # Get a new copy in this call, so changes don't propagate upwards
+        element_nsmap = element.nsmap
         new_prefixes = []
-        parent_nsmap = getattr(element.getparent(), 'nsmap', {})
-        if element.nsmap != parent_nsmap:
+        if element_nsmap != parent_nsmap:
             # There has been updates to the namespace
-            for prefix, ns_uri in element.nsmap.items():
+            for prefix, ns_uri in element_nsmap.items():
                 if parent_nsmap.get(prefix) != ns_uri:
                     new_prefixes.append( (prefix, ns_uri) )
 
@@ -220,13 +219,15 @@ class ElementTreeProducer(object):
                 attr_ns_tuple = _getNsTag(attr_ns_name)
                 attr_values[attr_ns_tuple] = value
                 attr_qnames[attr_ns_tuple] = build_qname(
-                    attr_ns_tuple[0], attr_ns_tuple[1], element.nsmap, -1)
+                    attr_ns_tuple[0], attr_ns_tuple[1], element_nsmap,
+                    None, True)
             sax_attributes = self._attr_class(attr_values, attr_qnames)
         else:
             sax_attributes = self._empty_attributes
 
         ns_uri, local_name = _getNsTag(tag)
-        qname = build_qname(ns_uri, local_name, element.nsmap, element.prefix)
+        qname = build_qname(ns_uri, local_name, element_nsmap, element.prefix,
+                            False)
 
         for prefix, uri in new_prefixes:
             content_handler.startPrefixMapping(prefix, uri)
@@ -235,36 +236,30 @@ class ElementTreeProducer(object):
         if element.text:
             content_handler.characters(element.text)
         for child in element:
-            self._recursive_saxify(child)
+            self._recursive_saxify(child, element_nsmap)
         content_handler.endElementNS((ns_uri, local_name), qname)
         for prefix, uri in new_prefixes:
             content_handler.endPrefixMapping(prefix)
         if element.tail:
             content_handler.characters(element.tail)
 
-    def _build_qname(self, ns_uri, local_name, prefixes, preferred_prefix):
+    def _build_qname(self, ns_uri, local_name, nsmap, preferred_prefix,
+                     is_attribute):
         if ns_uri is None:
             return local_name
 
-        if prefixes.get(preferred_prefix) == ns_uri:
+        if nsmap.get(preferred_prefix) == ns_uri and not is_attribute:
             prefix = preferred_prefix
         else:
             # Pick the first matching prefix:
-            for pfx in sorted(prefixes, key=str):
-                if prefixes[pfx] == ns_uri:
-                    prefix = pfx
-                    if pfx is None and preferred_prefix == -1:
-                        # If preferred_prefix is -1, that's a flag to say
-                        # that we want a prefix, any prefix, and only
-                        # accept the default prefix if no other is
-                        # available
-                        continue
-                    break
+            prefix = min(pfx for (pfx, uri) in nsmap.items()
+                         if pfx is not None and uri == ns_uri)
 
         if prefix is None:
             # Default namespace
             return local_name
         return prefix + ':' + local_name
+
 
 def saxify(element_or_tree, content_handler):
     """One-shot helper to generate SAX events from an XML tree and fire
