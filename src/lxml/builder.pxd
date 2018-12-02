@@ -1,4 +1,4 @@
-# cython: language_level=3
+# cython: language_level=2
 
 cdef object ET
 cdef object partial
