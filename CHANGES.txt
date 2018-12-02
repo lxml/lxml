@@ -10,9 +10,9 @@ Features added
 
 * The module ``lxml.sax`` is compiled using Cython in order to speed it up.
 
-* ElementTreeProducer now preserves the namespace prefixes. If two prefixes
-  point to the same URI, the first prefix in alphabetical order is used
-  for attributes.
+* GH#267: ElementTreeProducer now preserves the namespace prefixes.  If two
+  prefixes point to the same URI, the first prefix in alphabetical order is used.
+  Patch by Lennart Regebro.
 
 * Updated ISO-Schematron implementation to 2013 version (now MIT licensed)
   and the corresponding schema to the 2016 version (with optional "properties").
@@ -21,6 +21,15 @@ Bugs fixed
 ----------
 
 * LP#1799755: Fix a DeprecationWarning in Py3.7+.
+
+Other changes
+-------------
+
+* GH#270, GH#271: Support for Python 2.6 and 3.3 was removed.
+  Patch by hugovk.
+
+* The minimum dependency versions were raised to libxml2 2.9.2 and libxslt 1.1.27,
+  which were released in 2014 and 2012 respectively.
 
 
 4.2.6 (2018-??-??)
