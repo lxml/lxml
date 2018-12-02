@@ -47,8 +47,9 @@ working Cython installation.  You can use pip_ to install it::
 
 https://github.com/lxml/lxml/blob/master/requirements.txt
 
-lxml currently requires at least Cython 0.20, later release versions
-should work as well.
+lxml currently requires at least Cython 0.26.1, later release versions
+should work as well.  For Python 3.7 support, at least Cython 0.29 is
+required.
 
 
 Github, git and hg
