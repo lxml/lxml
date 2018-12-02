@@ -47,6 +47,11 @@ matrix:
       dist: xenial    # Required for Python 3.7
       sudo: required  # travis-ci/travis-ci#9069
       env: STATIC_DEPS=false
+    - python: 3.6
+      env:
+        - STATIC_DEPS=true
+        - LIBXML2_VERSION=2.9.2  # minimum version requirements
+        - LIBXSLT_VERSION=1.1.27
     - python: pypy
       env: STATIC_DEPS=false
     - python: pypy3
