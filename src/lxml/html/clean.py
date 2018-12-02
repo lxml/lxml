@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 """A cleanup tool for HTML.
 
 Removes unwanted tags and content.  See the `Cleaner` class for

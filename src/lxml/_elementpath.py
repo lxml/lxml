@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 #
 # ElementTree
 # $Id: ElementPath.py 3375 2008-02-13 08:05:08Z fredrik $

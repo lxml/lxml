@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 """
 SAX-based adapter to copy trees from/to the Python standard library.
 

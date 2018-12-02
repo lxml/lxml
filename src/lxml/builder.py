@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 #
 # Element generator factory by Fredrik Lundh.
 #

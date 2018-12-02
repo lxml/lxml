@@ -1,5 +1,6 @@
 # cython: binding=True
 # cython: auto_pickle=False
+# cython: language_level=2
 
 """
 The ``lxml.objectify`` module implements a Python object API for XML.
