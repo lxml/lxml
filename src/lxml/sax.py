@@ -191,7 +191,7 @@ class ElementTreeProducer(object):
 
         self._content_handler.endDocument()
 
-    def _recursive_saxify(self, element, prefixes):
+    def _recursive_saxify(self, element, parent_nsmap):
         content_handler = self._content_handler
         tag = element.tag
         if tag is Comment or tag is ProcessingInstruction:
@@ -202,7 +202,14 @@ class ElementTreeProducer(object):
                 content_handler.characters(element.tail)
             return
 
+        element_nsmap = element.nsmap
         new_prefixes = []
+        if element_nsmap != parent_nsmap:
+            # There has been updates to the namespace
+            for prefix, ns_uri in element_nsmap.items():
+                if parent_nsmap.get(prefix) != ns_uri:
+                    new_prefixes.append( (prefix, ns_uri) )
+
         build_qname = self._build_qname
         attribs = element.items()
         if attribs:
@@ -212,13 +219,15 @@ class ElementTreeProducer(object):
                 attr_ns_tuple = _getNsTag(attr_ns_name)
                 attr_values[attr_ns_tuple] = value
                 attr_qnames[attr_ns_tuple] = build_qname(
-                    attr_ns_tuple[0], attr_ns_tuple[1], prefixes, new_prefixes)
+                    attr_ns_tuple[0], attr_ns_tuple[1], element_nsmap,
+                    None, True)
             sax_attributes = self._attr_class(attr_values, attr_qnames)
         else:
             sax_attributes = self._empty_attributes
 
         ns_uri, local_name = _getNsTag(tag)
-        qname = build_qname(ns_uri, local_name, prefixes, new_prefixes)
+        qname = build_qname(ns_uri, local_name, element_nsmap, element.prefix,
+                            False)
 
         for prefix, uri in new_prefixes:
             content_handler.startPrefixMapping(prefix, uri)
@@ -227,22 +236,30 @@ class ElementTreeProducer(object):
         if element.text:
             content_handler.characters(element.text)
         for child in element:
-            self._recursive_saxify(child, prefixes)
+            self._recursive_saxify(child, element_nsmap)
         content_handler.endElementNS((ns_uri, local_name), qname)
         for prefix, uri in new_prefixes:
             content_handler.endPrefixMapping(prefix)
         if element.tail:
             content_handler.characters(element.tail)
 
-    def _build_qname(self, ns_uri, local_name, prefixes, new_prefixes):
+    def _build_qname(self, ns_uri, local_name, nsmap, preferred_prefix,
+                     is_attribute):
         if ns_uri is None:
             return local_name
-        try:
-            prefix = prefixes[ns_uri]
-        except KeyError:
-            prefix = prefixes[ns_uri] = 'ns%02d' % len(prefixes)
-            new_prefixes.append( (prefix, ns_uri) )
+
+        if nsmap.get(preferred_prefix) == ns_uri and not is_attribute:
+            prefix = preferred_prefix
+        else:
+            # Pick the first matching prefix:
+            prefix = min(pfx for (pfx, uri) in nsmap.items()
+                         if pfx is not None and uri == ns_uri)
+
+        if prefix is None:
+            # Default namespace
+            return local_name
         return prefix + ':' + local_name
+
 
 def saxify(element_or_tree, content_handler):
     """One-shot helper to generate SAX events from an XML tree and fire

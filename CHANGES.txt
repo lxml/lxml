@@ -10,6 +10,10 @@ Features added
 
 * The module ``lxml.sax`` is compiled using Cython in order to speed it up.
 
+* ElementTreeProducer now preserves the namespace prefixes. If two prefixes
+  point to the same URI, the first prefix in alphabetical order is used
+  for attributes.
+
 * Updated ISO-Schematron implementation to 2013 version (now MIT licensed)
   and the corresponding schema to the 2016 version (with optional "properties").
 
@@ -3893,16 +3897,16 @@ Features added
   prefix to namespace URI mapping. This will create namespace
   prefix declarations on these elements and these prefixes will show up
   in XML serialization.
-  
+
 Bugs fixed
 ----------
- 
+
 * Killed yet another memory management related bug: trees created
   using newDoc would not get a libxml2-level dictionary, which caused
   problems when deallocating these documents later if they contained a
   node that came from a document with a dictionary.
 
-* Moving namespaced elements between documents was problematic as 
+* Moving namespaced elements between documents was problematic as
   references to the original document would remain. This has been fixed
   by applying xmlReconciliateNs() after each move operation.
 
