@@ -78,7 +78,7 @@ valgrind_test_inplace: inplace
 		$(PYTHON) test.py
 
 gdb_test_inplace: inplace
-	@echo -e "file $(PYTHON)\nrun test.py" > .gdb.command
+	@echo "file $(PYTHON)\nrun test.py" > .gdb.command
 	gdb -x .gdb.command -d src -d src/lxml
 
 bench_inplace: inplace
