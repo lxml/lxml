@@ -2,8 +2,7 @@
 lxml changelog
 ==============
 
-4.3.0 (2018-??-??)
-==================
+4.3.0 (2019-??-??)
 
 Features added
 --------------
@@ -32,11 +31,13 @@ Other changes
   which were released in 2014 and 2012 respectively.
 
 
-4.2.6 (2018-??-??)
+4.2.6 (2019-01-02)
 ==================
 
 Bugs fixed
 ----------
+
+* LP#1799755: Fix a DeprecationWarning in Py3.7+.
 
 * Import warnings in Python 3.6+ were resolved.
 
