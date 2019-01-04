@@ -114,9 +114,9 @@ def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_d
 
 ## Routines to download and build libxml2/xslt from sources:
 
-LIBXML2_LOCATION = 'ftp://xmlsoft.org/libxml2/'
-LIBICONV_LOCATION = 'ftp://ftp.gnu.org/pub/gnu/libiconv/'
-ZLIB_LOCATION = 'http://zlib.net/'
+LIBXML2_LOCATION = 'http://xmlsoft.org/sources/'
+LIBICONV_LOCATION = 'https://ftp.gnu.org/pub/gnu/libiconv/'
+ZLIB_LOCATION = 'https://zlib.net/'
 match_libfile_version = re.compile('^[^-]*-([.0-9-]+)[.].*').match
 
 
@@ -205,7 +205,8 @@ def tryint(s):
 
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
+    #version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
+    version_re = re.compile(r'libxml2-([0-9.]+[0-9]).tar.gz')
     filename = 'libxml2-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxml2',
                             version_re, filename, version=version)
@@ -213,7 +214,8 @@ def download_libxml2(dest_dir, version=None):
 
 def download_libxslt(dest_dir, version=None):
     """Downloads libxslt, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
+    #version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
+    version_re = re.compile(r'libxslt-([0-9.]+[0-9]).tar.gz')
     filename = 'libxslt-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxslt',
                             version_re, filename, version=version)
@@ -221,7 +223,7 @@ def download_libxslt(dest_dir, version=None):
 
 def download_libiconv(dest_dir, version=None):
     """Downloads libiconv, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'^libiconv-([0-9.]+[0-9]).tar.gz$')
+    version_re = re.compile(r'libiconv-([0-9.]+[0-9]).tar.gz')
     filename = 'libiconv-%s.tar.gz'
     return download_library(dest_dir, LIBICONV_LOCATION, 'libiconv',
                             version_re, filename, version=version)
@@ -261,7 +263,7 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
             if location.startswith('ftp://'):
                 fns = remote_listdir(location)
             else:
-                fns = http_listfiles(location, filename.replace('%s', '(?:[0-9.]+[0-9])'))
+                fns = http_listfiles(location, '(%s)' % filename.replace('%s', '(?:[0-9.]+[0-9])'))
             version = find_max_version(name, fns, version_re)
         except IOError:
             # network failure - maybe we have the files already?
