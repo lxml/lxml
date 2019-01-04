@@ -16,11 +16,6 @@ Features added
 * Updated ISO-Schematron implementation to 2013 version (now MIT licensed)
   and the corresponding schema to the 2016 version (with optional "properties").
 
-Bugs fixed
-----------
-
-* LP#1799755: Fix a DeprecationWarning in Py3.7+.
-
 Other changes
 -------------
 
