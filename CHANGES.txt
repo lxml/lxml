@@ -2,7 +2,8 @@
 lxml changelog
 ==============
 
-4.3.0 (2019-??-??)
+4.3.0 (2019-01-04)
+==================
 
 Features added
 --------------
@@ -24,6 +25,8 @@ Other changes
 
 * The minimum dependency versions were raised to libxml2 2.9.2 and libxslt 1.1.27,
   which were released in 2014 and 2012 respectively.
+
+* Built with Cython 0.29.2.
 
 
 4.2.6 (2019-01-02)
