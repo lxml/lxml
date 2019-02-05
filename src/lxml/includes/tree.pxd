@@ -286,6 +286,7 @@ cdef extern from "libxml/tree.h":
         xmlAttr* prev
         xmlDoc* doc
         xmlNs* ns
+        xmlAttributeType atype
 
     ctypedef struct xmlID:
         const_xmlChar* value
@@ -334,6 +335,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlAttr* xmlSetProp(xmlNode* node, const_xmlChar* name, const_xmlChar* value) nogil
     cdef xmlAttr* xmlSetNsProp(xmlNode* node, xmlNs* ns,
                                const_xmlChar* name, const_xmlChar* value) nogil
+    cdef int xmlRemoveID(xmlDoc* doc, xmlAttr* cur) nogil
     cdef int xmlRemoveProp(xmlAttr* cur) nogil
     cdef xmlChar* xmlGetNodePath(xmlNode* node) nogil
     cdef void xmlDocDumpMemory(xmlDoc* cur, char** mem, int* size) nogil

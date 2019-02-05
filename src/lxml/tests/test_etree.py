@@ -1555,6 +1555,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(_bytes('<root>&test;</root>'),
                           tostring(root))
 
+    def test_entity_append_parsed(self):
+        Entity = self.etree.Entity
+        Element = self.etree.Element
+        parser = self.etree.XMLParser(resolve_entities=False)
+        entity = self.etree.XML('''<!DOCTYPE data [
+        <!ENTITY a "a">
+        <!ENTITY b "&a;">
+        ]>
+        <data>&b;</data>
+        ''', parser)
+
+        el = Element('test')
+        el.append(entity)
+        self.assertEqual(el.tag, 'test')
+        self.assertEqual(el[0].tag, 'data')
+        self.assertEqual(el[0][0].tag, Entity)
+        self.assertEqual(el[0][0].name, 'b')
+
     def test_entity_values(self):
         Entity = self.etree.Entity
         self.assertEqual(Entity("test").text, '&test;')

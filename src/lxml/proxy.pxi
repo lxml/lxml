@@ -324,6 +324,8 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     """
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
+    cdef xmlDoc* c_doc = doc._c_doc
+    cdef tree.xmlAttr* c_attr
     cdef char* c_name
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_ns
@@ -339,6 +341,9 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     c_start_node = c_element
 
     tree.BEGIN_FOR_EACH_FROM(c_element, c_element, 1)
+    # 0) set C doc link
+    c_element.doc = c_doc
+
     if tree._isElementOrXInclude(c_element):
         if hasProxy(c_element):
             proxy_count += 1
@@ -387,6 +392,15 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                 c_node = <xmlNode*>c_element.properties
             else:
                 c_node = c_node.next
+
+            if c_node:
+                # set C doc link also for properties
+                c_node.doc = c_doc
+                # remove attribute from ID table (see xmlSetTreeDoc() in libxml2's tree.c)
+                c_attr = <tree.xmlAttr*>c_node
+                if c_attr.atype == tree.XML_ATTRIBUTE_ID:
+                    tree.xmlRemoveID(c_source_doc, c_attr)
+
     tree.END_FOR_EACH_FROM(c_element)
 
     # free now unused namespace declarations

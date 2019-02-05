@@ -1267,6 +1267,21 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 
     return 0
 
+
+cdef int _linkChild(xmlNode* c_parent, xmlNode* c_node) except -1:
+    """Simple version of 'xmlAddChild()' that does not deep-fix the document links.
+    """
+    assert _isElement(c_node)
+    c_node.parent = c_parent
+    if c_parent.children is NULL:
+        c_parent.children = c_parent.last = c_node
+    else:
+        c_node.prev = c_parent.last
+        c_parent.last.next = c_node
+        c_parent.last = c_node
+    return 0
+
+
 cdef int _appendChild(_Element parent, _Element child) except -1:
     u"""Append a new child to a parent element.
     """
@@ -1279,7 +1294,8 @@ cdef int _appendChild(_Element parent, _Element child) except -1:
     c_next = c_node.next
     # move node itself
     tree.xmlUnlinkNode(c_node)
-    tree.xmlAddChild(parent._c_node, c_node)
+    # do not call xmlAddChild() here since it would deep-traverse the tree
+    _linkChild(parent._c_node, c_node)
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
@@ -1300,7 +1316,8 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
     c_child = _findChildForwards(parent._c_node, 0)
     if c_child is NULL:
         tree.xmlUnlinkNode(c_node)
-        tree.xmlAddChild(parent._c_node, c_node)
+        # do not call xmlAddChild() here since it would deep-traverse the tree
+        _linkChild(parent._c_node, c_node)
     else:
         tree.xmlAddPrevSibling(c_child, c_node)
     _moveTail(c_next, c_node)
