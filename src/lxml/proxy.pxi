@@ -328,12 +328,8 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef tree.xmlAttr* c_attr
     cdef char* c_name
     cdef _nscache c_ns_cache = [NULL, 0, 0]
-    cdef xmlNs* c_ns
-    cdef xmlNs* c_ns_next
-    cdef xmlNs* c_nsdef
     cdef xmlNs* c_del_ns_list = NULL
-    cdef size_t i, proxy_count = 0
-    cdef bint is_prefixed_attr
+    cdef proxy_count = 0
 
     if not tree._isElementOrXInclude(c_element):
         return 0
@@ -359,47 +355,21 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
 
         # 2) make sure the namespaces of an element and its attributes
         #    are declared in this document (i.e. on the node or its parents)
-        c_node = c_element
+        if c_element.ns is not NULL:
+            _fixCNs(doc, c_start_node, c_element, &c_ns_cache, c_del_ns_list)
+
+        c_node = <xmlNode*>c_element.properties
         while c_node is not NULL:
             if c_node.ns is not NULL:
-                c_ns = NULL
-                is_prefixed_attr = (c_node.type == tree.XML_ATTRIBUTE_NODE and c_node.ns.prefix)
-                for i in range(c_ns_cache.last):
-                    if c_node.ns is c_ns_cache.ns_map[i].old:
-                        if is_prefixed_attr and not c_ns_cache.ns_map[i].new.prefix:
-                            # avoid dropping prefix from attributes
-                            continue
-                        c_ns = c_ns_cache.ns_map[i].new
-                        break
+                _fixCNs(doc, c_start_node, c_node, &c_ns_cache, c_del_ns_list)
 
-                if c_ns:
-                    c_node.ns = c_ns
-                else:
-                    # not in cache or not acceptable
-                    # => find a replacement from this document
-                    try:
-                        c_ns = doc._findOrBuildNodeNs(
-                            c_start_node, c_node.ns.href, c_node.ns.prefix,
-                            c_node.type == tree.XML_ATTRIBUTE_NODE)
-                        c_node.ns = c_ns
-                        _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
-                    except:
-                        _cleanUpFromNamespaceAdaptation(c_start_node, &c_ns_cache, c_del_ns_list)
-                        raise
-
-            if c_node is c_element:
-                # after the element, continue with its attributes
-                c_node = <xmlNode*>c_element.properties
-            else:
-                c_node = c_node.next
-
-            if c_node:
-                # set C doc link also for properties
-                c_node.doc = c_doc
-                # remove attribute from ID table (see xmlSetTreeDoc() in libxml2's tree.c)
-                c_attr = <tree.xmlAttr*>c_node
-                if c_attr.atype == tree.XML_ATTRIBUTE_ID:
-                    tree.xmlRemoveID(c_source_doc, c_attr)
+            # remove attribute from ID table (see xmlSetTreeDoc() in libxml2's tree.c)
+            c_attr = <tree.xmlAttr*>c_node
+            if c_attr.atype == tree.XML_ATTRIBUTE_ID:
+                tree.xmlRemoveID(c_source_doc, c_attr)
+            # set C doc link also for attributes
+            c_node.doc = c_doc
+            c_node = c_node.next
 
     tree.END_FOR_EACH_FROM(c_element)
 
@@ -428,6 +398,36 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         else:
             fixElementDocument(c_start_node, doc, proxy_count)
 
+    return 0
+
+
+cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
+                 _nscache* c_ns_cache, xmlNs* c_del_ns_list) except -1:
+    cdef xmlNs* c_ns = NULL
+    cdef bint is_prefixed_attr = (c_node.type == tree.XML_ATTRIBUTE_NODE and c_node.ns.prefix)
+
+    for ns_map in c_ns_cache.ns_map[:c_ns_cache.last]:
+        if c_node.ns is ns_map.old:
+            if is_prefixed_attr and not ns_map.new.prefix:
+                # avoid dropping prefix from attributes
+                continue
+            c_ns = ns_map.new
+            break
+
+    if c_ns:
+        c_node.ns = c_ns
+    else:
+        # not in cache or not acceptable
+        # => find a replacement from this document
+        try:
+            c_ns = doc._findOrBuildNodeNs(
+                c_start_node, c_node.ns.href, c_node.ns.prefix,
+                c_node.type == tree.XML_ATTRIBUTE_NODE)
+            c_node.ns = c_ns
+            _appendToNsCache(c_ns_cache, c_node.ns, c_ns)
+        except:
+            _cleanUpFromNamespaceAdaptation(c_start_node, c_ns_cache, c_del_ns_list)
+            raise
     return 0
 
 
