@@ -2,16 +2,16 @@ version: 1.0.{build}
 
 environment:
   matrix:
-  - python: 27
-  - python: 27-x64
-  - python: 34
-  - python: 34-x64
-  - python: 35
-  - python: 35-x64
-  - python: 36
-  - python: 36-x64
   - python: 37
   - python: 37-x64
+  - python: 27
+  - python: 27-x64
+  - python: 36
+  - python: 36-x64
+  - python: 35
+  - python: 35-x64
+  - python: 34
+  - python: 34-x64
 
 install:
     - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
@@ -20,10 +20,11 @@ install:
 
 build: off
 build_script:
-    - python -u setup.py clean
-    - python -u setup.py bdist_wheel --static-deps
+  - python -u setup.py clean
+  - python -u setup.py build_ext --inplace --static-deps
+  - python -u test.py -vv -p
+  - python -u setup.py bdist_wheel --static-deps
 
 test: off
 test_script:
-  - python -u test.py -vv -p
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
