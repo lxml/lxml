@@ -369,6 +369,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                 tree.xmlRemoveID(c_source_doc, c_attr)
             # set C doc link also for attributes
             c_node.doc = c_doc
+            _fixDocChildren(c_node.children, c_doc)
             c_node = c_node.next
 
     tree.END_FOR_EACH_FROM(c_element)
@@ -399,6 +400,13 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
             fixElementDocument(c_start_node, doc, proxy_count)
 
     return 0
+
+
+cdef inline void _fixDocChildren(xmlNode* c_child, xmlDoc* c_doc):
+    while c_child:
+        c_child.doc = c_doc
+        _fixDocChildren(c_child.children, c_doc)
+        c_child = c_child.next
 
 
 cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
