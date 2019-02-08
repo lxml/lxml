@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-4.3.1 (2019-02-??)
+4.3.1 (2019-02-08)
 ==================
 
 * LP#1814522: Crash when appending a child subtree that contains unsubstituted
