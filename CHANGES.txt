@@ -5,8 +5,16 @@ lxml changelog
 4.3.1 (2019-02-08)
 ==================
 
+Bugs fixed
+----------
+
 * LP#1814522: Crash when appending a child subtree that contains unsubstituted
   entity references.
+
+Other changes
+-------------
+
+* Built with Cython 0.29.5.
 
 
 4.3.0 (2019-01-04)
