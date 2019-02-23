@@ -28,64 +28,64 @@ cdef class _DTDElementContentDecl:
     def __repr__(self):
         return "<%s.%s object name=%r type=%r occur=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, self.occur, id(self))
 
-    property name:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+    @property
+    def name(self):
+       _assertValidDTDNode(self, self._c_node)
+       return funicode(self._c_node.name) if self._c_node.name is not NULL else None
 
-    property type:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           cdef int type = self._c_node.type
-           if type == tree.XML_ELEMENT_CONTENT_PCDATA:
-               return "pcdata"
-           elif type == tree.XML_ELEMENT_CONTENT_ELEMENT:
-               return "element"
-           elif type == tree.XML_ELEMENT_CONTENT_SEQ:
-               return "seq"
-           elif type == tree.XML_ELEMENT_CONTENT_OR:
-               return "or"
-           else:
-               return None
+    @property
+    def type(self):
+       _assertValidDTDNode(self, self._c_node)
+       cdef int type = self._c_node.type
+       if type == tree.XML_ELEMENT_CONTENT_PCDATA:
+           return "pcdata"
+       elif type == tree.XML_ELEMENT_CONTENT_ELEMENT:
+           return "element"
+       elif type == tree.XML_ELEMENT_CONTENT_SEQ:
+           return "seq"
+       elif type == tree.XML_ELEMENT_CONTENT_OR:
+           return "or"
+       else:
+           return None
 
-    property occur:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           cdef int occur = self._c_node.ocur
-           if occur == tree.XML_ELEMENT_CONTENT_ONCE:
-               return "once"
-           elif occur == tree.XML_ELEMENT_CONTENT_OPT:
-               return "opt"
-           elif occur == tree.XML_ELEMENT_CONTENT_MULT:
-               return "mult"
-           elif occur == tree.XML_ELEMENT_CONTENT_PLUS:
-               return "plus"
-           else:
-               return None
+    @property
+    def occur(self):
+       _assertValidDTDNode(self, self._c_node)
+       cdef int occur = self._c_node.ocur
+       if occur == tree.XML_ELEMENT_CONTENT_ONCE:
+           return "once"
+       elif occur == tree.XML_ELEMENT_CONTENT_OPT:
+           return "opt"
+       elif occur == tree.XML_ELEMENT_CONTENT_MULT:
+           return "mult"
+       elif occur == tree.XML_ELEMENT_CONTENT_PLUS:
+           return "plus"
+       else:
+           return None
 
-    property left:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           c1 = self._c_node.c1
-           if c1:
-               node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
-               node._dtd = self._dtd
-               node._c_node = <tree.xmlElementContent*>c1
-               return node
-           else:
-               return None
+    @property
+    def left(self):
+       _assertValidDTDNode(self, self._c_node)
+       c1 = self._c_node.c1
+       if c1:
+           node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
+           node._dtd = self._dtd
+           node._c_node = <tree.xmlElementContent*>c1
+           return node
+       else:
+           return None
 
-    property right:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           c2 = self._c_node.c2
-           if c2:
-               node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
-               node._dtd = self._dtd
-               node._c_node = <tree.xmlElementContent*>c2
-               return node
-           else:
-               return None
+    @property
+    def right(self):
+       _assertValidDTDNode(self, self._c_node)
+       c2 = self._c_node.c2
+       if c2:
+           node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
+           node._dtd = self._dtd
+           node._c_node = <tree.xmlElementContent*>c2
+           return node
+       else:
+           return None
 
 
 @cython.final
@@ -98,67 +98,67 @@ cdef class _DTDAttributeDecl:
     def __repr__(self):
         return "<%s.%s object name=%r elemname=%r prefix=%r type=%r default=%r default_value=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.elemname, self.prefix, self.type, self.default, self.default_value, id(self))
 
-    property name:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+    @property
+    def name(self):
+       _assertValidDTDNode(self, self._c_node)
+       return funicode(self._c_node.name) if self._c_node.name is not NULL else None
 
-    property elemname:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           return funicode(self._c_node.elem) if self._c_node.elem is not NULL else None
+    @property
+    def elemname(self):
+       _assertValidDTDNode(self, self._c_node)
+       return funicode(self._c_node.elem) if self._c_node.elem is not NULL else None
 
-    property prefix:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
+    @property
+    def prefix(self):
+       _assertValidDTDNode(self, self._c_node)
+       return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
 
-    property type:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           cdef int type = self._c_node.atype
-           if type == tree.XML_ATTRIBUTE_CDATA:
-               return "cdata"
-           elif type == tree.XML_ATTRIBUTE_ID:
-               return "id"
-           elif type == tree.XML_ATTRIBUTE_IDREF:
-               return "idref"
-           elif type == tree.XML_ATTRIBUTE_IDREFS:
-               return "idrefs"
-           elif type == tree.XML_ATTRIBUTE_ENTITY:
-               return "entity"
-           elif type == tree.XML_ATTRIBUTE_ENTITIES:
-               return "entities"
-           elif type == tree.XML_ATTRIBUTE_NMTOKEN:
-               return "nmtoken"
-           elif type == tree.XML_ATTRIBUTE_NMTOKENS:
-               return "nmtokens"
-           elif type == tree.XML_ATTRIBUTE_ENUMERATION:
-               return "enumeration"
-           elif type == tree.XML_ATTRIBUTE_NOTATION:
-               return "notation"
-           else:
-               return None
+    @property
+    def type(self):
+       _assertValidDTDNode(self, self._c_node)
+       cdef int type = self._c_node.atype
+       if type == tree.XML_ATTRIBUTE_CDATA:
+           return "cdata"
+       elif type == tree.XML_ATTRIBUTE_ID:
+           return "id"
+       elif type == tree.XML_ATTRIBUTE_IDREF:
+           return "idref"
+       elif type == tree.XML_ATTRIBUTE_IDREFS:
+           return "idrefs"
+       elif type == tree.XML_ATTRIBUTE_ENTITY:
+           return "entity"
+       elif type == tree.XML_ATTRIBUTE_ENTITIES:
+           return "entities"
+       elif type == tree.XML_ATTRIBUTE_NMTOKEN:
+           return "nmtoken"
+       elif type == tree.XML_ATTRIBUTE_NMTOKENS:
+           return "nmtokens"
+       elif type == tree.XML_ATTRIBUTE_ENUMERATION:
+           return "enumeration"
+       elif type == tree.XML_ATTRIBUTE_NOTATION:
+           return "notation"
+       else:
+           return None
 
-    property default:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           cdef int default = self._c_node.def_
-           if default == tree.XML_ATTRIBUTE_NONE:
-               return "none"
-           elif default == tree.XML_ATTRIBUTE_REQUIRED:
-               return "required"
-           elif default == tree.XML_ATTRIBUTE_IMPLIED:
-               return "implied"
-           elif default == tree.XML_ATTRIBUTE_FIXED:
-               return "fixed"
-           else:
-               return None
+    @property
+    def default(self):
+       _assertValidDTDNode(self, self._c_node)
+       cdef int default = self._c_node.def_
+       if default == tree.XML_ATTRIBUTE_NONE:
+           return "none"
+       elif default == tree.XML_ATTRIBUTE_REQUIRED:
+           return "required"
+       elif default == tree.XML_ATTRIBUTE_IMPLIED:
+           return "implied"
+       elif default == tree.XML_ATTRIBUTE_FIXED:
+           return "fixed"
+       else:
+           return None
 
-    property default_value:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           return funicode(self._c_node.defaultValue) if self._c_node.defaultValue is not NULL else None
+    @property
+    def default_value(self):
+       _assertValidDTDNode(self, self._c_node)
+       return funicode(self._c_node.defaultValue) if self._c_node.defaultValue is not NULL else None
 
     def itervalues(self):
         _assertValidDTDNode(self, self._c_node)
@@ -181,44 +181,44 @@ cdef class _DTDElementDecl:
     def __repr__(self):
         return "<%s.%s object name=%r prefix=%r type=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.prefix, self.type, id(self))
 
-    property name:
-        def __get__(self):
-            _assertValidDTDNode(self, self._c_node)
-            return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+    @property
+    def name(self):
+        _assertValidDTDNode(self, self._c_node)
+        return funicode(self._c_node.name) if self._c_node.name is not NULL else None
 
-    property prefix:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
+    @property
+    def prefix(self):
+       _assertValidDTDNode(self, self._c_node)
+       return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
 
-    property type:
-        def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           cdef int type = self._c_node.etype
-           if type == tree.XML_ELEMENT_TYPE_UNDEFINED:
-               return "undefined"
-           elif type == tree.XML_ELEMENT_TYPE_EMPTY:
-               return "empty"
-           elif type == tree.XML_ELEMENT_TYPE_ANY:
-               return "any"
-           elif type == tree.XML_ELEMENT_TYPE_MIXED:
-               return "mixed"
-           elif type == tree.XML_ELEMENT_TYPE_ELEMENT:
-               return "element"
-           else:
-               return None
+    @property
+    def type(self):
+       _assertValidDTDNode(self, self._c_node)
+       cdef int type = self._c_node.etype
+       if type == tree.XML_ELEMENT_TYPE_UNDEFINED:
+           return "undefined"
+       elif type == tree.XML_ELEMENT_TYPE_EMPTY:
+           return "empty"
+       elif type == tree.XML_ELEMENT_TYPE_ANY:
+           return "any"
+       elif type == tree.XML_ELEMENT_TYPE_MIXED:
+           return "mixed"
+       elif type == tree.XML_ELEMENT_TYPE_ELEMENT:
+           return "element"
+       else:
+           return None
 
-    property content:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           cdef tree.xmlElementContent *content = self._c_node.content
-           if content:
-               node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
-               node._dtd = self._dtd
-               node._c_node = content
-               return node
-           else:
-               return None
+    @property
+    def content(self):
+       _assertValidDTDNode(self, self._c_node)
+       cdef tree.xmlElementContent *content = self._c_node.content
+       if content:
+           node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
+           node._dtd = self._dtd
+           node._c_node = content
+           return node
+       else:
+           return None
 
     def iterattributes(self):
         _assertValidDTDNode(self, self._c_node)
@@ -243,20 +243,20 @@ cdef class _DTDEntityDecl:
     def __repr__(self):
         return "<%s.%s object name=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, id(self))
 
-    property name:
-        def __get__(self):
-            _assertValidDTDNode(self, self._c_node)
-            return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+    @property
+    def name(self):
+        _assertValidDTDNode(self, self._c_node)
+        return funicode(self._c_node.name) if self._c_node.name is not NULL else None
 
-    property orig:
-        def __get__(self):
-            _assertValidDTDNode(self, self._c_node)
-            return funicode(self._c_node.orig) if self._c_node.orig is not NULL else None
+    @property
+    def orig(self):
+        _assertValidDTDNode(self, self._c_node)
+        return funicode(self._c_node.orig) if self._c_node.orig is not NULL else None
 
-    property content:
-        def __get__(self):
-            _assertValidDTDNode(self, self._c_node)
-            return funicode(self._c_node.content) if self._c_node.content is not NULL else None
+    @property
+    def content(self):
+        _assertValidDTDNode(self, self._c_node)
+        return funicode(self._c_node.content) if self._c_node.content is not NULL else None
 
 
 ################################################################################
@@ -293,23 +293,23 @@ cdef class DTD(_Validator):
                 self._error_log._buildExceptionMessage(u"error parsing DTD"),
                 self._error_log)
 
-    property name:
-       def __get__(self):
-           if self._c_dtd is NULL:
-               return None
-           return funicodeOrNone(self._c_dtd.name)
+    @property
+    def name(self):
+       if self._c_dtd is NULL:
+           return None
+       return funicodeOrNone(self._c_dtd.name)
 
-    property external_id:
-       def __get__(self):
-           if self._c_dtd is NULL:
-               return None
-           return funicodeOrNone(self._c_dtd.ExternalID)
+    @property
+    def external_id(self):
+       if self._c_dtd is NULL:
+           return None
+       return funicodeOrNone(self._c_dtd.ExternalID)
 
-    property system_url:
-       def __get__(self):
-           if self._c_dtd is NULL:
-               return None
-           return funicodeOrNone(self._c_dtd.SystemID)
+    @property
+    def system_url(self):
+       if self._c_dtd is NULL:
+           return None
+       return funicodeOrNone(self._c_dtd.SystemID)
 
     def iterelements(self):
         cdef tree.xmlNode *c_node = self._c_dtd.children if self._c_dtd is not NULL else NULL

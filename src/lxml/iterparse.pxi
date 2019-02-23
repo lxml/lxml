@@ -128,22 +128,22 @@ cdef class iterparse:
         self._parser = parser
         self._source = source
 
-    property error_log:
-        u"""The error log of the last (or current) parser run.
+    @property
+    def error_log(self):
+        """The error log of the last (or current) parser run.
         """
-        def __get__(self):
-            return self._parser.feed_error_log
+        return self._parser.feed_error_log
 
-    property resolvers:
-        u"""The custom resolver registry of the last (or current) parser run.
+    @property
+    def resolvers(self):
+        """The custom resolver registry of the last (or current) parser run.
         """
-        def __get__(self):
-            return self._parser.resolvers
+        return self._parser.resolvers
 
-    property version:
-        u"""The version of the underlying XML parser."""
-        def __get__(self):
-            return self._parser.version
+    @property
+    def version(self):
+        """The version of the underlying XML parser."""
+        return self._parser.version
 
     def set_element_class_lookup(self, ElementClassLookup lookup = None):
         u"""set_element_class_lookup(self, lookup = None)

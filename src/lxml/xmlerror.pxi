@@ -112,69 +112,73 @@ cdef class _LogEntry:
             self.filename, self.line, self.column, self.level_name,
             self.domain_name, self.type_name, self.message)
 
-    property domain_name:
+    @property
+    def domain_name(self):
         """The name of the error domain.  See lxml.etree.ErrorDomains
         """
-        def __get__(self):
-            return ErrorDomains._getName(self.domain, u"unknown")
+        return ErrorDomains._getName(self.domain, u"unknown")
 
-    property type_name:
+    @property
+    def type_name(self):
         """The name of the error type.  See lxml.etree.ErrorTypes
         """
-        def __get__(self):
-            if self.domain == ErrorDomains.RELAXNGV:
-                getName = RelaxNGErrorTypes._getName
-            else:
-                getName = ErrorTypes._getName
-            return getName(self.type, u"unknown")
+        if self.domain == ErrorDomains.RELAXNGV:
+            getName = RelaxNGErrorTypes._getName
+        else:
+            getName = ErrorTypes._getName
+        return getName(self.type, u"unknown")
 
-    property level_name:
+    @property
+    def level_name(self):
         """The name of the error level.  See lxml.etree.ErrorLevels
         """
-        def __get__(self):
-            return ErrorLevels._getName(self.level, u"unknown")
+        return ErrorLevels._getName(self.level, u"unknown")
 
-    property message:
-        def __get__(self):
-            cdef size_t size
-            if self._message is not None:
-                return self._message
-            if self._c_message is NULL:
-                return None
-            size = cstring_h.strlen(self._c_message)
-            if size > 0 and self._c_message[size-1] == '\n':
-                size -= 1  # strip EOL
-            # cannot use funicode() here because the message may contain
-            # byte encoded file paths etc.
-            try:
-                self._message = self._c_message[:size].decode('utf8')
-            except UnicodeDecodeError:
-                try:
-                    self._message = self._c_message[:size].decode(
-                        'ascii', 'backslashreplace')
-                except UnicodeDecodeError:
-                    self._message = u'<undecodable error message>'
-            if self._c_message:
-                # clean up early
-                tree.xmlFree(self._c_message)
-                self._c_message = NULL
+    @property
+    def message(self):
+        """The log message string.
+        """
+        cdef size_t size
+        if self._message is not None:
             return self._message
+        if self._c_message is NULL:
+            return None
+        size = cstring_h.strlen(self._c_message)
+        if size > 0 and self._c_message[size-1] == '\n':
+            size -= 1  # strip EOL
+        # cannot use funicode() here because the message may contain
+        # byte encoded file paths etc.
+        try:
+            self._message = self._c_message[:size].decode('utf8')
+        except UnicodeDecodeError:
+            try:
+                self._message = self._c_message[:size].decode(
+                    'ascii', 'backslashreplace')
+            except UnicodeDecodeError:
+                self._message = u'<undecodable error message>'
+        if self._c_message:
+            # clean up early
+            tree.xmlFree(self._c_message)
+            self._c_message = NULL
+        return self._message
 
-    property filename:
-        def __get__(self):
-            if self._filename is None:
-                if self._c_filename is not NULL:
-                    self._filename = _decodeFilename(self._c_filename)
-                    # clean up early
-                    tree.xmlFree(self._c_filename)
-                    self._c_filename = NULL
-            return self._filename
+    @property
+    def filename(self):
+        """The file path where the report originated, if any.
+        """
+        if self._filename is None:
+            if self._c_filename is not NULL:
+                self._filename = _decodeFilename(self._c_filename)
+                # clean up early
+                tree.xmlFree(self._c_filename)
+                self._c_filename = NULL
+        return self._filename
 
-    property path:
+    @property
+    def path(self):
         """The XPath for the node where the error was detected.
         """
-        def __get__(self):
-            return funicode(self._c_path) if self._c_path is not NULL else None
+        return funicode(self._c_path) if self._c_path is not NULL else None
 
 
 cdef class _BaseErrorLog:

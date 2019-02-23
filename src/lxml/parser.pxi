@@ -620,7 +620,7 @@ cdef void _receiveParserError(void* c_context, xmlerror.xmlError* error) nogil:
             _forwardParserError(<xmlparser.xmlParserCtxt*>c_context, error)
 
 cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
-                          _ErrorLog error_log) except 0:
+                          _ErrorLog error_log) except -1:
     if filename is not None and \
            ctxt.lastError.domain == xmlerror.XML_FROM_IO:
         if isinstance(filename, bytes):
@@ -940,23 +940,23 @@ cdef class _BaseParser:
         c_ctxt.sax.startDocument = _initSaxDocument
         return c_ctxt
 
-    property error_log:
-        u"""The error log of the last parser run.
+    @property
+    def error_log(self):
+        """The error log of the last parser run.
         """
-        def __get__(self):
-            cdef _ParserContext context
-            context = self._getParserContext()
-            return context._error_log.copy()
+        cdef _ParserContext context
+        context = self._getParserContext()
+        return context._error_log.copy()
 
-    property resolvers:
-        u"The custom resolver registry of this parser."
-        def __get__(self):
-            return self._resolvers
+    @property
+    def resolvers(self):
+        """The custom resolver registry of this parser."""
+        return self._resolvers
 
-    property version:
-        u"The version of the underlying XML parser."
-        def __get__(self):
-            return u"libxml2 %d.%d.%d" % LIBXML_VERSION
+    @property
+    def version(self):
+        """The version of the underlying XML parser."""
+        return u"libxml2 %d.%d.%d" % LIBXML_VERSION
 
     def setElementClassLookup(self, ElementClassLookup lookup = None):
         u":deprecated: use ``parser.set_element_class_lookup(lookup)`` instead."
@@ -1230,14 +1230,14 @@ cdef void _initSaxDocument(void* ctxt) with gil:
 cdef class _FeedParser(_BaseParser):
     cdef bint _feed_parser_running
 
-    property feed_error_log:
-        u"""The error log of the last (or current) run of the feed parser.
+    @property
+    def feed_error_log(self):
+        """The error log of the last (or current) run of the feed parser.
 
         Note that this is local to the feed parser and thus is
         different from what the ``error_log`` property returns.
         """
-        def __get__(self):
-            return self._getPushParserContext()._error_log.copy()
+        return self._getPushParserContext()._error_log.copy()
 
     cpdef feed(self, data):
         u"""feed(self, data)

@@ -226,16 +226,16 @@ cdef class XSLTAccessControl:
     cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt):
         xslt.xsltSetCtxtSecurityPrefs(self._prefs, ctxt)
 
-    property options:
-        u"The access control configuration as a map of options."
-        def __get__(self):
-            return {
-                u'read_file': self._optval(xslt.XSLT_SECPREF_READ_FILE),
-                u'write_file': self._optval(xslt.XSLT_SECPREF_WRITE_FILE),
-                u'create_dir': self._optval(xslt.XSLT_SECPREF_CREATE_DIRECTORY),
-                u'read_network': self._optval(xslt.XSLT_SECPREF_READ_NETWORK),
-                u'write_network': self._optval(xslt.XSLT_SECPREF_WRITE_NETWORK),
-                }
+    @property
+    def options(self):
+        """The access control configuration as a map of options."""
+        return {
+            u'read_file': self._optval(xslt.XSLT_SECPREF_READ_FILE),
+            u'write_file': self._optval(xslt.XSLT_SECPREF_WRITE_FILE),
+            u'create_dir': self._optval(xslt.XSLT_SECPREF_CREATE_DIRECTORY),
+            u'read_network': self._optval(xslt.XSLT_SECPREF_READ_NETWORK),
+            u'write_network': self._optval(xslt.XSLT_SECPREF_WRITE_NETWORK),
+        }
 
     @cython.final
     cdef _optval(self, xslt.xsltSecurityOption option):
@@ -427,10 +427,10 @@ cdef class XSLT:
         if self._c_style is not NULL:
             xslt.xsltFreeStylesheet(self._c_style)
 
-    property error_log:
-        u"The log of errors and warnings of an XSLT execution."
-        def __get__(self):
-            return self._error_log.copy()
+    @property
+    def error_log(self):
+        """The log of errors and warnings of an XSLT execution."""
+        return self._error_log.copy()
 
     @staticmethod
     def strparam(strval):
@@ -847,7 +847,7 @@ cdef class _XSLTResultTree(_ElementTree):
         buffer.buf = NULL
 
     property xslt_profile:
-        u"""Return an ElementTree with profiling data for the stylesheet run.
+        """Return an ElementTree with profiling data for the stylesheet run.
         """
         def __get__(self):
             cdef object root

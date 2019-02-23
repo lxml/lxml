@@ -515,15 +515,15 @@ cdef class DocInfo:
         if not root_name and (public_id or system_url):
             raise ValueError, u"Could not find root node"
 
-    property root_name:
-        u"Returns the name of the root node as defined by the DOCTYPE."
-        def __get__(self):
-            root_name, public_id, system_url = self._doc.getdoctype()
-            return root_name
+    @property
+    def root_name(self):
+        """Returns the name of the root node as defined by the DOCTYPE."""
+        root_name, public_id, system_url = self._doc.getdoctype()
+        return root_name
 
     @cython.final
     cdef tree.xmlDtd* _get_c_dtd(self):
-        u"""Return the DTD. Create it if it does not yet exist."""
+        """"Return the DTD. Create it if it does not yet exist."""
         cdef xmlDoc* c_doc = self._doc._c_doc
         cdef xmlNode* c_root_node
         cdef const_xmlChar* c_name
@@ -604,28 +604,28 @@ cdef class DocInfo:
                 tree.xmlFree(<void*>c_dtd.SystemID)
             c_dtd.SystemID = c_value
 
-    property xml_version:
-        u"Returns the XML version as declared by the document."
-        def __get__(self):
-            xml_version, encoding = self._doc.getxmlinfo()
-            return xml_version
+    @property
+    def xml_version(self):
+        """Returns the XML version as declared by the document."""
+        xml_version, encoding = self._doc.getxmlinfo()
+        return xml_version
 
-    property encoding:
-        u"Returns the encoding name as declared by the document."
-        def __get__(self):
-            xml_version, encoding = self._doc.getxmlinfo()
-            return encoding
+    @property
+    def encoding(self):
+        """Returns the encoding name as declared by the document."""
+        xml_version, encoding = self._doc.getxmlinfo()
+        return encoding
 
-    property standalone:
-        u"""Returns the standalone flag as declared by the document.  The possible
+    @property
+    def standalone(self):
+        """Returns the standalone flag as declared by the document.  The possible
         values are True (``standalone='yes'``), False
         (``standalone='no'`` or flag not provided in the declaration),
         and None (unknown or no declaration found).  Note that a
         normal truth test on this value will always tell if the
         ``standalone`` flag was set to ``'yes'`` or not.
         """
-        def __get__(self):
-            return self._doc.isstandalone()
+        return self._doc.isstandalone()
 
     property URL:
         u"The source URL of the document (or None if unknown)."
@@ -643,40 +643,40 @@ cdef class DocInfo:
             if c_oldurl is not NULL:
                 tree.xmlFree(<void*>c_oldurl)
 
-    property doctype:
-        u"Returns a DOCTYPE declaration string for the document."
-        def __get__(self):
-            root_name, public_id, system_url = self._doc.getdoctype()
-            if system_url:
-                # If '"' in system_url, we must escape it with single
-                # quotes, otherwise escape with double quotes. If url
-                # contains both a single quote and a double quote, XML
-                # standard is being violated.
-                if '"' in system_url:
-                    quoted_system_url = f"'{system_url}'"
-                else:
-                    quoted_system_url = f'"{system_url}"'
-            if public_id:
-                if system_url:
-                    return f'<!DOCTYPE {root_name} PUBLIC "{public_id}" {quoted_system_url}>'
-                else:
-                    return f'<!DOCTYPE {root_name} PUBLIC "{public_id}">'
-            elif system_url:
-                return f'<!DOCTYPE {root_name} SYSTEM {quoted_system_url}>'
-            elif self._doc.hasdoctype():
-                return f'<!DOCTYPE {root_name}>'
+    @property
+    def doctype(self):
+        """Returns a DOCTYPE declaration string for the document."""
+        root_name, public_id, system_url = self._doc.getdoctype()
+        if system_url:
+            # If '"' in system_url, we must escape it with single
+            # quotes, otherwise escape with double quotes. If url
+            # contains both a single quote and a double quote, XML
+            # standard is being violated.
+            if '"' in system_url:
+                quoted_system_url = f"'{system_url}'"
             else:
-                return u''
+                quoted_system_url = f'"{system_url}"'
+        if public_id:
+            if system_url:
+                return f'<!DOCTYPE {root_name} PUBLIC "{public_id}" {quoted_system_url}>'
+            else:
+                return f'<!DOCTYPE {root_name} PUBLIC "{public_id}">'
+        elif system_url:
+            return f'<!DOCTYPE {root_name} SYSTEM {quoted_system_url}>'
+        elif self._doc.hasdoctype():
+            return f'<!DOCTYPE {root_name}>'
+        else:
+            return u''
 
-    property internalDTD:
-        u"Returns a DTD validator based on the internal subset of the document."
-        def __get__(self):
-            return _dtdFactory(self._doc._c_doc.intSubset)
+    @property
+    def internalDTD(self):
+        """Returns a DTD validator based on the internal subset of the document."""
+        return _dtdFactory(self._doc._c_doc.intSubset)
 
-    property externalDTD:
-        u"Returns a DTD validator based on the external subset of the document."
-        def __get__(self):
-            return _dtdFactory(self._doc._c_doc.extSubset)
+    @property
+    def externalDTD(self):
+        """Returns a DTD validator based on the external subset of the document."""
+        return _dtdFactory(self._doc._c_doc.extSubset)
 
 
 @cython.no_gc_clear
@@ -996,12 +996,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             else:
                 self._doc._setNodeNs(self._c_node, _xcstr(ns))
 
-    property attrib:
-        u"""Element attribute dictionary. Where possible, use get(), set(),
+    @property
+    def attrib(self):
+        """Element attribute dictionary. Where possible, use get(), set(),
         keys(), values() and items() to access element attributes.
         """
-        def __get__(self):
-            return _Attrib.__new__(_Attrib, self)
+        return _Attrib.__new__(_Attrib, self)
 
     property text:
         u"""Text before the first subelement. This is either a string or
@@ -1039,14 +1039,14 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         #    _setTailText(self._c_node, None)
 
     # not in ElementTree, read-only
-    property prefix:
-        u"""Namespace prefix or None.
+    @property
+    def prefix(self):
+        """Namespace prefix or None.
         """
-        def __get__(self):
-            if self._c_node.ns is not NULL:
-                if self._c_node.ns.prefix is not NULL:
-                    return funicode(self._c_node.ns.prefix)
-            return None
+        if self._c_node.ns is not NULL:
+            if self._c_node.ns.prefix is not NULL:
+                return funicode(self._c_node.ns.prefix)
+        return None
 
     # not in ElementTree, read-only
     property sourceline:
@@ -1066,28 +1066,28 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 self._c_node.line = line
 
     # not in ElementTree, read-only
-    property nsmap:
-        u"""Namespace prefix->URI mapping known in the context of this
+    @property
+    def nsmap(self):
+        """Namespace prefix->URI mapping known in the context of this
         Element.  This includes all namespace declarations of the
         parents.
 
         Note that changing the returned dict has no effect on the Element.
         """
-        def __get__(self):
-            cdef xmlNode* c_node
-            cdef xmlNs* c_ns
-            _assertValidNode(self)
-            nsmap = {}
-            c_node = self._c_node
-            while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
-                c_ns = c_node.nsDef
-                while c_ns is not NULL:
-                    prefix = funicodeOrNone(c_ns.prefix)
-                    if prefix not in nsmap:
-                        nsmap[prefix] = funicodeOrNone(c_ns.href)
-                    c_ns = c_ns.next
-                c_node = c_node.parent
-            return nsmap
+        cdef xmlNode* c_node
+        cdef xmlNs* c_ns
+        _assertValidNode(self)
+        nsmap = {}
+        c_node = self._c_node
+        while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
+            c_ns = c_node.nsDef
+            while c_ns is not NULL:
+                prefix = funicodeOrNone(c_ns.prefix)
+                if prefix not in nsmap:
+                    nsmap[prefix] = funicodeOrNone(c_ns.href)
+                c_ns = c_ns.next
+            c_node = c_node.parent
+        return nsmap
 
     # not in ElementTree, read-only
     property base:
@@ -1640,9 +1640,9 @@ cdef class __ContentOnlyElement(_Element):
         u"__setitem__(self, index, value)"
         self._raiseImmutable()
 
-    property attrib:
-        def __get__(self):
-            return IMMUTABLE_EMPTY_MAPPING
+    @property
+    def attrib(self):
+        return IMMUTABLE_EMPTY_MAPPING
 
     property text:
         def __get__(self):
@@ -1688,17 +1688,17 @@ cdef class __ContentOnlyElement(_Element):
         return []
 
 cdef class _Comment(__ContentOnlyElement):
-    property tag:
-        def __get__(self):
-            return Comment
+    @property
+    def tag(self):
+        return Comment
 
     def __repr__(self):
         return "<!--%s-->" % strrepr(self.text)
 
 cdef class _ProcessingInstruction(__ContentOnlyElement):
-    property tag:
-        def __get__(self):
-            return ProcessingInstruction
+    @property
+    def tag(self):
+        return ProcessingInstruction
 
     property target:
         # not in ElementTree
@@ -1734,22 +1734,22 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
         """
         return self.attrib.get(key, default)
 
-    property attrib:
-        u"""Returns a dict containing all pseudo-attributes that can be
+    @property
+    def attrib(self):
+        """Returns a dict containing all pseudo-attributes that can be
         parsed from the text content of this processing instruction.
         Note that modifying the dict currently has no effect on the
         XML node, although this is not guaranteed to stay this way.
         """
-        def __get__(self):
-            return { attr : (value1 or value2)
-                     for attr, value1, value2 in _FIND_PI_ATTRIBUTES(u' ' + self.text) }
+        return { attr : (value1 or value2)
+                 for attr, value1, value2 in _FIND_PI_ATTRIBUTES(u' ' + self.text) }
 
 cdef object _FIND_PI_ATTRIBUTES = re.compile(ur'\s+(\w+)\s*=\s*(?:\'([^\']*)\'|"([^"]*)")', re.U).findall
 
 cdef class _Entity(__ContentOnlyElement):
-    property tag:
-        def __get__(self):
-            return Entity
+    @property
+    def tag(self):
+        return Entity
 
     property name:
         # not in ElementTree
@@ -1764,12 +1764,12 @@ cdef class _Entity(__ContentOnlyElement):
                 raise ValueError, f"Invalid entity name '{value}'"
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
-    property text:
+    @property
+    def text(self):
         # FIXME: should this be None or '&[VALUE];' or the resolved
         # entity value ?
-        def __get__(self):
-            _assertValidNode(self)
-            return f'&{funicode(self._c_node.name)};'
+        _assertValidNode(self)
+        return f'&{funicode(self._c_node.name)};'
 
     def __repr__(self):
         return "&%s;" % strrepr(self.name)
@@ -1923,23 +1923,23 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             return self
 
     # not in ElementTree
-    property docinfo:
-        u"""Information about the document provided by parser and DTD."""
-        def __get__(self):
-            self._assertHasRoot()
-            return DocInfo(self._context_node._doc)
+    @property
+    def docinfo(self):
+        """Information about the document provided by parser and DTD."""
+        self._assertHasRoot()
+        return DocInfo(self._context_node._doc)
 
     # not in ElementTree, read-only
-    property parser:
-        u"""The parser that was used to parse the document in this ElementTree.
+    @property
+    def parser(self):
+        """The parser that was used to parse the document in this ElementTree.
         """
-        def __get__(self):
-            if self._context_node is not None and \
-                   self._context_node._doc is not None:
-                return self._context_node._doc._parser
-            if self._doc is not None:
-                return self._doc._parser
-            return None
+        if self._context_node is not None and \
+               self._context_node._doc is not None:
+            return self._context_node._doc._parser
+        if self._doc is not None:
+            return self._doc._parser
+        return None
 
     def write(self, file, *, encoding=None, method=u"xml",
               pretty_print=False, xml_declaration=None, with_tail=True,
@@ -3544,11 +3544,11 @@ cdef class _Validator:
     cpdef _clear_error_log(self):
         self._error_log.clear()
 
-    property error_log:
-        u"The log of validation errors and warnings."
-        def __get__(self):
-            assert self._error_log is not None, "XPath evaluator not initialised"
-            return self._error_log.copy()
+    @property
+    def error_log(self):
+        """The log of validation errors and warnings."""
+        assert self._error_log is not None, "XPath evaluator not initialised"
+        return self._error_log.copy()
 
 include "dtd.pxi"        # DTD
 include "relaxng.pxi"    # RelaxNG

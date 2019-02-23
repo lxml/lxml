@@ -19,10 +19,10 @@ cdef class XInclude:
     def __init__(self):
         self._error_log = _ErrorLog()
 
-    property error_log:
-        def __get__(self):
-            assert self._error_log is not None, "XInclude instance not initialised"
-            return self._error_log.copy()
+    @property
+    def error_log(self):
+        assert self._error_log is not None, "XInclude instance not initialised"
+        return self._error_log.copy()
 
     def __call__(self, _Element node not None):
         u"__call__(self, node)"

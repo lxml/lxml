@@ -26,61 +26,61 @@ cdef class _ReadOnlyProxy:
         """
         self._free_after_use = 1
 
-    property tag:
-        u"""Element tag
+    @property
+    def tag(self):
+        """Element tag
         """
-        def __get__(self):
-            self._assertNode()
-            if self._c_node.type == tree.XML_ELEMENT_NODE:
-                return _namespacedName(self._c_node)
-            elif self._c_node.type == tree.XML_PI_NODE:
-                return ProcessingInstruction
-            elif self._c_node.type == tree.XML_COMMENT_NODE:
-                return Comment
-            elif self._c_node.type == tree.XML_ENTITY_REF_NODE:
-                return Entity
-            else:
-                self._raise_unsupported_type()
+        self._assertNode()
+        if self._c_node.type == tree.XML_ELEMENT_NODE:
+            return _namespacedName(self._c_node)
+        elif self._c_node.type == tree.XML_PI_NODE:
+            return ProcessingInstruction
+        elif self._c_node.type == tree.XML_COMMENT_NODE:
+            return Comment
+        elif self._c_node.type == tree.XML_ENTITY_REF_NODE:
+            return Entity
+        else:
+            self._raise_unsupported_type()
 
-    property text:
-        u"""Text before the first subelement. This is either a string or 
+    @property
+    def text(self):
+        """Text before the first subelement. This is either a string or
         the value None, if there was no text.
         """
-        def __get__(self):
-            self._assertNode()
-            if self._c_node.type == tree.XML_ELEMENT_NODE:
-                return _collectText(self._c_node.children)
-            elif self._c_node.type in (tree.XML_PI_NODE,
-                                       tree.XML_COMMENT_NODE):
-                if self._c_node.content is NULL:
-                    return ''
-                else:
-                    return funicode(self._c_node.content)
-            elif self._c_node.type == tree.XML_ENTITY_REF_NODE:
-                return f'&{funicode(self._c_node.name)};'
+        self._assertNode()
+        if self._c_node.type == tree.XML_ELEMENT_NODE:
+            return _collectText(self._c_node.children)
+        elif self._c_node.type in (tree.XML_PI_NODE,
+                                   tree.XML_COMMENT_NODE):
+            if self._c_node.content is NULL:
+                return ''
             else:
-                self._raise_unsupported_type()
+                return funicode(self._c_node.content)
+        elif self._c_node.type == tree.XML_ENTITY_REF_NODE:
+            return f'&{funicode(self._c_node.name)};'
+        else:
+            self._raise_unsupported_type()
         
-    property tail:
-        u"""Text after this element's end tag, but before the next sibling
+    @property
+    def tail(self):
+        """Text after this element's end tag, but before the next sibling
         element's start tag. This is either a string or the value None, if
         there was no text.
         """
-        def __get__(self):
-            self._assertNode()
-            return _collectText(self._c_node.next)
+        self._assertNode()
+        return _collectText(self._c_node.next)
 
-    property sourceline:
-        u"""Original line number as found by the parser or None if unknown.
+    @property
+    def sourceline(self):
+        """Original line number as found by the parser or None if unknown.
         """
-        def __get__(self):
-            cdef long line
-            self._assertNode()
-            line = tree.xmlGetLineNo(self._c_node)
-            if line > 0:
-                return line
-            else:
-                return None
+        cdef long line
+        self._assertNode()
+        line = tree.xmlGetLineNo(self._c_node)
+        if line > 0:
+            return line
+        else:
+            return None
 
     def __repr__(self):
         self._assertNode()
@@ -246,16 +246,16 @@ cdef class _ReadOnlyProxy:
 @cython.final
 @cython.internal
 cdef class _ReadOnlyPIProxy(_ReadOnlyProxy):
-    u"A read-only proxy for processing instructions (for internal use only!)"
-    property target:
-        def __get__(self):
-            self._assertNode()
-            return funicode(self._c_node.name)
+    """A read-only proxy for processing instructions (for internal use only!)"""
+    @property
+    def target(self):
+        self._assertNode()
+        return funicode(self._c_node.name)
 
 @cython.final
 @cython.internal
 cdef class _ReadOnlyEntityProxy(_ReadOnlyProxy):
-    u"A read-only proxy for entity references (for internal use only!)"
+    """A read-only proxy for entity references (for internal use only!)"""
     property name:
         def __get__(self):
             return funicode(self._c_node.name)
@@ -266,29 +266,29 @@ cdef class _ReadOnlyEntityProxy(_ReadOnlyProxy):
                 raise ValueError(f"Invalid entity name '{value}'")
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
-    property text:
-        def __get__(self):
-            return f'&{funicode(self._c_node.name)};'
+    @property
+    def text(self):
+        return f'&{funicode(self._c_node.name)};'
 
 
 @cython.internal
 cdef class _ReadOnlyElementProxy(_ReadOnlyProxy):
-    u"The main read-only Element proxy class (for internal use only!)."
+    """The main read-only Element proxy class (for internal use only!)."""
 
-    property attrib:
-        def __get__(self):
-            self._assertNode()
-            return dict(_collectAttributes(self._c_node, 3))
+    @property
+    def attrib(self):
+        self._assertNode()
+        return dict(_collectAttributes(self._c_node, 3))
 
-    property prefix:
-        u"""Namespace prefix or None.
+    @property
+    def prefix(self):
+        """Namespace prefix or None.
         """
-        def __get__(self):
-            self._assertNode()
-            if self._c_node.ns is not NULL:
-                if self._c_node.ns.prefix is not NULL:
-                    return funicode(self._c_node.ns.prefix)
-            return None
+        self._assertNode()
+        if self._c_node.ns is not NULL:
+            if self._c_node.ns.prefix is not NULL:
+                return funicode(self._c_node.ns.prefix)
+        return None
 
     def get(self, key, default=None):
         u"""Gets an element attribute.
@@ -437,7 +437,7 @@ cdef class _ModifyContentOnlyProxy(_ReadOnlyProxy):
 @cython.final
 @cython.internal
 cdef class _ModifyContentOnlyPIProxy(_ModifyContentOnlyProxy):
-    u"""A read-only proxy that allows changing the text/target content of a
+    """A read-only proxy that allows changing the text/target content of a
     processing instruction.
     """
     property target:
@@ -454,7 +454,7 @@ cdef class _ModifyContentOnlyPIProxy(_ModifyContentOnlyProxy):
 @cython.final
 @cython.internal
 cdef class _ModifyContentOnlyEntityProxy(_ModifyContentOnlyProxy):
-    u"A read-only proxy for entity references (for internal use only!)"
+    "A read-only proxy for entity references (for internal use only!)"
     property name:
         def __get__(self):
             return funicode(self._c_node.name)
@@ -494,7 +494,7 @@ cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
             self.append(element)
 
     property text:
-        u"""Text before the first subelement. This is either a string or the
+        """Text before the first subelement. This is either a string or the
         value None, if there was no text.
         """
         def __get__(self):

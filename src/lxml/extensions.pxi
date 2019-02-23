@@ -295,27 +295,27 @@ cdef class _BaseContext:
 
     # Python access to the XPath context for extension functions
 
-    property context_node:
-        def __get__(self):
-            cdef xmlNode* c_node
-            if self._xpathCtxt is NULL:
-                raise XPathError, \
-                    u"XPath context is only usable during the evaluation"
-            c_node = self._xpathCtxt.node
-            if c_node is NULL:
-                raise XPathError, u"no context node"
-            if c_node.doc != self._xpathCtxt.doc:
-                raise XPathError, \
-                    u"document-external context nodes are not supported"
-            if self._doc is None:
-                raise XPathError, u"document context is missing"
-            return _elementFactory(self._doc, c_node)
+    @property
+    def context_node(self):
+        cdef xmlNode* c_node
+        if self._xpathCtxt is NULL:
+            raise XPathError, \
+                u"XPath context is only usable during the evaluation"
+        c_node = self._xpathCtxt.node
+        if c_node is NULL:
+            raise XPathError, u"no context node"
+        if c_node.doc != self._xpathCtxt.doc:
+            raise XPathError, \
+                u"document-external context nodes are not supported"
+        if self._doc is None:
+            raise XPathError, u"document context is missing"
+        return _elementFactory(self._doc, c_node)
 
-    property eval_context:
-        def __get__(self):
-            if self._eval_context_dict is None:
-                self._eval_context_dict = {}
-            return self._eval_context_dict
+    @property
+    def eval_context(self):
+        if self._eval_context_dict is None:
+            self._eval_context_dict = {}
+        return self._eval_context_dict
 
     # Python reference keeping during XPath function evaluation
 

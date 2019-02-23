@@ -162,28 +162,28 @@ cdef class ObjectifiedElement(ElementBase):
     def __reduce__(self):
         return fromstring, (etree.tostring(self),)
 
-    property text:
-        def __get__(self):
-            return textOf(self._c_node)
+    @property
+    def text(self):
+        return textOf(self._c_node)
 
-    property __dict__:
-        u"""A fake implementation for __dict__ to support dir() etc.
+    @property
+    def __dict__(self):
+        """A fake implementation for __dict__ to support dir() etc.
 
         Note that this only considers the first child with a given name.
         """
-        def __get__(self):
-            cdef _Element child
-            cdef dict children
-            c_ns = tree._getNs(self._c_node)
-            tag = u"{%s}*" % pyunicode(c_ns) if c_ns is not NULL else None
-            children = {}
-            for child in etree.ElementChildIterator(self, tag=tag):
-                if c_ns is NULL and tree._getNs(child._c_node) is not NULL:
-                    continue
-                name = pyunicode(child._c_node.name)
-                if name not in children:
-                    children[name] = child
-            return children
+        cdef _Element child
+        cdef dict children
+        c_ns = tree._getNs(self._c_node)
+        tag = u"{%s}*" % pyunicode(c_ns) if c_ns is not NULL else None
+        children = {}
+        for child in etree.ElementChildIterator(self, tag=tag):
+            if c_ns is NULL and tree._getNs(child._c_node) is not NULL:
+                continue
+            name = pyunicode(child._c_node.name)
+            if name not in children:
+                children[name] = child
+        return children
 
     def __len__(self):
         u"""Count self and siblings with the same tag.
@@ -594,9 +594,9 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
     u"""This is the base class for all data type Elements.  Subclasses should
     override the 'pyval' property and possibly the __str__ method.
     """
-    property pyval:
-        def __get__(self):
-            return textOf(self._c_node)
+    @property
+    def pyval(self):
+        return textOf(self._c_node)
 
     def __str__(self):
         return textOf(self._c_node) or ''
@@ -619,9 +619,9 @@ cdef class NumberElement(ObjectifiedDataElement):
         """
         self._parse_value = function
 
-    property pyval:
-        def __get__(self):
-            return _parseNumber(self)
+    @property
+    def pyval(self):
+        return _parseNumber(self)
 
     def __int__(self):
         return int(_parseNumber(self))
@@ -726,9 +726,9 @@ cdef class StringElement(ObjectifiedDataElement):
     len(), iter(), str_attr[0], str_attr[0:1], etc. are *not* supported.
     Instead, use the .text attribute to get a 'real' string.
     """
-    property pyval:
-        def __get__(self):
-            return textOf(self._c_node) or u''
+    @property
+    def pyval(self):
+        return textOf(self._c_node) or u''
 
     def __repr__(self):
         return repr(textOf(self._c_node) or u'')
@@ -802,9 +802,10 @@ cdef class NoneElement(ObjectifiedDataElement):
     def __hash__(self):
         return hash(None)
 
-    property pyval:
-        def __get__(self):
-            return None
+    @property
+    def pyval(self):
+        return None
+
 
 cdef class BoolElement(IntElement):
     u"""Boolean type base on string values: 'true' or 'false'.
@@ -830,9 +831,9 @@ cdef class BoolElement(IntElement):
     def __repr__(self):
         return repr(__parseBool(textOf(self._c_node)))
 
-    property pyval:
-        def __get__(self):
-            return __parseBool(textOf(self._c_node))
+    @property
+    def pyval(self):
+        return __parseBool(textOf(self._c_node))
 
 def __checkBool(s):
     cdef int value = -1

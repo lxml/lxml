@@ -133,10 +133,10 @@ cdef class _XPathEvaluatorBase:
         self._context = _XPathContext(namespaces, extensions, self._error_log,
                                       enable_regexp, None, smart_strings)
 
-    property error_log:
-        def __get__(self):
-            assert self._error_log is not None, "XPath evaluator not initialised"
-            return self._error_log.copy()
+    @property
+    def error_log(self):
+        assert self._error_log is not None, "XPath evaluator not initialised"
+        return self._error_log.copy()
 
     def __dealloc__(self):
         if self._xpathCtxt is not NULL:
@@ -448,11 +448,11 @@ cdef class XPath(_XPathEvaluatorBase):
             self._unlock()
         return result
 
-    property path:
-        u"""The literal XPath expression.
+    @property
+    def path(self):
+        """The literal XPath expression.
         """
-        def __get__(self):
-            return self._path.decode(u'UTF-8')
+        return self._path.decode(u'UTF-8')
 
     def __dealloc__(self):
         if self._xpath is not NULL:
