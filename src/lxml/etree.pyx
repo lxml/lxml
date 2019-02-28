@@ -1387,6 +1387,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Can be restricted to find only elements with specific tags,
         see `iter`.
         """
+        if preceding:
+            if self._c_node and not self._c_node.prev:
+                return ITER_EMPTY
+        elif self._c_node and not self._c_node.next:
+            return ITER_EMPTY
         if tag is not None:
             tags += (tag,)
         return SiblingsIterator(self, tags, preceding=preceding)
@@ -1399,6 +1404,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Can be restricted to find only elements with specific tags,
         see `iter`.
         """
+        if self._c_node and not self._c_node.parent:
+            return ITER_EMPTY
         if tag is not None:
             tags += (tag,)
         return AncestorsIterator(self, tags)
@@ -1412,6 +1419,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         itself.  The returned elements can be restricted to find only elements
         with specific tags, see `iter`.
         """
+        if self._c_node and not self._c_node.children:
+            return ITER_EMPTY
         if tag is not None:
             tags += (tag,)
         return ElementDepthFirstIterator(self, tags, inclusive=False)
@@ -1425,6 +1434,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         elements can be reversed with the 'reversed' keyword and restricted
         to find only elements with specific tags, see `iter`.
         """
+        if self._c_node and not self._c_node.children:
+            return ITER_EMPTY
         if tag is not None:
             tags += (tag,)
         return ElementChildIterator(self, tags, reversed=reversed)
