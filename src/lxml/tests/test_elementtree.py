@@ -789,12 +789,19 @@ class _ETreeTestCaseBase(HelperTestCase):
             result.append(el.tag)
         self.assertEqual([], result)
 
-    def test_iteration_crash(self):
+    def test_iteration_set_tail_empty(self):
         # this would cause a crash in the past
         fromstring = self.etree.fromstring
-        root = etree.fromstring('<html><p></p>x</html>')
+        root = fromstring('<html><p></p>x</html>')
         for elem in root:
             elem.tail = ''
+
+    def test_iteration_clear_tail(self):
+        # this would cause a crash in the past
+        fromstring = self.etree.fromstring
+        root = fromstring('<html><p></p>x</html>')
+        for elem in root:
+            elem.tail = None
 
     def test_iteration_reversed(self):
         XML = self.etree.XML
@@ -1735,7 +1742,21 @@ class _ETreeTestCaseBase(HelperTestCase):
             a)
         self.assertEqual('b2', b.tail)
 
-    def _test_getchildren(self):
+    def test_remove_while_iterating(self):
+        # There is no guarantee that this "works", but it should
+        # remove at least one child and not crash.
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        SubElement(a, 'b')
+        SubElement(a, 'c')
+        SubElement(a, 'd')
+        for el in a:
+            a.remove(el)
+        self.assertLess(len(a), 3)
+
+    def test_getchildren(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
 
@@ -1783,6 +1804,34 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(
             [d],
             list(d.iter()))
+
+    def test_iter_remove_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        a.text = 'a'
+        a.tail = 'a1' * 100
+        b = SubElement(a, 'b')
+        b.text = 'b'
+        b.tail = 'b1' * 100
+        c = SubElement(a, 'c')
+        c.text = 'c'
+        c.tail = 'c1' * 100
+        d = SubElement(b, 'd')
+        d.text = 'd'
+        d.tail = 'd1' * 100
+        e = SubElement(c, 'e')
+        e.text = 'e'
+        e.tail = 'e1' * 100
+
+        for el in a.iter():
+            el.tail = None
+        el = None
+
+        self.assertEqual(
+            [None] * 5,
+            [el.tail for el in a.iter()])
 
     def test_getiterator(self):
         Element = self.etree.Element
@@ -1919,8 +1968,8 @@ class _ETreeTestCaseBase(HelperTestCase):
         c.text = 'c'
         c.tail = 'c1'
         d = SubElement(b, 'd')
-        c.text = 'd'
-        c.tail = 'd1'
+        d.text = 'd'
+        d.tail = 'd1'
         e = SubElement(c, 'e')
         e.text = 'e'
         e.tail = 'e1'
@@ -1945,8 +1994,8 @@ class _ETreeTestCaseBase(HelperTestCase):
         c.text = 'c'
         c.tail = 'c1'
         d = SubElement(b, 'd')
-        c.text = 'd'
-        c.tail = 'd1'
+        d.text = 'd'
+        d.tail = 'd1'
         e = SubElement(c, 'e')
         e.text = 'e'
         e.tail = 'e1'
