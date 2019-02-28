@@ -332,16 +332,11 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef proxy_count = 0
 
     if not tree._isElementOrXInclude(c_element):
-        c_element.doc = c_doc
-        _fixDocChildren(c_element.children, c_doc)
         return 0
 
     c_start_node = c_element
 
     tree.BEGIN_FOR_EACH_FROM(c_element, c_element, 1)
-    # 0) set C doc link
-    c_element.doc = c_doc
-
     if tree._isElementOrXInclude(c_element):
         if hasProxy(c_element):
             proxy_count += 1
@@ -352,7 +347,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
             try:
                 _stripRedundantNamespaceDeclarations(c_element, &c_ns_cache, &c_del_ns_list)
             except:
-                _fixDocChildren(c_start_node.children, c_doc)
                 _cleanUpFromNamespaceAdaptation(c_start_node, &c_ns_cache, c_del_ns_list)
                 raise
 
@@ -365,14 +359,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         while c_node is not NULL:
             if c_node.ns is not NULL:
                 _fixCNs(doc, c_start_node, c_node, &c_ns_cache, c_del_ns_list)
-
-            # remove attribute from ID table (see xmlSetTreeDoc() in libxml2's tree.c)
-            c_attr = <tree.xmlAttr*>c_node
-            if c_attr.atype == tree.XML_ATTRIBUTE_ID:
-                tree.xmlRemoveID(c_source_doc, c_attr)
-            # set C doc link also for attributes
-            c_node.doc = c_doc
-            _fixDocChildren(c_node.children, c_doc)
             c_node = c_node.next
 
     tree.END_FOR_EACH_FROM(c_element)
@@ -405,10 +391,29 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     return 0
 
 
+cdef void _setTreeDoc(xmlNode* c_node, xmlDoc* c_doc):
+    """Adaptation of 'xmlSetTreeDoc()' that deep-fix the document links iteratively.
+    It avoids https://gitlab.gnome.org/GNOME/libxml2/issues/42
+    """
+    tree.BEGIN_FOR_EACH_FROM(c_node, c_node, 1)
+    if c_node.type == tree.XML_ELEMENT_NODE:
+        c_attr = <tree.xmlAttr*>c_node.properties
+        while c_attr:
+            if c_attr.atype == tree.XML_ATTRIBUTE_ID:
+                tree.xmlRemoveID(c_node.doc, c_attr)
+            c_attr.doc = c_doc
+            _fixDocChildren(c_attr.children, c_doc)
+            c_attr = c_attr.next
+    # Set doc link for all nodes, not only elements.
+    c_node.doc = c_doc
+    tree.END_FOR_EACH_FROM(c_node)
+
+
 cdef inline void _fixDocChildren(xmlNode* c_child, xmlDoc* c_doc):
     while c_child:
         c_child.doc = c_doc
-        _fixDocChildren(c_child.children, c_doc)
+        if c_child.children:
+            _fixDocChildren(c_child.children, c_doc)
         c_child = c_child.next
 
 

@@ -1269,7 +1269,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 
 
 cdef int _linkChild(xmlNode* c_parent, xmlNode* c_node) except -1:
-    """Simple version of 'xmlAddChild()' that does not deep-fix the document links.
+    """Adaptation of 'xmlAddChild()' that deep-fix the document links iteratively.
     """
     assert _isElement(c_node)
     c_node.parent = c_parent
@@ -1279,6 +1279,8 @@ cdef int _linkChild(xmlNode* c_parent, xmlNode* c_node) except -1:
         c_node.prev = c_parent.last
         c_parent.last.next = c_node
         c_parent.last = c_node
+
+    _setTreeDoc(c_node, c_parent.doc)
     return 0
 
 
