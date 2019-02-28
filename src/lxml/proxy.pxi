@@ -332,6 +332,8 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef proxy_count = 0
 
     if not tree._isElementOrXInclude(c_element):
+        c_element.doc = c_doc
+        _fixDocChildren(c_element.children, c_doc)
         return 0
 
     c_start_node = c_element
