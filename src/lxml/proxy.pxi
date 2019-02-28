@@ -350,6 +350,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
             try:
                 _stripRedundantNamespaceDeclarations(c_element, &c_ns_cache, &c_del_ns_list)
             except:
+                _fixDocChildren(c_start_node.children, c_doc)
                 _cleanUpFromNamespaceAdaptation(c_start_node, &c_ns_cache, c_del_ns_list)
                 raise
 
