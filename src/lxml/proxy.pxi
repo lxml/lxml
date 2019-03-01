@@ -392,7 +392,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
 
 
 cdef void _setTreeDoc(xmlNode* c_node, xmlDoc* c_doc):
-    """Adaptation of 'xmlSetTreeDoc()' that deep-fix the document links iteratively.
+    """Adaptation of 'xmlSetTreeDoc()' that deep-fixes the document links iteratively.
     It avoids https://gitlab.gnome.org/GNOME/libxml2/issues/42
     """
     tree.BEGIN_FOR_EACH_FROM(c_node, c_node, 1)
