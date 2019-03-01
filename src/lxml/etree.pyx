@@ -887,19 +887,17 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _removeText(c_node.next)
         # remove all attributes
         c_attr = c_node.properties
-        while c_attr is not NULL:
-            c_attr_next = c_attr.next
-            tree.xmlRemoveProp(c_attr)
-            c_attr = c_attr_next
+        if c_attr:
+            c_node.properties = NULL
+            tree.xmlFreePropList(c_attr)
         # remove all subelements
         c_node = c_node.children
-        if c_node is not NULL:
-            if not _isElement(c_node):
-                c_node = _nextElement(c_node)
-            while c_node is not NULL:
-                c_node_next = _nextElement(c_node)
-                _removeNode(self._doc, c_node)
-                c_node = c_node_next
+        if c_node and not _isElement(c_node):
+            c_node = _nextElement(c_node)
+        while c_node is not NULL:
+            c_node_next = _nextElement(c_node)
+            _removeNode(self._doc, c_node)
+            c_node = c_node_next
 
     def insert(self, index, _Element element not None):
         u"""insert(self, index, element)

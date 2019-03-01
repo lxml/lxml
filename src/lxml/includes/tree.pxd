@@ -337,6 +337,7 @@ cdef extern from "libxml/tree.h":
                                const_xmlChar* name, const_xmlChar* value) nogil
     cdef int xmlRemoveID(xmlDoc* doc, xmlAttr* cur) nogil
     cdef int xmlRemoveProp(xmlAttr* cur) nogil
+    cdef void xmlFreePropList(xmlAttr* cur) nogil
     cdef xmlChar* xmlGetNodePath(xmlNode* node) nogil
     cdef void xmlDocDumpMemory(xmlDoc* cur, char** mem, int* size) nogil
     cdef void xmlDocDumpMemoryEnc(xmlDoc* cur, char** mem, int* size,
