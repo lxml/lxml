@@ -1327,7 +1327,7 @@ cdef object _dump(_Element element, int indent):
     result = f"{indentstr}{element.tag} = {value} [{_typename(element)}]\n"
     xsi_ns    = u"{%s}" % XML_SCHEMA_INSTANCE_NS
     pytype_ns = u"{%s}" % PYTYPE_NAMESPACE
-    for name, value in cetree.iterattributes(element, 3):
+    for name, value in sorted(cetree.iterattributes(element, 3)):
         if u'{' in name:
             if name == PYTYPE_ATTRIBUTE:
                 if value == TREE_PYTYPE_NAME:

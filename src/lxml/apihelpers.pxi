@@ -244,6 +244,10 @@ cdef _iter_nsmap(nsmap):
     The difference to _iter_attrib() is that None doesn't sort with strings
     in Py3.x.
     """
+    if python.PY_VERSION_HEX >= 0x03060000:
+        # dicts are insertion-ordered in Py3.6+ => keep the user provided order.
+        if isinstance(nsmap, dict):
+            return nsmap.items()
     if len(nsmap) <= 1:
         return nsmap.items()
     # nsmap will usually be a plain unordered dict => avoid type checking overhead
@@ -271,7 +275,10 @@ cdef _iter_attrib(attrib):
     Tries to preserve an existing order and sorts if it assumes no order.
     """
     # attrib will usually be a plain unordered dict
-    if type(attrib) is dict:
+    if isinstance(attrib, dict):
+        if python.PY_VERSION_HEX >= 0x03060000:
+            # dicts are insertion-ordered in Py3.6+ => keep the user provided order.
+            return attrib.items()
         return sorted(attrib.items())
     elif isinstance(attrib, (_Attrib, OrderedDict)):
         return attrib.items()
@@ -292,8 +299,12 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     is_html = doc._parser._for_html
     seen = set()
     if extra:
-        for name, value in sorted(extra.items()):
-            _addAttributeToNode(c_node, doc, is_html, name, value, seen)
+        if python.PY_VERSION_HEX >= 0x03060000:
+            for name, value in extra.items():
+                _addAttributeToNode(c_node, doc, is_html, name, value, seen)
+        else:
+            for name, value in sorted(extra.items()):
+                _addAttributeToNode(c_node, doc, is_html, name, value, seen)
     if attrib:
         for name, value in _iter_attrib(attrib):
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)

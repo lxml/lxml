@@ -1040,14 +1040,14 @@ and/or 'xsi:type' information:
     >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         d = 5.0 [FloatElement]
-          * xsi:type = 'xsd:double'
           * py:pytype = 'float'
+          * xsi:type = 'xsd:double'
         i = 5 [IntElement]
-          * xsi:type = 'xsd:int'
           * py:pytype = 'int'
+          * xsi:type = 'xsd:int'
         s = '5' [StringElement]
-          * xsi:type = 'xsd:string'
           * py:pytype = 'str'
+          * xsi:type = 'xsd:string'
     >>> objectify.deannotate(root)
     >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
@@ -1074,17 +1074,17 @@ arguments 'pytype' (default: True) and 'xsi' (default: True).
     >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         d = 5.0 [FloatElement]
-          * xsi:type = 'xsd:double'
           * py:pytype = 'float'
+          * xsi:type = 'xsd:double'
         i = 5 [IntElement]
-          * xsi:type = 'xsd:int'
           * py:pytype = 'int'
+          * xsi:type = 'xsd:int'
         s = '5' [StringElement]
-          * xsi:type = 'xsd:string'
           * py:pytype = 'str'
+          * xsi:type = 'xsd:string'
         n = None [NoneElement]
-          * xsi:nil = 'true'
           * py:pytype = 'NoneType'
+          * xsi:nil = 'true'
     >>> objectify.deannotate(root, xsi_nil=True)
     >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
