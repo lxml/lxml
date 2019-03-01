@@ -306,10 +306,17 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         root2 = Element("root2", root.attrib,
                         attr_99='TOAST-1', attr_98='TOAST-2')
-        self.assertEqual(['attr_98', 'attr_99'] + keys,
-                         root2.attrib.keys())
-        self.assertEqual(['TOAST-2', 'TOAST-1'] + values,
-                         root2.attrib.values())
+
+        if sys.version_info >= (3, 6):
+            self.assertEqual(['attr_99', 'attr_98'] + keys,
+                             root2.attrib.keys())
+            self.assertEqual(['TOAST-1', 'TOAST-2'] + values,
+                             root2.attrib.values())
+        else:
+            self.assertEqual(['attr_98', 'attr_99'] + keys,
+                             root2.attrib.keys())
+            self.assertEqual(['TOAST-2', 'TOAST-1'] + values,
+                             root2.attrib.values())
 
         self.assertEqual(keys, root.attrib.keys())
         self.assertEqual(values, root.attrib.values())
