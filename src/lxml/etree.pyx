@@ -870,11 +870,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _assertValidNode(element)
             _appendChild(self, element)
 
-    def clear(self):
-        u"""clear(self)
+    def clear(self, bint keep_tail=False):
+        u"""clear(self, keep_tail=False)
 
         Resets an element.  This function removes all subelements, clears
         all attributes and sets the text and tail properties to None.
+
+        Pass ``keep_tail=True`` to leave the tail text untouched.
         """
         cdef xmlAttr* c_attr
         cdef xmlAttr* c_attr_next
@@ -884,7 +886,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         c_node = self._c_node
         # remove self.text and self.tail
         _removeText(c_node.children)
-        _removeText(c_node.next)
+        if not keep_tail:
+            _removeText(c_node.next)
         # remove all attributes
         c_attr = c_node.properties
         if c_attr:

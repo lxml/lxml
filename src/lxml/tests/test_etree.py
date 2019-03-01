@@ -241,6 +241,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError,
                           etree.Element, "root", nsmap={'a:b' : 'testns'})
 
+    def test_clear_keep_tail(self):
+        XML = self.etree.XML
+        tostring = self.etree.tostring
+        a = XML('<a aa="A"><b ba="B">B1</b>B2<c ca="C">C1</c>C2</a>')
+        a[0].clear(keep_tail=True)
+        self.assertEqual(_bytes('<a aa="A"><b/>B2<c ca="C">C1</c>C2</a>'), tostring(a))
+
     def test_attribute_has_key(self):
         # ET in Py 3.x has no "attrib.has_key()" method
         XML = self.etree.XML
