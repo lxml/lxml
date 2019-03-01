@@ -30,6 +30,7 @@ class ErrorTestCase(HelperTestCase):
     def test_element_cyclic_gc_none(self):
         # test if cyclic reference can crash etree
         Element = self.etree.Element
+        getrefcount = sys.getrefcount
 
         # must disable tracing as it could change the refcounts
         trace_func = sys.gettrace()
@@ -37,15 +38,16 @@ class ErrorTestCase(HelperTestCase):
             sys.settrace(None)
             gc.collect()
 
-            count = sys.getrefcount(None)
+            count = getrefcount(None)
 
             l = [Element('name'), Element('name')]
             l.append(l)
 
             del l
             gc.collect()
+            count = getrefcount(None) - count
 
-            self.assertEqual(sys.getrefcount(None), count)
+            self.assertEqual(count, 0)
         finally:
             sys.settrace(trace_func)
 
