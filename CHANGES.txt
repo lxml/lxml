@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+4.4.0 (2019-??-??)
+==================
+
+Features added
+--------------
+
+* ``Element.clear()`` accepts a new keyword argument ``keep_tail=True`` to
+  clear everything but the tail text.  This is helpful in some document-style
+  use cases.
+
+
 4.3.2 (2019-02-29)
 ==================
 
