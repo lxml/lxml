@@ -6,8 +6,7 @@ class XPathSyntaxError(LxmlSyntaxError, XPathError):
 ################################################################################
 # XPath
 
-cdef object _XPATH_SYNTAX_ERRORS
-_XPATH_SYNTAX_ERRORS = (
+cdef object _XPATH_SYNTAX_ERRORS = (
     xmlerror.XML_XPATH_NUMBER_ERROR,
     xmlerror.XML_XPATH_UNFINISHED_LITERAL_ERROR,
     xmlerror.XML_XPATH_VARIABLE_REF_ERROR,
@@ -16,8 +15,7 @@ _XPATH_SYNTAX_ERRORS = (
     xmlerror.XML_XPATH_INVALID_CHAR_ERROR
 )
 
-cdef object _XPATH_EVAL_ERRORS
-_XPATH_EVAL_ERRORS = (
+cdef object _XPATH_EVAL_ERRORS = (
     xmlerror.XML_XPATH_UNDEF_VARIABLE_ERROR,
     xmlerror.XML_XPATH_UNDEF_PREFIX_ERROR,
     xmlerror.XML_XPATH_UNKNOWN_FUNC_ERROR,
@@ -462,10 +460,8 @@ cdef class XPath(_XPathEvaluatorBase):
         return self.path
 
 
-cdef object _replace_strings
-cdef object _find_namespaces
-_replace_strings = re.compile(b'("[^"]*")|(\'[^\']*\')').sub
-_find_namespaces = re.compile(b'({[^}]+})').findall
+cdef object _replace_strings = re.compile(b'("[^"]*")|(\'[^\']*\')').sub
+cdef object _find_namespaces = re.compile(b'({[^}]+})').findall
 
 cdef class ETXPath(XPath):
     u"""ETXPath(self, path, extensions=None, regexp=True, smart_strings=True)
