@@ -294,10 +294,9 @@ cdef class ObjectifiedElement(ElementBase):
         c_self_node = self._c_node
         c_parent = c_self_node.parent
         if c_parent is NULL:
-            if c_index == 0:
+            if c_index == 0 or c_index == -1:
                 return self
-            else:
-                raise IndexError, unicode(key)
+            raise IndexError, unicode(key)
         if c_index < 0:
             c_node = c_parent.last
         else:
