@@ -710,9 +710,15 @@ cdef class IntElement(NumberElement):
     def _init(self):
         self._parse_value = int
 
+    def __index__(self):
+        return int(_parseNumber(self))
+
 cdef class LongElement(NumberElement):
     def _init(self):
         self._parse_value = long
+
+    def __index__(self):
+        return int(_parseNumber(self))
 
 cdef class FloatElement(NumberElement):
     def _init(self):

@@ -1042,10 +1042,10 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_type_int(self):
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("{objectified}root")
         root.none = 5
         self.assertTrue(isinstance(root.none, objectify.IntElement))
+        self.assertEqual(5, root.none.__index__())
 
     def test_data_element_int(self):
         value = objectify.DataElement(5)

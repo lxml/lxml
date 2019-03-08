@@ -17,6 +17,8 @@ Features added
   the items by name.  This follows a similar change for ElementTree in CPython 3.8.
   See https://bugs.python.org/issue34160
 
+* Integer elements in ``lxml.objectify`` implement the ``__index__()`` special method.
+
 Bugs fixed
 ----------
 
