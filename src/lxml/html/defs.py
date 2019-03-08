@@ -8,7 +8,7 @@
 
 empty_tags = frozenset([
     'area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
-    'img', 'input', 'isindex', 'link', 'meta', 'param'])
+    'img', 'input', 'isindex', 'link', 'meta', 'param', 'source', 'track'])
 
 deprecated_tags = frozenset([
     'applet', 'basefont', 'center', 'dir', 'font', 'isindex',

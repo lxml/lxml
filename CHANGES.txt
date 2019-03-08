@@ -17,6 +17,12 @@ Features added
   the items by name.  This follows a similar change for ElementTree in CPython 3.8.
   See https://bugs.python.org/issue34160
 
+Bugs fixed
+----------
+
+* LP#1758553: The HTML elements ``source`` and ``track`` were added to the list
+  of empty tags in ``lxml.html.defs``.
+
 
 4.3.2 (2019-02-29)
 ==================
