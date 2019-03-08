@@ -440,6 +440,13 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("1", root.c1.c2[1].text)
         self.assertEqual("2", root.c1.c2[2].text)
         self.assertRaises(IndexError, operator.getitem, root.c1.c2, 3)
+        self.assertEqual(root, root[0])
+        self.assertRaises(IndexError, operator.getitem, root, 1)
+
+        c1 = root.c1
+        del root.c1  # unlink from parent
+        self.assertEqual(c1, c1[0])
+        self.assertRaises(IndexError, operator.getitem, c1, 1)
 
     def test_child_index_neg(self):
         root = self.XML(xml_str)
@@ -448,6 +455,13 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("1", root.c1.c2[-2].text)
         self.assertEqual("2", root.c1.c2[-1].text)
         self.assertRaises(IndexError, operator.getitem, root.c1.c2, -4)
+        self.assertEqual(root, root[-1])
+        self.assertRaises(IndexError, operator.getitem, root, -2)
+
+        c1 = root.c1
+        del root.c1  # unlink from parent
+        self.assertEqual(c1, c1[-1])
+        self.assertRaises(IndexError, operator.getitem, c1, -2)
 
     def test_child_len(self):
         root = self.XML(xml_str)
@@ -703,6 +717,48 @@ class ObjectifyTestCase(HelperTestCase):
                           [ c.text for c in root.c ])
 
     # other stuff
+
+    def test_setitem_index(self):
+        Element = self.Element
+        root = Element("root")
+        root['child'] = ['CHILD1', 'CHILD2']
+        self.assertEqual(["CHILD1", "CHILD2"],
+                          [ c.text for c in root.child ])
+
+        self.assertRaises(IndexError, operator.setitem, root.child, -3, 'oob')
+        self.assertRaises(IndexError, operator.setitem, root.child, -300, 'oob')
+        self.assertRaises(IndexError, operator.setitem, root.child, 2, 'oob')
+        self.assertRaises(IndexError, operator.setitem, root.child, 200, 'oob')
+
+        root.child[0] = "child0"
+        root.child[-1] = "child-1"
+        self.assertEqual(["child0", "child-1"],
+                          [ c.text for c in root.child ])
+
+        root.child[1] = "child1"
+        root.child[-2] = "child-2"
+        self.assertEqual(["child-2", "child1"],
+                          [ c.text for c in root.child ])
+
+    def test_delitem_index(self):
+        # make sure strings are set as children
+        Element = self.Element
+        root = Element("root")
+        root['child'] = ['CHILD1', 'CHILD2', 'CHILD3', 'CHILD4']
+        self.assertEqual(["CHILD1", "CHILD2", "CHILD3", "CHILD4"],
+                          [ c.text for c in root.child ])
+
+        del root.child[-1]
+        self.assertEqual(["CHILD1", "CHILD2", "CHILD3"],
+                          [ c.text for c in root.child ])
+        del root.child[-2]
+        self.assertEqual(["CHILD1", "CHILD3"],
+                          [ c.text for c in root.child ])
+        del root.child[0]
+        self.assertEqual(["CHILD3"],
+                          [ c.text for c in root.child ])
+        del root.child[-1]
+        self.assertRaises(AttributeError, getattr, root, 'child')
 
     def test_set_string(self):
         # make sure strings are not handled as sequences
