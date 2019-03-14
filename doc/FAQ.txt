@@ -63,9 +63,16 @@ ElementTree_.
      7.3  How can I find out which namespace prefixes are used in a document?
      7.4  How can I specify a default namespace for XPath expressions?
 
+
+The code examples below use the `'lxml.etree`` module:
+
+.. sourcecode:: pycon
+
+   >>> from lxml import etree
+
 ..
   >>> import sys
-  >>> from lxml import etree as _etree
+  >>> _etree = etree
   >>> if sys.version_info[0] >= 3:
   ...   class etree_mock(object):
   ...     def __getattr__(self, name): return getattr(_etree, name)
