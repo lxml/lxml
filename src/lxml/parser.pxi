@@ -1041,7 +1041,7 @@ cdef class _BaseParser:
         else:
             py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
             c_text = python.PyUnicode_AS_DATA(utext)
-        assert py_buffer_len <= limits.INT_MAX
+        assert 0 <= py_buffer_len <= limits.INT_MAX
         buffer_len = py_buffer_len
 
         context = self._getParserContext()
