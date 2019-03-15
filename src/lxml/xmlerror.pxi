@@ -716,32 +716,32 @@ cdef void _receiveGenericError(void* c_log_handler, int c_domain,
     c_name_pos = c_pos = msg
     format_count = 0
     while c_pos[0]:
-        if c_pos[0] == b'%':
+        if c_pos[0] == '%':
             c_pos += 1
-            if c_pos[0] == b's':  # "%s"
+            if c_pos[0] == 's':  # "%s"
                 format_count += 1
                 c_str = cvarargs.va_charptr(args)
                 if c_pos == msg + 1:
                     c_text = c_str  # msg == "%s..."
-                elif c_name_pos[0] == b'e':
+                elif c_name_pos[0] == 'e':
                     if cstring_h.strncmp(c_name_pos, 'element %s', 10) == 0:
                         c_element = c_str
-                elif c_name_pos[0] == b'f':
+                elif c_name_pos[0] == 'f':
                     if cstring_h.strncmp(c_name_pos, 'file %s', 7) == 0:
                         if cstring_h.strncmp('string://__STRING__XSLT',
                                              c_str, 23) == 0:
                             c_str = '<xslt>'
                         c_error.file = c_str
-            elif c_pos[0] == b'd':  # "%d"
+            elif c_pos[0] == 'd':  # "%d"
                 format_count += 1
                 c_int = cvarargs.va_int(args)
                 if cstring_h.strncmp(c_name_pos, 'line %d', 7) == 0:
                     c_error.line = c_int
-            elif c_pos[0] != b'%':  # "%%" == "%"
+            elif c_pos[0] != '%':  # "%%" == "%"
                 format_count += 1
                 break  # unexpected format or end of string => abort
-        elif c_pos[0] == b' ':
-            if c_pos[1] != b'%':
+        elif c_pos[0] == ' ':
+            if c_pos[1] != '%':
                 c_name_pos = c_pos + 1
         c_pos += 1
 
