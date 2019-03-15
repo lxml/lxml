@@ -182,6 +182,9 @@ def register_namespace(prefix, uri):
         raise ValueError("Prefix format reserved for internal use")
     _tagValidOrRaise(prefix_utf)
     _uriValidOrRaise(uri_utf)
+    if (uri_utf == b"http://www.w3.org/XML/1998/namespace" and prefix_utf != b'xml'
+            or prefix_utf == b'xml' and uri_utf != b"http://www.w3.org/XML/1998/namespace"):
+        raise ValueError("Cannot change the 'xml' prefix of the XML namespace")
     for k, v in list(_DEFAULT_NAMESPACE_PREFIXES.items()):
         if k == uri_utf or v == prefix_utf:
             del _DEFAULT_NAMESPACE_PREFIXES[k]

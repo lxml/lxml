@@ -2567,6 +2567,13 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.assertEqual(sorted(dic.itervalues()),
                               sorted(expected.itervalues()))
 
+    def test_register_namespace_xml(self):
+        self.assertRaises(ValueError, self.etree.register_namespace,
+                          "XML", "http://www.w3.org/XML/1998/namespace")
+        self.assertRaises(ValueError, self.etree.register_namespace,
+                          "xml", "http://www.w3.org/XML/2345")
+        self.etree.register_namespace("xml", "http://www.w3.org/XML/1998/namespace")  # ok
+
     def test_namespaces(self):
         etree = self.etree
 

@@ -25,6 +25,8 @@ Bugs fixed
 * LP#1758553: The HTML elements ``source`` and ``track`` were added to the list
   of empty tags in ``lxml.html.defs``.
 
+* Registering a prefix other than "xml" for the XML namespace is now rejected.
+
 
 4.3.2 (2019-02-29)
 ==================
