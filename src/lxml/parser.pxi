@@ -1744,8 +1744,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         is_pep393_string = (
             python.PEP393_ENABLED and python.PyUnicode_IS_READY(text))
         if is_pep393_string:
-            c_len = python.PyUnicode_GET_LENGTH(text)
-            c_len *= python.PyUnicode_KIND(text)
+            c_len = python.PyUnicode_GET_LENGTH(text) * python.PyUnicode_KIND(text)
         else:
             c_len = python.PyUnicode_GET_DATA_SIZE(text)
         if c_len > limits.INT_MAX:
