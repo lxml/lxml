@@ -57,6 +57,7 @@ ElementTree_.
      6.6  How do I output null characters in XML text?
      6.7  Is lxml vulnerable to XML bombs?
      6.8  How do I configure lxml safely as a web-service endpoint?
+     6.9  How can I sort the attributes?
    7  XPath and Document Traversal
      7.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
      7.2  Why doesn't ``findall()`` support full XPath expressions?
@@ -1146,6 +1147,35 @@ The defusedxml_ package comes with an example setup and a wrapper
 API for lxml that applies certain counter measures internally.
 
 .. _defusedxml: https://bitbucket.org/tiran/defusedxml
+
+
+How can I sort the attributes?
+------------------------------
+
+lxml preserves the order in which attributes were originally created.
+There is one case in which this is difficult: when attributes are passed
+in a dict or as keyword arguments to the `Element()` factory.  Before Python
+3.6, dicts had no predictable order.
+Since Python 3.6, however, dicts also preserve the creation order of their keys,
+and lxml makes use of that since release 4.4.
+In earlier versions, lxml tries to assure at least reproducible output by
+sorting the attributes from the dict before creating them.  All sequential
+ways to set attributes keep their order and do not apply sorting.  Also,
+OrderedDict instances are recognised and not sorted.
+
+In cases where you cannot control the order in which attributes are created,
+you can still change it before serialisation.  To sort them by name, for example,
+you can apply the following function:
+
+.. sourcecode:: python
+
+    def sort_attributes(root):
+        for el in root.iter():
+            attrib = el.attrib
+            if len(attrib) > 1:
+                attributes = sorted(attrib.items())
+                attrib.clear()
+                attrib.update(attributes)
 
 
 XPath and Document Traversal
