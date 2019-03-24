@@ -2378,6 +2378,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         rendered if it is used by the immediate parent or one of its attributes
         and its prefix and values have not already been rendered by an ancestor
         of the namespace node's parent element.
+
+        NOTE: This method is deprecated as of lxml 4.4 and will be removed in a
+        future release.  Use ``.write(f, method="c14n")`` instead.
         """
         self._assertHasRoot()
         _assertValidNode(self._context_node)

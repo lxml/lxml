@@ -27,6 +27,13 @@ Bugs fixed
 
 * Registering a prefix other than "xml" for the XML namespace is now rejected.
 
+Other changes
+-------------
+
+* The ``ElementTree.write_c14n()`` method has been deprecated in favour of the
+  long preferred ``ElementTree.write(f, method="c14n")``.  It will be removed
+  in a future release.
+
 
 4.3.2 (2019-02-29)
 ==================
