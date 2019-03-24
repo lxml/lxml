@@ -2449,9 +2449,10 @@ cdef class _Attrib:
 
     def clear(self):
         _assertValidNode(self._element)
-        cdef xmlNode* c_node = self._element._c_node
-        while c_node.properties is not NULL:
-            tree.xmlRemoveProp(c_node.properties)
+        c_attrs = self._element._c_node.properties
+        if c_attrs:
+            self._element._c_node.properties = NULL
+            tree.xmlFreePropList(c_attrs)
 
     # ACCESSORS
     def __repr__(self):
