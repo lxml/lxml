@@ -1939,7 +1939,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     # not in ElementTree
     @property
-    def docinfo(self):
+    def docinfo(self) -> DocInfo:
         """Information about the document provided by parser and DTD."""
         self._assertHasRoot()
         return DocInfo(self._context_node._doc)
@@ -1957,9 +1957,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return None
 
     def write(self, file, *, encoding=None, method="xml",
-              pretty_print=False, xml_declaration=None, with_tail=True,
+              bint pretty_print=False, xml_declaration=None, bint with_tail=True,
               standalone=None, doctype=None, compression=0,
-              exclusive=False, with_comments=True, inclusive_ns_prefixes=None,
+              bint exclusive=False, bint with_comments=True, inclusive_ns_prefixes=None,
               docstring=None):
         u"""write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
@@ -2360,7 +2360,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         XInclude()(self._context_node)
 
-    def write_c14n(self, file, *, exclusive=False, with_comments=True,
+    def write_c14n(self, file, *, bint exclusive=False, bint with_comments=True,
                    compression=0, inclusive_ns_prefixes=None):
         u"""write_c14n(self, file, exclusive=False, with_comments=True,
                        compression=0, inclusive_ns_prefixes=None)
