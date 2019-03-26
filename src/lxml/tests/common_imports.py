@@ -262,7 +262,7 @@ def read_file(name, mode='r'):
 def write_to_file(name, data, mode='w'):
     f = open(name, mode)
     try:
-        data = f.write(data)
+        f.write(data)
     finally:
         f.close()
 
