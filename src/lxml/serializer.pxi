@@ -757,6 +757,7 @@ cdef _FilelikeWriter _create_output_buffer(
         tree.xmlOutputBuffer** c_buffer_ret, bint close):
     cdef tree.xmlOutputBuffer* c_buffer
     cdef _FilelikeWriter writer
+    cdef bytes filename8
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
         raise LookupError(
@@ -764,10 +765,15 @@ cdef _FilelikeWriter _create_output_buffer(
     try:
         if _isString(f):
             filename8 = _encodeFilename(f)
+            if b'%' in filename8 and (b'://' not in filename8
+                                      or filename8[:7].lower() == b'file://'):
+                # A file path (not a URL) containing the '%' URL escape character.
+                # libxml2 uses URL-unescaping on these, so escape the path before passing it in.
+                filename8 = filename8.replace(b'%', b'%25')
             c_buffer = tree.xmlOutputBufferCreateFilename(
                 _cstr(filename8), enchandler, c_compression)
             if c_buffer is NULL:
-                return python.PyErr_SetFromErrno(IOError) # raises IOError
+                python.PyErr_SetFromErrno(IOError)  # raises IOError
             writer = None
         elif hasattr(f, 'write'):
             writer = _FilelikeWriter(f, compression=c_compression, close=close)

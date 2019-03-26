@@ -22,6 +22,13 @@ Features added
 Bugs fixed
 ----------
 
+* When writing to file paths that contain the URL escape character '%', the file
+  path could wrongly be mangled by URL unescaping and thus write to a different
+  file or directory.  Code that writes to file paths that are provided by untrusted
+  sources, but that must work with previous versions of lxml, should best either
+  reject paths that contain '%' characters, or otherwise make sure that the path
+  does not contain maliciously injected '%XX' URL hex escapes for paths like '../'.
+
 * LP#1758553: The HTML elements ``source`` and ``track`` were added to the list
   of empty tags in ``lxml.html.defs``.
 

@@ -109,7 +109,7 @@ class ETreeXSLTTestCase(HelperTestCase):
     @contextlib.contextmanager
     def _xslt_setup(
             self, encoding='UTF-16', expected_encoding=None,
-            expected="""<?xml version="1.0" encoding="%(ENCODING)s"?><foo>\\uF8D2</foo>"""):
+            expected='<?xml version="1.0" encoding="%(ENCODING)s"?><foo>\\uF8D2</foo>'):
         tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
                                  ).decode("unicode_escape"))
         style = self.parse('''\
@@ -189,6 +189,33 @@ class ETreeXSLTTestCase(HelperTestCase):
             try:
                 try:
                     res[0].write_output(f.name, compression=9)
+                finally:
+                    f.close()
+                with contextlib.closing(gzip.GzipFile(f.name)) as f:
+                    res[0] = f.read().decode("UTF-16")
+            finally:
+                os.unlink(f.name)
+
+    def test_xslt_write_output_file_path_urlescaped(self):
+        # libxml2 should not unescape file paths.
+        with self._xslt_setup() as res:
+            f = NamedTemporaryFile(suffix='tmp%2e', delete=False)
+            try:
+                try:
+                    res[0].write_output(f.name, compression=3)
+                finally:
+                    f.close()
+                with contextlib.closing(gzip.GzipFile(f.name)) as f:
+                    res[0] = f.read().decode("UTF-16")
+            finally:
+                os.unlink(f.name)
+
+    def test_xslt_write_output_file_path_urlescaped_plus(self):
+        with self._xslt_setup() as res:
+            f = NamedTemporaryFile(prefix='p+%2e', delete=False)
+            try:
+                try:
+                    res[0].write_output(f.name, compression=1)
                 finally:
                     f.close()
                 with contextlib.closing(gzip.GzipFile(f.name)) as f:

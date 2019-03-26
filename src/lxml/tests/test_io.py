@@ -106,6 +106,16 @@ class _IOTestCaseBase(HelperTestCase):
             os.close(handle)
             os.remove(filename)
 
+    def test_write_filename_special(self):
+        handle, filename = tempfile.mkstemp(prefix="p+%20", suffix=".xml")
+        try:
+            self.tree.write(filename)
+            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
+                             self.root_str)
+        finally:
+            os.close(handle)
+            os.remove(filename)
+
     def test_write_invalid_filename(self):
         filename = os.path.join(
             os.path.join('hopefullynonexistingpathname'),

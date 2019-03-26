@@ -4462,6 +4462,17 @@ class ETreeWriteTestCase(HelperTestCase):
         self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
                           data)
 
+    def test_write_file_url(self):
+        xml = _bytes('<a>'+'<b/>'*200+'</a>')
+        tree = self.parse(xml)
+        handle, filename = tempfile.mkstemp(prefix="p+%20", suffix=".xml")
+        try:
+            tree.write('file://' + filename)
+            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')), xml)
+        finally:
+            os.close(handle)
+            os.remove(filename)
+
 
 class ETreeErrorLogTest(HelperTestCase):
     etree = etree
