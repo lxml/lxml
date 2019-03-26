@@ -5,15 +5,13 @@ IO test cases that apply to both etree and ElementTree
 """
 
 import unittest
-import tempfile, gzip, os, os.path, sys, gc, shutil
+import tempfile, gzip, os, os.path, gc, shutil
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir)  # needed for Py3
-
-from common_imports import etree, ElementTree, _str, _bytes
-from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
-from common_imports import read_file, write_to_file, BytesIO
+from lxml.tests.common_imports import (
+    etree, ElementTree, _str, _bytes,
+    SillyFileLike, LargeFileLike, HelperTestCase,
+    read_file, write_to_file, BytesIO
+)
 
 
 class _IOTestCaseBase(HelperTestCase):
@@ -28,7 +26,7 @@ class _IOTestCaseBase(HelperTestCase):
         self.root_str = self.etree.tostring(self.root)
         self.tree = self.etree.ElementTree(self.root)
         self._temp_dir = tempfile.mkdtemp()
-        
+
     def tearDown(self):
         gc.collect()
         shutil.rmtree(self._temp_dir)
@@ -38,7 +36,7 @@ class _IOTestCaseBase(HelperTestCase):
 
     def buildNodes(self, element, children, depth):
         Element = self.etree.Element
-        
+
         if depth == 0:
             return
         for i in range(children):
@@ -49,7 +47,7 @@ class _IOTestCaseBase(HelperTestCase):
     def test_tree_io(self):
         Element = self.etree.Element
         ElementTree = self.etree.ElementTree
-    
+
         element = Element('top')
         element.text = _str("qwrtioüöä\uAABB")
         tree = ElementTree(element)
@@ -95,10 +93,10 @@ class _IOTestCaseBase(HelperTestCase):
         data2 = f.read()
         f.close()
         self.assertEqual(data1, data2)
-        
+
     def test_write_filename(self):
         # (c)ElementTree  supports filename strings as write argument
-        
+
         handle, filename = tempfile.mkstemp(suffix=".xml")
         self.tree.write(filename)
         try:
@@ -107,7 +105,7 @@ class _IOTestCaseBase(HelperTestCase):
         finally:
             os.close(handle)
             os.remove(filename)
-        
+
     def test_write_invalid_filename(self):
         filename = os.path.join(
             os.path.join('hopefullynonexistingpathname'),
@@ -140,7 +138,7 @@ class _IOTestCaseBase(HelperTestCase):
         # the root of the tree
 
         # parse from filename
-        
+
         handle, filename = tempfile.mkstemp(suffix=".xml")
         write_to_file(filename, self.root_str, 'wb')
         try:
@@ -171,13 +169,13 @@ class _IOTestCaseBase(HelperTestCase):
         finally:
             os.close(handle)
             os.remove(filename)
-        
+
     def test_class_parse_fileobject(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
         # the root of the tree
 
         # parse from file object
-        
+
         handle, filename = tempfile.mkstemp(suffix=".xml")
         try:
             os.write(handle, self.root_str)
