@@ -1956,7 +1956,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             return self._doc._parser
         return None
 
-    def write(self, file, *, encoding=None, method=u"xml",
+    def write(self, file, *, encoding=None, method="xml",
               pretty_print=False, xml_declaration=None, with_tail=True,
               standalone=None, doctype=None, compression=0,
               exclusive=False, with_comments=True, inclusive_ns_prefixes=None,
@@ -2023,16 +2023,16 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if xml_declaration is not None:
             write_declaration = xml_declaration
             if encoding is None:
-                encoding = u'ASCII'
+                encoding = 'ASCII'
             else:
                 encoding = encoding.upper()
         elif encoding is None:
-            encoding = u'ASCII'
+            encoding = 'ASCII'
             write_declaration = 0
         else:
             encoding = encoding.upper()
-            write_declaration = encoding not in \
-                                  (u'US-ASCII', u'ASCII', u'UTF8', u'UTF-8')
+            write_declaration = encoding not in (
+                'US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
         if standalone is None:
             is_standalone = -1
         elif standalone:
