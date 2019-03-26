@@ -905,7 +905,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _removeNode(self._doc, c_node)
             c_node = c_node_next
 
-    def insert(self, index, _Element element not None):
+    def insert(self, index: int, _Element element not None):
         u"""insert(self, index, element)
 
         Inserts a subelement at the given position in this element
@@ -1206,7 +1206,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         u"__reversed__(self)"
         return ElementChildIterator(self, reversed=True)
 
-    def index(self, _Element child not None, start=None, stop=None):
+    def index(self, _Element child not None, start: int = None, stop: int = None):
         u"""index(self, child, start=None, stop=None)
 
         Find the position of the child within the parent.
