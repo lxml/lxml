@@ -720,7 +720,7 @@ cdef class _XSLTResultTree(_ElementTree):
         """
         cdef _FilelikeWriter writer = None
         cdef _Document doc
-        cdef int r, c_compression
+        cdef int r, rclose, c_compression
         cdef const_xmlChar* c_encoding = NULL
         cdef tree.xmlOutputBuffer* c_buffer
 
@@ -733,23 +733,18 @@ cdef class _XSLTResultTree(_ElementTree):
             if doc is None:
                 raise XSLTSaveError("No document to serialise")
         c_compression = compression or 0
-        if _isString(file):
-            file_path = _encodeFilename(file)
-            c_filename = _cstr(file_path)
+        xslt.LXML_GET_XSLT_ENCODING(c_encoding, self._xslt._c_style)
+        writer = _create_output_buffer(file, <const_char*>c_encoding, compression, &c_buffer, close=False)
+        if writer is None:
             with nogil:
-                r = xslt.xsltSaveResultToFilename(
-                    c_filename, doc._c_doc, self._xslt._c_style, c_compression)
-        else:
-            xslt.LXML_GET_XSLT_ENCODING(c_encoding, self._xslt._c_style)
-            writer = _create_output_buffer(file, <const_char*>c_encoding, compression, &c_buffer, close=False)
-            if writer is None:
-                with nogil:
-                    r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
-            else:
                 r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
+                rclose = tree.xmlOutputBufferClose(c_buffer)
+        else:
+            r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
+            rclose = tree.xmlOutputBufferClose(c_buffer)
         if writer is not None:
             writer._exc_context._raise_if_stored()
-        if r == -1:
+        if r < 0 or rclose < 0:
             python.PyErr_SetFromErrno(XSLTSaveError)  # raises
 
     cdef _saveToStringAndSize(self, xmlChar** s, int* l):
