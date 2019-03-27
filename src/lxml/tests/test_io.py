@@ -88,21 +88,21 @@ class _IOTestCaseBase(HelperTestCase):
         # (c)ElementTree  supports filename strings as write argument
         with tmpfile(prefix="p", suffix=".xml") as filename:
             self.tree.write(filename)
-            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
+            self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
                              self.root_str)
 
     def test_write_filename_special_percent(self):
         # '%20' is a URL escaped space character.
         with tmpfile(prefix="p%20p", suffix=".xml") as filename:
             self.tree.write(filename)
-            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
+            self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
                              self.root_str)
 
     def test_write_filename_special_plus(self):
         # '+' is used as an escaped space character in URLs.
         with tmpfile(prefix="p+", suffix=".xml") as filename:
             self.tree.write(filename)
-            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
+            self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
                              self.root_str)
 
     def test_write_invalid_filename(self):
