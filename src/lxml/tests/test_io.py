@@ -93,10 +93,17 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_write_filename_special_percent(self):
         # '%20' is a URL escaped space character.
-        with tmpfile(prefix="p%20p", suffix=".xml") as filename:
-            self.tree.write(filename)
-            self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
-                             self.root_str)
+        with tmpfile(prefix="lxmltmp-p%20p", suffix=".xml") as filename:
+            try:
+                self.tree.write(filename)
+                self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
+                                 self.root_str)
+            except (AssertionError, IOError, OSError):
+                print(sorted(
+                    filename for filename in os.listdir(tempfile.gettempdir())
+                    if filename.startswith('lxmltmp-')
+                ))
+                raise
 
     def test_write_filename_special_plus(self):
         # '+' is used as an escaped space character in URLs.
