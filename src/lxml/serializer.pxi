@@ -689,20 +689,13 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         data = _textToString(element._c_node, encoding, with_tail)
         if compression:
             bytes_out = BytesIO()
-            gzip_file = GzipFile(
-                fileobj=bytes_out, mode='wb', compresslevel=compression)
-            try:
+            with GzipFile(fileobj=bytes_out, mode='wb', compresslevel=compression) as gzip_file:
                 gzip_file.write(data)
-            finally:
-                gzip_file.close()
             data = bytes_out.getvalue()
         if _isString(f):
             filename8 = _encodeFilename(f)
-            f = open(filename8, 'wb')
-            try:
+            with open(filename8, 'wb') as f:
                 f.write(data)
-            finally:
-                f.close()
         else:
             f.write(data)
         return

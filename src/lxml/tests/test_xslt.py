@@ -191,7 +191,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0].write_output(f.name, compression=9)
                 finally:
                     f.close()
-                with contextlib.closing(gzip.GzipFile(f.name)) as f:
+                with gzip.GzipFile(f.name) as f:
                     res[0] = f.read().decode("UTF-16")
             finally:
                 os.unlink(f.name)
@@ -205,7 +205,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0].write_output(f.name, compression=3)
                 finally:
                     f.close()
-                with contextlib.closing(gzip.GzipFile(f.name)) as f:
+                with gzip.GzipFile(f.name) as f:
                     res[0] = f.read().decode("UTF-16")
             finally:
                 os.unlink(f.name)
@@ -218,7 +218,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0].write_output(f.name, compression=1)
                 finally:
                     f.close()
-                with contextlib.closing(gzip.GzipFile(f.name)) as f:
+                with gzip.GzipFile(f.name) as f:
                     res[0] = f.read().decode("UTF-16")
             finally:
                 os.unlink(f.name)
