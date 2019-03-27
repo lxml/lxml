@@ -93,16 +93,25 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_write_filename_special_percent(self):
         # '%20' is a URL escaped space character.
+        before_test = os.listdir(tempfile.gettempdir())
+
+        def difference(filenames):
+            return sorted(
+                fn for fn in set(filenames).difference(before_test)
+                if fn.startswith('lxmltmp-')
+            )
+
         with tmpfile(prefix="lxmltmp-p%20p", suffix=".xml") as filename:
             try:
+                before_write = os.listdir(tempfile.gettempdir())
                 self.tree.write(filename)
+                after_write = os.listdir(tempfile.gettempdir())
                 self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
                                  self.root_str)
             except (AssertionError, IOError, OSError):
-                print(sorted(
-                    filename for filename in os.listdir(tempfile.gettempdir())
-                    if filename.startswith('lxmltmp-')
-                ))
+                print("Before write: %s, after write: %s" % (
+                    difference(before_write), difference(after_write))
+                )
                 raise
 
     def test_write_filename_special_plus(self):
