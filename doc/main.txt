@@ -247,6 +247,7 @@ See the websites of lxml
 `4.0 <http://lxml.de/4.0/>`_
 `4.1 <http://lxml.de/4.1/>`_
 `4.2 <http://lxml.de/4.2/>`_
+`4.3 <http://lxml.de/4.3/>`_
 
 ..
    and the `latest in-development version <http://lxml.de/dev/>`_.
@@ -261,58 +262,14 @@ See the websites of lxml
 
 * `lxml 4.3.0`_, released 2019-01-04 (`changes for 4.3.0`_)
 
-* `lxml 4.2.6`_, released 2019-01-03 (`changes for 4.2.6`_)
-
-* `lxml 4.2.5`_, released 2018-09-09 (`changes for 4.2.5`_)
-
-* `lxml 4.2.4`_, released 2018-08-03 (`changes for 4.2.4`_)
-
-* `lxml 4.2.3`_, released 2018-06-27 (`changes for 4.2.3`_)
-
-* `lxml 4.2.2`_, released 2018-06-22 (`changes for 4.2.2`_)
-
-* `lxml 4.2.1`_, released 2018-03-21 (`changes for 4.2.1`_)
-
-* `lxml 4.2.0`_, released 2018-03-13 (`changes for 4.2.0`_)
-
-* `lxml 4.1.1`_, released 2017-11-04 (`changes for 4.1.1`_)
-
-* `lxml 4.1.0`_, released 2017-10-13 (`changes for 4.1.0`_)
-
-* `lxml 4.0.0`_, released 2017-09-17 (`changes for 4.0.0`_)
-
-* `lxml 3.8.0`_, released 2017-06-03 (`changes for 3.8.0`_)
-
-* `older releases <http://lxml.de/3.7/#old-versions>`_
+* `older releases <http://lxml.de/4.2/#old-versions>`_
 
 .. _`lxml 4.3.3`: /files/lxml-4.3.3.tgz
 .. _`lxml 4.3.2`: /files/lxml-4.3.2.tgz
 .. _`lxml 4.3.1`: /files/lxml-4.3.1.tgz
 .. _`lxml 4.3.0`: /files/lxml-4.3.0.tgz
-.. _`lxml 4.2.6`: /files/lxml-4.2.6.tgz
-.. _`lxml 4.2.5`: /files/lxml-4.2.5.tgz
-.. _`lxml 4.2.4`: /files/lxml-4.2.4.tgz
-.. _`lxml 4.2.3`: /files/lxml-4.2.3.tgz
-.. _`lxml 4.2.2`: /files/lxml-4.2.2.tgz
-.. _`lxml 4.2.1`: /files/lxml-4.2.1.tgz
-.. _`lxml 4.2.0`: /files/lxml-4.2.0.tgz
-.. _`lxml 4.1.1`: /files/lxml-4.1.1.tgz
-.. _`lxml 4.1.0`: /files/lxml-4.1.0.tgz
-.. _`lxml 4.0.0`: /files/lxml-4.0.0.tgz
-.. _`lxml 3.8.0`: /files/lxml-3.8.0.tgz
 
 .. _`changes for 4.3.3`: /changes-4.3.3.html
 .. _`changes for 4.3.2`: /changes-4.3.2.html
 .. _`changes for 4.3.1`: /changes-4.3.1.html
 .. _`changes for 4.3.0`: /changes-4.3.0.html
-.. _`changes for 4.2.6`: /changes-4.2.6.html
-.. _`changes for 4.2.5`: /changes-4.2.5.html
-.. _`changes for 4.2.4`: /changes-4.2.4.html
-.. _`changes for 4.2.3`: /changes-4.2.3.html
-.. _`changes for 4.2.2`: /changes-4.2.2.html
-.. _`changes for 4.2.1`: /changes-4.2.1.html
-.. _`changes for 4.2.0`: /changes-4.2.0.html
-.. _`changes for 4.1.1`: /changes-4.1.1.html
-.. _`changes for 4.1.0`: /changes-4.1.0.html
-.. _`changes for 4.0.0`: /changes-4.0.0.html
-.. _`changes for 3.8.0`: /changes-3.8.0.html
