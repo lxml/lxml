@@ -26,15 +26,18 @@ from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
 
-print("")
-print("TESTED VERSION: %s" % etree.__version__)
-print("    Python:           " + repr(sys.version_info))
-print("    lxml.etree:       " + repr(etree.LXML_VERSION))
-print("    libxml used:      " + repr(etree.LIBXML_VERSION))
-print("    libxml compiled:  " + repr(etree.LIBXML_COMPILED_VERSION))
-print("    libxslt used:     " + repr(etree.LIBXSLT_VERSION))
-print("    libxslt compiled: " + repr(etree.LIBXSLT_COMPILED_VERSION))
-print("")
+print("""
+TESTED VERSION: %s""" % etree.__version__ + """
+    Python:           %r""" % (sys.version_info,) + """
+    lxml.etree:       %r""" % (etree.LXML_VERSION,) + """
+    libxml used:      %r""" % (etree.LIBXML_VERSION,) + """
+    libxml compiled:  %r""" % (etree.LIBXML_COMPILED_VERSION,) + """
+    libxslt used:     %r""" % (etree.LIBXSLT_VERSION,) + """
+    libxslt compiled: %r""" % (etree.LIBXSLT_COMPILED_VERSION,) + """
+    FS encoding:      %s""" % (sys.getfilesystemencoding(),) + """
+    Default encoding: %s""" % (sys.getdefaultencoding(),) + """
+    Max Unicode:      %s""" % (sys.maxunicode,) + """
+""")
 
 try:
     _unicode = unicode
