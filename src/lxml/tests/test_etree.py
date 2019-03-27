@@ -4458,7 +4458,9 @@ class ETreeWriteTestCase(HelperTestCase):
         xml = _bytes('<a>'+'<b/>'*200+'</a>')
         tree = self.parse(xml)
         with tmpfile(prefix="p+%20", suffix=".xml") as filename:
-            tree.write('file://' + filename.replace('\\', '/'))
+            url = 'file://' + (filename if sys.platform != 'win32'
+                               else '/' + filename.replace('\\', '/'))
+            tree.write(url)
             data = read_file(filename, 'rb').replace(_bytes('\n'), _bytes(''))
         self.assertEqual(data, xml)
 
