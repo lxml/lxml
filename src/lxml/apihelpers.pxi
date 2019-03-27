@@ -1383,7 +1383,7 @@ cdef bint isutf8l(const_xmlChar* s, size_t length):
     """
     Search for non-ASCII characters in the string, knowing its length in advance.
     """
-    cdef int i
+    cdef unsigned int i
     cdef unsigned long non_ascii_mask
     cdef const unsigned long *lptr = <const unsigned long*> s
 
