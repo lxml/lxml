@@ -18,13 +18,10 @@ except:
 from lxml import etree, html
 
 def make_version_tuple(version_string):
-    l = []
-    for part in re.findall('([0-9]+|[^0-9.]+)', version_string):
-        try:
-            l.append(int(part))
-        except ValueError:
-            l.append(part)
-    return tuple(l)
+    return tuple(
+        int(part) if part.isdigit() else part
+        for part in re.findall('([0-9]+|[^0-9.]+)', version_string)
+    )
 
 IS_PYPY = (getattr(sys, 'implementation', None) == 'pypy' or
            getattr(sys, 'pypy_version_info', None) is not None)
@@ -252,19 +249,13 @@ def fileUrlInTestDir(name):
     return path2url(fileInTestDir(name))
 
 def read_file(name, mode='r'):
-    f = open(name, mode)
-    try:
+    with open(name, mode) as f:
         data = f.read()
-    finally:
-        f.close()
     return data
 
 def write_to_file(name, data, mode='w'):
-    f = open(name, mode)
-    try:
+    with open(name, mode) as f:
         f.write(data)
-    finally:
-        f.close()
 
 def readFileInTestDir(name, mode='r'):
     return read_file(fileInTestDir(name), mode)
@@ -274,8 +265,3 @@ def canonicalize(xml):
     f = BytesIO()
     tree.write_c14n(f)
     return f.getvalue()
-
-def unentitify(xml):
-    for entity_name, value in re.findall("(&#([0-9]+);)", xml):
-        xml = xml.replace(entity_name, unichr(int(value)))
-    return xml
