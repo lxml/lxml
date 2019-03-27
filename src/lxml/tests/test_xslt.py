@@ -199,7 +199,7 @@ class ETreeXSLTTestCase(HelperTestCase):
     def test_xslt_write_output_file_path_urlescaped(self):
         # libxml2 should not unescape file paths.
         with self._xslt_setup() as res:
-            f = NamedTemporaryFile(suffix='tmp%2e', delete=False)
+            f = NamedTemporaryFile(prefix='tmp%2e', suffix='.xml.gz', delete=False)
             try:
                 try:
                     res[0].write_output(f.name, compression=3)
@@ -212,7 +212,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 
     def test_xslt_write_output_file_path_urlescaped_plus(self):
         with self._xslt_setup() as res:
-            f = NamedTemporaryFile(prefix='p+%2e', delete=False)
+            f = NamedTemporaryFile(prefix='p+%2e', suffix='.xml.gz', delete=False)
             try:
                 try:
                     res[0].write_output(f.name, compression=1)
