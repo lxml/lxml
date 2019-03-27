@@ -758,8 +758,10 @@ cdef _FilelikeWriter _create_output_buffer(
     try:
         if _isString(f):
             filename8 = _encodeFilename(f)
-            if b'%' in filename8 and (b'://' not in filename8
-                                      or filename8[:7].lower() == b'file://'):
+            if b'%' in filename8 and (
+                    # Exclude absolute Windows paths and file:// URLs.
+                    _isFilePath(<const xmlChar*>filename8) not in (NO_FILE_PATH, ABS_WIN_FILE_PATH)
+                    or filename8[:7].lower() == b'file://'):
                 # A file path (not a URL) containing the '%' URL escape character.
                 # libxml2 uses URL-unescaping on these, so escape the path before passing it in.
                 filename8 = filename8.replace(b'%', b'%25')

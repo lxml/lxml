@@ -1517,27 +1517,34 @@ cdef strrepr(s):
     return s.encode('unicode-escape') if python.IS_PYTHON2 else s
 
 
+cdef enum:
+    NO_FILE_PATH = 0
+    ABS_UNIX_FILE_PATH = 1
+    ABS_WIN_FILE_PATH = 2
+    REL_FILE_PATH = 3
+
+
 cdef bint _isFilePath(const_xmlChar* c_path):
     u"simple heuristic to see if a path is a filename"
     cdef xmlChar c
     # test if it looks like an absolute Unix path or a Windows network path
     if c_path[0] == c'/':
-        return 1
+        return ABS_UNIX_FILE_PATH
 
     # test if it looks like an absolute Windows path or URL
     if c'a' <= c_path[0] <= c'z' or c'A' <= c_path[0] <= c'Z':
         c_path += 1
         if c_path[0] == c':' and c_path[1] in b'\0\\':
-            return 1  # C: or C:\...
+            return ABS_WIN_FILE_PATH  # C: or C:\...
 
         # test if it looks like a URL with scheme://
         while c'a' <= c_path[0] <= c'z' or c'A' <= c_path[0] <= c'Z':
             c_path += 1
         if c_path[0] == c':' and c_path[1] == c'/' and c_path[2] == c'/':
-            return 0
+            return NO_FILE_PATH
 
     # assume it's a relative path
-    return 1
+    return REL_FILE_PATH
 
 cdef object _encodeFilename(object filename):
     u"""Make sure a filename is 8-bit encoded (or None).
