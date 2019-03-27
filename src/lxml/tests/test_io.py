@@ -98,6 +98,24 @@ class _IOTestCaseBase(HelperTestCase):
             self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
                              self.root_str)
 
+    def test_write_filename_special_win1(self):
+        with tmpfile(prefix="p%20", suffix=".xml") as filename:
+            self.tree.write(filename)
+            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
+                             self.root_str)
+
+    def test_write_filename_special_win2(self):
+        with tmpfile(prefix="p+", suffix=".xml") as filename:
+            self.tree.write(filename)
+            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
+                             self.root_str)
+
+    def test_write_filename_special_win3(self):
+        with tmpfile(prefix="p", suffix=".xml") as filename:
+            self.tree.write(filename)
+            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
+                             self.root_str)
+
     def test_write_invalid_filename(self):
         filename = os.path.join(
             os.path.join('hopefullynonexistingpathname'),
