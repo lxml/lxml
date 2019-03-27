@@ -12,7 +12,7 @@ RST2LATEX_OPTIONS = " ".join([
     "--strip-comments",
     "--language en",
 #    "--date",
-    "--use-latex-footnotes",
+#    "--use-latex-footnotes",
     "--use-latex-citations",
     "--use-latex-toc",
     "--font-encoding=T1",
