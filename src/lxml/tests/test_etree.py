@@ -20,10 +20,9 @@ import tempfile
 import textwrap
 import zlib
 import gzip
-from contextlib import contextmanager
 
 from .common_imports import etree, StringIO, BytesIO, HelperTestCase
-from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url
+from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url, tmpfile
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
 
@@ -42,16 +41,6 @@ try:
 except NameError:
     # Python 3
     _unicode = str
-
-
-@contextmanager
-def tmpfile():
-    handle, filename = tempfile.mkstemp()
-    try:
-        yield filename
-    finally:
-        os.close(handle)
-        os.remove(filename)
 
 
 class ETreeOnlyTestCase(HelperTestCase):
@@ -4465,13 +4454,10 @@ class ETreeWriteTestCase(HelperTestCase):
     def test_write_file_url(self):
         xml = _bytes('<a>'+'<b/>'*200+'</a>')
         tree = self.parse(xml)
-        handle, filename = tempfile.mkstemp(prefix="p+%20", suffix=".xml")
-        try:
+        with tmpfile(prefix="p+%20", suffix=".xml") as filename:
             tree.write('file://' + filename)
-            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')), xml)
-        finally:
-            os.close(handle)
-            os.remove(filename)
+            data = read_file(filename, 'rb').replace(_bytes('\n'), _bytes(''))
+        self.assertEqual(data, xml)
 
 
 class ETreeErrorLogTest(HelperTestCase):

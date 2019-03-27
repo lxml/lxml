@@ -10,7 +10,7 @@ import tempfile, gzip, os, os.path, gc, shutil
 from lxml.tests.common_imports import (
     etree, ElementTree, _str, _bytes,
     SillyFileLike, LargeFileLike, HelperTestCase,
-    read_file, write_to_file, BytesIO
+    read_file, write_to_file, BytesIO, tmpfile
 )
 
 
@@ -87,24 +87,16 @@ class _IOTestCaseBase(HelperTestCase):
     def test_write_filename(self):
         # (c)ElementTree  supports filename strings as write argument
 
-        handle, filename = tempfile.mkstemp(suffix=".xml")
-        try:
+        with tmpfile(suffix=".xml") as filename:
             self.tree.write(filename)
             self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
                              self.root_str)
-        finally:
-            os.close(handle)
-            os.remove(filename)
 
     def test_write_filename_special(self):
-        handle, filename = tempfile.mkstemp(prefix="p+%20", suffix=".xml")
-        try:
+        with tmpfile(prefix="p+%20", suffix=".xml") as filename:
             self.tree.write(filename)
             self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
                              self.root_str)
-        finally:
-            os.close(handle)
-            os.remove(filename)
 
     def test_write_invalid_filename(self):
         filename = os.path.join(
@@ -120,36 +112,26 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_module_parse_gzipobject(self):
         # (c)ElementTree supports gzip instance as parse argument
-        handle, filename = tempfile.mkstemp(suffix=".xml.gz")
-        try:
+        with tmpfile(suffix=".xml.gz") as filename:
             with gzip.open(filename, 'wb') as f:
                 f.write(self.root_str)
             with gzip.open(filename, 'rb') as f_gz:
                 tree = self.etree.parse(f_gz)
             self.assertEqual(self.etree.tostring(tree.getroot()), self.root_str)
-        finally:
-            os.close(handle)
-            os.remove(filename)
 
     def test_class_parse_filename(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
         # the root of the tree
 
         # parse from filename
-
-        handle, filename = tempfile.mkstemp(suffix=".xml")
-        try:
+        with tmpfile(suffix=".xml") as filename:
             write_to_file(filename, self.root_str, 'wb')
             tree = self.etree.ElementTree()
             root = tree.parse(filename)
             self.assertEqual(self.etree.tostring(root), self.root_str)
-        finally:
-            os.close(handle)
-            os.remove(filename)
 
     def test_class_parse_filename_remove_previous(self):
-        handle, filename = tempfile.mkstemp(suffix=".xml")
-        try:
+        with tmpfile(suffix=".xml") as filename:
             write_to_file(filename, self.root_str, 'wb')
             tree = self.etree.ElementTree()
             root = tree.parse(filename)
@@ -164,16 +146,12 @@ class _IOTestCaseBase(HelperTestCase):
             self.assertEqual('a', root3.tag)
             # root2's memory should've been freed here
             # XXX how to check?
-        finally:
-            os.close(handle)
-            os.remove(filename)
 
     def test_class_parse_fileobject(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
         # the root of the tree
 
         # parse from file object
-
         handle, filename = tempfile.mkstemp(suffix=".xml")
         try:
             os.write(handle, self.root_str)

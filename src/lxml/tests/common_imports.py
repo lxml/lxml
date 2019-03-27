@@ -1,9 +1,11 @@
+import gc
 import os
 import os.path
 import re
-import gc
 import sys
+import tempfile
 import unittest
+from contextlib import contextmanager
 
 try:
     import urlparse
@@ -265,3 +267,13 @@ def canonicalize(xml):
     f = BytesIO()
     tree.write_c14n(f)
     return f.getvalue()
+
+
+@contextmanager
+def tmpfile(**kwargs):
+    handle, filename = tempfile.mkstemp(**kwargs)
+    try:
+        yield filename
+    finally:
+        os.close(handle)
+        os.remove(filename)

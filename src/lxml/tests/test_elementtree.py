@@ -9,15 +9,15 @@ for IO related test cases.
 """
 
 import unittest
-import os, re, tempfile, copy, operator, sys
+import os, re, copy, operator, sys
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import BytesIO, etree
+from common_imports import BytesIO, etree, HelperTestCase
 from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
-from common_imports import filter_by_version, fileInTestDir, canonicalize, HelperTestCase
+from common_imports import filter_by_version, fileInTestDir, canonicalize, tmpfile
 from common_imports import _str, _bytes, unicode, next
 
 if cElementTree is not None and (CET_VERSION <= (1,0,7) or sys.version_info[0] >= 3):
@@ -3929,18 +3929,12 @@ class _ETreeTestCaseBase(HelperTestCase):
         """Write out element for comparison, using real file.
         """
         ElementTree = self.etree.ElementTree
-        handle, filename = tempfile.mkstemp()
-        try:
-            f = open(filename, 'wb')
-            tree = ElementTree(element=element)
-            tree.write(f, encoding=encoding)
-            f.close()
-            f = open(filename, 'rb')
-            data = f.read()
-            f.close()
-        finally:
-            os.close(handle)
-            os.remove(filename)
+        with tmpfile() as filename:
+            with open(filename, 'wb') as f:
+                tree = ElementTree(element=element)
+                tree.write(f, encoding=encoding)
+            with open(filename, 'rb') as f:
+                data = f.read()
         return canonicalize(data)
 
     def assertXML(self, expected, element, encoding='us-ascii'):
