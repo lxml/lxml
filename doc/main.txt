@@ -230,24 +230,24 @@ Old Versions
 ------------
 
 See the websites of lxml
-`1.3 <http://lxml.de/1.3/>`_,
-`2.0 <http://lxml.de/2.0/>`_,
-`2.1 <http://lxml.de/2.1/>`_,
-`2.2 <http://lxml.de/2.2/>`_,
-`2.3 <http://lxml.de/2.3/>`_,
-`3.0 <http://lxml.de/3.0/>`_,
-`3.1 <http://lxml.de/3.1/>`_,
-`3.2 <http://lxml.de/3.2/>`_,
-`3.3 <http://lxml.de/3.3/>`_,
-`3.4 <http://lxml.de/3.4/>`_,
-`3.5 <http://lxml.de/3.5/>`_,
-`3.6 <http://lxml.de/3.6/>`_,
-`3.7 <http://lxml.de/3.7/>`_,
+`4.3 <http://lxml.de/4.3/>`_,
+`4.2 <http://lxml.de/4.2/>`_,
+`4.1 <http://lxml.de/4.1/>`_,
+`4.0 <http://lxml.de/4.0/>`_,
 `3.8 <http://lxml.de/3.8/>`_,
-`4.0 <http://lxml.de/4.0/>`_
-`4.1 <http://lxml.de/4.1/>`_
-`4.2 <http://lxml.de/4.2/>`_
-`4.3 <http://lxml.de/4.3/>`_
+`3.7 <http://lxml.de/3.7/>`_,
+`3.6 <http://lxml.de/3.6/>`_,
+`3.5 <http://lxml.de/3.5/>`_,
+`3.4 <http://lxml.de/3.4/>`_,
+`3.3 <http://lxml.de/3.3/>`_,
+`3.2 <http://lxml.de/3.2/>`_,
+`3.1 <http://lxml.de/3.1/>`_,
+`3.0 <http://lxml.de/3.0/>`_,
+`2.3 <http://lxml.de/2.3/>`_,
+`2.2 <http://lxml.de/2.2/>`_,
+`2.1 <http://lxml.de/2.1/>`_,
+`2.0 <http://lxml.de/2.0/>`_,
+`1.3 <http://lxml.de/1.3/>`_
 
 ..
    and the `latest in-development version <http://lxml.de/dev/>`_.
