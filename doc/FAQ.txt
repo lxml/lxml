@@ -116,11 +116,11 @@ wrote a nice article about high-performance aspects when `parsing
 large files with lxml`_.
 
 .. _`lxml.etree Tutorial`:      tutorial.html
-.. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
+.. _`tutorial for ElementTree`: https://effbot.org/zone/element.htm
 .. _`extended etree API`:        api.html
 .. _`objectify documentation`:  objectify.html
 .. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
-.. _`element library`:          http://effbot.org/zone/element-lib.htm
+.. _`element library`:          https://effbot.org/zone/element-lib.htm
 .. _`parsing large files with lxml`: http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
 
 
@@ -142,8 +142,8 @@ web page`_.
 The `generated API documentation`_ is a comprehensive API reference
 for the lxml package.
 
-.. _`ElementTree API`: http://effbot.org/zone/element-index.htm
-.. _`the web page`:    http://lxml.de/#documentation
+.. _`ElementTree API`: https://effbot.org/zone/element-index.htm
+.. _`the web page`:    https://lxml.de/#documentation
 .. _`generated API documentation`: api/index.html
 
 
@@ -951,8 +951,8 @@ e.g. by setting all tail text to None:
        element.tail = None
 
 Fredrik Lundh also has a Python-level function for indenting XML by
-appending whitespace to tags.  It can be found on his `element
-library`_ recipe page.
+appending whitespace to tags.  It can be found on his `element library
+recipes page <http://effbot.org/zone/element-lib.htm#prettyprint>`_.
 
 
 Why can't lxml parse my XML from unicode strings?
