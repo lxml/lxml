@@ -67,7 +67,10 @@ matrix:
 
 install:
     - pip install -U pip wheel
-    - pip install $(if [ -z "${TRAVIS_PYTHON_VERSION##*-dev}" ]; then echo "--install-option=--no-cython-compile"; fi ) -r requirements.txt
+    - if [ -z "${TRAVIS_PYTHON_VERSION##*-dev}" ];
+        then pip install --install-option=--no-cython-compile https://github.com/cython/cython/archive/master.zip;
+        else pip install -r requirements.txt;
+      fi
     - pip install -U beautifulsoup4 cssselect html5lib ${EXTRA_DEPS}
 
 script:
