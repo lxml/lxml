@@ -19,6 +19,9 @@ Features added
 
 * Integer elements in ``lxml.objectify`` implement the ``__index__()`` special method.
 
+* GH#269: Read-only elements in XSLT were missing the ``nsmap`` property.
+  Original patch by Jan Pazdziora.
+
 Bugs fixed
 ----------
 
