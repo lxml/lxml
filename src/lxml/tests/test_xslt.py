@@ -1988,12 +1988,12 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
             def execute(self, context, self_node, input_node, output_parent):
                 output_parent.text = str(input_node.nsmap)
 
-        extensions = { ('extns', 'show-nsmap') : MyExt() }
+        extensions = {('extns', 'show-nsmap'): MyExt()}
 
         result = tree.xslt(style, extensions=extensions)
-        self.assertEqual(etree.tostring(result, pretty_print=True), """\
+        self.assertEqual(etree.tostring(result, pretty_print=True), b"""\
 <root>
-  <inner xmlns:sha256="http://www.w3.org/2001/04/xmlenc#sha256">{\'sha256\': \'http://www.w3.org/2001/04/xmlenc#sha256\'}
+  <inner xmlns:sha256="http://www.w3.org/2001/04/xmlenc#sha256">{'sha256': 'http://www.w3.org/2001/04/xmlenc#sha256'}
   </inner>
 </root>
 """)
