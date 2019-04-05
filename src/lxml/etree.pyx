@@ -1078,20 +1078,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Note that changing the returned dict has no effect on the Element.
         """
-        cdef xmlNode* c_node
-        cdef xmlNs* c_ns
         _assertValidNode(self)
-        nsmap = {}
-        c_node = self._c_node
-        while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
-            c_ns = c_node.nsDef
-            while c_ns is not NULL:
-                prefix = funicodeOrNone(c_ns.prefix)
-                if prefix not in nsmap:
-                    nsmap[prefix] = funicodeOrNone(c_ns.href)
-                c_ns = c_ns.next
-            c_node = c_node.parent
-        return nsmap
+        return _build_nsmap(self._c_node)
 
     # not in ElementTree, read-only
     property base:

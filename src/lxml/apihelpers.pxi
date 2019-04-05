@@ -236,6 +236,24 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
     return 0
 
 
+cdef dict _build_nsmap(xmlNode* c_node):
+    """
+    Namespace prefix->URI mapping known in the context of this Element.
+    This includes all namespace declarations of the parents.
+    """
+    cdef xmlNs* c_ns
+    nsmap = {}
+    while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
+        c_ns = c_node.nsDef
+        while c_ns is not NULL:
+            prefix = funicodeOrNone(c_ns.prefix)
+            if prefix not in nsmap:
+                nsmap[prefix] = funicodeOrNone(c_ns.href)
+            c_ns = c_ns.next
+        c_node = c_node.parent
+    return nsmap
+
+
 cdef _iter_nsmap(nsmap):
     """
     Create a reproducibly ordered iterable from an nsmap mapping.
