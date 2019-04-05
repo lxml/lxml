@@ -290,6 +290,26 @@ cdef class _ReadOnlyElementProxy(_ReadOnlyProxy):
                 return funicode(self._c_node.ns.prefix)
         return None
 
+    property nsmap:
+        u"""Namespace prefix->URI mapping known in the context of this
+        Element.
+        """
+        def __get__(self):
+            self._assertNode()
+            cdef xmlNode* c_node
+            cdef xmlNs* c_ns
+            nsmap = {}
+            c_node = self._c_node
+            while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
+                c_ns = c_node.nsDef
+                while c_ns is not NULL:
+                    prefix = funicodeOrNone(c_ns.prefix)
+                    if prefix not in nsmap:
+                        nsmap[prefix] = funicodeOrNone(c_ns.href)
+                    c_ns = c_ns.next
+                c_node = c_node.parent
+            return nsmap
+
     def get(self, key, default=None):
         u"""Gets an element attribute.
         """

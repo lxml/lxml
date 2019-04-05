@@ -1963,6 +1963,42 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
             b'<p style="color:red">This is *-arbitrary-* text in a paragraph</p>\n',
             etree.tostring(result))
 
+    def test_extensions_nsmap(self):
+        tree = self.parse("""\
+<root>
+  <inner xmlns:sha256="http://www.w3.org/2001/04/xmlenc#sha256">
+    <data>test</data>
+  </inner>
+</root>
+""")
+        style = self.parse("""\
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:my="extns" extension-element-prefixes="my" version="1.0">
+  <xsl:template match="node()|@*">
+    <xsl:copy>
+      <xsl:apply-templates select="node()|@*"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="data">
+    <my:show-nsmap/>
+  </xsl:template>
+</xsl:stylesheet>
+""")
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                output_parent.text = str(input_node.nsmap)
+
+        extensions = { ('extns', 'show-nsmap') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEqual(etree.tostring(result, pretty_print=True), """\
+<root>
+  <inner xmlns:sha256="http://www.w3.org/2001/04/xmlenc#sha256">{\'sha256\': \'http://www.w3.org/2001/04/xmlenc#sha256\'}
+  </inner>
+</root>
+""")
+
+
 
 class Py3XSLTTestCase(HelperTestCase):
     """XSLT tests for etree under Python 3"""
