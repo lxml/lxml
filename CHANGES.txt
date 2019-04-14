@@ -22,6 +22,9 @@ Features added
 * GH#269: Read-only elements in XSLT were missing the ``nsmap`` property.
   Original patch by Jan Pazdziora.
 
+* ElementInclude can now restrict the maximum inclusion depth via a ``max_depth``
+  argument to prevent content explosion.  It is limited to 6 by default.
+
 Bugs fixed
 ----------
 

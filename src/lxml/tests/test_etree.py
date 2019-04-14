@@ -4197,8 +4197,83 @@ class ETreeXIncludeTestCase(_XIncludeTestCase):
 
 class ElementIncludeTestCase(_XIncludeTestCase):
     from lxml import ElementInclude
-    def include(self, tree):
-        self.ElementInclude.include(tree.getroot())
+
+    def include(self, tree, loader=None, max_depth=None):
+        self.ElementInclude.include(tree.getroot(), loader=loader, max_depth=max_depth)
+
+    XINCLUDE = {}
+
+    XINCLUDE["Recursive1.xml"] = """\
+    <?xml version='1.0'?>
+    <document xmlns:xi="http://www.w3.org/2001/XInclude">
+      <p>The following is the source code of Recursive2.xml:</p>
+      <xi:include href="Recursive2.xml"/>
+    </document>
+    """
+
+    XINCLUDE["Recursive2.xml"] = """\
+    <?xml version='1.0'?>
+    <document xmlns:xi="http://www.w3.org/2001/XInclude">
+      <p>The following is the source code of Recursive3.xml:</p>
+      <xi:include href="Recursive3.xml"/>
+    </document>
+    """
+
+    XINCLUDE["Recursive3.xml"] = """\
+    <?xml version='1.0'?>
+    <document xmlns:xi="http://www.w3.org/2001/XInclude">
+      <p>The following is the source code of Recursive1.xml:</p>
+      <xi:include href="Recursive1.xml"/>
+    </document>
+    """
+
+    def xinclude_loader(self, href, parse="xml", encoding=None):
+        try:
+            data = textwrap.dedent(self.XINCLUDE[href])
+        except KeyError:
+            raise OSError("resource not found")
+        if parse == "xml":
+            data = etree.fromstring(data)
+        return data
+
+    def test_xinclude_failures(self):
+        # Test infinitely recursive includes.
+        document = self.xinclude_loader("Recursive1.xml").getroottree()
+        with self.assertRaises(self.ElementInclude.FatalIncludeError) as cm:
+            self.include(document, self.xinclude_loader)
+        self.assertEqual(str(cm.exception),
+                         "recursive include of 'Recursive2.xml' detected")
+
+        # Test 'max_depth' limitation.
+        document = self.xinclude_loader("Recursive1.xml").getroottree()
+        with self.assertRaises(self.ElementInclude.FatalIncludeError) as cm:
+            self.include(document, self.xinclude_loader, max_depth=None)
+        self.assertEqual(str(cm.exception),
+                         "recursive include of 'Recursive2.xml' detected")
+
+        document = self.xinclude_loader("Recursive1.xml").getroottree()
+        with self.assertRaises(self.ElementInclude.LimitedRecursiveIncludeError) as cm:
+            self.include(document, self.xinclude_loader, max_depth=0)
+        self.assertEqual(str(cm.exception),
+                         "maximum xinclude depth reached when including file Recursive2.xml")
+
+        document = self.xinclude_loader("Recursive1.xml").getroottree()
+        with self.assertRaises(self.ElementInclude.LimitedRecursiveIncludeError) as cm:
+            self.include(document, self.xinclude_loader, max_depth=1)
+        self.assertEqual(str(cm.exception),
+                         "maximum xinclude depth reached when including file Recursive3.xml")
+
+        document = self.xinclude_loader("Recursive1.xml").getroottree()
+        with self.assertRaises(self.ElementInclude.LimitedRecursiveIncludeError) as cm:
+            self.include(document, self.xinclude_loader, max_depth=2)
+        self.assertEqual(str(cm.exception),
+                         "maximum xinclude depth reached when including file Recursive1.xml")
+
+        document = self.xinclude_loader("Recursive1.xml").getroottree()
+        with self.assertRaises(self.ElementInclude.FatalIncludeError) as cm:
+            self.include(document, self.xinclude_loader, max_depth=3)
+        self.assertEqual(str(cm.exception),
+                         "recursive include of 'Recursive2.xml' detected")
 
 
 class ETreeC14NTestCase(HelperTestCase):

@@ -65,11 +65,20 @@ XINCLUDE_INCLUDE = XINCLUDE + "include"
 XINCLUDE_FALLBACK = XINCLUDE + "fallback"
 XINCLUDE_ITER_TAG = XINCLUDE + "*"
 
+# For security reasons, the inclusion depth is limited to this read-only value by default.
+DEFAULT_MAX_INCLUSION_DEPTH = 6
+
+
 ##
 # Fatal include error.
 
 class FatalIncludeError(etree.LxmlSyntaxError):
     pass
+
+
+class LimitedRecursiveIncludeError(FatalIncludeError):
+    pass
+
 
 ##
 # ET compatible default loader.
@@ -96,6 +105,7 @@ def default_loader(href, parse, encoding=None):
     file.close()
     return data
 
+
 ##
 # Default loader used by lxml.etree - handles custom resolvers properly
 # 
@@ -115,6 +125,7 @@ def _lxml_default_loader(href, parse, encoding=None, parser=None):
         data = data.decode(encoding)
     return data
 
+
 ##
 # Wrapper for ET compatibility - drops the parser
 
@@ -133,12 +144,22 @@ def _wrap_et_loader(loader):
 #     that implements the same interface as <b>default_loader</b>.
 # @param base_url The base URL of the original file, to resolve
 #     relative include file references.
+# @param max_depth The maximum number of recursive inclusions.
+#     Limited to reduce the risk of malicious content explosion.
+#     Pass None to disable the limitation.
+# @throws LimitedRecursiveIncludeError If the {@link max_depth} was exceeded.
 # @throws FatalIncludeError If the function fails to include a given
 #     resource, or if the tree contains malformed XInclude elements.
 # @throws IOError If the function fails to load a given resource.
 # @returns the node or its replacement if it was an XInclude node
 
-def include(elem, loader=None, base_url=None):
+def include(elem, loader=None, base_url=None,
+            max_depth=DEFAULT_MAX_INCLUSION_DEPTH):
+    if max_depth is None:
+        max_depth = -1
+    elif max_depth < 0:
+        raise ValueError("expected non-negative depth or None for 'max_depth', got %r" % max_depth)
+
     if base_url is None:
         if hasattr(elem, 'getroot'):
             tree = elem
@@ -149,9 +170,11 @@ def include(elem, loader=None, base_url=None):
             base_url = tree.docinfo.URL
     elif hasattr(elem, 'getroot'):
         elem = elem.getroot()
-    _include(elem, loader, base_url=base_url)
+    _include(elem, loader, base_url, max_depth)
 
-def _include(elem, loader=None, _parent_hrefs=None, base_url=None):
+
+def _include(elem, loader=None, base_url=None,
+             max_depth=DEFAULT_MAX_INCLUSION_DEPTH, _parent_hrefs=None):
     if loader is not None:
         load_include = _wrap_et_loader(loader)
     else:
@@ -176,13 +199,16 @@ def _include(elem, loader=None, _parent_hrefs=None, base_url=None):
                     raise FatalIncludeError(
                         "recursive include of %r detected" % href
                         )
+                if max_depth == 0:
+                    raise LimitedRecursiveIncludeError(
+                        "maximum xinclude depth reached when including file %s" % href)
                 _parent_hrefs.add(href)
                 node = load_include(href, parse, parser=parser)
                 if node is None:
                     raise FatalIncludeError(
                         "cannot load %r as %r" % (href, parse)
                         )
-                node = _include(node, loader, _parent_hrefs)
+                node = _include(node, loader, href, max_depth - 1, _parent_hrefs)
                 if e.tail:
                     node.tail = (node.tail or "") + e.tail
                 if parent is None:
