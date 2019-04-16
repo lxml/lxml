@@ -72,7 +72,8 @@ xpath_tokenizer_re = re.compile(
     )
 
 def xpath_tokenizer(pattern, namespaces=None):
-    default_namespace = namespaces.get(None) if namespaces else None
+    # ElementTree uses '', lxml used None originally.
+    default_namespace = (namespaces.get(None) or namespaces.get('')) if namespaces else None
     for token in xpath_tokenizer_re.findall(pattern):
         tag = token[1]
         if tag and tag[0] != "{":
@@ -254,9 +255,13 @@ def _build_path_iterator(path, namespaces):
 
     cache_key = (path,)
     if namespaces:
-        if '' in namespaces:
-            raise ValueError("empty namespace prefix must be passed as None, not the empty string")
+        # lxml originally used None for the default namespace but ElementTree uses the
+        # more convenient (all-strings-dict) empty string, so we support both here,
+        # preferring the more convenient '', as long as they aren't ambiguous.
         if None in namespaces:
+            if '' in namespaces and namespaces[None] != namespaces['']:
+                raise ValueError("Ambiguous default namespace provided: %r versus %r" % (
+                    namespaces[None], namespaces['']))
             cache_key += (namespaces[None],) + tuple(sorted(
                 item for item in namespaces.items() if item[0] is not None))
         else:

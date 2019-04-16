@@ -43,6 +43,11 @@ Bugs fixed
 Other changes
 -------------
 
+* When using ``Element.find*()`` with prefix-namespace mappings, the empty string
+  is now accepted to define a default namespace, in addition to the previously
+  supported ``None`` prefix.  Empty strings are more convenient since they keep
+  all prefix keys in a namespace dict strings, which simplifies sorting etc.
+
 * The ``ElementTree.write_c14n()`` method has been deprecated in favour of the
   long preferred ``ElementTree.write(f, method="c14n")``.  It will be removed
   in a future release.
