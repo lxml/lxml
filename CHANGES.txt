@@ -40,6 +40,9 @@ Bugs fixed
 
 * Registering a prefix other than "xml" for the XML namespace is now rejected.
 
+* Failing to write XSLT output to a file could raise a misleading exception.
+  It now raises ``IOError``.
+
 Other changes
 -------------
 

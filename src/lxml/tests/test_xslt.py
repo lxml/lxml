@@ -12,7 +12,7 @@ import os.path
 import unittest
 import contextlib
 from textwrap import dedent
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, mkdtemp
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -222,6 +222,18 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0] = f.read().decode("UTF-16")
             finally:
                 os.unlink(f.name)
+
+    def test_xslt_write_output_file_oserror(self):
+        with self._xslt_setup(expected='') as res:
+            tempdir = mkdtemp()
+            try:
+                res[0].write_output(os.path.join(tempdir, 'missing_subdir', 'out.xml'))
+            except IOError:
+                res[0] = ''
+            else:
+                self.fail("IOError not raised")
+            finally:
+                os.rmdir(tempdir)
 
     def test_xslt_unicode(self):
         expected = '''
