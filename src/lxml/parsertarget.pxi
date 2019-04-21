@@ -21,6 +21,8 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
     cdef object _target_start
     cdef object _target_end
     cdef object _target_data
+    cdef object _target_start_ns
+    cdef object _target_end_ns
     cdef object _target_doctype
     cdef object _target_pi
     cdef object _target_comment
@@ -47,6 +49,18 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
             self._target_end = target.end
             if self._target_end is not None:
                 event_filter |= SAX_EVENT_END
+        except AttributeError:
+            pass
+        try:
+            self._target_start_ns = target.start_ns
+            if self._target_start_ns is not None:
+                event_filter |= SAX_EVENT_START_NS
+        except AttributeError:
+            pass
+        try:
+            self._target_end_ns = target.end_ns
+            if self._target_end_ns is not None:
+                event_filter |= SAX_EVENT_END_NS
         except AttributeError:
             pass
         try:
@@ -83,6 +97,12 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
 
     cdef _handleSaxEnd(self, tag):
         return self._target_end(tag)
+
+    cdef _handleSaxStartNs(self, prefix, uri):
+        return self._target_start_ns(prefix, uri)
+
+    cdef _handleSaxEndNs(self, prefix):
+        return self._target_end_ns(prefix)
 
     cdef int _handleSaxData(self, data) except -1:
         self._target_data(data)

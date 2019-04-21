@@ -10,6 +10,8 @@ for IO related test cases.
 
 import unittest
 import os, re, copy, operator, sys
+from functools import wraps
+from itertools import islice
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -18,7 +20,7 @@ if this_dir not in sys.path:
 from common_imports import BytesIO, etree, HelperTestCase
 from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
 from common_imports import filter_by_version, fileInTestDir, canonicalize, tmpfile
-from common_imports import _str, _bytes, unicode, next
+from common_imports import _str, _bytes, unicode, next, IS_PYTHON2
 
 if cElementTree is not None and (CET_VERSION <= (1,0,7) or sys.version_info[0] >= 3):
     cElementTree = None
@@ -28,6 +30,18 @@ if ElementTree is not None:
 
 if cElementTree is not None:
     print("Comparing with cElementTree %s" % getattr(cElementTree, "VERSION", "?"))
+
+
+def et_needs_pyversion(*version):
+    def wrap(method):
+        @wraps(method)
+        def testfunc(self, *args):
+            if self.etree is not etree and sys.version_info < version:
+                raise unittest.SkipTest("requires ET in Python %s" % '.'.join(map(str, version)))
+            return method(self, *args)
+        return testfunc
+    return wrap
+
 
 class _ETreeTestCaseBase(HelperTestCase):
     etree = None
@@ -41,6 +55,102 @@ class _ETreeTestCaseBase(HelperTestCase):
             assert 'ElementTree' in self.etree.__name__
             XMLParser = self.etree.TreeBuilder
         return XMLParser(**kwargs)
+
+    try:
+        HelperTestCase.assertRegex
+    except AttributeError:
+        def assertRegex(self, *args, **kwargs):
+            return self.assertRegexpMatches(*args, **kwargs)
+
+    def test_interface(self):
+        # Test element tree interface.
+
+        def check_string(string):
+            len(string)
+            for char in string:
+                self.assertEqual(len(char), 1,
+                        msg="expected one-character string, got %r" % char)
+            new_string = string + ""
+            new_string = string + " "
+            string[:0]
+
+        def check_mapping(mapping):
+            len(mapping)
+            keys = mapping.keys()
+            items = mapping.items()
+            for key in keys:
+                item = mapping[key]
+            mapping["key"] = "value"
+            self.assertEqual(mapping["key"], "value",
+                    msg="expected value string, got %r" % mapping["key"])
+
+        def check_element(element):
+            self.assertTrue(self.etree.iselement(element), msg="not an element")
+            direlem = dir(element)
+            for attr in 'tag', 'attrib', 'text', 'tail':
+                self.assertTrue(hasattr(element, attr),
+                        msg='no %s member' % attr)
+                self.assertIn(attr, direlem,
+                        msg='no %s visible by dir' % attr)
+
+            check_string(element.tag)
+            check_mapping(element.attrib)
+            if element.text is not None:
+                check_string(element.text)
+            if element.tail is not None:
+                check_string(element.tail)
+            for elem in element:
+                check_element(elem)
+
+        element = self.etree.Element("tag")
+        check_element(element)
+        tree = self.etree.ElementTree(element)
+        check_element(tree.getroot())
+        element = self.etree.Element(u"t\xe4g", key="value")
+        tree = self.etree.ElementTree(element)
+        # lxml and ET Py2: slightly different repr()
+        #self.assertRegex(repr(element), r"^<Element 't\xe4g' at 0x.*>$")
+        element = self.etree.Element("tag", key="value")
+
+        # Make sure all standard element methods exist.
+
+        def check_method(method):
+            self.assertTrue(hasattr(method, '__call__'),
+                    msg="%s not callable" % method)
+
+        check_method(element.append)
+        check_method(element.extend)
+        check_method(element.insert)
+        check_method(element.remove)
+        check_method(element.getchildren)
+        check_method(element.find)
+        check_method(element.iterfind)
+        check_method(element.findall)
+        check_method(element.findtext)
+        check_method(element.clear)
+        check_method(element.get)
+        check_method(element.set)
+        check_method(element.keys)
+        check_method(element.items)
+        check_method(element.iter)
+        check_method(element.itertext)
+        check_method(element.getiterator)
+
+        # These methods return an iterable. See bug 6472.
+
+        def check_iter(it):
+            check_method(it.next if IS_PYTHON2 else it.__next__)
+
+        check_iter(element.iterfind("tag"))
+        check_iter(element.iterfind("*"))
+        check_iter(tree.iterfind("tag"))
+        check_iter(tree.iterfind("*"))
+
+        # These aliases are provided:
+
+        # not an alias in lxml
+        #self.assertEqual(self.etree.XML, self.etree.fromstring)
+        self.assertEqual(self.etree.PI, self.etree.ProcessingInstruction)
 
     def test_element(self):
         for i in range(10):
@@ -3996,15 +4106,174 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual("value", mapping["key"])
 
 
-class _XMLPullParserTest(unittest.TestCase):
+class _ElementSlicingTest(unittest.TestCase):
     etree = None
 
-    def _feed(self, parser, data, chunk_size=None):
-        if chunk_size is None:
-            parser.feed(data)
-        else:
-            for i in range(0, len(data), chunk_size):
-                parser.feed(data[i:i+chunk_size])
+    def _elem_tags(self, elemlist):
+        return [e.tag for e in elemlist]
+
+    def _subelem_tags(self, elem):
+        return self._elem_tags(list(elem))
+
+    def _make_elem_with_children(self, numchildren):
+        """Create an Element with a tag 'a', with the given amount of children
+           named 'a0', 'a1' ... and so on.
+
+        """
+        e = self.etree.Element('a')
+        for i in range(numchildren):
+            self.etree.SubElement(e, 'a%s' % i)
+        return e
+
+    def test_getslice_single_index(self):
+        e = self._make_elem_with_children(10)
+
+        self.assertEqual(e[1].tag, 'a1')
+        self.assertEqual(e[-2].tag, 'a8')
+
+        self.assertRaises(IndexError, lambda: e[12])
+        self.assertRaises(IndexError, lambda: e[-12])
+
+    def test_getslice_range(self):
+        e = self._make_elem_with_children(6)
+
+        self.assertEqual(self._elem_tags(e[3:]), ['a3', 'a4', 'a5'])
+        self.assertEqual(self._elem_tags(e[3:6]), ['a3', 'a4', 'a5'])
+        self.assertEqual(self._elem_tags(e[3:16]), ['a3', 'a4', 'a5'])
+        self.assertEqual(self._elem_tags(e[3:5]), ['a3', 'a4'])
+        self.assertEqual(self._elem_tags(e[3:-1]), ['a3', 'a4'])
+        self.assertEqual(self._elem_tags(e[:2]), ['a0', 'a1'])
+
+    def test_getslice_steps(self):
+        e = self._make_elem_with_children(10)
+
+        self.assertEqual(self._elem_tags(e[8:10:1]), ['a8', 'a9'])
+        self.assertEqual(self._elem_tags(e[::3]), ['a0', 'a3', 'a6', 'a9'])
+        self.assertEqual(self._elem_tags(e[::8]), ['a0', 'a8'])
+        self.assertEqual(self._elem_tags(e[1::8]), ['a1', 'a9'])
+        # FIXME
+        #self.assertEqual(self._elem_tags(e[3::sys.maxsize]), ['a3'])
+        # FIXME
+        #self.assertEqual(self._elem_tags(e[3::sys.maxsize<<64]), ['a3'])
+
+    def test_getslice_negative_steps(self):
+        e = self._make_elem_with_children(4)
+
+        self.assertEqual(self._elem_tags(e[::-1]), ['a3', 'a2', 'a1', 'a0'])
+        self.assertEqual(self._elem_tags(e[::-2]), ['a3', 'a1'])
+        # FIXME
+        #self.assertEqual(self._elem_tags(e[3::-sys.maxsize]), ['a3'])
+        # FIXME
+        #self.assertEqual(self._elem_tags(e[3::-sys.maxsize-1]), ['a3'])
+        # FIXME
+        #self.assertEqual(self._elem_tags(e[3::-sys.maxsize<<64]), ['a3'])
+
+    def test_delslice(self):
+        e = self._make_elem_with_children(4)
+        del e[0:2]
+        self.assertEqual(self._subelem_tags(e), ['a2', 'a3'])
+
+        e = self._make_elem_with_children(4)
+        del e[0:]
+        self.assertEqual(self._subelem_tags(e), [])
+
+        e = self._make_elem_with_children(4)
+        del e[::-1]
+        self.assertEqual(self._subelem_tags(e), [])
+
+        e = self._make_elem_with_children(4)
+        del e[::-2]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'a2'])
+
+        e = self._make_elem_with_children(4)
+        del e[1::2]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'a2'])
+
+        e = self._make_elem_with_children(2)
+        del e[::2]
+        self.assertEqual(self._subelem_tags(e), ['a1'])
+
+    def test_setslice_single_index(self):
+        e = self._make_elem_with_children(4)
+        e[1] = self.etree.Element('b')
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a2', 'a3'])
+
+        e[-2] = self.etree.Element('c')
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'c', 'a3'])
+
+        with self.assertRaises(IndexError):
+            e[5] = self.etree.Element('d')
+        with self.assertRaises(IndexError):
+            e[-5] = self.etree.Element('d')
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'c', 'a3'])
+
+    def test_setslice_range(self):
+        e = self._make_elem_with_children(4)
+        e[1:3] = [self.etree.Element('b%s' % i) for i in range(2)]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b0', 'b1', 'a3'])
+
+        e = self._make_elem_with_children(4)
+        e[1:3] = [self.etree.Element('b')]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a3'])
+
+        e = self._make_elem_with_children(4)
+        e[1:3] = [self.etree.Element('b%s' % i) for i in range(3)]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b0', 'b1', 'b2', 'a3'])
+
+    def test_setslice_steps(self):
+        e = self._make_elem_with_children(6)
+        e[1:5:2] = [self.etree.Element('b%s' % i) for i in range(2)]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b0', 'a2', 'b1', 'a4', 'a5'])
+
+        e = self._make_elem_with_children(6)
+        with self.assertRaises(ValueError):
+            e[1:5:2] = [self.etree.Element('b')]
+        with self.assertRaises(ValueError):
+            e[1:5:2] = [self.etree.Element('b%s' % i) for i in range(3)]
+        with self.assertRaises(ValueError):
+            e[1:5:2] = []
+        self.assertEqual(self._subelem_tags(e), ['a0', 'a1', 'a2', 'a3', 'a4', 'a5'])
+
+        #e = self._make_elem_with_children(4)
+        # FIXME
+        #e[1::sys.maxsize] = [self.etree.Element('b')]
+        #self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a2', 'a3'])
+        # FIXME
+        #e[1::sys.maxsize<<64] = [self.etree.Element('c')]
+        #self.assertEqual(self._subelem_tags(e), ['a0', 'c', 'a2', 'a3'])
+
+    def test_setslice_negative_steps(self):
+        #e = self._make_elem_with_children(4)
+        # FIXME
+        #e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(2)]
+        #self.assertEqual(self._subelem_tags(e), ['a0', 'b1', 'b0', 'a3'])
+
+        e = self._make_elem_with_children(4)
+        # FIXME
+        #with self.assertRaises(ValueError):
+        #    e[2:0:-1] = [self.etree.Element('b')]
+        # FIXME
+        #with self.assertRaises(ValueError):
+        #    e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(3)]
+        # FIXME
+        #with self.assertRaises(ValueError):
+        #    e[2:0:-1] = []
+        self.assertEqual(self._subelem_tags(e), ['a0', 'a1', 'a2', 'a3'])
+
+        #e = self._make_elem_with_children(4)
+        # FIXME
+        #e[1::-sys.maxsize] = [self.etree.Element('b')]
+        #self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a2', 'a3'])
+        # FIXME
+        #e[1::-sys.maxsize-1] = [self.etree.Element('c')]
+        #self.assertEqual(self._subelem_tags(e), ['a0', 'c', 'a2', 'a3'])
+        # FIXME
+        #e[1::-sys.maxsize<<64] = [self.etree.Element('d')]
+        #self.assertEqual(self._subelem_tags(e), ['a0', 'd', 'a2', 'a3'])
+
+
+class _XMLPullParserTest(unittest.TestCase):
+    etree = None
 
     def _close_and_return_root(self, parser):
         if 'ElementTree' in self.etree.__name__:
@@ -4014,8 +4283,26 @@ class _XMLPullParserTest(unittest.TestCase):
             root = parser.close()
         return root
 
-    def assert_event_tags(self, parser, expected):
-        events = parser.read_events()
+    def _feed(self, parser, data, chunk_size=None):
+        if chunk_size is None:
+            parser.feed(data)
+        else:
+            for i in range(0, len(data), chunk_size):
+                parser.feed(data[i:i+chunk_size])
+
+    def assert_events(self, parser, expected, max_events=None):
+        self.assertEqual(
+            [(event, (elem.tag, elem.text))
+             for event, elem in islice(parser.read_events(), max_events)],
+            expected)
+
+    def assert_event_tuples(self, parser, expected, max_events=None):
+        self.assertEqual(
+            list(islice(parser.read_events(), max_events)),
+            expected)
+
+    def assert_event_tags(self, parser, expected, max_events=None):
+        events = islice(parser.read_events(), max_events)
         self.assertEqual([(action, elem.tag) for action, elem in events],
                          expected)
 
@@ -4052,12 +4339,8 @@ class _XMLPullParserTest(unittest.TestCase):
         self._feed(parser, "</root>\n")
         action, elem = next(it)
         self.assertEqual((action, elem.tag), ('end', 'root'))
-        try:
+        with self.assertRaises(StopIteration):
             next(it)
-        except StopIteration:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
 
     def test_simple_xml_with_ns(self):
         parser = self.etree.XMLPullParser()
@@ -4096,14 +4379,68 @@ class _XMLPullParserTest(unittest.TestCase):
         self.assertEqual(list(parser.read_events()), [('end-ns', None)])
         parser.close()
 
+    @et_needs_pyversion(3,8)
+    def test_ns_events_start(self):
+        parser = self.etree.XMLPullParser(events=('start-ns', 'start', 'end'))
+        self._feed(parser, "<tag xmlns='abc' xmlns:p='xyz'>\n")
+        self.assert_event_tuples(parser, [
+            ('start-ns', ('', 'abc')),
+            ('start-ns', ('p', 'xyz')),
+        ], max_events=2)
+        self.assert_event_tags(parser, [
+            ('start', '{abc}tag'),
+        ], max_events=1)
+
+        self._feed(parser, "<child />\n")
+        self.assert_event_tags(parser, [
+            ('start', '{abc}child'),
+            ('end', '{abc}child'),
+        ])
+
+        self._feed(parser, "</tag>\n")
+        parser.close()
+        self.assert_event_tags(parser, [
+            ('end', '{abc}tag'),
+        ])
+
+    @et_needs_pyversion(3,8)
+    def test_ns_events_start_end(self):
+        parser = self.etree.XMLPullParser(events=('start-ns', 'start', 'end', 'end-ns'))
+        self._feed(parser, "<tag xmlns='abc' xmlns:p='xyz'>\n")
+        self.assert_event_tuples(parser, [
+            ('start-ns', ('', 'abc')),
+            ('start-ns', ('p', 'xyz')),
+        ], max_events=2)
+        self.assert_event_tags(parser, [
+            ('start', '{abc}tag'),
+        ], max_events=1)
+
+        self._feed(parser, "<child />\n")
+        self.assert_event_tags(parser, [
+            ('start', '{abc}child'),
+            ('end', '{abc}child'),
+        ])
+
+        self._feed(parser, "</tag>\n")
+        parser.close()
+        self.assert_event_tags(parser, [
+            ('end', '{abc}tag'),
+        ], max_events=1)
+        self.assert_event_tuples(parser, [
+            ('end-ns', None),
+            ('end-ns', None),
+        ])
+
     def test_events(self):
         parser = self.etree.XMLPullParser(events=())
         self._feed(parser, "<root/>\n")
         self.assert_event_tags(parser, [])
 
         parser = self.etree.XMLPullParser(events=('start', 'end'))
-        self._feed(parser, "<!-- comment -->\n")
-        self.assert_event_tags(parser, [])
+        self._feed(parser, "<!-- text here -->\n")
+        self.assert_events(parser, [])
+
+        parser = self.etree.XMLPullParser(events=('start', 'end'))
         self._feed(parser, "<root>\n")
         self.assert_event_tags(parser, [('start', 'root')])
         self._feed(parser, "<element key='value'>text</element")
@@ -4142,6 +4479,36 @@ class _XMLPullParserTest(unittest.TestCase):
         root = self._close_and_return_root(parser)
         self.assertEqual(root.tag, 'root')
 
+    @et_needs_pyversion(3,8)
+    def test_events_comment(self):
+        parser = self.etree.XMLPullParser(events=('start', 'comment', 'end'))
+        self._feed(parser, "<!-- text here -->\n")
+        self.assert_events(parser, [('comment', (self.etree.Comment, ' text here '))])
+        self._feed(parser, "<!-- more text here -->\n")
+        self.assert_events(parser, [('comment', (self.etree.Comment, ' more text here '))])
+        self._feed(parser, "<root-tag>text")
+        self.assert_event_tags(parser, [('start', 'root-tag')])
+        self._feed(parser, "<!-- inner comment-->\n")
+        self.assert_events(parser, [('comment', (self.etree.Comment, ' inner comment'))])
+        self._feed(parser, "</root-tag>\n")
+        self.assert_event_tags(parser, [('end', 'root-tag')])
+        self._feed(parser, "<!-- outer comment -->\n")
+        self.assert_events(parser, [('comment', (self.etree.Comment, ' outer comment '))])
+
+        parser = self.etree.XMLPullParser(events=('comment',))
+        self._feed(parser, "<!-- text here -->\n")
+        self.assert_events(parser, [('comment', (self.etree.Comment, ' text here '))])
+
+    @et_needs_pyversion(3,8)
+    def test_events_pi(self):
+        # Note: lxml's PIs have target+text, ET's PIs have both in "text"
+        parser = self.etree.XMLPullParser(events=('start', 'pi', 'end'))
+        self._feed(parser, "<?pitarget?>\n")
+        self.assert_event_tags(parser, [('pi', self.etree.PI)])
+        parser = self.etree.XMLPullParser(events=('pi',))
+        self._feed(parser, "<?pitarget some text ?>\n")
+        self.assert_event_tags(parser, [('pi', self.etree.PI)])
+
     def test_events_sequence(self):
         # Test that events can be some sequence that's not just a tuple or list
         eventset = {'end', 'start'}
@@ -4149,26 +4516,23 @@ class _XMLPullParserTest(unittest.TestCase):
         self._feed(parser, "<foo>bar</foo>")
         self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])
 
-        class DummyIter:
+        class DummyIter(object):
             def __init__(self):
                 self.events = iter(['start', 'end', 'start-ns'])
             def __iter__(self):
                 return self
             def __next__(self):
                 return next(self.events)
-            next = __next__
+            def next(self):
+                return next(self.events)
 
         parser = self.etree.XMLPullParser(events=DummyIter())
         self._feed(parser, "<foo>bar</foo>")
         self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])
 
     def test_unknown_event(self):
-        try:
+        with self.assertRaises(ValueError):
             self.etree.XMLPullParser(events=('start', 'end', 'bogus'))
-        except ValueError:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
 
 
 if etree:
@@ -4176,6 +4540,9 @@ if etree:
         etree = etree
 
     class ETreePullTestCase(_XMLPullParserTest):
+        etree = etree
+
+    class ETreeElementSlicingTest(_ElementSlicingTest):
         etree = etree
 
 
@@ -4202,6 +4569,9 @@ if ElementTree:
     else:
         ElementTreePullTestCase = None
 
+    class ElementTreeElementSlicingTest(_ElementSlicingTest):
+        etree = ElementTree
+
 
 if cElementTree:
     class CElementTreeTestCase(_ETreeTestCaseBase):
@@ -4211,18 +4581,24 @@ if cElementTree:
         CElementTreeTestCase,
         CElementTreeTestCase.required_versions_cET, CET_VERSION)
 
+    class CElementTreeElementSlicingTest(_ElementSlicingTest):
+        etree = cElementTree
+
 
 def test_suite():
     suite = unittest.TestSuite()
     if etree:
         suite.addTests([unittest.makeSuite(ETreeTestCase)])
         suite.addTests([unittest.makeSuite(ETreePullTestCase)])
+        suite.addTests([unittest.makeSuite(ETreeElementSlicingTest)])
     if ElementTree:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
         if ElementTreePullTestCase:
             suite.addTests([unittest.makeSuite(ElementTreePullTestCase)])
+        suite.addTests([unittest.makeSuite(ElementTreeElementSlicingTest)])
     if cElementTree:
         suite.addTests([unittest.makeSuite(CElementTreeTestCase)])
+        suite.addTests([unittest.makeSuite(CElementTreeElementSlicingTest)])
     return suite
 
 if __name__ == '__main__':

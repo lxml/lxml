@@ -25,6 +25,15 @@ Features added
 * ElementInclude can now restrict the maximum inclusion depth via a ``max_depth``
   argument to prevent content explosion.  It is limited to 6 by default.
 
+* The ``target`` object of the XMLParser can have ``start_ns()`` and ``end_ns()``
+  callback methods to listen to namespace declarations.
+
+* The ``TreeBuilder`` has new arguments ``comment_factory`` and ``pi_factory`` to
+  pass factories for creating comments and processing instructions.  Setting them
+  to ``None`` makes the ``TreeBuilder`` discard them from the tree and only return
+  the comment text and PI ``(target, data)`` tuple from the parser callback, e.g.
+  for pull parser events.
+
 Bugs fixed
 ----------
 
