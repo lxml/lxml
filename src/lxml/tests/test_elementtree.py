@@ -4151,22 +4151,17 @@ class _ElementSlicingTest(unittest.TestCase):
         self.assertEqual(self._elem_tags(e[::3]), ['a0', 'a3', 'a6', 'a9'])
         self.assertEqual(self._elem_tags(e[::8]), ['a0', 'a8'])
         self.assertEqual(self._elem_tags(e[1::8]), ['a1', 'a9'])
-        # FIXME
-        #self.assertEqual(self._elem_tags(e[3::sys.maxsize]), ['a3'])
-        # FIXME
-        #self.assertEqual(self._elem_tags(e[3::sys.maxsize<<64]), ['a3'])
+        self.assertEqual(self._elem_tags(e[3::sys.maxsize]), ['a3'])
+        self.assertEqual(self._elem_tags(e[3::sys.maxsize<<64]), ['a3'])
 
     def test_getslice_negative_steps(self):
         e = self._make_elem_with_children(4)
 
         self.assertEqual(self._elem_tags(e[::-1]), ['a3', 'a2', 'a1', 'a0'])
         self.assertEqual(self._elem_tags(e[::-2]), ['a3', 'a1'])
-        # FIXME
-        #self.assertEqual(self._elem_tags(e[3::-sys.maxsize]), ['a3'])
-        # FIXME
-        #self.assertEqual(self._elem_tags(e[3::-sys.maxsize-1]), ['a3'])
-        # FIXME
-        #self.assertEqual(self._elem_tags(e[3::-sys.maxsize<<64]), ['a3'])
+        self.assertEqual(self._elem_tags(e[3::-sys.maxsize]), ['a3'])
+        self.assertEqual(self._elem_tags(e[3::-sys.maxsize-1]), ['a3'])
+        self.assertEqual(self._elem_tags(e[3::-sys.maxsize<<64]), ['a3'])
 
     def test_delslice(self):
         e = self._make_elem_with_children(4)
@@ -4234,42 +4229,33 @@ class _ElementSlicingTest(unittest.TestCase):
             e[1:5:2] = []
         self.assertEqual(self._subelem_tags(e), ['a0', 'a1', 'a2', 'a3', 'a4', 'a5'])
 
-        #e = self._make_elem_with_children(4)
-        # FIXME
-        #e[1::sys.maxsize] = [self.etree.Element('b')]
-        #self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a2', 'a3'])
-        # FIXME
-        #e[1::sys.maxsize<<64] = [self.etree.Element('c')]
-        #self.assertEqual(self._subelem_tags(e), ['a0', 'c', 'a2', 'a3'])
+        e = self._make_elem_with_children(4)
+        e[1::sys.maxsize] = [self.etree.Element('b')]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a2', 'a3'])
+        e[1::sys.maxsize<<64] = [self.etree.Element('c')]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'c', 'a2', 'a3'])
 
     def test_setslice_negative_steps(self):
-        #e = self._make_elem_with_children(4)
-        # FIXME
-        #e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(2)]
-        #self.assertEqual(self._subelem_tags(e), ['a0', 'b1', 'b0', 'a3'])
+        e = self._make_elem_with_children(4)
+        e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(2)]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b1', 'b0', 'a3'])
 
         e = self._make_elem_with_children(4)
-        # FIXME
-        #with self.assertRaises(ValueError):
-        #    e[2:0:-1] = [self.etree.Element('b')]
-        # FIXME
-        #with self.assertRaises(ValueError):
-        #    e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(3)]
-        # FIXME
-        #with self.assertRaises(ValueError):
-        #    e[2:0:-1] = []
+        with self.assertRaises(ValueError):
+            e[2:0:-1] = [self.etree.Element('b')]
+        with self.assertRaises(ValueError):
+            e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(3)]
+        with self.assertRaises(ValueError):
+            e[2:0:-1] = []
         self.assertEqual(self._subelem_tags(e), ['a0', 'a1', 'a2', 'a3'])
 
-        #e = self._make_elem_with_children(4)
-        # FIXME
-        #e[1::-sys.maxsize] = [self.etree.Element('b')]
-        #self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a2', 'a3'])
-        # FIXME
-        #e[1::-sys.maxsize-1] = [self.etree.Element('c')]
-        #self.assertEqual(self._subelem_tags(e), ['a0', 'c', 'a2', 'a3'])
-        # FIXME
-        #e[1::-sys.maxsize<<64] = [self.etree.Element('d')]
-        #self.assertEqual(self._subelem_tags(e), ['a0', 'd', 'a2', 'a3'])
+        e = self._make_elem_with_children(4)
+        e[1::-sys.maxsize] = [self.etree.Element('b')]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a2', 'a3'])
+        e[1::-sys.maxsize-1] = [self.etree.Element('c')]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'c', 'a2', 'a3'])
+        e[1::-sys.maxsize<<64] = [self.etree.Element('d')]
+        self.assertEqual(self._subelem_tags(e), ['a0', 'd', 'a2', 'a3'])
 
 
 class _XMLPullParserTest(unittest.TestCase):

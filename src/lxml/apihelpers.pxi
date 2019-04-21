@@ -1189,7 +1189,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     if not isinstance(elements, (list, tuple)):
         elements = list(elements)
 
-    if step > 1:
+    if step != 1 or not left_to_right:
         # *replacing* children stepwise with list => check size!
         seqlength = len(elements)
         if seqlength != slicelength:
@@ -1225,6 +1225,8 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     while c_node is not NULL and c < slicelength:
         for i in range(step):
             c_next = next_element(c_next)
+            if c_next is NULL:
+                break
         _removeNode(parent._doc, c_node)
         c += 1
         c_node = c_next
@@ -1250,7 +1252,11 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 slicelength -= 1
                 for i in range(1, step):
                     c_node = next_element(c_node)
+                    if c_node is NULL:
+                        break
             break
+    else:
+        c_node = c_orig_neighbour
 
     if left_to_right:
         # adjust step size after removing slice as we are not stepping
@@ -1276,6 +1282,8 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 slicelength -= 1
                 for i in range(step):
                     c_node = next_element(c_node)
+                    if c_node is NULL:
+                        break
                 if c_node is NULL:
                     break
         else:

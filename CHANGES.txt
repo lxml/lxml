@@ -44,6 +44,16 @@ Bugs fixed
   reject paths that contain '%' characters, or otherwise make sure that the path
   does not contain maliciously injected '%XX' URL hex escapes for paths like '../'.
 
+* Assigning to Element child slices with negative step could insert the slice at
+  the wrong position, starting too far on the left.
+
+* Assigning to Element child slices with overly large step size could take very
+  long, regardless of the length of the actual slice.
+
+* Assigning to Element child slices of the wrong size could sometimes fail to
+  raise a ValueError (like a list assignment would) and instead assign outside
+  of the original slice bounds or leave parts of it unreplaced.
+
 * LP#1758553: The HTML elements ``source`` and ``track`` were added to the list
   of empty tags in ``lxml.html.defs``.
 
