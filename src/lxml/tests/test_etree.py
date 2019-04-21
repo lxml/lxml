@@ -3288,7 +3288,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(
             child1, e[1])
 
-    def test_setslice_all_empty_reversed(self):
+    def test_setslice_all_reversed(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
 
@@ -3298,8 +3298,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         f = Element('f')
         g = Element('g')
 
-        s = [e, f, g]
-        a[::-1] = s
+        a[:] = [e, f, g]
+        self.assertEqual(
+            [e, f, g],
+            list(a))
+
+        a[::-1] = [e, f, g]
         self.assertEqual(
             [g, f, e],
             list(a))
