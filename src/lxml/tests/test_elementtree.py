@@ -4466,7 +4466,7 @@ class _XMLPullParserTest(unittest.TestCase):
         root = self._close_and_return_root(parser)
         self.assertEqual(root.tag, 'root')
 
-    @et_needs_pyversion(3,8)
+    @et_needs_pyversion(3, 8, 0, 'alpha', 4)
     def test_events_comment(self):
         parser = self.etree.XMLPullParser(events=('start', 'comment', 'end'))
         self._feed(parser, "<!-- text here -->\n")
@@ -4486,7 +4486,7 @@ class _XMLPullParserTest(unittest.TestCase):
         self._feed(parser, "<!-- text here -->\n")
         self.assert_events(parser, [('comment', (self.etree.Comment, ' text here '))])
 
-    @et_needs_pyversion(3,8)
+    @et_needs_pyversion(3, 8, 0, 'alpha', 4)
     def test_events_pi(self):
         # Note: lxml's PIs have target+text, ET's PIs have both in "text"
         parser = self.etree.XMLPullParser(events=('start', 'pi', 'end'))
