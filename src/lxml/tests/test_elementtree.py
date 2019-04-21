@@ -62,6 +62,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         def assertRegex(self, *args, **kwargs):
             return self.assertRegexpMatches(*args, **kwargs)
 
+    @et_needs_pyversion(3, 6)
     def test_interface(self):
         # Test element tree interface.
 
