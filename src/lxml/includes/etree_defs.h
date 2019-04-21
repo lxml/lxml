@@ -6,8 +6,8 @@
 #ifndef PY_VERSION_HEX
 #  error the development package of Python (header files etc.) is not installed correctly
 #else
-#  if PY_VERSION_HEX < 0x02070000 || PY_MAJOR_VERSION >= 3 && PY_VERSION_HEX < 0x03030000
-#  error this version of lxml requires Python 2.7, 3.3 or later
+#  if PY_VERSION_HEX < 0x02070000 || PY_MAJOR_VERSION >= 3 && PY_VERSION_HEX < 0x03050000
+#  error this version of lxml requires Python 2.7, 3.5 or later
 #  endif
 #endif
 

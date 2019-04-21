@@ -65,6 +65,8 @@ Bugs fixed
 Other changes
 -------------
 
+* Support for Python 3.4 was removed.
+
 * When using ``Element.find*()`` with prefix-namespace mappings, the empty string
   is now accepted to define a default namespace, in addition to the previously
   supported ``None`` prefix.  Empty strings are more convenient since they keep
