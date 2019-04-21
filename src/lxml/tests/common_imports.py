@@ -38,12 +38,17 @@ if hasattr(ElementTree, 'VERSION'):
 else:
     ET_VERSION = (0,0,0)
 
-from xml.etree import cElementTree
+if IS_PYTHON2:
+    from xml.etree import cElementTree
 
-if hasattr(cElementTree, 'VERSION'):
-    CET_VERSION = make_version_tuple(cElementTree.VERSION)
+    if hasattr(cElementTree, 'VERSION'):
+        CET_VERSION = make_version_tuple(cElementTree.VERSION)
+    else:
+        CET_VERSION = (0,0,0)
 else:
-    CET_VERSION = (0,0,0)
+    CET_VERSION = (0, 0, 0)
+    cElementTree = None
+
 
 def filter_by_version(test_class, version_dict, current_version):
     """Remove test methods that do not work with the current lib version.
