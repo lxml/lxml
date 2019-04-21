@@ -1149,6 +1149,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 c += 1
                 for i in range(step):
                     c_node = next_element(c_node)
+                    if c_node is NULL:
+                        break
             return result
         else:
             # indexing

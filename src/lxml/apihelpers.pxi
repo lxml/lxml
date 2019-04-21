@@ -1160,6 +1160,8 @@ cdef int _deleteSlice(_Document doc, xmlNode* c_node,
     while c_node is not NULL and c < count:
         for i in range(step):
             c_next = next_element(c_next)
+            if c_next is NULL:
+                break
         _removeNode(doc, c_node)
         c += 1
         c_node = c_next
