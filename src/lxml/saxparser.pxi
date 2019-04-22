@@ -1,22 +1,22 @@
 # SAX-like interfaces
 
 ctypedef enum _SaxParserEvents:
-    SAX_EVENT_START    =   1
-    SAX_EVENT_END      =   2
-    SAX_EVENT_DATA     =   4
-    SAX_EVENT_DOCTYPE  =   8
-    SAX_EVENT_PI       =  16
-    SAX_EVENT_COMMENT  =  32
-    SAX_EVENT_START_NS =  64
-    SAX_EVENT_END_NS   = 128
+    SAX_EVENT_START    = 1 << 0
+    SAX_EVENT_END      = 1 << 1
+    SAX_EVENT_DATA     = 1 << 2
+    SAX_EVENT_DOCTYPE  = 1 << 3
+    SAX_EVENT_PI       = 1 << 4
+    SAX_EVENT_COMMENT  = 1 << 5
+    SAX_EVENT_START_NS = 1 << 6
+    SAX_EVENT_END_NS   = 1 << 7
 
 ctypedef enum _ParseEventFilter:
-    PARSE_EVENT_FILTER_START     =  1
-    PARSE_EVENT_FILTER_END       =  2
-    PARSE_EVENT_FILTER_START_NS  =  4
-    PARSE_EVENT_FILTER_END_NS    =  8
-    PARSE_EVENT_FILTER_COMMENT   = 16
-    PARSE_EVENT_FILTER_PI        = 32
+    PARSE_EVENT_FILTER_START     = 1 << 0
+    PARSE_EVENT_FILTER_END       = 1 << 1
+    PARSE_EVENT_FILTER_START_NS  = 1 << 2
+    PARSE_EVENT_FILTER_END_NS    = 1 << 3
+    PARSE_EVENT_FILTER_COMMENT   = 1 << 4
+    PARSE_EVENT_FILTER_PI        = 1 << 5
 
 
 cdef int _buildParseEventFilter(events) except -1:
