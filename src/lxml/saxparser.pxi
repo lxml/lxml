@@ -501,9 +501,6 @@ cdef void _handleSaxEndNoNs(void* ctxt, const_xmlChar* c_name) with gil:
         return  # swallow any further exceptions
 
 
-cdef tuple NS_END_EVENT = ('end-ns', None)
-
-
 cdef int _pushSaxNsEndEvents(_SaxParserContext context) except -1:
     cdef bint build_events = context._event_filter & PARSE_EVENT_FILTER_END_NS
     cdef bint call_target = context._target._sax_event_filter & SAX_EVENT_END_NS
@@ -519,7 +516,7 @@ cdef int _pushSaxNsEndEvents(_SaxParserContext context) except -1:
         if call_target:
             context._target._handleSaxEndNs(prefix_uri[0])
         if build_events:
-            context.events_iterator._events.append(NS_END_EVENT)
+            context.events_iterator._events.append(('end-ns', None))
 
     return 0
 
