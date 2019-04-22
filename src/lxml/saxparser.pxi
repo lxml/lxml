@@ -109,7 +109,8 @@ cdef class _SaxParserContext(_ParserContext):
             self._connectEvents(c_ctxt)
 
     cdef void _connectTarget(self, xmlparser.xmlParserCtxt* c_ctxt):
-        """wrap original SAX2 callbacks to call into parser target"""
+        """Wrap original SAX2 callbacks to call into parser target.
+        """
         sax = c_ctxt.sax
         self._origSaxStart = sax.startElementNs = NULL
         self._origSaxStartNoNs = sax.startElement = NULL
@@ -154,28 +155,37 @@ cdef class _SaxParserContext(_ParserContext):
         c_ctxt.replaceEntities = 1
 
     cdef void _connectEvents(self, xmlparser.xmlParserCtxt* c_ctxt):
-        """wrap original SAX2 callbacks to collect parse events"""
+        """Wrap original SAX2 callbacks to collect parse events without parser target.
+        """
         sax = c_ctxt.sax
         self._origSaxStartDocument = sax.startDocument
         sax.startDocument = _handleSaxStartDocument
+
+        # only override "start" event handler if needed
         self._origSaxStart = sax.startElementNs
-        self._origSaxStartNoNs = sax.startElement
-        # only override start event handler if needed
-        if self._event_filter == 0 or \
+        if self._event_filter == 0 or c_ctxt.html or \
                self._event_filter & (PARSE_EVENT_FILTER_START |
                                      PARSE_EVENT_FILTER_END |
                                      PARSE_EVENT_FILTER_START_NS |
                                      PARSE_EVENT_FILTER_END_NS):
             sax.startElementNs = <xmlparser.startElementNsSAX2Func>_handleSaxStart
+
+        self._origSaxStartNoNs = sax.startElement
+        if self._event_filter == 0 or c_ctxt.html or \
+               self._event_filter & (PARSE_EVENT_FILTER_START |
+                                     PARSE_EVENT_FILTER_END):
             sax.startElement = <xmlparser.startElementSAXFunc>_handleSaxStartNoNs
 
+        # only override "end" event handler if needed
         self._origSaxEnd = sax.endElementNs
-        self._origSaxEndNoNs = sax.endElement
-        # only override end event handler if needed
         if self._event_filter == 0 or \
                self._event_filter & (PARSE_EVENT_FILTER_END |
                                      PARSE_EVENT_FILTER_END_NS):
             sax.endElementNs = <xmlparser.endElementNsSAX2Func>_handleSaxEnd
+
+        self._origSaxEndNoNs = sax.endElement
+        if self._event_filter == 0 or \
+               self._event_filter & PARSE_EVENT_FILTER_END:
             sax.endElement = <xmlparser.endElementSAXFunc>_handleSaxEndNoNs
 
         self._origSaxComment = sax.comment
