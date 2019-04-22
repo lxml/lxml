@@ -8,8 +8,13 @@ belong here. Note that there is a second test module called test_io.py
 for IO related test cases.
 """
 
+import copy
+import operator
+import os
+import re
+import sys
+import textwrap
 import unittest
-import os, re, copy, operator, sys
 from functools import wraps
 from itertools import islice
 
@@ -3994,6 +3999,72 @@ class _ETreeTestCaseBase(HelperTestCase):
             parser.close()
 
         self.assertRaises(self.etree.ParseError, feed)
+
+    @et_needs_pyversion(3, 8, 0, 'alpha', 4)
+    def test_parser_target_start_end_ns(self):
+        class Builder(list):
+            def start(self, tag, attrib):
+                self.append(("start", tag))
+            def end(self, tag):
+                self.append(("end", tag))
+            def data(self, text):
+                pass
+            def pi(self, target, data):
+                self.append(("pi", target, data))
+            def comment(self, data):
+                self.append(("comment", data))
+            def start_ns(self, prefix, uri):
+                self.append(("start-ns", prefix, uri))
+            def end_ns(self, prefix):
+                self.append(("end-ns", prefix))
+
+        builder = Builder()
+        parser = self.etree.XMLParser(target=builder)
+        parser.feed(textwrap.dedent("""\
+            <?pi data?>
+            <!-- comment -->
+            <root xmlns='namespace'>
+               <element key='value'>text</element>
+               <element>text</element>tail
+               <empty-element/>
+            </root>
+            """))
+        self.assertEqual(builder, [
+                ('pi', 'pi', 'data'),
+                ('comment', ' comment '),
+                ('start-ns', '', 'namespace'),
+                ('start', '{namespace}root'),
+                ('start', '{namespace}element'),
+                ('end', '{namespace}element'),
+                ('start', '{namespace}element'),
+                ('end', '{namespace}element'),
+                ('start', '{namespace}empty-element'),
+                ('end', '{namespace}empty-element'),
+                ('end', '{namespace}root'),
+                ('end-ns', ''),
+            ])
+
+    @et_needs_pyversion(3, 8, 0, 'alpha', 4)
+    def test_parser_target_end_ns(self):
+        class Builder(list):
+            def end_ns(self, prefix):
+                self.append(("end-ns", prefix))
+
+        builder = Builder()
+        parser = self.etree.XMLParser(target=builder)
+        parser.feed(textwrap.dedent("""\
+            <?pi data?>
+            <!-- comment -->
+            <root xmlns='namespace' xmlns:p='pns'>
+               <element key='value'>text</element>
+               <p:element>text</p:element>tail
+               <empty-element/>
+            </root>
+            """))
+        self.assertEqual(builder, [
+                ('end-ns', 'p'),
+                ('end-ns', ''),
+            ])
 
     def test_treebuilder(self):
         builder = self.etree.TreeBuilder()

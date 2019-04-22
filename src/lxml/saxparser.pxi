@@ -113,7 +113,9 @@ cdef class _SaxParserContext(_ParserContext):
         sax = c_ctxt.sax
         self._origSaxStart = sax.startElementNs = NULL
         self._origSaxStartNoNs = sax.startElement = NULL
-        if self._target._sax_event_filter & (SAX_EVENT_START | SAX_EVENT_START_NS):
+        if self._target._sax_event_filter & (SAX_EVENT_START |
+                                             SAX_EVENT_START_NS |
+                                             SAX_EVENT_END_NS):
             # intercept => overwrite orig callback
             # FIXME: also intercept on when collecting END events
             if sax.initialized == xmlparser.XML_SAX2_MAGIC:
@@ -123,7 +125,8 @@ cdef class _SaxParserContext(_ParserContext):
 
         self._origSaxEnd = sax.endElementNs = NULL
         self._origSaxEndNoNs = sax.endElement = NULL
-        if self._target._sax_event_filter & (SAX_EVENT_END | SAX_EVENT_END_NS):
+        if self._target._sax_event_filter & (SAX_EVENT_END |
+                                             SAX_EVENT_END_NS):
             if sax.initialized == xmlparser.XML_SAX2_MAGIC:
                 sax.endElementNs = _handleSaxEnd
             if self._target._sax_event_filter & SAX_EVENT_END:
@@ -319,17 +322,19 @@ cdef void _handleSaxTargetStart(
     if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
+
+    cdef int event_filter = context._event_filter
+    cdef int sax_event_filter = context._target._sax_event_filter
     try:
         if c_nb_namespaces:
             declared_namespaces = _build_prefix_uri_list(
                 context, c_nb_namespaces, c_namespaces)
 
-            if context._event_filter & PARSE_EVENT_FILTER_START_NS:
+            if event_filter & PARSE_EVENT_FILTER_START_NS:
                 for prefix_uri_tuple in declared_namespaces:
                     context.events_iterator._events.append(("start-ns", prefix_uri_tuple))
 
-            if context._target._sax_event_filter & SAX_EVENT_START_NS:
-                callback = context._target._handleSaxStart
+            if sax_event_filter & SAX_EVENT_START_NS:
                 for prefix, uri in declared_namespaces:
                     context._target._handleSaxStartNs(prefix, uri)
                 #if not context._target._sax_event_filter & SAX_EVENT_START:
@@ -338,37 +343,38 @@ cdef void _handleSaxTargetStart(
         else:
             declared_namespaces = None
 
-        if c_nb_defaulted > 0:
-            # only add default attributes if we asked for them
-            if c_ctxt.loadsubset & xmlparser.XML_COMPLETE_ATTRS == 0:
-                c_nb_attributes -= c_nb_defaulted
-        if c_nb_attributes == 0:
-            attrib = IMMUTABLE_EMPTY_MAPPING
-        else:
-            attrib = {}
-            for i in xrange(c_nb_attributes):
-                name = _namespacedNameFromNsName(
-                    c_attributes[2], c_attributes[0])
-                if c_attributes[3] is NULL:
-                    value = ''
-                else:
-                    c_len = c_attributes[4] - c_attributes[3]
-                    value = c_attributes[3][:c_len].decode('utf8')
-                attrib[name] = value
-                c_attributes += 5
+        if sax_event_filter & SAX_EVENT_START:
+            if c_nb_defaulted > 0:
+                # only add default attributes if we asked for them
+                if c_ctxt.loadsubset & xmlparser.XML_COMPLETE_ATTRS == 0:
+                    c_nb_attributes -= c_nb_defaulted
+            if c_nb_attributes == 0:
+                attrib = IMMUTABLE_EMPTY_MAPPING
+            else:
+                attrib = {}
+                for i in xrange(c_nb_attributes):
+                    name = _namespacedNameFromNsName(
+                        c_attributes[2], c_attributes[0])
+                    if c_attributes[3] is NULL:
+                        value = ''
+                    else:
+                        c_len = c_attributes[4] - c_attributes[3]
+                        value = c_attributes[3][:c_len].decode('utf8')
+                    attrib[name] = value
+                    c_attributes += 5
 
-        nsmap = dict(declared_namespaces) if c_nb_namespaces else IMMUTABLE_EMPTY_MAPPING
+            nsmap = dict(declared_namespaces) if c_nb_namespaces else IMMUTABLE_EMPTY_MAPPING
 
-        element = _callTargetSaxStart(
-            context, c_ctxt,
-            _namespacedNameFromNsName(c_namespace, c_localname),
-            attrib, nsmap)
+            element = _callTargetSaxStart(
+                context, c_ctxt,
+                _namespacedNameFromNsName(c_namespace, c_localname),
+                attrib, nsmap)
 
-        if (context._event_filter & PARSE_EVENT_FILTER_END_NS or
-                context._target._sax_event_filter & SAX_EVENT_START_NS):
+        if (event_filter & PARSE_EVENT_FILTER_END_NS or
+                sax_event_filter & SAX_EVENT_END_NS):
             context._ns_stack.append(declared_namespaces)
-        if context._event_filter & (PARSE_EVENT_FILTER_END |
-                                    PARSE_EVENT_FILTER_START):
+        if event_filter & (PARSE_EVENT_FILTER_END |
+                           PARSE_EVENT_FILTER_START):
             _pushSaxStartEvent(context, c_ctxt, c_namespace,
                                c_localname, element)
     except:
@@ -461,8 +467,11 @@ cdef void _handleSaxEnd(void* ctxt, const_xmlChar* c_localname,
     context = <_SaxParserContext>c_ctxt._private
     try:
         if context._target is not None:
-            node = context._target._handleSaxEnd(
-                _namespacedNameFromNsName(c_namespace, c_localname))
+            if context._target._sax_event_filter & SAX_EVENT_END:
+                node = context._target._handleSaxEnd(
+                    _namespacedNameFromNsName(c_namespace, c_localname))
+            else:
+                node = None
         else:
             context._origSaxEnd(c_ctxt, c_localname, c_prefix, c_namespace)
             node = None
@@ -497,16 +506,16 @@ cdef tuple NS_END_EVENT = ('end-ns', None)
 
 cdef int _pushSaxNsEndEvents(_SaxParserContext context) except -1:
     cdef bint build_events = context._event_filter & PARSE_EVENT_FILTER_END_NS
-    cdef bint call_target = context._target._sax_event_filter & SAX_EVENT_START_NS
+    cdef bint call_target = context._target._sax_event_filter & SAX_EVENT_END_NS
     if not build_events and not call_target:
         return 0
 
-    declared_namespaces = context._ns_stack.pop()
+    cdef list declared_namespaces = context._ns_stack.pop()
     if declared_namespaces is None:
         return 0
 
     cdef tuple prefix_uri
-    for prefix_uri in declared_namespaces:
+    for prefix_uri in reversed(declared_namespaces):
         if call_target:
             context._target._handleSaxEndNs(prefix_uri[0])
         if build_events:
