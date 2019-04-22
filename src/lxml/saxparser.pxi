@@ -282,13 +282,16 @@ cdef void _handleSaxStart(
     if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
+    cdef int event_filter = context._event_filter
     try:
         if (c_nb_namespaces and
-                context._event_filter & PARSE_EVENT_FILTER_START_NS):
+                event_filter & (PARSE_EVENT_FILTER_START_NS |
+                                PARSE_EVENT_FILTER_END_NS)):
             declared_namespaces = _build_prefix_uri_list(
                 context, c_nb_namespaces, c_namespaces)
-            for prefix_uri_tuple in declared_namespaces:
-                context.events_iterator._events.append(("start-ns", prefix_uri_tuple))
+            if event_filter & PARSE_EVENT_FILTER_START_NS:
+                for prefix_uri_tuple in declared_namespaces:
+                    context.events_iterator._events.append(("start-ns", prefix_uri_tuple))
         else:
             declared_namespaces = None
 
@@ -298,12 +301,11 @@ cdef void _handleSaxStart(
         if c_ctxt.html:
             _fixHtmlDictNodeNames(c_ctxt.dict, c_ctxt.node)
 
-        if context._event_filter & PARSE_EVENT_FILTER_END_NS:
+        if event_filter & PARSE_EVENT_FILTER_END_NS:
             context._ns_stack.append(declared_namespaces)
-        if context._event_filter & (PARSE_EVENT_FILTER_END |
-                                    PARSE_EVENT_FILTER_START):
-            _pushSaxStartEvent(context, c_ctxt, c_namespace,
-                               c_localname, None)
+        if event_filter & (PARSE_EVENT_FILTER_END |
+                           PARSE_EVENT_FILTER_START):
+            _pushSaxStartEvent(context, c_ctxt, c_namespace, c_localname, None)
     except:
         context._handleSaxException(c_ctxt)
     finally:

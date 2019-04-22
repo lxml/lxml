@@ -3078,6 +3078,32 @@ class _ETreeTestCaseBase(HelperTestCase):
             'value',
             root[0].get(attr_name))
 
+    def test_iterparse_only_end_ns(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<a xmlns="http://ns1/"><b><c xmlns="http://ns2/"/></b></a>')
+
+        attr_name = '{http://testns/}bla'
+        events = []
+        iterator = iterparse(f, events=('start','end','start-ns','end-ns'))
+        for event, elem in iterator:
+            events.append(event)
+            if event == 'start':
+                if elem.tag != '{http://ns1/}a':
+                    elem.set(attr_name, 'value')
+
+        self.assertEqual(
+            ['start-ns', 'start', 'start', 'start-ns', 'start',
+             'end', 'end-ns', 'end', 'end', 'end-ns'],
+            events)
+
+        root = iterator.root
+        self.assertEqual(
+            None,
+            root.get(attr_name))
+        self.assertEqual(
+            'value',
+            root[0].get(attr_name))
+
     def test_iterparse_getiterator(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<a><b><d/></b><c/></a>')
@@ -4435,6 +4461,24 @@ class _XMLPullParserTest(unittest.TestCase):
         self._feed(parser, "<empty-element/>\n")
         self._feed(parser, "</root>\n")
         self.assertEqual(list(parser.read_events()), [('end-ns', None)])
+        parser.close()
+
+    def test_ns_events_end_ns_only(self):
+        parser = self.etree.XMLPullParser(events=['end-ns'])
+        self._feed(parser, "<!-- comment -->\n")
+        self._feed(parser, "<root xmlns='namespace' xmlns:a='abc' xmlns:b='xyz'>\n")
+        self.assertEqual(list(parser.read_events()), [])
+        self._feed(parser, "<a:element key='value'>text</a:element")
+        self._feed(parser, ">\n")
+        self._feed(parser, "<b:element>text</b:element>tail\n")
+        self._feed(parser, "<empty-element/>\n")
+        self.assertEqual(list(parser.read_events()), [])
+        self._feed(parser, "</root>\n")
+        self.assertEqual(list(parser.read_events()), [
+            ('end-ns', None),
+            ('end-ns', None),
+            ('end-ns', None),
+        ])
         parser.close()
 
     @et_needs_pyversion(3,8)
