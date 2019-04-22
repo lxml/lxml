@@ -3052,7 +3052,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             i += 1
         self.assertEqual(i, CHILD_COUNT + 1)
 
-    def test_iterparse_attrib_ns(self):
+    def test_iterparse_set_ns_attribute(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<a xmlns="http://ns1/"><b><c xmlns="http://ns2/"/></b></a>')
 
