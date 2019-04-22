@@ -144,7 +144,7 @@ cdef class _SaxParserContext(_ParserContext):
 
         self._origSaxPI = sax.processingInstruction = NULL
         if self._target._sax_event_filter & SAX_EVENT_PI:
-            sax.processingInstruction = _handleSaxPI
+            sax.processingInstruction = _handleSaxTargetPI
 
         self._origSaxComment = sax.comment = NULL
         if self._target._sax_event_filter & SAX_EVENT_COMMENT:
@@ -381,6 +381,8 @@ cdef void _handleSaxTargetStart(
                 context, c_ctxt,
                 _namespacedNameFromNsName(c_namespace, c_localname),
                 attrib, nsmap)
+        else:
+            element = None
 
         if (event_filter & PARSE_EVENT_FILTER_END_NS or
                 sax_event_filter & SAX_EVENT_END_NS):
@@ -515,7 +517,9 @@ cdef void _handleSaxEndNoNs(void* ctxt, const_xmlChar* c_name) with gil:
 
 cdef int _pushSaxNsEndEvents(_SaxParserContext context) except -1:
     cdef bint build_events = context._event_filter & PARSE_EVENT_FILTER_END_NS
-    cdef bint call_target = context._target._sax_event_filter & SAX_EVENT_END_NS
+    cdef bint call_target = (
+        context._target is not None
+        and context._target._sax_event_filter & SAX_EVENT_END_NS)
     if not build_events and not call_target:
         return 0
 
@@ -594,8 +598,8 @@ cdef void _handleSaxStartDocument(void* ctxt) with gil:
         return  # swallow any further exceptions
 
 
-cdef void _handleSaxPI(void* ctxt, const_xmlChar* c_target,
-                       const_xmlChar* c_data) with gil:
+cdef void _handleSaxTargetPI(void* ctxt, const_xmlChar* c_target,
+                             const_xmlChar* c_data) with gil:
     # can only be called if parsing with a target
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     if c_ctxt._private is NULL or c_ctxt.disableSAX:
