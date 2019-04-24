@@ -29,10 +29,9 @@ Features added
   callback methods to listen to namespace declarations.
 
 * The ``TreeBuilder`` has new arguments ``comment_factory`` and ``pi_factory`` to
-  pass factories for creating comments and processing instructions.  Setting them
-  to ``None`` makes the ``TreeBuilder`` discard them from the tree and only return
-  the comment text and PI ``(target, data)`` tuple from the parser callback, e.g.
-  for pull parser events.
+  pass factories for creating comments and processing instructions, as well as
+  flag arguments ``insert_comments`` and ``insert_pis`` to discard them from the
+  tree when set to false.
 
 Bugs fixed
 ----------
