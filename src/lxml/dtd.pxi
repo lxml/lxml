@@ -29,6 +29,11 @@ cdef class _DTDElementContentDecl:
         return "<%s.%s object name=%r type=%r occur=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, self.occur, id(self))
 
     @property
+    def prefix(self):
+       _assertValidDTDNode(self, self._c_node)
+       return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
+    
+    @property
     def name(self):
        _assertValidDTDNode(self, self._c_node)
        return funicode(self._c_node.name) if self._c_node.name is not NULL else None
