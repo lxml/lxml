@@ -16,9 +16,12 @@ DESTRUCTOR_NAME = b'destructor:xmlFreeDoc'
 
 class ExternalDocumentTestCase(HelperTestCase):
     def setUp(self):
-        import ctypes
-        from ctypes import pythonapi
-        from ctypes.util import find_library
+        try:
+            import ctypes
+            from ctypes import pythonapi
+            from ctypes.util import find_library
+        except ImportError:
+            raise unittest.SkipTest("ctypes support missing")
 
         def wrap(func, restype, *argtypes):
             func.restype = restype
