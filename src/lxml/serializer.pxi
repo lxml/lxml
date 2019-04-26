@@ -948,7 +948,7 @@ cdef class C14NWriterTarget:
         # Stack with user declared namespace prefixes as (uri, prefix) pairs.
         self._ns_stack = []
         if not rewrite_prefixes:
-            self._ns_stack.append(list(_DEFAULT_NAMESPACE_PREFIXES.items()))
+            self._ns_stack.append(_DEFAULT_NAMESPACE_PREFIXES.items())
         self._ns_stack.append([])
         self._prefix_map = {}
         self._preserve_space = [False]
