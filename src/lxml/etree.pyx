@@ -11,7 +11,7 @@ from __future__ import absolute_import
 __docformat__ = u"restructuredtext en"
 
 __all__ = [
-    'AttributeBasedElementClassLookup', 'C14NError', 'CDATA',
+    'AttributeBasedElementClassLookup', 'C14NError', 'C14NWriterTarget', 'CDATA',
     'Comment', 'CommentBase', 'CustomElementClassLookup', 'DEBUG',
     'DTD', 'DTDError', 'DTDParseError', 'DTDValidateError',
     'DocumentInvalid', 'ETCompatXMLParser', 'ETXPath', 'Element',
@@ -35,7 +35,8 @@ __all__ = [
     'XPathEvalError', 'XPathEvaluator', 'XPathFunctionError', 'XPathResultError',
     'XPathSyntaxError', 'XSLT', 'XSLTAccessControl', 'XSLTApplyError',
     'XSLTError', 'XSLTExtension', 'XSLTExtensionError', 'XSLTParseError',
-    'XSLTSaveError', 'cleanup_namespaces', 'clear_error_log', 'dump',
+    'XSLTSaveError', 'canonicalize',
+    'cleanup_namespaces', 'clear_error_log', 'dump',
     'fromstring', 'fromstringlist', 'get_default_parser', 'iselement',
     'iterparse', 'iterwalk', 'parse', 'parseid', 'register_namespace',
     'set_default_parser', 'set_element_class_lookup', 'strip_attributes',
@@ -1998,15 +1999,21 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             compression = 0
 
         # C14N serialisation
-        if method == 'c14n':
+        if method in ('c14n', 'c14n2'):
             if encoding is not None:
                 raise ValueError("Cannot specify encoding with C14N")
             if xml_declaration:
                 raise ValueError("Cannot enable XML declaration in C14N")
 
-            _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
-                            compression, inclusive_ns_prefixes)
+            if method == 'c14n':
+                _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
+                                compression, inclusive_ns_prefixes)
+            else:  # c14n2
+                with _open_utf8_file(file, compression=compression) as f:
+                    target = C14NWriterTarget(f.write, comments=with_comments)
+                    _tree_to_target(self, target)
             return
+
         if not with_comments:
             raise ValueError("Can only discard comments in C14N serialisation")
         # suppress decl. in default case (purely for ElementTree compatibility)
@@ -3291,7 +3298,7 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     The keyword argument 'pretty_print' (bool) enables formatted XML.
 
     The keyword argument 'method' selects the output method: 'xml',
-    'html', plain 'text' (text content without tags) or 'c14n'.
+    'html', plain 'text' (text content without tags), 'c14n' or 'c14n2'.
     Default is 'xml'.
 
     The ``exclusive`` and ``with_comments`` arguments are only used
@@ -3314,12 +3321,18 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     cdef bint write_declaration
     cdef int is_standalone
     # C14N serialisation
-    if method == 'c14n':
+    if method in ('c14n', 'c14n2'):
         if encoding is not None:
             raise ValueError("Cannot specify encoding with C14N")
         if xml_declaration:
             raise ValueError("Cannot enable XML declaration in C14N")
-        return _tostringC14N(element_or_tree, exclusive, with_comments, inclusive_ns_prefixes)
+        if method == 'c14n':
+            return _tostringC14N(element_or_tree, exclusive, with_comments, inclusive_ns_prefixes)
+        else:
+            out = BytesIO()
+            target = C14NWriterTarget(utf8_writer(out).write, comments=with_comments)
+            _tree_to_target(element_or_tree, target)
+            return out.getvalue()
     if not with_comments:
         raise ValueError("Can only discard comments in C14N serialisation")
     if encoding is unicode or (encoding is not None and encoding.lower() == 'unicode'):

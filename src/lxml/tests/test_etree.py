@@ -1173,6 +1173,101 @@ class ETreeOnlyTestCase(HelperTestCase):
             [('end', root[0]), ('end', root[1]), ('end', root)],
             events)
 
+    def test_iterwalk_comments_root_element(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(
+            b'<!--C0--><a><!--Ca--><b><!--Cb--></b><!--Cc--><c/></a><!--C99-->')
+
+        iterator = iterwalk(root, events=('start', 'end', 'comment'))
+        events = list(iterator)
+        self.assertEqual(
+            [('start', root), ('comment', root[0]),
+             ('start', root[1]), ('comment', root[1][0]), ('end', root[1]),
+             ('comment', root[2]), ('start', root[3]), ('end', root[3]),
+             ('end', root),
+             ],
+            events)
+
+    def test_iterwalk_comments_tree(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(
+            b'<!--C0--><a><!--Ca--><b><!--Cb--></b><!--Cc--><c/></a><!--C99-->')
+
+        iterator = iterwalk(self.etree.ElementTree(root), events=('start', 'end', 'comment'))
+        events = list(iterator)
+        self.assertEqual(
+            [('comment', root.getprevious()),
+             ('start', root), ('comment', root[0]),  # <a>
+             ('start', root[1]), ('comment', root[1][0]), ('end', root[1]),  # <b>
+             ('comment', root[2]), ('start', root[3]), ('end', root[3]),  # <c>
+             ('end', root), ('comment', root.getnext()),
+             ],
+            events)
+
+    def test_iterwalk_pis_root_element(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(
+            b'<?C0?><a><?Ca?><b><?Cb?></b><?Cc?><c/></a><?C99?>')
+
+        iterator = iterwalk(root, events=('start', 'end', 'pi'))
+        events = list(iterator)
+        self.assertEqual(
+            [('start', root), ('pi', root[0]),
+             ('start', root[1]), ('pi', root[1][0]), ('end', root[1]),
+             ('pi', root[2]), ('start', root[3]), ('end', root[3]),
+             ('end', root),
+             ],
+            events)
+
+    def test_iterwalk_pis_tree(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(
+            b'<?C0?><a><?Ca?><b><?Cb?></b><?Cc?><c/></a><?C99?>')
+
+        iterator = iterwalk(self.etree.ElementTree(root), events=('start', 'end', 'pi'))
+        events = list(iterator)
+        self.assertEqual(
+            [('pi', root.getprevious()),
+             ('start', root), ('pi', root[0]),  # <a>
+             ('start', root[1]), ('pi', root[1][0]), ('end', root[1]),  # <b>
+             ('pi', root[2]), ('start', root[3]), ('end', root[3]),  # <c>
+             ('end', root), ('pi', root.getnext()),
+             ],
+            events)
+
+    def test_iterwalk_pis_comments_tree(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(
+            b'<!--C0--><?C0?><!--C1--><a><?Ca?><b><!--Cb--></b><?Cc?><c/></a><!--C99--><?C99?>')
+
+        iterator = iterwalk(self.etree.ElementTree(root), events=('start', 'end', 'pi', 'comment'))
+        events = list(iterator)
+        self.assertEqual(
+            [('comment', root.getprevious().getprevious().getprevious()),
+             ('pi', root.getprevious().getprevious()),
+             ('comment', root.getprevious()),
+             ('start', root), ('pi', root[0]),  # <a>
+             ('start', root[1]), ('comment', root[1][0]), ('end', root[1]),  # <b>
+             ('pi', root[2]), ('start', root[3]), ('end', root[3]),  # <c>
+             ('end', root), ('comment', root.getnext()), ('pi', root.getnext().getnext()),
+             ],
+            events)
+
+    def test_iterwalk_pis_comments_tree_no_events(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(
+            b'<!--C0--><?C0?><!--C1--><a><?Ca?><b><!--Cb--></b><?Cc?><c/></a><!--C99--><?C99?>')
+
+        iterator = iterwalk(self.etree.ElementTree(root), events=('start', 'end'))
+        events = list(iterator)
+        self.assertEqual(
+            [('start', root),  # <a>
+             ('start', root[1]), ('end', root[1]),  # <b>
+             ('start', root[3]), ('end', root[3]),  # <c>
+             ('end', root),
+             ],
+            events)
+
     def test_iterwalk_start(self):
         iterwalk = self.etree.iterwalk
         root = self.etree.XML(_bytes('<a><b></b><c/></a>'))
@@ -4315,6 +4410,15 @@ class ETreeC14NTestCase(HelperTestCase):
         self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
                           data)
 
+    def test_c14n2_file_gzip(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        with tmpfile() as filename:
+            tree.write(filename, method='c14n2', compression=9)
+            with gzip.open(filename, 'rb') as f:
+                data = f.read()
+        self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
+                          data)
+
     def test_c14n_with_comments(self):
         tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
         f = BytesIO()
@@ -4333,6 +4437,24 @@ class ETreeC14NTestCase(HelperTestCase):
         self.assertEqual(_bytes('<a><b></b></a>'),
                           s)
 
+    def test_c14n2_with_comments(self):
+        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
+        f = BytesIO()
+        tree.write(f, method='c14n2')
+        s = f.getvalue()
+        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+                          s)
+        f = BytesIO()
+        tree.write(f, method='c14n2', with_comments=True)
+        s = f.getvalue()
+        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+                          s)
+        f = BytesIO()
+        tree.write(f, method='c14n2', with_comments=False)
+        s = f.getvalue()
+        self.assertEqual(_bytes('<a><b></b></a>'),
+                          s)
+
     def test_c14n_tostring_with_comments(self):
         tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
         s = etree.tostring(tree, method='c14n')
@@ -4343,6 +4465,18 @@ class ETreeC14NTestCase(HelperTestCase):
                           s)
         s = etree.tostring(tree, method='c14n', with_comments=False)
         self.assertEqual(_bytes('<a><b></b></a>'),
+                          s)
+
+    def test_c14n2_tostring_with_comments(self):
+        tree = self.parse(b'<!--hi--><a><!--ho--><b/></a><!--hu-->')
+        s = etree.tostring(tree, method='c14n2')
+        self.assertEqual(b'<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->',
+                          s)
+        s = etree.tostring(tree, method='c14n2', with_comments=True)
+        self.assertEqual(b'<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->',
+                          s)
+        s = etree.tostring(tree, method='c14n2', with_comments=False)
+        self.assertEqual(b'<a><b></b></a>',
                           s)
 
     def test_c14n_element_tostring_with_comments(self):

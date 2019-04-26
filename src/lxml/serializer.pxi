@@ -611,6 +611,38 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
 ############################################################
 # output to file-like objects
 
+cdef object io_open
+from io import open
+
+cdef object gzip
+import gzip
+
+cdef object getwriter
+from codecs import getwriter
+cdef object utf8_writer = getwriter('utf8')
+
+cdef object contextmanager
+from contextlib import contextmanager
+
+cdef object _open_utf8_file
+
+@contextmanager
+def _open_utf8_file(file, compression=0):
+    if _isString(file):
+        if compression:
+            with gzip.GzipFile(file, mode='wb', compresslevel=compression) as zf:
+                yield utf8_writer(zf)
+        else:
+            with io_open(file, 'w', encoding='utf8') as f:
+                yield f
+    else:
+        if compression:
+            with gzip.GzipFile(fileobj=file, mode='wb', compresslevel=compression) as zf:
+                yield utf8_writer(zf)
+        else:
+            yield utf8_writer(file)
+
+
 @cython.final
 @cython.internal
 cdef class _FilelikeWriter:
@@ -866,13 +898,19 @@ def canonicalize(write, xml_data=None, *, file=None, **options):
     To write to a file, open it in text mode with encoding "utf-8" and pass
     its ``.write`` method.
 
-    Either *xml_data* (an XML string) or *file* (a file-like object) must be
-    provided as input.
+    Either *xml_data* (an XML string, tree or Element) or *file*
+    (a file-like object) must be provided as input.
 
     The configuration options are the same as for the ``C14NWriterTarget``.
     """
+    target = C14NWriterTarget(write, **options)
+
+    if xml_data is not None and not isinstance(xml_data, basestring):
+        _tree_to_target(xml_data, target)
+        return
+
     cdef _FeedParser parser = XMLParser(
-        target=C14NWriterTarget(write, **options),
+        target=target,
         attribute_defaults=True,
         collect_ids=False,
     )
@@ -887,6 +925,21 @@ def canonicalize(write, xml_data=None, *, file=None, **options):
                 d = file.read(64*1024)
     finally:
         parser.close()
+
+
+cdef _tree_to_target(element, target):
+    for event, elem in iterwalk(element, events=('start', 'end', 'start-ns', 'comment', 'pi')):
+        if event == 'start':
+            target.start(elem.tag, elem.attrib)
+        elif event == 'end':
+            target.end(elem.tag)
+        elif event == 'start-ns':
+            target.start_ns(*elem)
+        elif event == 'comment':
+            target.comment(elem.text)
+        elif event == 'pi':
+            target.pi(elem.target, elem.text)
+    target.close()
 
 
 cdef object _looks_like_prefix_name = re.compile('^\w+:\w+$', re.UNICODE).match
