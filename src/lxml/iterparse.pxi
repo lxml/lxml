@@ -254,6 +254,7 @@ cdef class iterwalk:
     cdef list   _node_stack
     cdef list   _events
     cdef object _pop_event
+    cdef object _include_siblings
     cdef int    _index
     cdef int    _event_filter
     cdef _IterwalkSkipStates _skip_state
@@ -276,6 +277,17 @@ cdef class iterwalk:
             self._index = 0
             if self._matcher is not None and self._event_filter & PARSE_EVENT_FILTER_START:
                 self._matcher.cacheTags(root._doc)
+
+            # When processing an ElementTree, add events for the preceding comments/PIs.
+            if self._event_filter & (PARSE_EVENT_FILTER_COMMENT | PARSE_EVENT_FILTER_PI):
+                if isinstance(element_or_tree, _ElementTree):
+                    self._include_siblings = root
+                    for elem in list(root.itersiblings(preceding=True))[::-1]:
+                        if self._event_filter & PARSE_EVENT_FILTER_COMMENT and elem.tag is Comment:
+                            self._events.append((u'comment', elem))
+                        elif self._event_filter & PARSE_EVENT_FILTER_PI and elem.tag is PI:
+                            self._events.append((u'pi', elem))
+
             ns_count = self._start_node(root)
             self._node_stack.append( (root, ns_count) )
         else:
@@ -302,23 +314,21 @@ cdef class iterwalk:
             if self._skip_state == IWSKIP_SKIP_NEXT:
                 c_child = NULL
             else:
-                c_child = _findChildForwards(node._c_node, 0)
+                c_child = self._process_non_elements(
+                    node._doc, _findChildForwards(node._c_node, 0))
             self._skip_state = IWSKIP_CANNOT_SKIP
 
+            while c_child is NULL:
+                # back off through parents
+                self._index -= 1
+                node = self._end_node()
+                if self._index < 0:
+                    break
+                c_child = self._process_non_elements(
+                    node._doc, _nextElement(node._c_node))
+
             if c_child is not NULL:
-                # try children
                 next_node = _elementFactory(node._doc, c_child)
-            else:
-                # back off
-                next_node = None
-                while next_node is None:
-                    # back off through parents
-                    self._index -= 1
-                    node = self._end_node()
-                    if self._index < 0:
-                        break
-                    next_node = node.getnext()
-            if next_node is not None:
                 if self._event_filter & (PARSE_EVENT_FILTER_START |
                                          PARSE_EVENT_FILTER_START_NS):
                     ns_count = self._start_node(next_node)
@@ -328,12 +338,36 @@ cdef class iterwalk:
                 self._index += 1
             if self._events:
                 return self._next_event()
+
+        if self._include_siblings is not None:
+            node, self._include_siblings = self._include_siblings, None
+            self._process_non_elements(node._doc, _nextElement(node._c_node))
+            if self._events:
+                return self._next_event()
+
         raise StopIteration
+
+    @cython.final
+    cdef xmlNode* _process_non_elements(self, _Document doc, xmlNode* c_node):
+        while c_node is not NULL and c_node.type != tree.XML_ELEMENT_NODE:
+            if c_node.type == tree.XML_COMMENT_NODE:
+                if self._event_filter & PARSE_EVENT_FILTER_COMMENT:
+                    self._events.append(
+                        (u"comment", _elementFactory(doc, c_node)))
+                c_node = _nextElement(c_node)
+            elif c_node.type == tree.XML_PI_NODE:
+                if self._event_filter & PARSE_EVENT_FILTER_PI:
+                    self._events.append(
+                        (u"pi", _elementFactory(doc, c_node)))
+                c_node = _nextElement(c_node)
+            else:
+                break
+        return c_node
 
     @cython.final
     cdef _next_event(self):
         if self._skip_state == IWSKIP_NEXT_IS_START:
-            if self._events[0][0] in ('start', 'start-ns'):
+            if self._events[0][0] in (u'start', u'start-ns'):
                 self._skip_state = IWSKIP_CAN_SKIP
         return self._pop_event(0)
 

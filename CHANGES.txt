@@ -56,6 +56,11 @@ Bugs fixed
   raise a ValueError (like a list assignment would) and instead assign outside
   of the original slice bounds or leave parts of it unreplaced.
 
+* The ``comment`` and ``pi`` events in ``iterwalk()`` were never triggered, and
+  instead, comments and processing instructions in the tree were reported as
+  ``start`` elements.  Also, when walking an ElementTree (as opposed to its root
+  element), comments and PIs outside of the root element are now reported.
+
 * LP#1758553: The HTML elements ``source`` and ``track`` were added to the list
   of empty tags in ``lxml.html.defs``.
 
