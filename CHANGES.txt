@@ -33,6 +33,9 @@ Features added
   flag arguments ``insert_comments`` and ``insert_pis`` to discard them from the
   tree when set to false.
 
+* A `C14N 2.0 <https://www.w3.org/TR/xml-c14n2/>`_ implementation was added as
+  ``etree.canonicalize()`` and a corresponding ``C14NWriterTarget`` class.
+
 Bugs fixed
 ----------
 
