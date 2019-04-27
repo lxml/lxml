@@ -4419,6 +4419,21 @@ class ETreeC14NTestCase(HelperTestCase):
         self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
                           data)
 
+    def test_c14n2_with_text(self):
+        tree = self.parse(
+            b'<?xml version="1.0"?>    <a> abc \n <b>  btext </b> btail <c/>    ctail </a>     ')
+        f = BytesIO()
+        tree.write(f, method='c14n2')
+        s = f.getvalue()
+        self.assertEqual(b'<a> abc \n <b>  btext </b> btail <c></c>    ctail </a>',
+                         s)
+
+        f = BytesIO()
+        tree.write(f, method='c14n2', strip_text=True)
+        s = f.getvalue()
+        self.assertEqual(b'<a>abc<b>btext</b>btail<c></c>ctail</a>',
+                         s)
+
     def test_c14n_with_comments(self):
         tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
         f = BytesIO()

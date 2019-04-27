@@ -929,16 +929,24 @@ def canonicalize(write, xml_data=None, *, file=None, **options):
 
 cdef _tree_to_target(element, target):
     for event, elem in iterwalk(element, events=('start', 'end', 'start-ns', 'comment', 'pi')):
+        text = None
         if event == 'start':
             target.start(elem.tag, elem.attrib)
+            text = elem.text
         elif event == 'end':
             target.end(elem.tag)
+            text = elem.tail
         elif event == 'start-ns':
             target.start_ns(*elem)
+            continue
         elif event == 'comment':
             target.comment(elem.text)
+            text = elem.tail
         elif event == 'pi':
             target.pi(elem.target, elem.text)
+            text = elem.tail
+        if text:
+            target.data(text)
     target.close()
 
 
@@ -953,7 +961,7 @@ cdef class C14NWriterTarget:
 
     Configuration options:
 
-    - *comments*: set to true to include comments
+    - *with_comments*: set to true to include comments
     - *strip_text*: set to true to strip whitespace before and after text content
     - *rewrite_prefixes*: set to true to replace namespace prefixes by "n{number}"
     - *qname_aware_tags*: a set of qname aware tag names in which prefixes
@@ -970,18 +978,18 @@ cdef class C14NWriterTarget:
     cdef dict _prefix_map
     cdef list _preserve_space
     cdef tuple _pending_start
-    cdef bint _comments
+    cdef bint _with_comments
     cdef bint _strip_text
     cdef bint _rewrite_prefixes
     cdef bint _root_seen
     cdef bint _root_done
 
     def __init__(self, write, *,
-                 comments=False, strip_text=False, rewrite_prefixes=False,
+                 with_comments=False, strip_text=False, rewrite_prefixes=False,
                  qname_aware_tags=None, qname_aware_attrs=None):
         self._write = write
         self._data = []
-        self._comments = comments
+        self._with_comments = with_comments
         self._strip_text = strip_text
 
         self._rewrite_prefixes = rewrite_prefixes
@@ -1164,7 +1172,7 @@ cdef class C14NWriterTarget:
         self._ns_stack.pop()
 
     def comment(self, text):
-        if not self._comments:
+        if not self._with_comments:
             return
         if self._root_done:
             self._write(u'\n')

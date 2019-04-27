@@ -1950,12 +1950,14 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     def write(self, file, *, encoding=None, method="xml",
               bint pretty_print=False, xml_declaration=None, bint with_tail=True,
               standalone=None, doctype=None, compression=0,
-              bint exclusive=False, bint with_comments=True, inclusive_ns_prefixes=None,
+              bint exclusive=False, inclusive_ns_prefixes=None,
+              bint with_comments=True, bint strip_text=False,
               docstring=None):
         u"""write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
                   standalone=None, doctype=None, compression=0,
-                  exclusive=False, with_comments=True, inclusive_ns_prefixes=None)
+                  exclusive=False, inclusive_ns_prefixes=None,
+                  with_comments=True, strip_text=False)
 
         Write the tree to a filename, file or file-like object.
 
@@ -1964,9 +1966,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         The keyword argument 'method' selects the output method:
         'xml', 'html', 'text' or 'c14n'.  Default is 'xml'.
 
-        The ``exclusive`` and ``with_comments`` arguments are only
-        used with C14N output, where they request exclusive and
-        uncommented C14N serialisation respectively.
+        With ``method="c14n"`` (C14N version 1), the options ``exclusive``,
+        ``with_comments`` and ``inclusive_ns_prefixes`` request exclusive
+        C14N, include comments, and list the inclusive prefixes respectively.
+
+        With ``method="c14n2"`` (C14N version 2), the ``with_comments`` and
+        ``strip_text`` options control the output of comments and text space
+        according to C14N 2.0.
 
         Passing a boolean value to the ``standalone`` option will
         output an XML declaration with the corresponding
@@ -2010,7 +2016,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                                 compression, inclusive_ns_prefixes)
             else:  # c14n2
                 with _open_utf8_file(file, compression=compression) as f:
-                    target = C14NWriterTarget(f.write, comments=with_comments)
+                    target = C14NWriterTarget(
+                        f.write, with_comments=with_comments, strip_text=strip_text)
                     _tree_to_target(self, target)
             return
 
@@ -3275,11 +3282,17 @@ def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
 def tostring(element_or_tree, *, encoding=None, method="xml",
              xml_declaration=None, bint pretty_print=False, bint with_tail=True,
              standalone=None, doctype=None,
-             bint exclusive=False, bint with_comments=True, inclusive_ns_prefixes=None):
+             # method='c14n'
+             bint exclusive=False, inclusive_ns_prefixes=None,
+             # method='c14n2'
+             bint with_comments=True, bint strip_text=False,
+             ):
     u"""tostring(element_or_tree, encoding=None, method="xml",
                  xml_declaration=None, pretty_print=False, with_tail=True,
                  standalone=None, doctype=None,
-                 exclusive=False, with_comments=True, inclusive_ns_prefixes=None)
+                 exclusive=False, inclusive_ns_prefixes=None,
+                 with_comments=True, strip_text=False,
+                 )
 
     Serialize an element to an encoded string representation of its XML
     tree.
@@ -3301,9 +3314,13 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     'html', plain 'text' (text content without tags), 'c14n' or 'c14n2'.
     Default is 'xml'.
 
-    The ``exclusive`` and ``with_comments`` arguments are only used
-    with C14N output, where they request exclusive and uncommented
-    C14N serialisation respectively.
+    With ``method="c14n"`` (C14N version 1), the options ``exclusive``,
+    ``with_comments`` and ``inclusive_ns_prefixes`` request exclusive
+    C14N, include comments, and list the inclusive prefixes respectively.
+
+    With ``method="c14n2"`` (C14N version 2), the ``with_comments`` and
+    ``strip_text`` options control the output of comments and text space
+    according to C14N 2.0.
 
     Passing a boolean value to the ``standalone`` option will output
     an XML declaration with the corresponding ``standalone`` flag.
@@ -3330,11 +3347,15 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
             return _tostringC14N(element_or_tree, exclusive, with_comments, inclusive_ns_prefixes)
         else:
             out = BytesIO()
-            target = C14NWriterTarget(utf8_writer(out).write, comments=with_comments)
+            target = C14NWriterTarget(
+                utf8_writer(out).write,
+                with_comments=with_comments, strip_text=strip_text)
             _tree_to_target(element_or_tree, target)
             return out.getvalue()
     if not with_comments:
         raise ValueError("Can only discard comments in C14N serialisation")
+    if strip_text:
+        raise ValueError("Can only strip text in C14N 2.0 serialisation")
     if encoding is unicode or (encoding is not None and encoding.lower() == 'unicode'):
         if xml_declaration:
             raise ValueError, \

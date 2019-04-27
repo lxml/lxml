@@ -4645,12 +4645,19 @@ class _C14NTest(unittest.TestCase):
 
     if not hasattr(unittest.TestCase, 'subTest'):
         @contextmanager
-        def subTest(self, name):
+        def subTest(self, message, **kwargs):
             try:
                 yield
+            except unittest.SkipTest:
+                raise
             except Exception as e:
                 print("Subtest {} failed: {}".format(name, e))
                 raise
+
+    def _canonicalize(self, input_file, **options):
+        out = io.StringIO()
+        self.etree.canonicalize(out.write, file=input_file, **options)
+        return out.getvalue()
 
     #
     # simple roundtrip tests (from c14n.py)
@@ -4781,20 +4788,18 @@ class _C14NTest(unittest.TestCase):
                             "QName rewriting in XPath text is not supported in {}".format(
                                 output_file))
 
-                    out = io.StringIO()
                     with io.open(full_path(input_file + ".xml"), 'rb') as f:
                         if input_file == 'inC14N5':
                             # Hack: avoid setting up external entity resolution in the parser.
                             with open(full_path('world.txt'), 'rb') as entity_file:
                                 f = io.BytesIO(f.read().replace(b'&ent2;', entity_file.read().strip()))
 
-                        self.etree.canonicalize(
-                            out.write, file=f,
-                            comments=keep_comments,
+                        text = self._canonicalize(
+                            f,
+                            with_comments=keep_comments,
                             strip_text=strip_text,
                             rewrite_prefixes=rewrite_prefixes,
                             qname_aware_tags=qtags, qname_aware_attrs=qattrs)
-                    text = out.getvalue()
                     with io.open(full_path(output_file + ".xml"), 'r', encoding='utf8') as f:
                         expected = f.read()
                     if input_file == 'inC14N3' and self.etree is not etree:
@@ -4816,6 +4821,36 @@ if etree:
 
     class ETreeC14NTest(_C14NTest):
         etree = etree
+
+    class ETreeC14N2WriteTest(ETreeC14NTest):
+        def _canonicalize(self, input_file, with_comments=True, strip_text=False,
+                          rewrite_prefixes=False, qname_aware_tags=None, qname_aware_attrs=None,
+                          **options):
+            if rewrite_prefixes or qname_aware_attrs or qname_aware_tags:
+                self.skipTest("C14N 2.0 feature not supported with ElementTree.write()")
+
+            parser = self.etree.XMLParser(attribute_defaults=True, collect_ids=False)
+            tree = self.etree.parse(input_file, parser)
+            out = io.BytesIO()
+            tree.write(
+                out, method='c14n2',
+                with_comments=with_comments, strip_text=strip_text,
+                **options)
+            return out.getvalue().decode('utf8')
+
+    class ETreeC14N2TostringTest(ETreeC14NTest):
+        def _canonicalize(self, input_file, with_comments=True, strip_text=False,
+                          rewrite_prefixes=False, qname_aware_tags=None, qname_aware_attrs=None,
+                          **options):
+            if rewrite_prefixes or qname_aware_attrs or qname_aware_tags:
+                self.skipTest("C14N 2.0 feature not supported with ElementTree.tostring()")
+
+            parser = self.etree.XMLParser(attribute_defaults=True, collect_ids=False)
+            tree = self.etree.parse(input_file, parser)
+            return self.etree.tostring(
+                tree, method='c14n2',
+                with_comments=with_comments, strip_text=strip_text,
+                **options).decode('utf8')
 
 
 if ElementTree:
@@ -4870,6 +4905,8 @@ def test_suite():
         suite.addTests([unittest.makeSuite(ETreePullTestCase)])
         suite.addTests([unittest.makeSuite(ETreeElementSlicingTest)])
         suite.addTests([unittest.makeSuite(ETreeC14NTest)])
+        suite.addTests([unittest.makeSuite(ETreeC14N2WriteTest)])
+        suite.addTests([unittest.makeSuite(ETreeC14N2TostringTest)])
     if ElementTree:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
         if ElementTreePullTestCase:

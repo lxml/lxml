@@ -34,7 +34,8 @@ Features added
   tree when set to false.
 
 * A `C14N 2.0 <https://www.w3.org/TR/xml-c14n2/>`_ implementation was added as
-  ``etree.canonicalize()`` and a corresponding ``C14NWriterTarget`` class.
+  ``etree.canonicalize()``, a corresponding ``C14NWriterTarget`` class, and
+  a ``c14n2`` serialisation method.
 
 Bugs fixed
 ----------
