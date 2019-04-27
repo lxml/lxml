@@ -947,7 +947,7 @@ cdef _tree_to_target(element, target):
             text = elem.tail
         if text:
             target.data(text)
-    target.close()
+    return target.close()
 
 
 cdef object _looks_like_prefix_name = re.compile('^\w+:\w+$', re.UNICODE).match
