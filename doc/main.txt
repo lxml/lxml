@@ -105,7 +105,8 @@ ElementTree_ documentation, the next place to look is the `lxml.etree
 specific API`_ documentation.  It describes how lxml extends the
 ElementTree API to expose libxml2 and libxslt specific XML
 functionality, such as XPath_, `Relax NG`_, `XML Schema`_, XSLT_, and
-`c14n`_.  Python code can be called from XPath expressions and XSLT
+`c14n`_ (including `c14n 2.0`_).
+Python code can be called from XPath expressions and XSLT
 stylesheets through the use of `XPath extension functions`_.  lxml
 also offers a `SAX compliant API`_, that works with the SAX support in
 the standard library.
@@ -142,11 +143,12 @@ external C modules, including fast custom element class support.
 .. _`objectify and etree`: FAQ.html#what-is-the-difference-between-lxml-etree-and-lxml-objectify
 .. _`EuroPython 2008 talk`: s5/lxml-ep2008.html
 
-.. _XPath: http://www.w3.org/TR/xpath/
-.. _`Relax NG`: http://www.relaxng.org/
-.. _`XML Schema`: http://www.w3.org/XML/Schema
-.. _`XSLT`: http://www.w3.org/TR/xslt
-.. _`c14n`: http://www.w3.org/TR/xml-c14n
+.. _XPath: https://www.w3.org/TR/xpath/
+.. _`Relax NG`: https://relaxng.org/
+.. _`XML Schema`: https://www.w3.org/XML/Schema
+.. _`XSLT`: https://www.w3.org/TR/xslt
+.. _`c14n`: https://www.w3.org/TR/xml-c14n
+.. _`c14n 2.0`: https://www.w3.org/TR/xml-c14n2
 
 
 Download
