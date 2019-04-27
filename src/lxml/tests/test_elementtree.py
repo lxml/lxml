@@ -4645,7 +4645,7 @@ class _C14NTest(unittest.TestCase):
 
     if not hasattr(unittest.TestCase, 'subTest'):
         @contextmanager
-        def subTest(self, message, **kwargs):
+        def subTest(self, name, **kwargs):
             try:
                 yield
             except unittest.SkipTest:
