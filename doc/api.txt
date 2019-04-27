@@ -40,7 +40,6 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    8   Incremental XML generation
    9   CDATA
    10  XInclude and ElementInclude
-   11  write_c14n on ElementTree
 
 ..
   >>> from io import BytesIO
