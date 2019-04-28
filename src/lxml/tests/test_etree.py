@@ -3099,6 +3099,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_getiterator_filter_local_name(self):
         Element = self.etree.Element
+        Comment = self.etree.Comment
         SubElement = self.etree.SubElement
 
         a = Element('{a}a')
@@ -3108,6 +3109,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         e = SubElement(a, '{nsA}e')
         f = SubElement(e, '{nsB}e')
         g = SubElement(e, 'e')
+        a.append(Comment('test'))
 
         self.assertEqual(
             [b, c, d],

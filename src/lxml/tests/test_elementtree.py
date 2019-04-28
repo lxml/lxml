@@ -1000,6 +1000,52 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(len(list(root.findall(".//b"))), 3)
         self.assertEqual(len(list(root.findall("b"))), 2)
 
+    @et_needs_pyversion(3, 8, 0, 'alpha', 4)
+    def test_findall_wildcard(self):
+        def summarize_list(l):
+            return [el.tag for el in l]
+
+        root = self.etree.XML('''
+            <a xmlns:x="X" xmlns:y="Y">
+                <x:b><c/></x:b>
+                <b/>
+                <c><x:b/><b/></c><y:b/>
+            </a>''')
+        root.append(self.etree.Comment('test'))
+
+        self.assertEqual(summarize_list(root.findall("{*}b")),
+                         ['{X}b', 'b', '{Y}b'])
+        self.assertEqual(summarize_list(root.findall("{*}c")),
+                         ['c'])
+        self.assertEqual(summarize_list(root.findall("{X}*")),
+                         ['{X}b'])
+        self.assertEqual(summarize_list(root.findall("{Y}*")),
+                         ['{Y}b'])
+        self.assertEqual(summarize_list(root.findall("{}*")),
+                         ['b', 'c'])
+        self.assertEqual(summarize_list(root.findall("{}b")),  # only for consistency
+                         ['b'])
+        self.assertEqual(summarize_list(root.findall("{}b")),
+                         summarize_list(root.findall("b")))
+        self.assertEqual(summarize_list(root.findall("{*}*")),
+                         ['{X}b', 'b', 'c', '{Y}b'])
+        self.assertEqual(summarize_list(root.findall("{*}*")
+                         + ([] if self.etree is etree else [root[-1]])),
+                         summarize_list(root.findall("*")))
+
+        self.assertEqual(summarize_list(root.findall(".//{*}b")),
+                         ['{X}b', 'b', '{X}b', 'b', '{Y}b'])
+        self.assertEqual(summarize_list(root.findall(".//{*}c")),
+                         ['c', 'c'])
+        self.assertEqual(summarize_list(root.findall(".//{X}*")),
+                         ['{X}b', '{X}b'])
+        self.assertEqual(summarize_list(root.findall(".//{Y}*")),
+                         ['{Y}b'])
+        self.assertEqual(summarize_list(root.findall(".//{}*")),
+                         ['c', 'b', 'c', 'b'])
+        self.assertEqual(summarize_list(root.findall(".//{}b")),
+                         ['b', 'b'])
+
     def test_element_with_attributes_keywords(self):
         Element = self.etree.Element
 
