@@ -900,7 +900,7 @@ def canonicalize(xml_data=None, *, out=None, from_file=None, **options):
     If *out* is not provided, this function returns the output as text string.
 
     Either *xml_data* (an XML string, tree or Element) or *file*
-    (a file-like object) must be provided as input.
+    (a file path or file-like object) must be provided as input.
 
     The configuration options are the same as for the ``C14NWriterTarget``.
     """
@@ -923,16 +923,14 @@ def canonicalize(xml_data=None, *, out=None, from_file=None, **options):
         collect_ids=False,
     )
 
-    try:
-        if xml_data is not None:
-            parser.feed(xml_data)
-        elif from_file is not None:
-            d = from_file.read(64*1024)
-            while d:
-                parser.feed(d)
-                d = from_file.read(64*1024)
-    finally:
+    if xml_data is not None:
+        parser.feed(xml_data)
         parser.close()
+    elif from_file is not None:
+        try:
+            _parseDocument(from_file, parser, base_url=None)
+        except _TargetParserResult:
+            pass
 
     return sio.getvalue() if sio is not None else None
 
