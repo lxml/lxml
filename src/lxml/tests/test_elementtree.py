@@ -4701,17 +4701,13 @@ class _C14NTest(unittest.TestCase):
                 raise
 
     def _canonicalize(self, input_file, **options):
-        out = io.StringIO()
-        self.etree.canonicalize(out.write, file=input_file, **options)
-        return out.getvalue()
+        return self.etree.canonicalize(from_file=input_file, **options)
 
     #
     # simple roundtrip tests (from c14n.py)
 
     def c14n_roundtrip(self, xml, **options):
-        f = io.StringIO()
-        self.etree.canonicalize(f.write, xml, **options)
-        return f.getvalue()
+        return self.etree.canonicalize(xml, **options)
 
     def test_simple_roundtrip(self):
         c14n_roundtrip = self.c14n_roundtrip

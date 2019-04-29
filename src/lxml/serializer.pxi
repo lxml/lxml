@@ -891,23 +891,31 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
 
 # C14N 2.0
 
-def canonicalize(write, xml_data=None, *, file=None, **options):
+def canonicalize(xml_data=None, *, out=None, from_file=None, **options):
     """Convert XML to its C14N 2.0 serialised form.
 
-    The C14N serialised output is written using the *write* function.
-    To write to a file, open it in text mode with encoding "utf-8" and pass
-    its ``.write`` method.
+    If *out* is provided, it must be a file or file-like object that receives
+    the serialised canonical XML output (text, not bytes) through its ``.write()``
+    method.  To write to a file, open it in text mode with encoding "utf-8".
+    If *out* is not provided, this function returns the output as text string.
 
     Either *xml_data* (an XML string, tree or Element) or *file*
     (a file-like object) must be provided as input.
 
     The configuration options are the same as for the ``C14NWriterTarget``.
     """
-    target = C14NWriterTarget(write, **options)
+    if xml_data is None and from_file is None:
+        raise ValueError("Either 'xml_data' or 'from_file' must be provided as input")
+
+    sio = None
+    if out is None:
+        sio = out = StringIO()
+
+    target = C14NWriterTarget(out.write, **options)
 
     if xml_data is not None and not isinstance(xml_data, basestring):
         _tree_to_target(xml_data, target)
-        return
+        return sio.getvalue() if sio is not None else None
 
     cdef _FeedParser parser = XMLParser(
         target=target,
@@ -918,13 +926,15 @@ def canonicalize(write, xml_data=None, *, file=None, **options):
     try:
         if xml_data is not None:
             parser.feed(xml_data)
-        elif file is not None:
-            d = file.read(64*1024)
+        elif from_file is not None:
+            d = from_file.read(64*1024)
             while d:
                 parser.feed(d)
-                d = file.read(64*1024)
+                d = from_file.read(64*1024)
     finally:
         parser.close()
+
+    return sio.getvalue() if sio is not None else None
 
 
 cdef _tree_to_target(element, target):

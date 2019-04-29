@@ -373,9 +373,30 @@ the local error logs of XSLT, XMLSchema, etc.
 Serialisation
 -------------
 
-lxml.etree has direct support for pretty printing XML output.  Functions like
-``ElementTree.write()`` and ``tostring()`` support it through a keyword
-argument:
+C14N
+....
+
+lxml.etree has support for `C14N 1.0 <https://www.w3.org/TR/xml-exc-c14n/>`_
+and `C14N 2.0 <https://www.w3.org/TR/xml-c14n2/>`_.  When serialising an XML
+tree using ``ElementTree.write()`` or ``tostring()``, you can pass the option
+``method="c14n"`` for 1.0 or ``method="c14n2"`` for 2.0.
+
+Additionally, there is a function ``etree.canonicalize()`` which can be used
+to convert serialised XML to its canonical form directly, without creating
+a tree in memory.  By default, it returns the canonical output, but can be
+directed to write it to a file instead.
+
+.. sourcecode:: pycon
+
+  >>> c14n_xml = etree.canonicalize("<root><test z='1' y='2'/></root>")
+  >>> print(c14n_xml)
+  <root><test y="2" z="1"></test></root>
+
+Pretty printing
+...............
+
+Functions like ``ElementTree.write()`` and ``tostring()`` also support pretty
+printing XML through a keyword argument:
 
 .. sourcecode:: pycon
 
@@ -390,6 +411,9 @@ argument:
 
 Note the newline that is appended at the end when pretty printing the
 output.  It was added in lxml 2.0.
+
+XML declaration
+...............
 
 By default, lxml (just as ElementTree) outputs the XML declaration only if it
 is required by the standard:
