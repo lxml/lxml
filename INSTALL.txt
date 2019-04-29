@@ -68,7 +68,7 @@ build dependencies of the provided lxml package, e.g.
 
 ::
 
-    sudo apt-get build-dep python3-lxml
+    sudo apt-get install build-dep python3-lxml
 
 
 Installation
