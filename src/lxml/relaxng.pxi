@@ -57,11 +57,9 @@ cdef class RelaxNG(_Validator):
             if _isString(file):
                 if file[-4:].lower() == '.rnc':
                     _require_rnc2rng()
-                    rng_data = _rnc2rng.dumps(_rnc2rng.load(file))
-                    doc = _parseMemoryDocument(rng_data, parser=None, url=None)
-                    root_node = doc.getroot()
-                    fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-                    parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
+                    rng_data_utf8 = _utf8(_rnc2rng.dumps(_rnc2rng.load(file)))
+                    doc = _parseMemoryDocument(rng_data_utf8, parser=None, url=file)
+                    parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
                 else:
                     doc = None
                     filename = _encodeFilename(file)
@@ -69,11 +67,10 @@ cdef class RelaxNG(_Validator):
                         parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
             elif (_getFilenameForFile(file) or '')[-4:].lower() == '.rnc':
                 _require_rnc2rng()
-                rng_data = _rnc2rng.dumps(_rnc2rng.load(file))
-                doc = _parseMemoryDocument(rng_data, parser=None, url=None)
-                root_node = doc.getroot()
-                fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-                parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
+                rng_data_utf8 = _utf8(_rnc2rng.dumps(_rnc2rng.load(file)))
+                doc = _parseMemoryDocument(
+                    rng_data_utf8, parser=None, url=_getFilenameForFile(file))
+                parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
             else:
                 doc = _parseDocument(file, parser=None, base_url=None)
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
@@ -160,5 +157,5 @@ cdef class RelaxNG(_Validator):
         will enable resolving resource references relative to the source.
         """
         _require_rnc2rng()
-        rng_str = _rnc2rng.dumps(_rnc2rng.loads(src))
+        rng_str = utf8(_rnc2rng.dumps(_rnc2rng.loads(src)))
         return cls(_parseMemoryDocument(rng_str, parser=None, url=base_url))

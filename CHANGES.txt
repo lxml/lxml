@@ -62,6 +62,9 @@ Bugs fixed
   ``start`` elements.  Also, when walking an ElementTree (as opposed to its root
   element), comments and PIs outside of the root element are now reported.
 
+* LP#1827833: The RelaxNG compact syntax support was broken with recent versions
+  of ``rnc2rng``.
+
 * LP#1758553: The HTML elements ``source`` and ``track`` were added to the list
   of empty tags in ``lxml.html.defs``.
 

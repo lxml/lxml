@@ -218,6 +218,7 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertTrue(schema.validate(b_tree))
         self.assertFalse(schema.error_log.filter_from_errors())
 
+
 class RelaxNGCompactTestCase(HelperTestCase):
 
     pytestmark = skipif('rnc2rng is None')
@@ -230,17 +231,21 @@ class RelaxNGCompactTestCase(HelperTestCase):
         self.assertFalse(schema.validate(tree_invalid))
 
     def test_relaxng_compact_file_obj(self):
-        f = open(fileInTestDir('test.rnc'), 'rb')
-        try:
+        with open(fileInTestDir('test.rnc'), 'r') as f:
             schema = etree.RelaxNG(file=f)
-        finally:
-            f.close()
+
+        tree_valid = self.parse('<a><b>B</b><c>C</c></a>')
+        tree_invalid = self.parse('<a><b></b></a>')
+        self.assertTrue(schema.validate(tree_valid))
+        self.assertFalse(schema.validate(tree_invalid))
 
     def test_relaxng_compact_str(self):
         tree_valid = self.parse('<a><b>B</b></a>')
+        tree_invalid = self.parse('<a><b>X</b></a>')
         rnc_str = 'element a { element b { "B" } }'
         schema = etree.RelaxNG.from_rnc_string(rnc_str)
         self.assertTrue(schema.validate(tree_valid))
+        self.assertFalse(schema.validate(tree_invalid))
 
 
 def test_suite():
