@@ -86,6 +86,65 @@ class EtreeElementPathTestCase(HelperTestCase):
             'a[. = "abc"]',
         )
 
+    def test_xpath_tokenizer(self):
+        # Test the XPath tokenizer.  Copied from CPython's "test_xml_etree.py"
+        ElementPath = self._elementpath
+
+        def check(p, expected, namespaces=None):
+            self.assertEqual([op or tag
+                              for op, tag in ElementPath.xpath_tokenizer(p, namespaces)],
+                             expected)
+
+        # tests from the xml specification
+        check("*", ['*'])
+        check("text()", ['text', '()'])
+        check("@name", ['@', 'name'])
+        check("@*", ['@', '*'])
+        check("para[1]", ['para', '[', '1', ']'])
+        check("para[last()]", ['para', '[', 'last', '()', ']'])
+        check("*/para", ['*', '/', 'para'])
+        check("/doc/chapter[5]/section[2]",
+              ['/', 'doc', '/', 'chapter', '[', '5', ']',
+               '/', 'section', '[', '2', ']'])
+        check("chapter//para", ['chapter', '//', 'para'])
+        check("//para", ['//', 'para'])
+        check("//olist/item", ['//', 'olist', '/', 'item'])
+        check(".", ['.'])
+        check(".//para", ['.', '//', 'para'])
+        check("..", ['..'])
+        check("../@lang", ['..', '/', '@', 'lang'])
+        check("chapter[title]", ['chapter', '[', 'title', ']'])
+        check("employee[@secretary and @assistant]", ['employee',
+              '[', '@', 'secretary', '', 'and', '', '@', 'assistant', ']'])
+
+        # additional tests
+        check("@{ns}attr", ['@', '{ns}attr'])
+        check("{http://spam}egg", ['{http://spam}egg'])
+        check("./spam.egg", ['.', '/', 'spam.egg'])
+        check(".//{http://spam}egg", ['.', '//', '{http://spam}egg'])
+
+        # wildcard tags
+        check("{ns}*", ['{ns}*'])
+        check("{}*", ['{}*'])
+        check("{*}tag", ['{*}tag'])
+        check("{*}*", ['{*}*'])
+        check(".//{*}tag", ['.', '//', '{*}tag'])
+
+        # namespace prefix resolution
+        check("./xsd:type", ['.', '/', '{http://www.w3.org/2001/XMLSchema}type'],
+              {'xsd': 'http://www.w3.org/2001/XMLSchema'})
+        check("type", ['{http://www.w3.org/2001/XMLSchema}type'],
+              {'': 'http://www.w3.org/2001/XMLSchema'})
+        check("@xsd:type", ['@', '{http://www.w3.org/2001/XMLSchema}type'],
+              {'xsd': 'http://www.w3.org/2001/XMLSchema'})
+        check("@type", ['@', 'type'],
+              {'': 'http://www.w3.org/2001/XMLSchema'})
+        check("@{*}type", ['@', '{*}type'],
+              {'': 'http://www.w3.org/2001/XMLSchema'})
+        check("@{ns}attr", ['@', '{ns}attr'],
+              {'': 'http://www.w3.org/2001/XMLSchema',
+               'ns': 'http://www.w3.org/2001/XMLSchema'})
+
     def test_find(self):
         """
         Test find methods (including xpath syntax).
