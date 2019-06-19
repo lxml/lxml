@@ -1787,7 +1787,7 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
     regardless of the value of include_meta_content_type any existing
     ``<meta http-equiv="Content-Type" ...>`` tag will be removed
 
-    The ``encoding`` argument controls the output encoding (defauts to
+    The ``encoding`` argument controls the output encoding (defaults to
     ASCII, with &#...; character references for any characters outside
     of ASCII).  Note that you can pass the name ``'unicode'`` as
     ``encoding`` argument to serialise to a Unicode string.
