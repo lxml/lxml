@@ -56,7 +56,7 @@ class OutcomeCache(object):
     # (1, None)
     #     \
     #      (4, None)--(5, FAIL)
-    
+
     def __init__(self):
         self.tail = {}                  # Points to outcome of tail
         self.result = None              # Result so far
@@ -71,7 +71,7 @@ class OutcomeCache(object):
             if start not in p.tail:
                 p.tail[start] = OutcomeCache()
             p = p.tail[start]
-            
+
         p.result = result
 
     def lookup(self, c):
@@ -110,7 +110,7 @@ class OutcomeCache(object):
 
         if k0 is not None:
             return self.tail[k0].lookup_superset(c, start)
-        
+
         return None
 
     def lookup_subset(self, c):
@@ -122,8 +122,8 @@ class OutcomeCache(object):
                 p = p.tail[c[start]]
 
         return p.result
-        
-        
+
+
 
 
 # Test the outcome cache
@@ -138,11 +138,11 @@ def oc_test():
     assert oc.lookup([5, 6, 7]) is None
     oc.add([5, 6, 7], 8)
     assert oc.lookup([5, 6, 7]) == 8
-    
+
     assert oc.lookup([]) is None
     oc.add([], 0)
     assert oc.lookup([]) == 0
-    
+
     assert oc.lookup([1, 2]) is None
     oc.add([1, 2], 3)
     assert oc.lookup([1, 2]) == 3
@@ -189,8 +189,8 @@ class DD(object):
     # inconsistencies), or implement an own `split()' method, which
     # allows you to split configurations according to your own
     # criteria.
-    # 
-    # The class includes other previous delta debugging alorithms,
+    #
+    # The class includes other previous delta debugging algorithms,
     # which are obsolete now; they are only included for comparison
     # purposes.
 
@@ -225,7 +225,7 @@ class DD(object):
         s2 = {}
         for delta in c2:
             s2[delta] = 1
-        
+
         c = []
         for delta in c1:
             if delta not in s2:
@@ -299,7 +299,7 @@ class DD(object):
             cached_result = self.outcome_cache.lookup_superset(c)
             if cached_result == self.PASS:
                 return self.PASS
-            
+
             cached_result = self.outcome_cache.lookup_subset(c)
             if cached_result == self.FAIL:
                 return self.FAIL
@@ -381,7 +381,7 @@ class DD(object):
 
         # necessary to use more resolving mechanisms which can reverse each
         # other, can (but needn't) be used in subclasses
-        self._resolve_type = 0 
+        self._resolve_type = 0
 
         while t == self.UNRESOLVED:
             self.__resolving = 1
@@ -390,19 +390,19 @@ class DD(object):
             if csubr is None:
                 # Nothing left to resolve
                 break
-            
+
             if len(csubr) >= len(c2):
                 # Added everything: csub == c2. ("Upper" Baseline)
                 # This has already been tested.
                 csubr = None
                 break
-                
+
             if len(csubr) <= len(r):
                 # Removed everything: csub == r. (Baseline)
                 # This has already been tested.
                 csubr = None
                 break
-            
+
             t = self.test(csubr)
 
         self.__resolving = 0
@@ -509,7 +509,7 @@ class DD(object):
                     # Interference
                     if self.debug_dd:
                         print("dd: interference of %s and %s" % (self.pretty(cs[i]), self.pretty(cbars[i])))
-                        
+
                     d    = self.dd(cs[i][:], cbars[i] + r)
                     dbar = self.dd(cbars[i][:], cs[i] + r)
                     return d + dbar
@@ -518,7 +518,7 @@ class DD(object):
                     # Preference
                     if self.debug_dd:
                         print("dd: preferring %d deltas: %s" % (len(cs[i]), self.pretty(cs[i])))
-                        
+
                     return self.dd(cs[i][:], cbars[i] + r)
 
                 if ts[i] == self.PASS or tbars[i] == self.FAIL:
@@ -731,7 +731,7 @@ class DD(object):
             else:
                 t1 = self.test(c1)
                 t2 = self.test(c2)
-            
+
             assert t1 == self.PASS
             assert t2 == self.FAIL
             assert self.__listsubseteq(c1, c2)
@@ -763,7 +763,7 @@ class DD(object):
             # Check subsets
             for j in range(n):
                 i = int((j + cbar_offset) % n)
-                
+
                 if self.debug_dd:
                     print("dd: trying %s" % (self.pretty(cs[i]),))
 
@@ -839,16 +839,16 @@ class DD(object):
     def dd(self, c):
         return self.dddiff(c)           # Backwards compatibility
 
-                    
+
 
 
 
 if __name__ == '__main__':
     # Test the outcome cache
     oc_test()
-    
+
     # Define our own DD class, with its own test method
-    class MyDD(DD):        
+    class MyDD(DD):
         def _test_a(self, c):
             "Test the configuration C.  Return PASS, FAIL, or UNRESOLVED."
 
@@ -886,7 +886,7 @@ if __name__ == '__main__':
         def __init__(self):
             self._test = self._test_c
             DD.__init__(self)
-                        
+
 
     print("WYNOT - a tool for delta debugging.")
     mydd = MyDD()
@@ -903,12 +903,12 @@ if __name__ == '__main__':
     print("The 1-minimal failure-inducing input is %s" % (c,))
     print("Removing any element will make the failure go away.")
     print('')
-    
+
     print("Computing the failure-inducing difference...")
     (c, c1, c2) = mydd.dd([1, 2, 3, 4, 5, 6, 7, 8])        # Invoke DD
     print("The 1-minimal failure-inducing difference is %s" % (c,))
     print("%s passes, %s fails" % (c1, c2))
-    
+
 
 
 # Local Variables:

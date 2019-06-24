@@ -66,7 +66,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 
     def test_xmlschema_error_log_path(self):
         """We don't have a guarantee that there will always be a path
-        for a _LogEntry object (or even a node for which to determina
+        for a _LogEntry object (or even a node for which to determine
         a path), but at least when this test was created schema validation
         errors always got a node and an XPath value. If that ever changes,
         we can modify this test to something like:
@@ -412,7 +412,7 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
     <xsd:complexType name="AType">
       <xsd:sequence><xsd:element name="b" type="xsd:string" minOccurs="0" maxOccurs="unbounded" /></xsd:sequence>
     </xsd:complexType>
-</xsd:schema>""" 
+</xsd:schema>"""
 
     class simple_resolver(etree.Resolver):
         def __init__(self, schema):
