@@ -88,6 +88,12 @@ Other changes
   in a future release.
 
 
+4.3.5 (2019-07-27)
+==================
+
+* Rebuilt with Cython 0.29.13 to support Python 3.8.
+
+
 4.3.4 (2019-06-10)
 ==================
 
