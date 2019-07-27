@@ -838,8 +838,8 @@ cdef class TreeBuilder(_SaxParserTarget):
             f"end tag mismatch (expected {self._last.tag}, got {tag})"
         return element
 
-    def pi(self, target, data):
-        u"""pi(self, target, data)
+    def pi(self, target, data=None):
+        u"""pi(self, target, data=None)
 
         Creates a processing instruction using the factory, appends it
         (unless disabled) and returns it.
