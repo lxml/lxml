@@ -292,17 +292,12 @@ cdef _iter_attrib(attrib):
     Create a reproducibly ordered iterable from an attrib mapping.
     Tries to preserve an existing order and sorts if it assumes no order.
     """
-    # attrib will usually be a plain unordered dict
-    if isinstance(attrib, dict):
-        if python.PY_VERSION_HEX >= 0x03060000:
-            # dicts are insertion-ordered in Py3.6+ => keep the user provided order.
-            return attrib.items()
-        return sorted(attrib.items())
-    elif isinstance(attrib, (_Attrib, OrderedDict)):
+    # dicts are insertion-ordered in Py3.6+ => keep the user provided order.
+    if python.PY_VERSION_HEX >= 0x03060000 and isinstance(attrib, dict) or (
+            isinstance(attrib, (_Attrib, OrderedDict))):
         return attrib.items()
-    else:
-        # assume it's an unordered mapping of some kind
-        return sorted(attrib.items())
+    # assume it's an unordered mapping of some kind
+    return sorted(attrib.items())
 
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):

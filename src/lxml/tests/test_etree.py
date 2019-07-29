@@ -9,6 +9,7 @@ test_elementtree
 
 from __future__ import absolute_import
 
+from collections import OrderedDict
 import os.path
 import unittest
 import copy
@@ -16,7 +17,6 @@ import sys
 import re
 import gc
 import operator
-import tempfile
 import textwrap
 import zlib
 import gzip
@@ -286,8 +286,8 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_attrib_order(self):
         Element = self.etree.Element
 
-        keys = ["attr%d" % i for i in range(10)]
-        values = ["TEST-%d" % i for i in range(10)]
+        keys = ["attr%d" % i for i in range(12, 4, -1)]
+        values = ["TEST-%d" % i for i in range(12, 4, -1)]
         items = list(zip(keys, values))
 
         root = Element("root")
@@ -296,19 +296,32 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(keys, root.attrib.keys())
         self.assertEqual(values, root.attrib.values())
 
-        root2 = Element("root2", root.attrib,
-                        attr_99='TOAST-1', attr_98='TOAST-2')
-
+        attr_order = [
+            ('attr_99', 'TOAST-1'),
+            ('attr_98', 'TOAST-2'),
+        ]
+        ordered_dict_types = [OrderedDict, lambda x:x]
         if sys.version_info >= (3, 6):
-            self.assertEqual(['attr_99', 'attr_98'] + keys,
-                             root2.attrib.keys())
-            self.assertEqual(['TOAST-1', 'TOAST-2'] + values,
-                             root2.attrib.values())
+            ordered_dict_types.append(dict)
         else:
-            self.assertEqual(['attr_98', 'attr_99'] + keys,
-                             root2.attrib.keys())
-            self.assertEqual(['TOAST-2', 'TOAST-1'] + values,
-                             root2.attrib.values())
+            # Keyword arguments are not ordered in Py<3.6, and thus get sorted.
+            attr_order.sort()
+        attr_order += items
+        expected_keys = [attr[0] for attr in attr_order]
+        expected_values = [attr[1] for attr in attr_order]
+        expected_items = list(zip(expected_keys, expected_values))
+
+        for dict_type in ordered_dict_types:
+            root2 = Element("root2", dict_type(root.attrib),
+                            attr_99='TOAST-1', attr_98='TOAST-2')
+
+            try:
+                self.assertSequenceEqual(expected_keys, root2.attrib.keys())
+                self.assertSequenceEqual(expected_values, root2.attrib.values())
+                self.assertSequenceEqual(expected_items, root2.attrib.items())
+            except AssertionError as exc:
+                exc.args = ("Order of '%s': %s" % (dict_type.__name__, exc.args[0]),) + exc.args[1:]
+                raise
 
         self.assertEqual(keys, root.attrib.keys())
         self.assertEqual(values, root.attrib.values())

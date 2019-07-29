@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+4.4.1 (2019-0?-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#1838252: The order of an OrderedDict was lost in 4.4.0 when passing it as
+  attrib mapping during element creation.
+
+
 4.4.0 (2019-07-27)
 ==================
 
