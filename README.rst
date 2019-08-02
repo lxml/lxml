@@ -45,7 +45,7 @@ fast Python XML processing.
             :height: 47
             :alt: Donate to the lxml project
 
-.. _`doc/main.txt`: http://lxml.de/
+.. _`doc/main.txt`: https://github.com/lxml/lxml/blob/master/doc/main.txt
 .. _`INSTALL.txt`: http://lxml.de/installation.html
 
 `Travis-CI <https://travis-ci.org/>`_ and `AppVeyor <https://www.appveyor.com/>`_
