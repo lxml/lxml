@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-4.4.1 (2019-0?-??)
+4.4.1 (2019-08-11)
 ==================
 
 Bugs fixed
@@ -10,6 +10,8 @@ Bugs fixed
 
 * LP#1838252: The order of an OrderedDict was lost in 4.4.0 when passing it as
   attrib mapping during element creation.
+
+* LP#1838521: The package metadata now lists the supported Python versions.
 
 
 4.4.0 (2019-07-27)
