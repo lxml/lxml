@@ -202,13 +202,13 @@ def _include(elem, loader=None, base_url=None,
                 if max_depth == 0:
                     raise LimitedRecursiveIncludeError(
                         "maximum xinclude depth reached when including file %s" % href)
-                _parent_hrefs.add(href)
                 node = load_include(href, parse, parser=parser)
                 if node is None:
                     raise FatalIncludeError(
                         "cannot load %r as %r" % (href, parse)
                         )
-                node = _include(node, loader, href, max_depth - 1, _parent_hrefs)
+                _parent_hrefs_for_node = set([href]) | _parent_hrefs
+                node = _include(node, loader, href, max_depth - 1, _parent_hrefs_for_node)
                 if e.tail:
                     node.tail = (node.tail or "") + e.tail
                 if parent is None:
