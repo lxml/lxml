@@ -20,9 +20,9 @@ Bugs fixed
 Features added
 --------------
 
-* ``Element.clear()`` accepts a new keyword argument ``keep_tail=True`` to
-  clear everything but the tail text.  This is helpful in some document-style
-  use cases.
+* ``Element.clear()`` accepts a new keyword argument ``keep_tail=True`` to clear
+  everything but the tail text.  This is helpful in some document-style use cases
+  and for clearing the current element in ``iterparse()`` and pull parsing.
 
 * When creating attributes or namespaces from a dict in Python 3.6+, lxml now
   preserves the original insertion order of that dict, instead of always sorting

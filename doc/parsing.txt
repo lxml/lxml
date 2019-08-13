@@ -654,14 +654,14 @@ that are no longer needed:
   >>> parser.feed('<element><child /></element>')
   >>> for action, elem in events:
   ...     print('%s: %d' % (elem.tag, len(elem)))  # processing
-  ...     elem.clear()                             # delete children
+  ...     elem.clear(keep_tail=True)               # delete children
   element: 0
   child: 0
   element: 1
   >>> parser.feed('<empty-element xmlns="http://testns/" /></root>')
   >>> for action, elem in events:
   ...     print('%s: %d' % (elem.tag, len(elem)))  # processing
-  ...     elem.clear()                             # delete children
+  ...     elem.clear(keep_tail=True)               # delete children
   {http://testns/}empty-element: 0
   root: 3
 
@@ -688,7 +688,7 @@ of the current element:
 
   >>> for event, element in parser.read_events():
   ...     # ... do something with the element
-  ...     element.clear()                 # clean up children
+  ...     element.clear(keep_tail=True)   # clean up children
   ...     while element.getprevious() is not None:
   ...         del element.getparent()[0]  # clean up preceding siblings
 

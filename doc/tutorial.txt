@@ -1004,7 +1004,10 @@ that the Element has been parsed completely.
 It also allows you to ``.clear()`` or modify the content of an Element to
 save memory. So if you parse a large tree and you want to keep memory
 usage small, you should clean up parts of the tree that you no longer
-need:
+need. The ``keep_tail=True`` argument to ``.clear()`` makes sure that
+(tail) text content that follows the current element will not be touched.
+It is highly discouraged to modify any content that the parser may not
+have completely read through yet.
 
 .. sourcecode:: pycon
 
@@ -1016,7 +1019,7 @@ need:
     ...         print(element.text)
     ...     elif element.tag == 'a':
     ...         print("** cleaning up the subtree")
-    ...         element.clear()
+    ...         element.clear(keep_tail=True)
     data
     ** cleaning up the subtree
     None
@@ -1041,7 +1044,7 @@ for data extraction.
 
     >>> for _, element in etree.iterparse(xml_file, tag='a'):
     ...     print('%s -- %s' % (element.findtext('b'), element[1].text))
-    ...     element.clear()
+    ...     element.clear(keep_tail=True)
     ABC -- abc
     MORE DATA -- more data
     XYZ -- xyz
