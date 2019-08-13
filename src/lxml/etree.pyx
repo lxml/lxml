@@ -3266,6 +3266,55 @@ def iselement(element):
     return isinstance(element, _Element) and (<_Element>element)._c_node is not NULL
 
 
+def indent(tree, space="  ", Py_ssize_t level=0):
+    """Indent an XML document by inserting newlines and indentation space
+    after elements.
+
+    *tree* is the ElementTree or Element to modify.  The (root) element
+    itself will not be changed, but the tail text of all elements in its
+    subtree will be adapted.
+
+    *space* is the whitespace to insert for each indentation level, two
+    space characters by default.
+
+    *level* is the initial indentation level. Setting this to a higher
+    value than 0 can be used for indenting subtrees that are more deeply
+    nested inside of a document.
+    """
+    root = _rootNodeOrRaise(tree)
+    if _hasChild(root._c_node):
+        _indent_children(root._c_node, level, _utf8(space), [b"\n"] * (level or 1))
+
+
+cdef _get_indentation_string(list indentations, bytes one_space, Py_ssize_t level):
+    # Reusing indentation strings for speed.
+    cdef Py_ssize_t i
+    for i in range(len(indentations), level+1):
+        indentations.append(b"\n" + one_space * i)
+    return indentations[level]
+
+
+cdef int _indent_children(xmlNode* c_node, Py_ssize_t level, bytes one_space, list indentations) except -1:
+    # Start a new indentation level for the first child.
+    child_indentation = _get_indentation_string(indentations, one_space, level+1)
+    if not _hasNonWhitespaceText(c_node):
+        _setNodeText(c_node, child_indentation)
+
+    # Recursively indent all children.
+    cdef xmlNode* c_child = _findChildForwards(c_node, 0)
+    while c_child is not NULL:
+        if _hasChild(c_child):
+            _indent_children(c_child, level+1, one_space, indentations)
+        c_next_child = _nextElement(c_child)
+        if not _hasNonWhitespaceTail(c_child):
+            if c_next_child is NULL:
+                # Dedent after the last child.
+                child_indentation = _get_indentation_string(indentations, one_space, level)
+            _setTailText(c_child, child_indentation)
+        c_child = c_next_child
+    return 0
+
+
 def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
     u"""dump(elem, pretty_print=True, with_tail=True)
 

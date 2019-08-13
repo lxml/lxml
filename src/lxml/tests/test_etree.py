@@ -3709,6 +3709,125 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = etree.HTML(_bytes('<html><head><base href="http://no/such/url"></head></html>'))
         self.assertEqual(root.base, "http://no/such/url")
 
+    def test_indent(self):
+        ET = self.etree
+        elem = ET.XML("<root></root>")
+        ET.indent(elem)
+        self.assertEqual(ET.tostring(elem), b'<root/>')
+
+        elem = ET.XML("<html><body>text</body></html>")
+        ET.indent(elem)
+        self.assertEqual(ET.tostring(elem), b'<html>\n  <body>text</body>\n</html>')
+
+        elem = ET.XML("<html> <body>text</body>  </html>")
+        ET.indent(elem)
+        self.assertEqual(ET.tostring(elem), b'<html>\n  <body>text</body>\n</html>')
+
+        elem = ET.XML("<html> <body>text</body>   </html>")
+        ET.indent(elem)
+        self.assertEqual(ET.tostring(elem), b'<html>\n  <body>text</body>\n</html>')
+
+        elem = ET.XML("<html><body>text</body>tail</html>")
+        ET.indent(elem)
+        self.assertEqual(ET.tostring(elem), b'<html>\n  <body>text</body>tail</html>')
+
+        elem = ET.XML("<html><body><p>par</p>\n<p>text</p>\t<p><br/></p></body></html>")
+        ET.indent(elem)
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n'
+            b'  <body>\n'
+            b'    <p>par</p>\n'
+            b'    <p>text</p>\n'
+            b'    <p>\n'
+            b'      <br/>\n'
+            b'    </p>\n'
+            b'  </body>\n'
+            b'</html>'
+        )
+
+        elem = ET.XML("<html><body><p>pre<br/>post</p><p>text</p></body></html>")
+        ET.indent(elem)
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n'
+            b'  <body>\n'
+            b'    <p>pre<br/>post</p>\n'
+            b'    <p>text</p>\n'
+            b'  </body>\n'
+            b'</html>'
+        )
+
+    def test_indent_space(self):
+        ET = self.etree
+        elem = ET.XML("<html><body><p>pre<br/>post</p><p>text</p></body></html>")
+        ET.indent(elem, space='\t')
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n'
+            b'\t<body>\n'
+            b'\t\t<p>pre<br/>post</p>\n'
+            b'\t\t<p>text</p>\n'
+            b'\t</body>\n'
+            b'</html>'
+        )
+
+        elem = ET.XML("<html><body><p>pre<br/>post</p><p>text</p></body></html>")
+        ET.indent(elem, space='')
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n'
+            b'<body>\n'
+            b'<p>pre<br/>post</p>\n'
+            b'<p>text</p>\n'
+            b'</body>\n'
+            b'</html>'
+        )
+
+    def test_indent_space_caching(self):
+        ET = self.etree
+        elem = ET.XML("<html><body><p>par</p><p>text</p><p><br/></p><p /></body></html>")
+        ET.indent(elem)
+        self.assertEqual(
+            {el.tail for el in elem.iter()},
+            {None, "\n", "\n  ", "\n    "}
+        )
+        self.assertEqual(
+            {el.text for el in elem.iter()},
+            {None, "\n  ", "\n    ", "\n      ", "par", "text"}
+        )
+        # NOTE: lxml does not reuse Python text strings across elements.
+        #self.assertEqual(
+        #    len({el.tail for el in elem.iter()}),
+        #    len({id(el.tail) for el in elem.iter()}),
+        #)
+
+    def test_indent_level(self):
+        ET = self.etree
+        elem = ET.XML("<html><body><p>pre<br/>post</p><p>text</p></body></html>")
+        ET.indent(elem, level=2)
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n'
+            b'      <body>\n'
+            b'        <p>pre<br/>post</p>\n'
+            b'        <p>text</p>\n'
+            b'      </body>\n'
+            b'    </html>'
+        )
+
+        elem = ET.XML("<html><body><p>pre<br/>post</p><p>text</p></body></html>")
+        ET.indent(elem, level=1, space=' ')
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n'
+            b'  <body>\n'
+            b'   <p>pre<br/>post</p>\n'
+            b'   <p>text</p>\n'
+            b'  </body>\n'
+            b' </html>'
+        )
+
     def test_parse_fileobject_unicode(self):
         # parse from a file object that returns unicode strings
         f = LargeFileLikeUnicode()

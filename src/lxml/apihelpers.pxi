@@ -666,6 +666,19 @@ cdef inline bint _hasText(xmlNode* c_node):
 cdef inline bint _hasTail(xmlNode* c_node):
     return c_node is not NULL and _textNodeOrSkip(c_node.next) is not NULL
 
+cdef inline bint _hasNonWhitespaceTail(xmlNode* c_node):
+    return _hasNonWhitespaceText(c_node, tail=True)
+
+cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False):
+    c_text_node = c_node and _textNodeOrSkip(c_node.next if tail else c_node.children)
+    if c_text_node is NULL:
+        return False
+    while c_text_node is not NULL:
+        if c_text_node.content[0] != c'\0' and not _collectText(c_text_node).isspace():
+            return True
+        c_text_node = _textNodeOrSkip(c_text_node.next)
+    return False
+
 cdef _collectText(xmlNode* c_node):
     u"""Collect all text nodes and return them as a unicode string.
 
