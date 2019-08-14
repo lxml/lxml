@@ -4344,19 +4344,28 @@ class ElementIncludeTestCase(_XIncludeTestCase):
     XINCLUDE["NonRecursive1.xml"] = """\
     <?xml version='1.0'?>
     <document xmlns:xi="http://www.w3.org/2001/XInclude">
-      <p>The following is multiple times the source code of NonRecursive2.xml:</p>
-      <xi:include href="NonRecursive2.xml"/>
-      <xi:include href="NonRecursive2.xml"/>
+      <p>The following is multiple times the source code of NonRecursive3.xml:</p>
+      <xi:include href="NonRecursive3.xml"/>
+      <xi:include href="NonRecursive3.xml"/>
       <p>The following is multiple times the source code of Leaf.xml:</p>
       <xi:include href="Leaf.xml"/>
       <xi:include href="Leaf.xml"/>
       <xi:include href="Leaf.xml"/>
-      <p>One more time the source code of NonRecursive2.xml:</p>
-      <xi:include href="NonRecursive2.xml"/>
+      <p>One more time the source code of NonRecursive3.xml:</p>
+      <xi:include href="NonRecursive3.xml"/>
     </document>
     """
 
     XINCLUDE["NonRecursive2.xml"] = """\
+    <?xml version='1.0'?>
+    <document xmlns:xi="http://www.w3.org/2001/XInclude">
+      <p>The following is multiple times the source code of NonRecursive3.xml:</p>
+      <xi:include href="NonRecursive3.xml"/>
+      <xi:include href="NonRecursive3.xml"/>
+    </document>
+    """
+
+    XINCLUDE["NonRecursive3.xml"] = """\
     <?xml version='1.0'?>
     <document xmlns:xi="http://www.w3.org/2001/XInclude">
       <p>The following is multiple times the source code of Leaf.xml:</p>
@@ -4423,11 +4432,15 @@ class ElementIncludeTestCase(_XIncludeTestCase):
     def test_multiple_include_of_same_file(self):
         # Test that including the same file multiple times, but on the same level
         # is not detected as recursive include
-        document = self.xinclude_loader("NonRecursive2.xml").getroottree()
+        document = self.xinclude_loader("NonRecursive3.xml").getroottree()
         self.include(document, self.xinclude_loader)
 
         # same but for more than one level
         document = self.xinclude_loader("NonRecursive1.xml").getroottree()
+        self.include(document, self.xinclude_loader)
+
+        # same but no Leaf.xml in top-level file
+        document = self.xinclude_loader("NonRecursive2.xml").getroottree()
         self.include(document, self.xinclude_loader)
 
 
