@@ -3805,6 +3805,17 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_indent_level(self):
         ET = self.etree
         elem = ET.XML("<html><body><p>pre<br/>post</p><p>text</p></body></html>")
+        try:
+            ET.indent(elem, level=-1)
+        except ValueError:
+            pass
+        else:
+            self.assertTrue(False, "ValueError not raised")
+        self.assertEqual(
+            ET.tostring(elem),
+            b"<html><body><p>pre<br/>post</p><p>text</p></body></html>"
+        )
+
         ET.indent(elem, level=2)
         self.assertEqual(
             ET.tostring(elem),

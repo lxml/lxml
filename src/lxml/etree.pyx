@@ -3282,6 +3282,8 @@ def indent(tree, space="  ", Py_ssize_t level=0):
     nested inside of a document.
     """
     root = _rootNodeOrRaise(tree)
+    if level < 0:
+        raise ValueError(f"Initial indentation level must be >= 0, got {level}")
     if _hasChild(root._c_node):
         _indent_children(root._c_node, level, _utf8(space), [b"\n"] * (level or 1))
 
