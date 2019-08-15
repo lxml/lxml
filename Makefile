@@ -3,7 +3,7 @@ PYTHON3?=python3
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
-LXMLVERSION=$(shell cat version.txt)
+LXMLVERSION:=$(shell sed -ne '/__version__/s|.*__version__\s*=\s*"\([^"]*\)".*|\1|p' src/lxml/__init__.py)
 
 PARALLEL:=$(shell $(PYTHON) -c 'import sys; print("-j7" if sys.version_info >= (3, 5) else "")' )
 PARALLEL3:=$(shell $(PYTHON3) -c 'import sys; print("-j7" if sys.version_info >= (3, 5) else "")' )

@@ -11,6 +11,11 @@ Features added
 * A new function ``indent()`` was added to insert tail whitespace for pretty-printing
   an XML tree.
 
+Other changes
+-------------
+
+* LP#1840234: The package version number is now available as ``lxml.__version__``.
+
 
 4.4.1 (2019-08-11)
 ==================

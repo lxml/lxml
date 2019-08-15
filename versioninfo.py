@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import sys
 
 __LXML_VERSION = None
@@ -8,8 +9,9 @@ __LXML_VERSION = None
 def version():
     global __LXML_VERSION
     if __LXML_VERSION is None:
-        with open(os.path.join(get_base_dir(), 'version.txt')) as f:
-            __LXML_VERSION = f.read().strip()
+        with open(os.path.join(get_base_dir(), 'src', 'lxml', '__init__.py')) as f:
+            __LXML_VERSION = re.search(r'__version__\s*=\s*"([^"]+)"', f.read(250)).group(1)
+            assert __LXML_VERSION
     return __LXML_VERSION
 
 
