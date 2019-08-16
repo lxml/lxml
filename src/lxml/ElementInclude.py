@@ -207,8 +207,7 @@ def _include(elem, loader=None, base_url=None,
                     raise FatalIncludeError(
                         "cannot load %r as %r" % (href, parse)
                         )
-                _parent_hrefs_for_node = set([href]) | _parent_hrefs
-                node = _include(node, loader, href, max_depth - 1, _parent_hrefs_for_node)
+                node = _include(node, loader, href, max_depth - 1, {href} | _parent_hrefs)
                 if e.tail:
                     node.tail = (node.tail or "") + e.tail
                 if parent is None:
