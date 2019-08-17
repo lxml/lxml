@@ -3285,20 +3285,18 @@ def indent(tree, space="  ", Py_ssize_t level=0):
     if level < 0:
         raise ValueError(f"Initial indentation level must be >= 0, got {level}")
     if _hasChild(root._c_node):
-        _indent_children(root._c_node, level, _utf8(space), [b"\n"] * (level or 1))
-
-
-cdef _get_indentation_string(list indentations, bytes one_space, Py_ssize_t level):
-    # Reusing indentation strings for speed.
-    cdef Py_ssize_t i
-    for i in range(len(indentations), level+1):
-        indentations.append(b"\n" + one_space * i)
-    return indentations[level]
+        space = _utf8(space)
+        indent = b"\n" + level * space
+        _indent_children(root._c_node, 1, space, [indent, indent + space])
 
 
 cdef int _indent_children(xmlNode* c_node, Py_ssize_t level, bytes one_space, list indentations) except -1:
+    # Reuse indentation strings for speed.
+    if len(indentations) <= level:
+        indentations.append(indentations[-1] + one_space)
+
     # Start a new indentation level for the first child.
-    child_indentation = _get_indentation_string(indentations, one_space, level+1)
+    child_indentation = indentations[level]
     if not _hasNonWhitespaceText(c_node):
         _setNodeText(c_node, child_indentation)
 
@@ -3311,7 +3309,7 @@ cdef int _indent_children(xmlNode* c_node, Py_ssize_t level, bytes one_space, li
         if not _hasNonWhitespaceTail(c_child):
             if c_next_child is NULL:
                 # Dedent after the last child.
-                child_indentation = _get_indentation_string(indentations, one_space, level)
+                child_indentation = indentations[level-1]
             _setTailText(c_child, child_indentation)
         c_child = c_next_child
     return 0
