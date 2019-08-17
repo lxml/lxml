@@ -3266,8 +3266,10 @@ def iselement(element):
     return isinstance(element, _Element) and (<_Element>element)._c_node is not NULL
 
 
-def indent(tree, space="  ", Py_ssize_t level=0):
-    """Indent an XML document by inserting newlines and indentation space
+def indent(tree, space="  ", *, Py_ssize_t level=0):
+    """indent(tree, space="  ", level=0)
+
+    Indent an XML document by inserting newlines and indentation space
     after elements.
 
     *tree* is the ElementTree or Element to modify.  The (root) element
