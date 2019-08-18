@@ -17,6 +17,17 @@ Other changes
 * LP#1840234: The package version number is now available as ``lxml.__version__``.
 
 
+4.4.2 (2019-0?-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#1835708: ``ElementInclude`` incorrectly rejected repeated non-recursive
+  includes as recursive.
+  Patch by Rainer Hausdorf.
+
+
 4.4.1 (2019-08-11)
 ==================
 
