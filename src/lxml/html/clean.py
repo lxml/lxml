@@ -432,6 +432,12 @@ class Cleaner(object):
         return False
 
     def allow_element(self, el):
+        """
+        Decide whether an element is configured to be accepted or rejected.
+
+        :param el: an element.
+        :return: true to accept the element or false to reject/discard it.
+        """
         if el.tag not in self._tag_link_attrs:
             return False
         attr = self._tag_link_attrs[el.tag]
@@ -450,8 +456,15 @@ class Cleaner(object):
             return self.allow_embedded_url(el, url)
 
     def allow_embedded_url(self, el, url):
-        if (self.whitelist_tags is not None
-            and el.tag not in self.whitelist_tags):
+        """
+        Decide whether a URL that was found in an element's attributes or text
+        if configured to be accepted or rejected.
+
+        :param el: an element.
+        :param url: a URL found on the element.
+        :return: true to accept the URL and false to reject it.
+        """
+        if self.whitelist_tags is not None and el.tag not in self.whitelist_tags:
             return False
         scheme, netloc, path, query, fragment = urlsplit(url)
         netloc = netloc.lower().split(':', 1)[0]
