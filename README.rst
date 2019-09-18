@@ -52,6 +52,8 @@ fast Python XML processing.
 support the lxml project with their build and CI servers.
 Jetbrains supports the lxml project by donating free licenses of their
 `PyCharm IDE <https://www.jetbrains.com/pycharm/>`_.
+Another supporter of the lxml project is
+`COLOGNE Webdesign <https://www.colognewebdesign.de/>`_.
 
 
 Legal Notice for Donations
