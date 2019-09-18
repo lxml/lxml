@@ -25,15 +25,22 @@ with it and linking to the project website.
 
 If you are using lxml for your work and feel like giving a bit of
 your own benefit back to support the project, consider sending us
-money through PayPal that we can use for fixing bugs in the software
-and improving its features and documentation.  Please read the Legal
-Notice below, at the bottom of this page.  Thank you for your support.
+money through GitHub Sponsors or PayPal that we can use for fixing bugs
+in the software and improving its features and documentation.
+Please read the Legal Notice below, at the bottom of this page.
+Thank you for your support.
 
 .. class:: center
 
+  `Support lxml through GitHub Sponsors <https://github.com/users/scoder/sponsorship>`_
+
+  (Note: GitHub will currently double your donation!)
+
+  or
+
   |Donate|_
 
-.. _Donate: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R56JE3VCPDA9N
+.. _`Donate`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R56JE3VCPDA9N
 
 Please `contact Stefan Behnel <http://consulting.behnel.de/>`_
 for other ways to support the lxml project,
