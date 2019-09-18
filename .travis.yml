@@ -54,7 +54,6 @@ matrix:
     - python: pypy3
       env: STATIC_DEPS=false
   allow_failures:
-    - python: 3.8-dev
     - python: pypy
     - python: pypy3
 
