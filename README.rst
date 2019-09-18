@@ -32,7 +32,7 @@ Thank you for your support.
 
 .. class:: center
 
-  `Support lxml through GitHub Sponsors <https://github.com/users/scoder/sponsorship>`_
+  Support lxml through `GitHub Sponsors <https://github.com/users/scoder/sponsorship>`_
 
   (Note: GitHub will currently double your donation!)
 
