@@ -703,6 +703,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         this if they recursively call _init() in the superclasses.
         """
 
+    @cython.linetrace(False)
+    @cython.profile(False)
     def __dealloc__(self):
         #print "trying to free node:", <int>self._c_node
         #displayNode(self._c_node, 0)
