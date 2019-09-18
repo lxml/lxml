@@ -36,7 +36,7 @@ Thank you for your support.
 
   (Note: GitHub will currently double your donation!)
 
-  or
+  or via PayPal:
 
   |Donate|_
 
