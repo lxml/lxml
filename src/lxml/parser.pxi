@@ -127,7 +127,13 @@ cdef class _ParserDictionaryContext:
     cdef void initParserDict(self, xmlparser.xmlParserCtxt* pctxt):
         u"Assure we always use the same string dictionary."
         self.initThreadDictRef(&pctxt.dict)
-        pctxt.dictNames = 1
+        if not pctxt.html:
+            # dictNames cannot be enabled under HTML because the SAX
+            # handler performs buffer lookahead accesses for space
+            # optimization when it is enabled, but the HTML API operates
+            # on temp buffers which would result in accesses on
+            # uninitialized memory.
+          pctxt.dictNames = 1
 
     cdef void initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
         u"Assure we always use the same string dictionary."
@@ -1197,8 +1203,6 @@ cdef void _initSaxDocument(void* ctxt) with gil:
 
     # set up document dict
     if c_doc and c_ctxt.dict and not c_doc.dict:
-        # I have no idea why libxml2 disables this - we need it
-        c_ctxt.dictNames = 1
         c_doc.dict = c_ctxt.dict
         xmlparser.xmlDictReference(c_ctxt.dict)
 
