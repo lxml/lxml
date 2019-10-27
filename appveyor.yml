@@ -15,6 +15,12 @@ environment:
 
 install:
     - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
+    - ps: |
+      if (-not (Test-Path $env:PYTHON)) {
+        curl -o install_python.ps1 https://raw.githubusercontent.com/matthew-brett/multibuild/11a389d78892cf90addac8f69433d5e22bfa422a/install_python.ps1
+        .\install_python.ps1
+      }
+      # remove the above when appveyor has proper Python 3.8 support
     - python -m pip.__main__ install -U pip wheel setuptools
     - pip install -r requirements.txt
 
