@@ -38,10 +38,10 @@ matrix:
     - python: 3.7
       dist: xenial    # Required for Python >= 3.7
       env: STATIC_DEPS=true
-    - python: 3.8-dev
+    - python: 3.8
       dist: xenial    # Required for Python >= 3.7
       env: STATIC_DEPS=false
-    - python: 3.8-dev
+    - python: 3.8
       dist: xenial    # Required for Python >= 3.7
       env: STATIC_DEPS=true
     - python: 3.7

@@ -2,6 +2,8 @@ version: 1.0.{build}
 
 environment:
   matrix:
+  - python: 38
+  - python: 38-x64
   - python: 37
   - python: 37-x64
   - python: 27
@@ -13,15 +15,21 @@ environment:
 
 install:
     - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
+    - ps: |
+        $env:PYTHON = "C:\\Python$($env:PYTHON)"
+        if (-not (Test-Path $env:PYTHON)) {
+          curl -o install_python.ps1 https://raw.githubusercontent.com/matthew-brett/multibuild/11a389d78892cf90addac8f69433d5e22bfa422a/install_python.ps1
+          .\\install_python.ps1
+        }
+        # remove the above when appveyor has proper Python 3.8 support
     - python -m pip.__main__ install -U pip wheel setuptools
     - pip install -r requirements.txt
 
 build: off
 build_script:
-  - python -u setup.py clean
+  - python -u setup.py bdist_wheel --static-deps
   - python -u setup.py build_ext --inplace --static-deps
   - python -u test.py -vv -p
-  - python -u setup.py bdist_wheel --static-deps
 
 test: off
 test_script:
