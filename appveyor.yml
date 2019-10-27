@@ -2,6 +2,8 @@ version: 1.0.{build}
 
 environment:
   matrix:
+  - python: 38
+  - python: 38-x64
   - python: 37
   - python: 37-x64
   - python: 27
