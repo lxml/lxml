@@ -41,7 +41,7 @@ install:
         }
     # remove the above when appveyor has proper Python 3.8 support
     - "set PATH=%PYTHON%\\Scripts;%PATH%"
-    - "%PYTHON%\\python.exe -m pip.__main__ install -U pip wheel setuptools"
+    - "%PYTHON%\\python.exe -m pip install -U pip wheel setuptools"
     - "%PYTHON%\\python.exe -m pip install -r requirements.txt"
 
 build: off
