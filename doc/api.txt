@@ -323,9 +323,8 @@ error level:
 .. sourcecode:: pycon
 
   >>> log = e.error_log.filter_from_level(etree.ErrorLevels.FATAL)
-  >>> print(log)
+  >>> print(log[0])
   <string>:4:8:FATAL:PARSER:ERR_TAG_NAME_MISMATCH: Opening and ending tag mismatch: a line 3 and root
-  <string>:5:1:FATAL:PARSER:ERR_TAG_NOT_FINISHED: Premature end of data in tag root line 2
 
 This might look a little cryptic at first, but it is the information that
 libxml2 gives you.  At least the message at the end should give you a hint
@@ -345,18 +344,10 @@ like this:
   >>> print(entry.filename)
   <string>
 
-There is also a convenience attribute ``last_error`` that returns the last
-error or fatal error that occurred:
-
-.. sourcecode:: pycon
-
-  >>> entry = e.error_log.last_error
-  >>> print(entry.domain_name)
-  PARSER
-  >>> print(entry.type_name)
-  ERR_TAG_NOT_FINISHED
-  >>> print(entry.filename)
-  <string>
+There is also a convenience attribute ``error_log.last_error`` that returns the
+last error or fatal error that occurred, so that it's easy to test if there was
+an error at all. Note, however, that there might have been more than one error,
+and the first error that occurred might be more relevant in some cases.
 
 
 Error logging
