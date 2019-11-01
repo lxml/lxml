@@ -21,8 +21,8 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_MAXSIZE=70M
     - PATH="/usr/lib/ccache:$PATH"
-    - LIBXML2_VERSION=2.9.9
-    - LIBXSLT_VERSION=1.1.33
+    - LIBXML2_VERSION=2.9.10
+    - LIBXSLT_VERSION=1.1.34
   matrix:
     - STATIC_DEPS=false
     - STATIC_DEPS=true
