@@ -36,6 +36,8 @@ Thank you for your support.
 
   (Note: GitHub will currently double your donation!)
 
+  via `Tidelift <https://tidelift.com/subscription/pkg/pypi-lxml>`_
+
   or via PayPal:
 
   |Donate|_
