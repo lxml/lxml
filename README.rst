@@ -25,9 +25,11 @@ with it and linking to the project website.
 
 If you are using lxml for your work and feel like giving a bit of
 your own benefit back to support the project, consider sending us
-money through GitHub Sponsors or PayPal that we can use for fixing bugs
-in the software and improving its features and documentation.
-Please read the Legal Notice below, at the bottom of this page.
+money through GitHub Sponsors, Tidelift or PayPal that we can use
+to buy us free time for the maintenance of this great library, to
+fix bugs in the software, review and integrate code contributions,
+and improving its features and documentation.  Please read the
+Legal Notice below, at the bottom of this page.
 Thank you for your support.
 
 .. class:: center
