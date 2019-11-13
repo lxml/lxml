@@ -190,13 +190,13 @@ class _IOTestCaseBase(HelperTestCase):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
         # the root of the tree
 
-        # parse from unamed file object    
+        # parse from unnamed file object
         f = SillyFileLike()
         root = self.etree.ElementTree().parse(f)
         self.assertTrue(root.tag.endswith('foo'))
 
     def test_module_parse_large_fileobject(self):
-        # parse from unamed file object
+        # parse from unnamed file object
         f = LargeFileLike()
         tree = self.etree.parse(f)
         root = tree.getroot()
