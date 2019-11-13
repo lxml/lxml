@@ -32,7 +32,7 @@ cdef class Schematron(_Validator):
 
       >>> schematron = Schematron(XML('''
       ... <schema xmlns="http://www.ascc.net/xml/schematron" >
-      ...   <pattern name="id is the only permited attribute name">
+      ...   <pattern name="id is the only permitted attribute name">
       ...     <rule context="*">
       ...       <report test="@*[not(name()='id')]">Attribute
       ...         <name path="@*[not(name()='id')]"/> is forbidden<name/>

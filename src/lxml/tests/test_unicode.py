@@ -155,7 +155,7 @@ class UnicodeTestCase(HelperTestCase):
         self.assertEqual(uni, el.text)
 
 ##     def test_parse_fileobject_unicode(self):
-##         # parse unicode from unamed file object (not support by ElementTree)
+##         # parse unicode from unnamed file object (not supported by ElementTree)
 ##         f = SillyFileLike(uxml)
 ##         root = etree.parse(f).getroot()
 ##         self.assertEqual(unicode(etree.tostring(root, 'UTF-8'), 'UTF-8'),
