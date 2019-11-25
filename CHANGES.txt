@@ -14,6 +14,8 @@ Features added
 Other changes
 -------------
 
+* Linux/MacOS Binary wheels now use libxml2 2.9.10 and libxslt 1.1.34.
+
 * LP#1840234: The package version number is now available as ``lxml.__version__``.
 
 
