@@ -17,7 +17,7 @@ Other changes
 * LP#1840234: The package version number is now available as ``lxml.__version__``.
 
 
-4.4.2 (2019-0?-??)
+4.4.2 (2019-11-25)
 ==================
 
 Bugs fixed
