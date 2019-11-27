@@ -31,7 +31,7 @@ cdef class _DTDElementContentDecl:
     @property
     def name(self):
        _assertValidDTDNode(self, self._c_node)
-       return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+       return funicodeOrNone(self._c_node.name)
 
     @property
     def type(self):
@@ -101,17 +101,17 @@ cdef class _DTDAttributeDecl:
     @property
     def name(self):
        _assertValidDTDNode(self, self._c_node)
-       return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+       return funicodeOrNone(self._c_node.name)
 
     @property
     def elemname(self):
        _assertValidDTDNode(self, self._c_node)
-       return funicode(self._c_node.elem) if self._c_node.elem is not NULL else None
+       return funicodeOrNone(self._c_node.elem)
 
     @property
     def prefix(self):
        _assertValidDTDNode(self, self._c_node)
-       return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
+       return funicodeOrNone(self._c_node.prefix)
 
     @property
     def type(self):
@@ -158,7 +158,7 @@ cdef class _DTDAttributeDecl:
     @property
     def default_value(self):
        _assertValidDTDNode(self, self._c_node)
-       return funicode(self._c_node.defaultValue) if self._c_node.defaultValue is not NULL else None
+       return funicodeOrNone(self._c_node.defaultValue)
 
     def itervalues(self):
         _assertValidDTDNode(self, self._c_node)
@@ -184,12 +184,12 @@ cdef class _DTDElementDecl:
     @property
     def name(self):
         _assertValidDTDNode(self, self._c_node)
-        return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+        return funicodeOrNone(self._c_node.name)
 
     @property
     def prefix(self):
        _assertValidDTDNode(self, self._c_node)
-       return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
+       return funicodeOrNone(self._c_node.prefix)
 
     @property
     def type(self):
@@ -246,17 +246,17 @@ cdef class _DTDEntityDecl:
     @property
     def name(self):
         _assertValidDTDNode(self, self._c_node)
-        return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+        return funicodeOrNone(self._c_node.name)
 
     @property
     def orig(self):
         _assertValidDTDNode(self, self._c_node)
-        return funicode(self._c_node.orig) if self._c_node.orig is not NULL else None
+        return funicodeOrNone(self._c_node.orig)
 
     @property
     def content(self):
         _assertValidDTDNode(self, self._c_node)
-        return funicode(self._c_node.content) if self._c_node.content is not NULL else None
+        return funicodeOrNone(self._c_node.content)
 
 
 ################################################################################
