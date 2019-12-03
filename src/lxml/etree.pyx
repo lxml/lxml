@@ -1121,7 +1121,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     # ACCESSORS
     def __repr__(self):
         u"__repr__(self)"
-        return "<Element %s at 0x%x, %s>" % (strrepr(self.tag), id(self), self.attrib)
+        if self.text:
+            return "<Element %s at 0x%x, %s(%s)>" % (strrepr(self.tag), id(self), self.attrib, self.text)
+        else:
+            return "<Element %s at 0x%x, %s>" % (strrepr(self.tag), id(self), self.attrib)
 
     def __getitem__(self, x):
         u"""Returns the subelement at the given position or the requested
