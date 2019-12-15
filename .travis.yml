@@ -1,5 +1,4 @@
 os: linux
-dist: trusty
 
 language: python
 
@@ -10,9 +9,11 @@ cache:
     - libs
 
 python:
-  - 2.7
+  - 3.8
+  - 3.7
   - 3.6
   - 3.5
+  - 2.7
 
 env:
   global:
@@ -29,23 +30,9 @@ env:
 
 matrix:
   include:
-    - python: 3.7
-      dist: xenial    # Required for Python >= 3.7
+    - python: 3.8
       env: STATIC_DEPS=false EXTRA_DEPS=coverage
-    - python: 3.7
-      dist: xenial    # Required for Python >= 3.7
-      env: STATIC_DEPS=false
-    - python: 3.7
-      dist: xenial    # Required for Python >= 3.7
-      env: STATIC_DEPS=true
     - python: 3.8
-      dist: xenial    # Required for Python >= 3.7
-      env: STATIC_DEPS=false
-    - python: 3.8
-      dist: xenial    # Required for Python >= 3.7
-      env: STATIC_DEPS=true
-    - python: 3.7
-      dist: xenial    # Required for Python >= 3.7
       env:
         - STATIC_DEPS=true
         - LIBXML2_VERSION=2.9.2  # minimum version requirements
