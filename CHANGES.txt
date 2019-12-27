@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+4.4.3 (2019-12-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#1844674: ``itertext()`` was missing tail text of comments and PIs since 4.4.0.
+
+
 4.4.2 (2019-11-25)
 ==================
 
