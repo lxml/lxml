@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 import unittest
 import sys
-import os.path
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir)  # needed for Py3
-
-from common_imports import StringIO, etree, SillyFileLike, HelperTestCase
-from common_imports import _str, _bytes, _chr
+from .common_imports import StringIO, etree, HelperTestCase, _str, _bytes, _chr
 
 try:
     unicode

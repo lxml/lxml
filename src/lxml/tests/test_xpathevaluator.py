@@ -4,14 +4,12 @@
 Test cases related to XPath evaluation and the XPath class
 """
 
-import unittest, sys, os.path
+from __future__ import absolute_import
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
+import unittest, sys
 
-from common_imports import etree, HelperTestCase, _bytes, BytesIO
-from common_imports import doctest, make_doctest
+from .common_imports import etree, HelperTestCase, _bytes, BytesIO, doctest, make_doctest
+
 
 class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""

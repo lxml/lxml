@@ -4,14 +4,13 @@
 Test cases related to RelaxNG parsing and validation
 """
 
-import unittest, sys, os.path
+from __future__ import absolute_import
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
+import unittest
 
-from common_imports import etree, BytesIO, _bytes, HelperTestCase, fileInTestDir
-from common_imports import doctest, make_doctest, skipif
+from .common_imports import (
+    etree, BytesIO, _bytes, HelperTestCase, fileInTestDir, make_doctest, skipif
+)
 
 try:
     import rnc2rng

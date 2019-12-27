@@ -15,10 +15,6 @@ import tempfile
 
 from lxml.etree import LxmlSyntaxError
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
 from .common_imports import etree, BytesIO, HelperTestCase, skipIf, _str
 
 

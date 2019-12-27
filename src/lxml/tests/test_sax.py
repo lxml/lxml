@@ -4,16 +4,14 @@
 Test cases related to SAX I/O
 """
 
-import unittest, sys, os.path
+from __future__ import absolute_import
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import HelperTestCase, make_doctest, BytesIO, _bytes
-from lxml import sax
+import unittest
 from xml.dom import pulldom
 from xml.sax.handler import ContentHandler
+
+from .common_imports import HelperTestCase, make_doctest, BytesIO, _bytes
+from lxml import sax
 
 
 class ETreeSaxTestCase(HelperTestCase):

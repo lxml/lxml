@@ -4,14 +4,11 @@
 Test cases related to XML Schema parsing and validation
 """
 
-import unittest, sys, os.path
+from __future__ import absolute_import
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
+import unittest
 
-from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
-from common_imports import doctest, make_doctest
+from .common_imports import etree, BytesIO, HelperTestCase, fileInTestDir, make_doctest
 
 
 class ETreeXMLSchemaTestCase(HelperTestCase):

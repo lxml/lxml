@@ -5,14 +5,11 @@ Tests for different Element class lookup mechanisms.
 """
 
 
-import unittest, os.path, sys, gc
+from __future__ import absolute_import
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
+import unittest, gc
 
-from common_imports import etree, HelperTestCase, SillyFileLike, fileInTestDir
-from common_imports import canonicalize, _bytes, _str, BytesIO, StringIO
+from .common_imports import etree, HelperTestCase, _bytes, BytesIO
 
 xml_str = _bytes('''\
 <root xmlns="myNS" xmlns:other="otherNS">

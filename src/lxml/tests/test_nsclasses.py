@@ -5,14 +5,11 @@ Test cases related to namespace implementation classes and the
 namespace registry mechanism
 """
 
-import unittest, sys, os.path
+from __future__ import absolute_import
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
+import unittest
 
-from common_imports import etree, HelperTestCase, _bytes
-from common_imports import doctest, make_doctest
+from .common_imports import etree, HelperTestCase, _bytes, make_doctest
 
 class ETreeNamespaceClassesTestCase(HelperTestCase):
     

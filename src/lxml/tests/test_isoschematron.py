@@ -4,15 +4,12 @@
 Test cases related to ISO-Schematron parsing and validation
 """
 
-import unittest, sys, os.path
+from __future__ import absolute_import
+
+import unittest
 from lxml import isoschematron
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import etree, HelperTestCase, fileInTestDir
-from common_imports import doctest, make_doctest
+from .common_imports import etree, HelperTestCase, fileInTestDir, doctest, make_doctest
 
 
 class ETreeISOSchematronTestCase(HelperTestCase):

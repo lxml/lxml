@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-import unittest, doctest
+from __future__ import absolute_import
+
+import unittest
 
 # These tests check that error handling in the Pyrex code is
 # complete.
@@ -9,11 +11,7 @@ import unittest, doctest
 import sys, gc, os.path
 from lxml import etree
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import HelperTestCase
+from .common_imports import HelperTestCase
 
 
 class ErrorTestCase(HelperTestCase):
@@ -53,7 +51,7 @@ class ErrorTestCase(HelperTestCase):
 
     def test_xmlsyntaxerror_has_info(self):
         broken_xml_name = 'test_broken.xml'
-        broken_xml_path = os.path.join(this_dir, broken_xml_name)
+        broken_xml_path = os.path.join(os.path.dirname(__file__), broken_xml_name)
         fail_msg = 'test_broken.xml should raise an etree.XMLSyntaxError'
         try:
             etree.parse(broken_xml_path)

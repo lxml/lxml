@@ -4,17 +4,14 @@
 Tests specific to the Python based class lookup.
 """
 
+from __future__ import absolute_import
 
-import unittest, os.path, sys
+import unittest
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize, doctest, _bytes
+from .common_imports import etree, HelperTestCase, _bytes
 
 from lxml.etree import PythonElementClassLookup
+
 
 xml_str = _bytes('''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">

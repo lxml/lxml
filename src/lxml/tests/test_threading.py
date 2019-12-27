@@ -4,17 +4,14 @@
 Tests for thread usage in lxml.etree.
 """
 
+from __future__ import absolute_import
+
 import re
 import sys
-import os.path
 import unittest
 import threading
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import etree, HelperTestCase, BytesIO, _bytes
+from .common_imports import etree, HelperTestCase, BytesIO, _bytes
 
 try:
     from Queue import Queue

@@ -4,20 +4,14 @@
 Web IO test cases (wsgiref)
 """
 
-from __future__ import with_statement
+from __future__ import with_statement, absolute_import
 
 import unittest
 import textwrap
-import os
 import sys
 import gzip
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir)  # needed for Py3
-
-from .common_imports import (
-    etree, HelperTestCase, BytesIO, _bytes)
+from .common_imports import etree, HelperTestCase, BytesIO, _bytes
 from .dummy_http_server import webserver, HTTPRequestCollector
 
 

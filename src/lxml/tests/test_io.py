@@ -4,10 +4,12 @@
 IO test cases that apply to both etree and ElementTree
 """
 
+from __future__ import absolute_import
+
 import unittest
 import tempfile, gzip, os, os.path, gc, shutil
 
-from lxml.tests.common_imports import (
+from .common_imports import (
     etree, ElementTree, _str, _bytes,
     SillyFileLike, LargeFileLike, HelperTestCase,
     read_file, write_to_file, BytesIO, tmpfile

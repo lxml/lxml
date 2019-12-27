@@ -8,6 +8,8 @@ belong here. Note that there is a second test module called test_io.py
 for IO related test cases.
 """
 
+from __future__ import absolute_import
+
 import copy
 import io
 import operator
@@ -20,14 +22,12 @@ from contextlib import contextmanager
 from functools import wraps, partial
 from itertools import islice
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import BytesIO, etree, HelperTestCase
-from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
-from common_imports import filter_by_version, fileInTestDir, canonicalize, tmpfile
-from common_imports import _str, _bytes, unicode, next, IS_PYTHON2
+from .common_imports import (
+    BytesIO, etree, HelperTestCase,
+    ElementTree, cElementTree, ET_VERSION, CET_VERSION,
+    filter_by_version, fileInTestDir, canonicalize, tmpfile,
+    _str, _bytes, unicode, next, IS_PYTHON2
+)
 
 if cElementTree is not None and (CET_VERSION <= (1,0,7) or sys.version_info[0] >= 3):
     cElementTree = None

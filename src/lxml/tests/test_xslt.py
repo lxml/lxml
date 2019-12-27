@@ -4,6 +4,8 @@
 Test cases related to XSLT processing
 """
 
+from __future__ import absolute_import
+
 import io
 import sys
 import copy
@@ -13,10 +15,6 @@ import unittest
 import contextlib
 from textwrap import dedent
 from tempfile import NamedTemporaryFile, mkdtemp
-
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
 
 is_python3 = sys.version_info[0] >= 3
 
@@ -30,8 +28,10 @@ try:
 except NameError: # Python 3
     basestring = str
 
-from .common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
-from .common_imports import doctest, _bytes, _str, make_doctest, skipif
+from .common_imports import (
+    etree, BytesIO, HelperTestCase, fileInTestDir, _bytes, make_doctest, skipif
+)
+
 
 class ETreeXSLTTestCase(HelperTestCase):
     """XSLT tests etree"""

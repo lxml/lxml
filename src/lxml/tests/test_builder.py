@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-import unittest
 
 """
 Tests that ElementMaker works properly.
 """
 
-import sys, os.path
+from __future__ import absolute_import
+
+import unittest
+
 from lxml import etree
 from lxml.builder import E
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import HelperTestCase, BytesIO, _bytes
+from .common_imports import HelperTestCase, _bytes
 
 
 class BuilderTestCase(HelperTestCase):

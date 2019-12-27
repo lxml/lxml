@@ -1,7 +1,10 @@
+
+from __future__ import absolute_import
+
 import unittest
 
 from lxml import etree
-from lxml.tests.common_imports import HelperTestCase
+from .common_imports import HelperTestCase
 from lxml.doctestcompare import LXMLOutputChecker, PARSE_HTML, PARSE_XML
 
 

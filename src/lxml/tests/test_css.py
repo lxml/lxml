@@ -1,8 +1,11 @@
+
+from __future__ import absolute_import
+
 import unittest
 
 import lxml.html
 
-from lxml.tests.common_imports import doctest, HelperTestCase, skipif
+from .common_imports import doctest, HelperTestCase, skipif
 
 try:
     import cssselect

@@ -4,15 +4,13 @@
 HTML parser test cases for etree
 """
 
+from __future__ import absolute_import
+
 import unittest
 import tempfile, os, os.path, sys
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import etree, html, StringIO, BytesIO, fileInTestDir, _bytes, _str
-from common_imports import SillyFileLike, HelperTestCase, write_to_file, next
+from .common_imports import etree, html, BytesIO, fileInTestDir, _bytes, _str
+from .common_imports import SillyFileLike, HelperTestCase, write_to_file, next
 
 try:
     unicode

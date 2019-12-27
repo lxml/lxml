@@ -4,15 +4,13 @@
 Test cases related to DTD parsing and validation
 """
 
-import unittest, sys, os.path
+import unittest, sys
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir)  # needed for Py3
-
-from common_imports import etree, html, BytesIO, _bytes, _str
-from common_imports import HelperTestCase, make_doctest, skipIf
-from common_imports import fileInTestDir, fileUrlInTestDir
+from .common_imports import (
+    etree, html, BytesIO, _bytes, _str,
+    HelperTestCase, make_doctest, skipIf,
+    fileInTestDir, fileUrlInTestDir
+)
 
 
 class ETreeDtdTestCase(HelperTestCase):
