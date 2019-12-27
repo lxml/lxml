@@ -1448,6 +1448,17 @@ class ETreeOnlyTestCase(HelperTestCase):
             [1,2,1,4],
             counts)
 
+    def test_itertext_comment_pi(self):
+        # https://bugs.launchpad.net/lxml/+bug/1844674
+        XML = self.etree.XML
+        root = XML(_bytes(
+            "<root>RTEXT<a></a>ATAIL<b/><!-- COMMENT -->CTAIL<?PI PITEXT?> PITAIL </root>"
+        ))
+
+        text = list(root.itertext())
+        self.assertEqual(["RTEXT", "ATAIL", "CTAIL", " PITAIL "],
+                          text)
+
     def test_resolve_string_dtd(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(dtd_validation=True)
