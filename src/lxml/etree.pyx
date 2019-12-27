@@ -2966,9 +2966,9 @@ cdef class ElementTextIterator:
     def __cinit__(self, _Element element not None, tag=None, *, bint with_tail=True):
         _assertValidNode(element)
         if with_tail:
-            events = (u"start", u"end")
+            events = (u"start", u"comment", u"pi", u"end")
         else:
-            events = (u"start",)
+            events = (u"start", u"comment", u"pi")
         self._start_element = element
         self._events = iterwalk(element, events=events, tag=tag)
 
