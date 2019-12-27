@@ -2961,7 +2961,7 @@ cdef class ElementTextIterator:
     You can set the ``with_tail`` keyword argument to ``False`` to skip over
     tail text (e.g. if you know that it's only whitespace from pretty-printing).
     """
-    cdef object _nextEvent
+    cdef object _events
     cdef _Element _start_element
     def __cinit__(self, _Element element not None, tag=None, *, bint with_tail=True):
         _assertValidNode(element)
@@ -2970,7 +2970,7 @@ cdef class ElementTextIterator:
         else:
             events = (u"start",)
         self._start_element = element
-        self._nextEvent = iterwalk(element, events=events, tag=tag).__next__
+        self._events = iterwalk(element, events=events, tag=tag)
 
     def __iter__(self):
         return self
@@ -2979,7 +2979,7 @@ cdef class ElementTextIterator:
         cdef _Element element
         result = None
         while result is None:
-            event, element = self._nextEvent() # raises StopIteration
+            event, element = next(self._events)  # raises StopIteration
             if event == u"start":
                 result = element.text
             elif element is not self._start_element:
