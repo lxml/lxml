@@ -50,7 +50,7 @@ This is the easiest way of extending lxml at the C level.  A Cython_
     # My Cython extension
 
     # directive pointing compiler to lxml header files;
-    # use ``aliases={"LXML_PACKAGE_DIR": LXML_PACKAGE_DIR}``
+    # use ``aliases={"LXML_PACKAGE_DIR": lxml.__path__}``
     # argument to cythonize in setup.py to dynamically
     # determine dir at compile time
     # distutils: include_dirs = LXML_PACKAGE_DIR
