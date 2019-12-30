@@ -49,8 +49,14 @@ This is the easiest way of extending lxml at the C level.  A Cython_
 
     # My Cython extension
 
+    # directive pointing compiler to lxml header files;
+    # use ``aliases={"LXML_PACKAGE_DIR": lxml.__path__}``
+    # argument to cythonize in setup.py to dynamically
+    # determine dir at compile time
+    # distutils: include_dirs = LXML_PACKAGE_DIR
+
     # import the public functions and classes of lxml.etree
-    cimport etreepublic as cetree
+    cimport lxml.includes.etreepublic as cetree
 
     # import the lxml.etree module in Python
     cdef object etree
@@ -69,13 +75,13 @@ Public lxml classes are easily subclassed.  For example, to implement
 and set a new default element class, you can write Cython code like
 the following::
 
-    from etreepublic cimport ElementBase
+    from lxml.includes.etreepublic cimport ElementBase
     cdef class NewElementClass(ElementBase):
          def set_value(self, myval):
              self.set("my_attribute", myval)
 
     etree.set_element_class_lookup(
-         etree.DefaultElementClassLookup(element=NewElementClass))
+         etree.ElementDefaultClassLookup(element=NewElementClass))
 
 
 Writing external modules in C
