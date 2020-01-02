@@ -782,7 +782,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
                 raise IndexError, f"index out of range: {x}"
-            _removeText(c_node.next)
             _removeNode(self._doc, c_node)
 
     def __deepcopy__(self, memo):

@@ -11,6 +11,12 @@ Features added
 * A new function ``indent()`` was added to insert tail whitespace for pretty-printing
   an XML tree.
 
+Bugs fixed
+----------
+
+* LP#1857794: Tail text of nodes that get removed from a document using item
+  deletion disappeared silently instead of sticking with the node that was removed.
+
 Other changes
 -------------
 

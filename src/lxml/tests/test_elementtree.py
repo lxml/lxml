@@ -1689,7 +1689,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual('{http://huhu}bump1', foo[0][0].tag)
         self.assertEqual('{http://huhu}bump2', foo[0][1].tag)
 
-    def test_delitem_tail(self):
+    def test_delitem_tail_dealloc(self):
         ElementTree = self.etree.ElementTree
         f = BytesIO('<a><b></b>B2<c></c>C2</a>')
         doc = ElementTree(file=f)
@@ -1698,6 +1698,19 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertXML(
             _bytes('<a><c></c>C2</a>'),
             a)
+
+    def test_delitem_tail(self):
+        ElementTree = self.etree.ElementTree
+        f = BytesIO('<a><b></b>B2<c></c>C2</a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        b, c = a
+        del a[0]
+        self.assertXML(
+            _bytes('<a><c></c>C2</a>'),
+            a)
+        self.assertEqual("B2", b.tail)
+        self.assertEqual("C2", c.tail)
 
     def test_clear(self):
         Element = self.etree.Element
@@ -2383,7 +2396,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             [b, d],
             list(a))
 
-    def test_delslice_child_tail(self):
+    def test_delslice_child_tail_dealloc(self):
         ElementTree = self.etree.ElementTree
         f = BytesIO('<a><b></b>B2<c></c>C2<d></d>D2<e></e>E2</a>')
         doc = ElementTree(file=f)
@@ -2392,6 +2405,21 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertXML(
             _bytes('<a><b></b>B2<e></e>E2</a>'),
             a)
+
+    def test_delslice_child_tail(self):
+        ElementTree = self.etree.ElementTree
+        f = BytesIO('<a><b></b>B2<c></c>C2<d></d>D2<e></e>E2</a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        b, c, d, e = a
+        del a[1:3]
+        self.assertXML(
+            _bytes('<a><b></b>B2<e></e>E2</a>'),
+            a)
+        self.assertEqual("B2", b.tail)
+        self.assertEqual("C2", c.tail)
+        self.assertEqual("D2", d.tail)
+        self.assertEqual("E2", e.tail)
 
     def test_delslice_tail(self):
         XML = self.etree.XML
