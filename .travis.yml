@@ -1,5 +1,4 @@
 os: linux
-
 language: python
 
 cache:
@@ -10,10 +9,10 @@ cache:
 
 python:
   - 3.8
+  - 2.7
   - 3.7
   - 3.6
   - 3.5
-  - 2.7
 
 env:
   global:
