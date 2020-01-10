@@ -137,10 +137,13 @@ def inject_donate_buttons(lxml_path, rst2html_script, tree):
                                namespaces=htmlnsmap)[0]
     intro_div.append(support_div)
 
+    finance_div = readme.xpath('h:body//h:div[@id = "project-income-report"][1]',
+                               namespaces=htmlnsmap)[0]
     legal = readme.xpath('h:body//h:div[@id = "legal-notice-for-donations"][1]',
                          namespaces=htmlnsmap)[0]
     last_div = tree.xpath('h:body//h:div//h:div', namespaces=htmlnsmap)[-1]
-    last_div.addnext(legal)
+    last_div.addnext(finance_div)
+    finance_div.addnext(legal)
 
 
 def rest2html(script, source_path, dest_path, stylesheet_url):
