@@ -7,7 +7,7 @@ lxml
 
 .. class:: pagequote
 
-| `» lxml takes all the pain out of XML. « <http://thread.gmane.org/gmane.comp.python.lxml.devel/3252/focus=3258>`_
+| `» lxml takes all the pain out of XML. « <https://mailman-mail5.webfaction.com/pipermail/lxml/20080131/019119.html>`_
 | Stephan Richter
 
 .. class:: eyecatcher
