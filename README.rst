@@ -67,6 +67,16 @@ Another supporter of the lxml project is
 `COLOGNE Webdesign <https://www.colognewebdesign.de/>`_.
 
 
+Project income report
+---------------------
+
+* Total project income in 2019: EUR 717.52  (59.79 € / month)
+
+  - Tidelift: EUR 360.30
+  - Paypal: EUR 157.22
+  - other: EUR 200.00
+
+
 Legal Notice for Donations
 --------------------------
 
