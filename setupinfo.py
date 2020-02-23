@@ -2,6 +2,7 @@ import sys
 import io
 import os
 import os.path
+import subprocess
 from distutils.core import Extension
 from distutils.errors import CompileError, DistutilsOptionError
 from distutils.command.build_ext import build_ext as _build_ext
@@ -360,22 +361,19 @@ def define_macros():
     macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1' if OPTION_WITH_CLINES else '0'))
     return macros
 
-_ERROR_PRINTED = False
 
 def run_command(cmd, *args):
     if not cmd:
         return ''
     if args:
         cmd = ' '.join((cmd,) + args)
-    import subprocess
+
     p = subprocess.Popen(cmd, shell=True,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout_data, errors = p.communicate()
-    global _ERROR_PRINTED
-    if errors and not _ERROR_PRINTED:
-        _ERROR_PRINTED = True
-        print("ERROR: %s" % errors)
-        print("** make sure the development packages of libxml2 and libxslt are installed **\n")
+
+    if errors:
+        return ''
     return decode_input(stdout_data).strip()
 
 
@@ -392,21 +390,75 @@ def check_min_version(version, min_version, error_name):
     return True
 
 
-def get_library_version(config_tool):
-    is_pkgconfig = "pkg-config" in config_tool
-    return run_command(config_tool,
-                       "--modversion" if is_pkgconfig else "--version")
+def get_library_version(prog, libname=None):
+    if libname:
+        return run_command(prog, '--modversion %s' % libname)
+    else:
+        return run_command(prog, '--version')
 
+
+PKG_CONFIG = None
+XML2_CONFIG = None
+XSLT_CONFIG = None
 
 def get_library_versions():
-    xml2_version = get_library_version(find_xml2_config())
-    xslt_version = get_library_version(find_xslt_config())
-    return xml2_version, xslt_version
+    global XML2_CONFIG, XSLT_CONFIG
+
+    # Pre-built libraries
+    if XML2_CONFIG and XSLT_CONFIG:
+        xml2_version = get_library_version(XML2_CONFIG)
+        xslt_version = get_library_version(XSLT_CONFIG)
+        return xml2_version, xslt_version
+
+    # Path to xml2-config and xslt-config specified on the command line
+    if OPTION_WITH_XML2_CONFIG:
+        xml2_version = get_library_version(OPTION_WITH_XML2_CONFIG)
+        if xml2_version and OPTION_WITH_XSLT_CONFIG:
+            xslt_version = get_library_version(OPTION_WITH_XSLT_CONFIG)
+            if xslt_version:
+                XML2_CONFIG = OPTION_WITH_XML2_CONFIG
+                XSLT_CONFIG = OPTION_WITH_XSLT_CONFIG
+                return xml2_version, xslt_version
+
+    # Try pkg-config
+    global PKG_CONFIG
+    PKG_CONFIG = os.getenv('PKG_CONFIG', 'pkg-config')
+    xml2_version = get_library_version(PKG_CONFIG, 'libxml-2.0')
+    if xml2_version:
+        xslt_version = get_library_version(PKG_CONFIG, 'libxslt')
+        if xml2_version and xslt_version:
+            return xml2_version, xslt_version
+
+    # Try xml2-config and xslt-config
+    XML2_CONFIG = os.getenv('XML2_CONFIG', 'xml2-config')
+    xml2_version = get_library_version(XML2_CONFIG)
+    if xml2_version:
+        XSLT_CONFIG = os.getenv('XSLT_CONFIG', 'xslt-config')
+        xslt_version = get_library_version(XSLT_CONFIG)
+        if xml2_version and xslt_version:
+            return xml2_version, xslt_version
+
+    # One or both build dependencies not found. Fail on Linux platforms only.
+    if sys.platform.startswith('win'):
+        return '', ''
+    print("Error: Please make sure the libxml2 and libxslt development packages are installed.")
+    sys.exit(1)
+
+
+def get_flags(prog, option, libname=None):
+    if libname:
+        return run_command(prog, '--%s %s' % (option, libname))
+    else:
+        return run_command(prog, '--%s' % option)
 
 
 def flags(option):
-    xml2_flags = run_command(find_xml2_config(), "--%s" % option)
-    xslt_flags = run_command(find_xslt_config(), "--%s" % option)
+    if XML2_CONFIG:
+        xml2_flags = get_flags(XML2_CONFIG, option)
+        xslt_flags = get_flags(XSLT_CONFIG, option)
+    else:
+        xml2_flags = get_flags(PKG_CONFIG, option, 'libxml-2.0')
+        xslt_flags = get_flags(PKG_CONFIG, option, 'libxslt')
 
     flag_list = xml2_flags.split()
     for flag in xslt_flags.split():
@@ -418,37 +470,6 @@ def flags(option):
 def get_xcode_isysroot():
     return run_command('xcrun', '--show-sdk-path')
 
-XSLT_CONFIG = None
-XML2_CONFIG = None
-
-def find_xml2_config():
-    global XML2_CONFIG
-    if XML2_CONFIG:
-        return XML2_CONFIG
-    option = '--with-xml2-config='
-    for arg in sys.argv:
-        if arg.startswith(option):
-            sys.argv.remove(arg)
-            XML2_CONFIG = arg[len(option):]
-            return XML2_CONFIG
-    else:
-        # default: do nothing, rely only on xslt-config
-        XML2_CONFIG = os.getenv('XML2_CONFIG', '')
-    return XML2_CONFIG
-
-def find_xslt_config():
-    global XSLT_CONFIG
-    if XSLT_CONFIG:
-        return XSLT_CONFIG
-    option = '--with-xslt-config='
-    for arg in sys.argv:
-        if arg.startswith(option):
-            sys.argv.remove(arg)
-            XSLT_CONFIG = arg[len(option):]
-            return XSLT_CONFIG
-    else:
-        XSLT_CONFIG = os.getenv('XSLT_CONFIG', 'xslt-config')
-    return XSLT_CONFIG
 
 ## Option handling:
 
@@ -501,6 +522,8 @@ OPTION_AUTO_RPATH = has_option('auto-rpath')
 OPTION_BUILD_LIBXML2XSLT = staticbuild or has_option('static-deps')
 if OPTION_BUILD_LIBXML2XSLT:
     OPTION_STATIC = True
+OPTION_WITH_XML2_CONFIG = option_value('xml2-config')
+OPTION_WITH_XSLT_CONFIG = option_value('xslt-config')
 OPTION_LIBXML2_VERSION = option_value('libxml2-version')
 OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
