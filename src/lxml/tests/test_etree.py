@@ -3289,6 +3289,30 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(len(list(tree.findall(QName("b")))), 2)
         self.assertEqual(len(list(tree.findall(QName("X", "b")))), 1)
 
+    def test_elementtree_iter_qname(self):
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+        QName = self.etree.QName
+        tree = ElementTree(XML(
+                _bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')))
+        self.assertEqual(
+            list(tree.iter(QName("b"))),
+            list(tree.iter("b")),
+        )
+        self.assertEqual(
+            list(tree.iter(QName("X", "b"))),
+            list(tree.iter("{X}b")),
+        )
+
+        self.assertEqual(
+            [e.tag for e in tree.iter(QName("X", "b"), QName("b"))],
+            ['{X}b', 'b', '{X}b', 'b', 'b']
+        )
+        self.assertEqual(
+            list(tree.iter(QName("X", "b"), QName("b"))),
+            list(tree.iter("{X}b", "b"))
+        )
+
     def test_findall_ns(self):
         XML = self.etree.XML
         root = XML(_bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>'))
