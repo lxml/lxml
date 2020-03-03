@@ -2741,6 +2741,8 @@ cdef class _MultiTagMatcher:
                 elif href == b'*':
                     href = None  # wildcard: any namespace, including none
                 self._py_tags.append((href, name))
+        elif isinstance(tag, QName):
+            self._storeTags(tag.text, seen)
         else:
             # support a sequence of tags
             for item in tag:

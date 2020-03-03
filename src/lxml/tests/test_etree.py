@@ -3266,6 +3266,30 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, tree.getelementpath, d1)
         self.assertRaises(ValueError, tree.getelementpath, d2)
 
+    def test_elementtree_iter_qname(self):
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+        QName = self.etree.QName
+        tree = ElementTree(XML(
+                _bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')))
+        self.assertEqual(
+            list(tree.iter(QName("b"))),
+            list(tree.iter("b")),
+        )
+        self.assertEqual(
+            list(tree.iter(QName("X", "b"))),
+            list(tree.iter("{X}b")),
+        )
+
+        self.assertEqual(
+            [e.tag for e in tree.iter(QName("X", "b"), QName("b"))],
+            ['{X}b', 'b', '{X}b', 'b', 'b']
+        )
+        self.assertEqual(
+            list(tree.iter(QName("X", "b"), QName("b"))),
+            list(tree.iter("{X}b", "b"))
+        )
+
     def test_elementtree_find_qname(self):
         XML = self.etree.XML
         ElementTree = self.etree.ElementTree
