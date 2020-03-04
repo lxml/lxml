@@ -110,17 +110,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
         use_cython = False
         print("Building without Cython.")
 
-    lib_versions = get_library_versions()
-    versions_ok = True
-    if lib_versions[0]:
-        print("Using build configuration of libxml2 %s and libxslt %s" %
-              lib_versions)
-        versions_ok = check_min_version(lib_versions[0], (2, 7, 0), 'libxml2')
-    else:
-        print("Using build configuration of libxslt %s" %
-              lib_versions[1])
-    versions_ok |= check_min_version(lib_versions[1], (1, 1, 23), 'libxslt')
-    if not versions_ok:
+    if not check_build_dependencies():
         raise RuntimeError("Dependency missing")
 
     base_dir = get_base_dir()
@@ -377,15 +367,15 @@ def run_command(cmd, *args):
     return decode_input(stdout_data).strip()
 
 
-def check_min_version(version, min_version, error_name):
+def check_min_version(version, min_version, libname):
     if not version:
         # this is ok for targets like sdist etc.
         return True
-    version = tuple(map(int, version.split('.')[:3]))
-    min_version = tuple(min_version)
-    if version < min_version:
-        print("Minimum required version of %s is %s, found %s" % (
-            error_name, '.'.join(map(str, version)), '.'.join(map(str, min_version))))
+    lib_version = tuple(map(int, version.split('.')[:3]))
+    req_version = tuple(map(int, min_version.split('.')[:3]))
+    if lib_version < req_version:
+        print("Minimum required version of %s is %s. Your system has version %s." % (
+            libname, min_version, version))
         return False
     return True
 
@@ -443,6 +433,20 @@ def get_library_versions():
         return '', ''
     print("Error: Please make sure the libxml2 and libxslt development packages are installed.")
     sys.exit(1)
+
+
+def check_build_dependencies():
+    xml2_version, xslt_version = get_library_versions()
+
+    xml2_ok = check_min_version(xml2_version, '2.7.0', 'libxml2')
+    xslt_ok = check_min_version(xslt_version, '1.1.23', 'libxslt')
+
+    if xml2_version and xslt_version:
+        print("Building against libxml2 %s and libxslt %s" % (xml2_version, xslt_version))
+    else:
+        print("Building against pre-built libxml2 andl libxslt libraries")
+
+    return (xml2_ok and xslt_ok)
 
 
 def get_flags(prog, option, libname=None):
