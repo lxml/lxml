@@ -11,8 +11,8 @@ Bugs fixed
 * LP#1865141, GH#298: ``QName`` values were not accepted by the ``el.iter()`` method.
   Patch by xmo-odoo.
 
-* LP#1863413, GH#297: The build failed to detect find libraries on Linux that
-  are only configured via pkg-config.
+* LP#1863413, GH#297: The build failed to detect libraries on Linux that are only
+  configured via pkg-config.
   Patch by Hugh McMaster.
 
 
