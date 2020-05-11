@@ -744,7 +744,7 @@ cdef class _XSLTResultTree(_ElementTree):
             rclose = tree.xmlOutputBufferClose(c_buffer)
         if writer is not None:
             writer._exc_context._raise_if_stored()
-        if r < 0 or rclose < 0:
+        if r < 0 or rclose == -1:
             python.PyErr_SetFromErrno(IOError)  # raises IOError
 
     cdef _saveToStringAndSize(self, xmlChar** s, int* l):

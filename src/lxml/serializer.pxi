@@ -147,7 +147,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
                 c_result_buffer))[:tree.xmlBufUse(c_result_buffer)]
     finally:
         error_result = tree.xmlOutputBufferClose(c_buffer)
-    if error_result < 0:
+    if error_result == -1:
         _raiseSerialisationError(error_result)
     return result
 
@@ -770,7 +770,7 @@ cdef int _serialise_node(tree.xmlOutputBuffer* c_buffer, const_xmlChar* c_doctyp
     error_result = c_buffer.error
     if error_result == xmlerror.XML_ERR_OK:
         error_result = tree.xmlOutputBufferClose(c_buffer)
-        if error_result > 0:
+        if error_result != -1:
             error_result = xmlerror.XML_ERR_OK
     else:
         tree.xmlOutputBufferClose(c_buffer)
@@ -870,6 +870,8 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                 error = tree.xmlOutputBufferClose(c_buffer)
                 if bytes_count < 0:
                     error = bytes_count
+                elif error != -1:
+                    error = xmlerror.XML_ERR_OK
         else:
             raise TypeError(f"File or filename expected, got '{python._fqtypename(f).decode('UTF-8')}'")
     finally:
@@ -1674,7 +1676,7 @@ cdef class _IncrementalFileWriter:
         error_result = self._c_out.error
         if error_result == xmlerror.XML_ERR_OK:
             error_result = tree.xmlOutputBufferClose(self._c_out)
-            if error_result > 0:
+            if error_result != -1:
                 error_result = xmlerror.XML_ERR_OK
         else:
             tree.xmlOutputBufferClose(self._c_out)
