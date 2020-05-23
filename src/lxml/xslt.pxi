@@ -397,7 +397,9 @@ cdef class XSLT:
         c_doc._private = <python.PyObject*>self._xslt_resolver_context
 
         with self._error_log:
+            orig_loader = _register_document_loader()
             c_style = xslt.xsltParseStylesheetDoc(c_doc)
+            _reset_document_loader(orig_loader)
 
         if c_style is NULL or c_style.errors:
             tree.xmlFreeDoc(c_doc)
@@ -633,8 +635,10 @@ cdef class XSLT:
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
         with self._error_log, nogil:
+            orig_loader = _register_document_loader()
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
+            _reset_document_loader(orig_loader)
         return c_result
 
 

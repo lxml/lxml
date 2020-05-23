@@ -502,7 +502,15 @@ cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_
 cdef xmlparser.xmlExternalEntityLoader __DEFAULT_ENTITY_LOADER
 __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
 
-xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_resolver)
+
+cdef xmlparser.xmlExternalEntityLoader _register_document_loader() nogil:
+    cdef xmlparser.xmlExternalEntityLoader old = xmlparser.xmlGetExternalEntityLoader()
+    xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_resolver)
+    return old
+
+cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) nogil:
+    xmlparser.xmlSetExternalEntityLoader(old)
+
 
 ############################################################
 ## Parsers
@@ -514,6 +522,7 @@ cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef _ParserSchemaValidationContext _validator
     cdef xmlparser.xmlParserCtxt* _c_ctxt
+    cdef xmlparser.xmlExternalEntityLoader _orig_loader
     cdef python.PyThread_type_lock _lock
     cdef _Document _doc
     cdef bint _collect_ids
@@ -561,7 +570,7 @@ cdef class _ParserContext(_ResolverContext):
             else:
                 xmlparser.xmlClearParserCtxt(self._c_ctxt)
 
-    cdef int prepare(self) except -1:
+    cdef int prepare(self, bint set_document_loader=True) except -1:
         cdef int result
         if config.ENABLE_THREADING and self._lock is not NULL:
             with nogil:
@@ -572,19 +581,24 @@ cdef class _ParserContext(_ResolverContext):
         self._error_log.clear()
         self._doc = None
         self._c_ctxt.sax.serror = _receiveParserError
+        self._orig_loader = _register_document_loader() if set_document_loader else NULL
         if self._validator is not None:
             self._validator.connect(self._c_ctxt, self._error_log)
         return 0
 
     cdef int cleanup(self) except -1:
-        if self._validator is not None:
-            self._validator.disconnect()
-        self._resetParserContext()
-        self.clear()
-        self._doc = None
-        self._c_ctxt.sax.serror = NULL
-        if config.ENABLE_THREADING and self._lock is not NULL:
-            python.PyThread_release_lock(self._lock)
+        if self._orig_loader is not NULL:
+            _reset_document_loader(self._orig_loader)
+        try:
+            if self._validator is not None:
+                self._validator.disconnect()
+            self._resetParserContext()
+            self.clear()
+            self._doc = None
+            self._c_ctxt.sax.serror = NULL
+        finally:
+            if config.ENABLE_THREADING and self._lock is not NULL:
+                python.PyThread_release_lock(self._lock)
         return 0
 
     cdef object _handleParseResult(self, _BaseParser parser,
@@ -1286,7 +1300,7 @@ cdef class _FeedParser(_BaseParser):
         pctxt = context._c_ctxt
         error = 0
         if not self._feed_parser_running:
-            context.prepare()
+            context.prepare(set_document_loader=False)
             self._feed_parser_running = 1
             c_filename = (_cstr(self._filename)
                           if self._filename is not None else NULL)
@@ -1296,6 +1310,7 @@ cdef class _FeedParser(_BaseParser):
             # however if we give it all we got, we'll have nothing for
             # *mlParseChunk() and things go wrong.
             buffer_len = 4 if py_buffer_len > 4 else <int>py_buffer_len
+            orig_loader = _register_document_loader()
             if self._for_html:
                 error = _htmlCtxtResetPush(
                     pctxt, c_data, buffer_len, c_filename, c_encoding,
@@ -1304,6 +1319,7 @@ cdef class _FeedParser(_BaseParser):
                 xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
                     pctxt, c_data, buffer_len, c_filename, c_encoding)
+            _reset_document_loader(orig_loader)
             py_buffer_len -= buffer_len
             c_data += buffer_len
             if error:
@@ -1321,7 +1337,9 @@ cdef class _FeedParser(_BaseParser):
                     buffer_len = <int>py_buffer_len
                 if self._for_html:
                     c_node = pctxt.node  # last node where the parser stopped
+                    orig_loader = _register_document_loader()
                     error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
+                    _reset_document_loader(orig_loader)
                     # and now for the fun part: move node names to the dict
                     if pctxt.myDoc:
                         fixup_error = _fixHtmlDictSubtreeNames(
@@ -1331,7 +1349,9 @@ cdef class _FeedParser(_BaseParser):
                             pctxt.myDoc.dict = pctxt.dict
                             xmlparser.xmlDictReference(pctxt.dict)
                 else:
+                    orig_loader = _register_document_loader()
                     error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
+                    _reset_document_loader(orig_loader)
                 py_buffer_len -= buffer_len
                 c_data += buffer_len
 

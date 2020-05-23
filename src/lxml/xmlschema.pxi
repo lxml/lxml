@@ -77,7 +77,9 @@ cdef class XMLSchema(_Validator):
             # resolve requests to the document's parser
             __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(self._doc._parser)
         with nogil:
+            orig_loader = _register_document_loader()
             self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+            _reset_document_loader(orig_loader)
         if self._doc is not None:
             __GLOBAL_PARSER_CONTEXT.popImpliedContext()
         xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)

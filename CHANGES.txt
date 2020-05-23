@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+4.5.2 (2020-0?-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#1880251: Instead of globally overwriting the document loader in libxml2, lxml now
+  sets it per parser run, which improves the interoperability with other users of libxml2
+  such as libxmlsec.
+
+
 4.5.1 (2020-05-19)
 ==================
 

@@ -64,7 +64,9 @@ cdef class RelaxNG(_Validator):
                     doc = None
                     filename = _encodeFilename(file)
                     with self._error_log:
+                        orig_loader = _register_document_loader()
                         parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
+                        _reset_document_loader(orig_loader)
             elif (_getFilenameForFile(file) or '')[-4:].lower() == '.rnc':
                 _require_rnc2rng()
                 rng_data_utf8 = _utf8(_rnc2rng.dumps(_rnc2rng.load(file)))

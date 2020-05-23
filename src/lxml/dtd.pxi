@@ -277,14 +277,20 @@ cdef class DTD(_Validator):
             if _isString(file):
                 file = _encodeFilename(file)
                 with self._error_log:
+                    orig_loader = _register_document_loader()
                     self._c_dtd = xmlparser.xmlParseDTD(NULL, _xcstr(file))
+                    _reset_document_loader(orig_loader)
             elif hasattr(file, 'read'):
+                orig_loader = _register_document_loader()
                 self._c_dtd = _parseDtdFromFilelike(file)
+                _reset_document_loader(orig_loader)
             else:
                 raise DTDParseError, u"file must be a filename or file-like object"
         elif external_id is not None:
             with self._error_log:
+                orig_loader = _register_document_loader()
                 self._c_dtd = xmlparser.xmlParseDTD(<const_xmlChar*>external_id, NULL)
+                _reset_document_loader(orig_loader)
         else:
             raise DTDParseError, u"either filename or external ID required"
 
