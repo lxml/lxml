@@ -3047,9 +3047,9 @@ class ETreeOnlyTestCase(HelperTestCase):
         c = SubElement(a, 'c')
         d = SubElement(b, 'd')
         e = SubElement(c, 'e')
-        self.assertXML(
+        self.assertEqual(
             _bytes('<a><b><d></d></b><c><e></e></c></a>'),
-            a)
+            self.etree.tostring(a, method="c14n"))
         self.assertEqual(
             [b, c],
             a.getchildren())
