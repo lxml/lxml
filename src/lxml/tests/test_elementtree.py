@@ -130,7 +130,8 @@ class _ETreeTestCaseBase(HelperTestCase):
         check_method(element.extend)
         check_method(element.insert)
         check_method(element.remove)
-        check_method(element.getchildren)
+        # Removed in Py3.9
+        #check_method(element.getchildren)
         check_method(element.find)
         check_method(element.iterfind)
         check_method(element.findall)
@@ -142,7 +143,8 @@ class _ETreeTestCaseBase(HelperTestCase):
         check_method(element.items)
         check_method(element.iter)
         check_method(element.itertext)
-        check_method(element.getiterator)
+        # Removed in Py3.9
+        #check_method(element.getiterator)
 
         # These methods return an iterable. See bug 6472.
 
@@ -1933,28 +1935,6 @@ class _ETreeTestCaseBase(HelperTestCase):
             a.remove(el)
         self.assertLess(len(a), 3)
 
-    def test_getchildren(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        e = SubElement(c, 'e')
-        self.assertXML(
-            _bytes('<a><b><d></d></b><c><e></e></c></a>'),
-            a)
-        self.assertEqual(
-            [b, c],
-            a.getchildren())
-        self.assertEqual(
-            [d],
-            b.getchildren())
-        self.assertEqual(
-            [],
-            d.getchildren())
-
     def test_makeelement(self):
         Element = self.etree.Element
 
@@ -2009,184 +1989,6 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(
             [None] * 5,
             [el.tail for el in a.iter()])
-
-    def test_getiterator(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        e = SubElement(c, 'e')
-
-        self.assertEqual(
-            [a, b, d, c, e],
-            list(a.getiterator()))
-        self.assertEqual(
-            [d],
-            list(d.getiterator()))
-
-    def test_getiterator_empty(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        e = SubElement(c, 'e')
-
-        self.assertEqual(
-            [],
-            list(a.getiterator('none')))
-        self.assertEqual(
-            [],
-            list(e.getiterator('none')))
-        self.assertEqual(
-            [e],
-            list(e.getiterator()))
-
-    def test_getiterator_filter(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        e = SubElement(c, 'e')
-
-        self.assertEqual(
-            [a],
-            list(a.getiterator('a')))
-        a2 = SubElement(e, 'a')
-        self.assertEqual(
-            [a, a2],
-            list(a.getiterator('a')))
-        self.assertEqual(
-            [a2],
-            list(c.getiterator('a')))
-
-    def test_getiterator_filter_all(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        e = SubElement(c, 'e')
-
-        self.assertEqual(
-            [a, b, d, c, e],
-            list(a.getiterator('*')))
-
-    def test_getiterator_filter_comment(self):
-        Element = self.etree.Element
-        Comment = self.etree.Comment
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        comment_b = Comment("TEST-b")
-        b.append(comment_b)
-
-        self.assertEqual(
-            [comment_b],
-            list(a.getiterator(Comment)))
-
-        comment_a = Comment("TEST-a")
-        a.append(comment_a)
-
-        self.assertEqual(
-            [comment_b, comment_a],
-            list(a.getiterator(Comment)))
-
-        self.assertEqual(
-            [comment_b],
-            list(b.getiterator(Comment)))
-
-    def test_getiterator_filter_pi(self):
-        Element = self.etree.Element
-        PI = self.etree.ProcessingInstruction
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        pi_b = PI("TEST-b")
-        b.append(pi_b)
-
-        self.assertEqual(
-            [pi_b],
-            list(a.getiterator(PI)))
-
-        pi_a = PI("TEST-a")
-        a.append(pi_a)
-
-        self.assertEqual(
-            [pi_b, pi_a],
-            list(a.getiterator(PI)))
-
-        self.assertEqual(
-            [pi_b],
-            list(b.getiterator(PI)))
-
-    def test_getiterator_with_text(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        a.text = 'a'
-        b = SubElement(a, 'b')
-        b.text = 'b'
-        b.tail = 'b1'
-        c = SubElement(a, 'c')
-        c.text = 'c'
-        c.tail = 'c1'
-        d = SubElement(b, 'd')
-        d.text = 'd'
-        d.tail = 'd1'
-        e = SubElement(c, 'e')
-        e.text = 'e'
-        e.tail = 'e1'
-
-        self.assertEqual(
-            [a, b, d, c, e],
-            list(a.getiterator()))
-        #self.assertEqual(
-        #    [d],
-        #    list(d.getiterator()))
-
-    def test_getiterator_filter_with_text(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        a.text = 'a'
-        b = SubElement(a, 'b')
-        b.text = 'b'
-        b.tail = 'b1'
-        c = SubElement(a, 'c')
-        c.text = 'c'
-        c.tail = 'c1'
-        d = SubElement(b, 'd')
-        d.text = 'd'
-        d.tail = 'd1'
-        e = SubElement(c, 'e')
-        e.text = 'e'
-        e.tail = 'e1'
-
-        self.assertEqual(
-            [a],
-            list(a.getiterator('a')))
-        a2 = SubElement(e, 'a')
-        self.assertEqual(
-            [a, a2],
-            list(a.getiterator('a')))   
-        self.assertEqual(
-            [a2],
-            list(e.getiterator('a')))
 
     def test_getslice(self):
         Element = self.etree.Element
@@ -2710,41 +2512,6 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual('A2',
                           a.tail)
 
-    def test_elementtree_getiterator(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-        ElementTree = self.etree.ElementTree
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        e = SubElement(c, 'e')
-        t = ElementTree(element=a)
-
-        self.assertEqual(
-            [a, b, d, c, e],
-            list(t.getiterator()))
-
-    def test_elementtree_getiterator_filter(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-        ElementTree = self.etree.ElementTree
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        e = SubElement(c, 'e')
-        t = ElementTree(element=a)
-
-        self.assertEqual(
-            [a],
-            list(t.getiterator('a')))
-        a2 = SubElement(e, 'a')
-        self.assertEqual(
-            [a, a2],
-            list(t.getiterator('a')))
-
     def test_ns_access(self):
         ElementTree = self.etree.ElementTree
         ns = 'http://xml.infrae.com/1'
@@ -3179,17 +2946,6 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(
             'value',
             root[0].get(attr_name))
-
-    def test_iterparse_getiterator(self):
-        iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><d/></b><c/></a>')
-
-        counts = []
-        for event, elem in iterparse(f):
-            counts.append(len(list(elem.getiterator())))
-        self.assertEqual(
-            [1,2,1,4],
-            counts)
 
     def test_iterparse_move_elements(self):
         iterparse = self.etree.iterparse
@@ -5119,6 +4875,8 @@ if ElementTree:
 
         @classmethod
         def setUpClass(cls):
+            if sys.version_info >= (3, 9):
+                return
             import warnings
             # ElementTree warns about getiterator() in recent Pythons
             warnings.filterwarnings(
