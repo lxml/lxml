@@ -12,6 +12,8 @@ Bugs fixed
   sets it per parser run, which improves the interoperability with other users of libxml2
   such as libxmlsec.
 
+* LP#1881960: Fix build in CPython 3.10 by using Cython 0.29.20.
+
 
 4.5.1 (2020-05-19)
 ==================
