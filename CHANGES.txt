@@ -14,6 +14,9 @@ Bugs fixed
 
 * LP#1881960: Fix build in CPython 3.10 by using Cython 0.29.20.
 
+* The setup options "--with-xml2-config" and "--with-xslt-config" were accidentally renamed
+  to "--xml2-config" and "--xslt-config" in 4.5.1 and are now available again.
+
 
 4.5.1 (2020-05-19)
 ==================

@@ -489,7 +489,8 @@ def has_option(name):
         return True
     return False
 
-def option_value(name):
+
+def option_value(name, deprecated_for=None):
     for index, option in enumerate(sys.argv):
         if option == '--' + name:
             if index+1 >= len(sys.argv):
@@ -497,13 +498,25 @@ def option_value(name):
                     'The option %s requires a value' % option)
             value = sys.argv[index+1]
             sys.argv[index:index+2] = []
+            if deprecated_for:
+                print_deprecated_option(name, deprecated_for)
             return value
         if option.startswith('--' + name + '='):
             value = option[len(name)+3:]
             sys.argv[index:index+1] = []
+            if deprecated_for:
+                print_deprecated_option(name, deprecated_for)
             return value
-    env_val = os.getenv(name.upper().replace('-', '_'))
+    env_name = name.upper().replace('-', '_')
+    env_val = os.getenv(env_name)
+    if env_val and deprecated_for:
+        print_deprecated_option(env_name, deprecated_for.upper().replace('-', '_'))
     return env_val
+
+
+def print_deprecated_option(name, new_name):
+    print("WARN: Option '%s' if deprecated. Use '%s' instead." % (name, new_name))
+
 
 staticbuild = bool(os.environ.get('STATICBUILD', ''))
 # pick up any commandline options and/or env variables
@@ -526,8 +539,8 @@ OPTION_AUTO_RPATH = has_option('auto-rpath')
 OPTION_BUILD_LIBXML2XSLT = staticbuild or has_option('static-deps')
 if OPTION_BUILD_LIBXML2XSLT:
     OPTION_STATIC = True
-OPTION_WITH_XML2_CONFIG = option_value('xml2-config')
-OPTION_WITH_XSLT_CONFIG = option_value('xslt-config')
+OPTION_WITH_XML2_CONFIG = option_value('with-xml2-config') or option_value('xml2-config', deprecated_for='with-xml2-config')
+OPTION_WITH_XSLT_CONFIG = option_value('with-xslt-config') or option_value('xslt-config', deprecated_for='with-xslt-config')
 OPTION_LIBXML2_VERSION = option_value('libxml2-version')
 OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
