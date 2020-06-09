@@ -515,7 +515,7 @@ def option_value(name, deprecated_for=None):
 
 
 def print_deprecated_option(name, new_name):
-    print("WARN: Option '%s' if deprecated. Use '%s' instead." % (name, new_name))
+    print("WARN: Option '%s' is deprecated. Use '%s' instead." % (name, new_name))
 
 
 staticbuild = bool(os.environ.get('STATICBUILD', ''))
