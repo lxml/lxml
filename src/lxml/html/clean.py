@@ -480,9 +480,9 @@ class Cleaner(object):
         doesn't normally see.  We can't allow anything like that, so
         we'll kill any comments that could be conditional.
         """
-        bad = []
+        has_conditional_comment = _conditional_comment_re.search
         self._kill_elements(
-            doc, lambda el: _conditional_comment_re.search(el.text),
+            doc, lambda el: has_conditional_comment(el.text),
             etree.Comment)                
 
     def _kill_elements(self, doc, condition, iterate=None):
