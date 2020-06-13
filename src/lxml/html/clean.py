@@ -313,10 +313,7 @@ class Cleaner(object):
                         el.text = '/* deleted */'
                     elif new != old:
                         el.text = new
-        if self.comments or self.processing_instructions:
-            # FIXME: why either?  I feel like there's some obscure reason
-            # because you can put PIs in comments...?  But I've already
-            # forgotten it
+        if self.comments:
             kill_tags.add(etree.Comment)
         if self.processing_instructions:
             kill_tags.add(etree.ProcessingInstruction)
@@ -401,6 +398,12 @@ class Cleaner(object):
                     "It does not make sense to pass in both allow_tags and remove_unknown_tags")
             allow_tags = set(defs.tags)
         if allow_tags:
+            # make sure we do not remove comments/PIs if users want them (which is rare enough)
+            if not self.comments:
+                allow_tags.add(etree.Comment)
+            if not self.processing_instructions:
+                allow_tags.add(etree.ProcessingInstruction)
+
             bad = []
             for el in doc.iter():
                 if el.tag not in allow_tags:

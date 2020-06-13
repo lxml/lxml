@@ -8,6 +8,9 @@ lxml changelog
 Bugs fixed
 ----------
 
+* LP#1882606: ``Cleaner.clean_html()`` discarded comments and PIs regardless of the
+  corresponding configuration option, if ``remove_unknown_tags`` was set.
+
 * LP#1880251: Instead of globally overwriting the document loader in libxml2, lxml now
   sets it per parser run, which improves the interoperability with other users of libxml2
   such as libxmlsec.

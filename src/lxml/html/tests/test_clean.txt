@@ -101,6 +101,28 @@
   </body>
 </html>
 
+>>> print(Cleaner(page_structure=False, comments=False).clean_html(doc))
+<html>
+  <head>
+    <style>/* deleted */</style>
+  </head>
+  <body>
+    <!-- I am interpreted for EVIL! -->
+    <a href="">a link</a>
+    <a href="">a control char link</a>
+    <a href="">data</a>
+    <a href="#">another link</a>
+    <p>a paragraph</p>
+    <div>secret EVIL!</div>
+     of EVIL!
+      Password:
+    <a href="evil-site">spam spam SPAM!</a>
+    <a href="http://example.com" rel="author">Author</a>
+    <a href="http://example.com" rel="nofollow">Text</a>
+    <img src="evil!">
+  </body>
+</html>
+
 >>> print(Cleaner(page_structure=False, safe_attrs_only=False).clean_html(doc))
 <html>
   <head>

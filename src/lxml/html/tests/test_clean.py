@@ -68,6 +68,26 @@ class CleanerTest(unittest.TestCase):
         s = lxml.html.fromstring('<invalid tag>child</another>')
         self.assertEqual('child', clean_html(s).text_content())
 
+    def test_clean_with_comments(self):
+        html = """<p><span style="color: #00ffff;">Cy<!-- xx -->an</span><!-- XXX --></p>"""
+        s = lxml.html.fragment_fromstring(html)
+
+        self.assertEqual(
+            b'<p><span>Cyan</span></p>',
+            lxml.html.tostring(clean_html(s)))
+        self.assertEqual(
+            '<p><span>Cyan</span></p>',
+            clean_html(html))
+
+        cleaner = Cleaner(comments=False)
+        result = cleaner.clean_html(s)
+        self.assertEqual(
+            b'<p><span>Cy<!-- xx -->an</span><!-- XXX --></p>',
+            lxml.html.tostring(result))
+        self.assertEqual(
+            '<p><span>Cy<!-- xx -->an</span><!-- XXX --></p>',
+            cleaner.clean_html(html))
+
 
 def test_suite():
     suite = unittest.TestSuite()
