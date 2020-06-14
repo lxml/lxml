@@ -4933,22 +4933,27 @@ class ETreeC14NTestCase(HelperTestCase):
                           s)
 
     def test_c14n2_with_comments(self):
-        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
-        f = BytesIO()
-        tree.write(f, method='c14n2')
-        s = f.getvalue()
-        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
-                          s)
-        f = BytesIO()
-        tree.write(f, method='c14n2', with_comments=True)
-        s = f.getvalue()
-        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
-                          s)
-        f = BytesIO()
-        tree.write(f, method='c14n2', with_comments=False)
-        s = f.getvalue()
-        self.assertEqual(_bytes('<a><b></b></a>'),
-                          s)
+        tree = self.parse(b'<!--hi--> <a> <!-- ho --> <b/> </a> <!-- hu -->')
+        self.assertEqual(
+            b'<!--hi-->\n<a> <!-- ho --> <b></b> </a>\n<!-- hu -->',
+            etree.tostring(tree, method='c14n2'))
+
+        self.assertEqual(
+            b'<!--hi-->\n<a> <!-- ho --> <b></b> </a>\n<!-- hu -->',
+            etree.tostring(tree, method='c14n2', with_comments=True))
+
+        self.assertEqual(
+            b'<a>  <b></b> </a>',
+            etree.tostring(tree, method='c14n2', with_comments=False))
+
+    def test_c14n2_with_comments_strip_text(self):
+        tree = self.parse(b'<!--hi--> <a> <!-- ho --> <b/> </a> <!-- hu -->')
+        self.assertEqual(
+            b'<!--hi-->\n<a><!-- ho --><b></b></a>\n<!-- hu -->',
+            etree.tostring(tree, method='c14n2', with_comments=True, strip_text=True))
+        self.assertEqual(
+            b'<a><b></b></a>',
+            etree.tostring(tree, method='c14n2', with_comments=False, strip_text=True))
 
     def test_c14n_tostring_with_comments(self):
         tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
