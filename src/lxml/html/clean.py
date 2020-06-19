@@ -1,4 +1,4 @@
-# cython: language_level=2
+# cython: language_level=3str
 
 """A cleanup tool for HTML.
 
