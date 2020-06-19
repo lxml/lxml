@@ -35,7 +35,7 @@ class CleanerTest(unittest.TestCase):
         self.assertEqual(12-5+1, len(list(result.iter())))
 
     def test_allow_and_remove(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             Cleaner(allow_tags=['a'], remove_unknown_tags=True)
 
     def test_remove_unknown_tags(self):
