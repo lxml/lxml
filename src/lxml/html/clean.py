@@ -227,9 +227,7 @@ class Cleaner(object):
             "It does not make sense to pass in both allow_tags and remove_unknown_tags"
 
         if kw.get("allow_tags"):
-            setattr(self, "remove_unknown_tags", False)
-        else:
-            setattr(self, "remove_unknown_tags", True)
+            self.remove_unknown_tags = False
 
     # Used to lookup the primary URL for a given tag that is up for
     # removal:
