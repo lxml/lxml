@@ -207,7 +207,7 @@ class Cleaner(object):
     remove_tags = None
     allow_tags = None
     kill_tags = None
-    remove_unknown_tags = None
+    remove_unknown_tags = True
     safe_attrs_only = True
     safe_attrs = defs.safe_attrs
     add_nofollow = False
