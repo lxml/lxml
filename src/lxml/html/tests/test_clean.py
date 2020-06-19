@@ -34,6 +34,21 @@ class CleanerTest(unittest.TestCase):
 
         self.assertEqual(12-5+1, len(list(result.iter())))
 
+    def test_allow_and_remove(self):
+        with self.assertRaises(AssertionError):
+            Cleaner(allow_tags=['a'], remove_unknown_tags=True)
+
+    def test_remove_unknown_tags(self):
+        html = """<div><bun>lettuce, tomato, veggie patty</bun></div>"""
+        clean_html = """<div>lettuce, tomato, veggie patty</div>"""
+        cleaner = Cleaner(remove_unknown_tags=True)
+        result = cleaner.clean_html(html)
+        self.assertEqual(
+            result,
+            clean_html,
+            msg="Unknown tags not removed. Got: %s" % result,
+        )
+
     def test_safe_attrs_included(self):
         html = """<p><span style="color: #00ffff;">Cyan</span></p>"""
 

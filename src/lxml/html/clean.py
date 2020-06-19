@@ -207,7 +207,7 @@ class Cleaner(object):
     remove_tags = None
     allow_tags = None
     kill_tags = None
-    remove_unknown_tags = True
+    remove_unknown_tags = None
     safe_attrs_only = True
     safe_attrs = defs.safe_attrs
     add_nofollow = False
@@ -222,6 +222,14 @@ class Cleaner(object):
             setattr(self, name, value)
         if self.inline_style is None and 'inline_style' not in kw:
             self.inline_style = self.style
+
+        assert not all([kw.get("allow_tags"), kw.get("remove_unknown_tags")]), \
+            "It does not make sense to pass in both allow_tags and remove_unknown_tags"
+
+        if kw.get("allow_tags"):
+            setattr(self, "remove_unknown_tags", False)
+        else:
+            setattr(self, "remove_unknown_tags", True)
 
     # Used to lookup the primary URL for a given tag that is up for
     # removal:
