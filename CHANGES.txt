@@ -8,6 +8,8 @@ lxml changelog
 Bugs fixed
 ----------
 
+* ``Cleaner()`` now validates that only known configuration options can be set.
+
 * LP#1882606: ``Cleaner.clean_html()`` discarded comments and PIs regardless of the
   corresponding configuration option, if ``remove_unknown_tags`` was set.
 
