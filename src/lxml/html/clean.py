@@ -215,8 +215,11 @@ class Cleaner(object):
     whitelist_tags = {'iframe', 'embed'}
 
     def __init__(self, **kw):
+        not_an_attribute = object()
         for name, value in kw.items():
-            if not hasattr(self, name):
+            default = getattr(self, name, not_an_attribute)
+            if (default is not None and default is not True and default is not False
+                    and not isinstance(default, (frozenset, set, tuple, list))):
                 raise TypeError(
                     "Unknown parameter: %s=%r" % (name, value))
             setattr(self, name, value)
@@ -249,9 +252,12 @@ class Cleaner(object):
         """
         Cleans the document.
         """
-        if hasattr(doc, 'getroot'):
-            # ElementTree instance, instead of an element
-            doc = doc.getroot()
+        try:
+            getroot = doc.getroot
+        except AttributeError:
+            pass  # Element instance
+        else:
+            doc = getroot()  # ElementTree instance, instead of an element
         # convert XHTML to HTML
         xhtml_to_html(doc)
         # Normalize a case that IE treats <image> like <img>, and that
