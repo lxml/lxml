@@ -226,6 +226,12 @@ class Cleaner(object):
         if self.inline_style is None and 'inline_style' not in kw:
             self.inline_style = self.style
 
+        if kw.get("allow_tags"):
+            if kw.get("remove_unknown_tags"):
+                raise ValueError("It does not make sense to pass in both "
+                                 "allow_tags and remove_unknown_tags")
+            self.remove_unknown_tags = False
+
     # Used to lookup the primary URL for a given tag that is up for
     # removal:
     _tag_link_attrs = dict(
