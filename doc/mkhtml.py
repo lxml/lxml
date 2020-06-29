@@ -272,7 +272,7 @@ def publish(dirname, lxml_path, release):
     SubElement(SubElement(menu_div[-1], 'li'), 'a', href='/sitemap.html').text = 'Sitemap'
 
     # integrate menu into web pages
-    for tree, basename, outpath in trees.itervalues():
+    for tree, basename, outpath in trees.values():
         head = find_head(tree)[0]
         SubElement(head, 'script', type='text/javascript').text = menu_js
         SubElement(head, 'meta', name='viewport', content="width=device-width, initial-scale=1")
