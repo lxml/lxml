@@ -36,9 +36,7 @@ Thank you for your support.
 
   Support lxml through `GitHub Sponsors <https://github.com/users/scoder/sponsorship>`_
 
-  (Note: GitHub will currently double your donation!)
-
-  via `Tidelift <https://tidelift.com/subscription/pkg/pypi-lxml>`_
+  via a `Tidelift subscription <https://tidelift.com/subscription/pkg/pypi-lxml>`_
 
   or via PayPal:
 
