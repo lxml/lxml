@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-4.5.2 (2020-0?-??)
+4.5.2 (2020-07-09)
 ==================
 
 Bugs fixed
@@ -17,7 +17,7 @@ Bugs fixed
   sets it per parser run, which improves the interoperability with other users of libxml2
   such as libxmlsec.
 
-* LP#1881960: Fix build in CPython 3.10 by using Cython 0.29.20.
+* LP#1881960: Fix build in CPython 3.10 by using Cython 0.29.21.
 
 * The setup options "--with-xml2-config" and "--with-xslt-config" were accidentally renamed
   to "--xml2-config" and "--xslt-config" in 4.5.1 and are now available again.
