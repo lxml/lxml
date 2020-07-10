@@ -16,6 +16,13 @@ MANYLINUX_LIBXML2_VERSION=2.9.10
 MANYLINUX_LIBXSLT_VERSION=1.1.34
 MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
 MANYLINUX_IMAGE_686=quay.io/pypa/manylinux1_i686
+MANYLINUX_IMAGE_AARCH64=quay.io/pypa/manylinux2014_aarch64
+
+SHARED_ENV=-e CFLAGS="-O3 -g1 -march=core2 -pipe -fPIC -flto"
+AARCH64_ENV=-e AR="/opt/rh/devtoolset-9/root/usr/bin/gcc-ar" \
+		-e NM="/opt/rh/devtoolset-9/root/usr/bin/gcc-nm" \
+		-e RANLIB="/opt/rh/devtoolset-9/root/usr/bin/gcc-ranlib" \
+		-e CFLAGS="-O3 -g1 -pipe -fPIC -flto"
 
 .PHONY: all inplace inplace3 rebuild-sdist sdist build require-cython wheel_manylinux wheel
 
@@ -45,17 +52,20 @@ require-cython:
 	@[ -n "$(PYTHON_WITH_CYTHON)" ] || { \
 	    echo "NOTE: missing Cython - please use this command to install it: $(PYTHON) -m pip install Cython"; false; }
 
-wheel_manylinux: wheel_manylinux64 wheel_manylinux32
+qemu-user-static:
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-wheel_manylinux32 wheel_manylinux64: dist/lxml-$(LXMLVERSION).tar.gz
+wheel_manylinux: qemu-user-static wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
+
+wheel_manylinux32 wheel_manylinux64 wheel_manylinuxaarch64: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
-		-e CFLAGS="-O3 -g1 -march=core2 -pipe -fPIC -flto" \
+		$(if $(filter $@,wheel_manylinuxaarch64),$(AARCH64_ENV),$(SHARED_ENV),) \
 		-e LDFLAGS="$(LDFLAGS) -flto" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		-e WHEELHOUSE=wheelhouse_$(subst wheel_,,$@) \
-		$(if $(patsubst %32,,$@),$(MANYLINUX_IMAGE_X86_64),$(MANYLINUX_IMAGE_686)) \
+		$(if $(filter $@,wheel_manylinuxaarch64),$(MANYLINUX_IMAGE_AARCH64),$(if $(patsubst %32,,$@),$(MANYLINUX_IMAGE_X86_64),$(MANYLINUX_IMAGE_686))) \
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
 wheel:
