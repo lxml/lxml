@@ -15,7 +15,7 @@ Support the project
 
 lxml has been downloaded from the `Python Package Index`_
 millions of times and is also available directly in many package
-distributions, e.g. for Linux or MacOS-X.
+distributions, e.g. for Linux or macOS.
 
 .. _`Python Package Index`: https://pypi.python.org/pypi/lxml
 
