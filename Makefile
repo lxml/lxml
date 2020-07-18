@@ -60,7 +60,7 @@ wheel_manylinux32 wheel_manylinux64 wheel_manylinuxaarch64: dist/lxml-$(LXMLVERS
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
 		$(if $(patsubst %aarch64,,$@),,$(AARCH64_ENV)) \
-		-e CFLAGS="-O3 -g1 -pipe -fPIC -flto $(if $(patsubst %aarch64,,$@),-march=core2,)" \
+		-e CFLAGS="-O3 -g1 -pipe -fPIC -flto $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
 		-e LDFLAGS="$(LDFLAGS) -flto" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
