@@ -18,11 +18,9 @@ MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
 MANYLINUX_IMAGE_686=quay.io/pypa/manylinux1_i686
 MANYLINUX_IMAGE_AARCH64=quay.io/pypa/manylinux2014_aarch64
 
-SHARED_ENV=-e CFLAGS="-O3 -g1 -march=core2 -pipe -fPIC -flto"
 AARCH64_ENV=-e AR="/opt/rh/devtoolset-9/root/usr/bin/gcc-ar" \
 		-e NM="/opt/rh/devtoolset-9/root/usr/bin/gcc-nm" \
-		-e RANLIB="/opt/rh/devtoolset-9/root/usr/bin/gcc-ranlib" \
-		-e CFLAGS="-O3 -g1 -pipe -fPIC -flto"
+		-e RANLIB="/opt/rh/devtoolset-9/root/usr/bin/gcc-ranlib"
 
 .PHONY: all inplace inplace3 rebuild-sdist sdist build require-cython wheel_manylinux wheel
 
@@ -60,7 +58,8 @@ wheel_manylinux: qemu-user-static wheel_manylinux64 wheel_manylinux32 wheel_many
 wheel_manylinux32 wheel_manylinux64 wheel_manylinuxaarch64: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
-		$(if $(filter $@,wheel_manylinuxaarch64),$(AARCH64_ENV),$(SHARED_ENV),) \
+		$(if $(patsubst %aarch64,,$@),,$(AARCH64_ENV)) \
+		-e CFLAGS="-O3 -g1 -pipe -fPIC -flto $(if $(patsubst %aarch64,,$@),-march=core2,)" \
 		-e LDFLAGS="$(LDFLAGS) -flto" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
