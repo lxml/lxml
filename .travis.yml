@@ -40,6 +40,12 @@ matrix:
       env: STATIC_DEPS=false
     - python: pypy3
       env: STATIC_DEPS=false
+    - python: 3.8
+      env: STATIC_DEPS=false
+      arch: arm64
+    - python: 3.8
+      env: STATIC_DEPS=true
+      arch: arm64
   allow_failures:
     - python: pypy
     - python: pypy3
