@@ -53,7 +53,8 @@ require-cython:
 qemu-user-static:
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-wheel_manylinux: qemu-user-static wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
+wheel_manylinux: wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
+wheel_manylinuxaarch64: qemu-user-static
 
 wheel_manylinux32 wheel_manylinux64 wheel_manylinuxaarch64: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
