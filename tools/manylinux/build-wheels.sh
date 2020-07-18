@@ -57,7 +57,7 @@ build_wheels() {
         THIRD=$!
 
         [ -z "$FIRST" ] || wait ${FIRST}
-        FIRST=$SECOND
+        if [ "$(uname -m)" == "aarch64" ]; then FIRST=$THIRD; else FIRST=$SECOND; fi
         SECOND=$THIRD
     done
     wait
