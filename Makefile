@@ -14,6 +14,8 @@ CYTHON3_WITH_COVERAGE:=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys
 
 MANYLINUX_LIBXML2_VERSION=2.9.10
 MANYLINUX_LIBXSLT_VERSION=1.1.34
+MANYLINUX_CFLAGS="-O3 -g1 -pipe -fPIC -flto"
+MANYLINUX_LDFLAGS="-flto"
 MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
 MANYLINUX_IMAGE_686=quay.io/pypa/manylinux1_i686
 MANYLINUX_IMAGE_AARCH64=quay.io/pypa/manylinux2014_aarch64
@@ -60,8 +62,8 @@ wheel_manylinux32 wheel_manylinux64 wheel_manylinuxaarch64: dist/lxml-$(LXMLVERS
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
 		$(if $(patsubst %aarch64,,$@),,$(AARCH64_ENV)) \
-		-e CFLAGS="-O3 -g1 -pipe -fPIC -flto $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
-		-e LDFLAGS="$(LDFLAGS) -flto" \
+		-e CFLAGS="$(MANYLINUX_CFLAGS) $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
+		-e LDFLAGS="$(MANYLINUX_LDFLAGS)" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		-e WHEELHOUSE=wheelhouse_$(subst wheel_,,$@) \
