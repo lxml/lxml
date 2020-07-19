@@ -371,7 +371,28 @@ def build_libxml2xslt(download_dir, build_dir,
     libxml2_dir  = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
     libxslt_dir  = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
     prefix = os.path.join(os.path.abspath(build_dir), 'libxml2')
+    lib_dir = os.path.join(prefix, 'lib')
     safe_mkdir(prefix)
+
+    lib_names = ['libxml2', 'libexslt', 'libxslt', 'iconv', 'libz']
+    existing_libs = {
+        lib: os.path.join(lib_dir, filename)
+        for lib in lib_names
+        for filename in os.listdir(lib_dir)
+        if lib in filename and filename.endswith('.a')
+    } if os.path.isdir(lib_dir) else {}
+
+    def has_current_lib(name, build_dir, _build_all_following=[False]):
+        if _build_all_following[0]:
+            return False  # a dependency was rebuilt => rebuilt this lib as well
+        lib_file = existing_libs.get(name)
+        found = lib_file and os.path.getmtime(lib_file) > os.path.getmtime(build_dir)
+        if found:
+            print("Found pre-built '%s'" % name)
+        else:
+            # also rebuild all following libs (which may depend on this one)
+            _build_all_following[0] = True
+        return found
 
     call_setup = {}
     if sys.platform == 'darwin':
@@ -388,10 +409,12 @@ def build_libxml2xslt(download_dir, build_dir,
         './configure',
         '--prefix=%s' % prefix,
     ]
-    cmmi(zlib_configure_cmd, zlib_dir, multicore, **call_setup)
+    if not has_current_lib("libz", zlib_dir):
+        cmmi(zlib_configure_cmd, zlib_dir, multicore, **call_setup)
 
     # build libiconv
-    cmmi(configure_cmd, libiconv_dir, multicore, **call_setup)
+    if not has_current_lib("iconv", libiconv_dir):
+        cmmi(configure_cmd, libiconv_dir, multicore, **call_setup)
 
     # build libxml2
     libxml2_configure_cmd = configure_cmd + [
@@ -411,7 +434,8 @@ def build_libxml2xslt(download_dir, build_dir,
             libxml2_configure_cmd.append('--enable-rebuild-docs=no')
     except Exception:
         pass # this isn't required, so ignore any errors
-    cmmi(libxml2_configure_cmd, libxml2_dir, multicore, **call_setup)
+    if not has_current_lib("libxml2", libxml2_dir):
+        cmmi(libxml2_configure_cmd, libxml2_dir, multicore, **call_setup)
 
     # build libxslt
     libxslt_configure_cmd = configure_cmd + [
@@ -419,13 +443,13 @@ def build_libxml2xslt(download_dir, build_dir,
         '--with-libxml-prefix=%s' % prefix,
         '--without-crypto',
     ]
-    cmmi(libxslt_configure_cmd, libxslt_dir, multicore, **call_setup)
+    if not (has_current_lib("libxslt", libxslt_dir) and has_current_lib("libexslt", libxslt_dir)):
+        cmmi(libxslt_configure_cmd, libxslt_dir, multicore, **call_setup)
 
     # collect build setup for lxml
     xslt_config = os.path.join(prefix, 'bin', 'xslt-config')
     xml2_config = os.path.join(prefix, 'bin', 'xml2-config')
 
-    lib_dir = os.path.join(prefix, 'lib')
     static_include_dirs.extend([
             os.path.join(prefix, 'include'),
             os.path.join(prefix, 'include', 'libxml2'),
@@ -435,7 +459,7 @@ def build_libxml2xslt(download_dir, build_dir,
 
     listdir = os.listdir(lib_dir)
     static_binaries += [os.path.join(lib_dir, filename)
-        for lib in ['libxml2', 'libexslt', 'libxslt', 'iconv', 'libz']
+        for lib in lib_names
         for filename in listdir
         if lib in filename and filename.endswith('.a')]
 
