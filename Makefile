@@ -14,8 +14,8 @@ CYTHON3_WITH_COVERAGE:=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys
 
 MANYLINUX_LIBXML2_VERSION=2.9.10
 MANYLINUX_LIBXSLT_VERSION=1.1.34
-MANYLINUX_CFLAGS="-O3 -g1 -pipe -fPIC -flto"
-MANYLINUX_LDFLAGS="-flto"
+MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
+MANYLINUX_LDFLAGS=-flto
 MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
 MANYLINUX_IMAGE_686=quay.io/pypa/manylinux1_i686
 MANYLINUX_IMAGE_AARCH64=quay.io/pypa/manylinux2014_aarch64
