@@ -70,6 +70,7 @@ lxml.html.usedoctest module
 
 .. module:: lxml.html.usedoctest
 
+Doctest module for HTML comparison.
 
 Module contents
 ---------------
