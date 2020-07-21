@@ -66,8 +66,10 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         for a _LogEntry object (or even a node for which to determine
         a path), but at least when this test was created schema validation
         errors always got a node and an XPath value. If that ever changes,
-        we can modify this test to something like:
+        we can modify this test to something like::
+
             self.assertTrue(error_path is None or tree_path == error_path)
+
         That way, we can at least verify that if we did get a path value
         it wasn't bogus.
         """
