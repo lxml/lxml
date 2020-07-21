@@ -504,7 +504,7 @@ cdef class PythonElementClassLookup(FallbackElementClassLookup):
     `lxml.etree` API (such as XPath, extended slicing or some
     iteration methods).
 
-    See http://codespeak.net/lxml/element_classes.html
+    See https://lxml.de/element_classes.html
     """
     def __cinit__(self):
         self._lookup_function = _python_class_lookup

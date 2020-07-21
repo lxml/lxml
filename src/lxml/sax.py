@@ -9,7 +9,7 @@ SAX events.
 Use the `ElementTreeProducer` class or the `saxify()` function to fire
 the SAX events of an ElementTree against a SAX ContentHandler.
 
-See http://codespeak.net/lxml/sax.html
+See https://lxml.de/sax.html
 """
 
 from __future__ import absolute_import
