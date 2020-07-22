@@ -26,10 +26,6 @@ language = 'en'
 
 exclude_patterns = ['_build']
 
-autodoc_default_options = {
-    'private-members': True,
-}
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -44,6 +40,11 @@ html_logo = '../html/python-xml.png'
 
 
 # -- Extension configuration -------------------------------------------------
+
+autodoc_default_options = {
+    'ignore-module-all': True,
+    'private-members': True,
+}
 
 # -- Options for todo extension ----------------------------------------------
 
