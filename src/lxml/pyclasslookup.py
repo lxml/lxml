@@ -1,3 +1,3 @@
-"""Dummy module for backwards compatibility."""
+# dummy module for backwards compatibility
 
 from lxml.etree import PythonElementClassLookup
