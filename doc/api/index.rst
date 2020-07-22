@@ -8,7 +8,6 @@ lxml API Reference
    lxml
    lxml.html
    lxml.isoschematron
-   lxml.tests
 
 
 Indices and tables
