@@ -26,6 +26,10 @@ language = 'en'
 
 exclude_patterns = ['_build']
 
+autodoc_default_options = {
+    'private-members': True,
+}
+
 
 # -- Options for HTML output -------------------------------------------------
 
