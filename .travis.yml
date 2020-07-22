@@ -46,6 +46,11 @@ matrix:
     - python: 3.8
       env: STATIC_DEPS=true
       arch: arm64
+    - python: 3.8
+      env:
+        - STATIC_DEPS=false
+        - EXTRA_DEPS="docutils pygments sphinx sphinx-rtd-theme"
+      script: make html
   allow_failures:
     - python: pypy
     - python: pypy3
