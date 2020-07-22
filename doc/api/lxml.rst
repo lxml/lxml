@@ -49,14 +49,6 @@ lxml.objectify module
    :undoc-members:
    :show-inheritance:
 
-lxml.pyclasslookup module
--------------------------
-
-.. automodule:: lxml.pyclasslookup
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 lxml.sax module
 ---------------
 
