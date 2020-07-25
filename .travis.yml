@@ -29,8 +29,10 @@ env:
 
 matrix:
   include:
-    - python: 3.7
-      env: STATIC_DEPS=false EXTRA_DEPS="coverage<5"
+    - python: 3.8
+      env:
+        - STATIC_DEPS=false
+        - EXTRA_DEPS="coverage<5"
     - python: 3.8
       env:
         - STATIC_DEPS=true
