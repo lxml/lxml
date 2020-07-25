@@ -105,34 +105,33 @@ ftest_build: build
 ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
-apihtml: inplace
-	rm -fr doc/html/api
-	@[ -x "`which epydoc`" ] \
-		&& (cd src && echo "Generating API docs ..." && \
-			PYTHONPATH=. epydoc -v --docformat "restructuredtext en" \
-			-o ../doc/html/api --exclude='[.]html[.]tests|[.]_' \
-			--exclude-introspect='[.]usedoctest' \
-			--name "lxml API" --url / lxml/) \
-		|| (echo "not generating epydoc API documentation")
+apidoc: clean docclean
+	@[ -x "`which sphinx-apidoc`" ] \
+		&& (echo "Generating API docs ..." && \
+			sphinx-apidoc -e -P -T -o doc/api src/lxml \
+				"*includes" "*tests" "*pyclasslookup.py" "*usedoctest.py" "*html/_html5builder.py") \
+		|| (echo "not generating Sphinx autodoc API rst files")
+
+apihtml: apidoc inplace
+	@[ -x "`which sphinx-build`" ] \
+		&& (echo "Generating API docs ..." && \
+			make -C doc/api html) \
+		|| (echo "not generating Sphinx autodoc API documentation")
 
 website: inplace
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
 
-html: inplace website apihtml s5
+html: apihtml inplace website s5
 
 s5:
 	$(MAKE) -C doc/s5 slides
 
-apipdf: inplace
-	rm -fr doc/pdf
-	mkdir -p doc/pdf
-	@[ -x "`which epydoc`" ] \
-		&& (cd src && echo "Generating API docs ..." && \
-			PYTHONPATH=. epydoc -v --latex --docformat "restructuredtext en" \
-			-o ../doc/pdf --exclude='([.]html)?[.]tests|[.]_' \
-			--exclude-introspect='html[.]clean|[.]usedoctest' \
-			--name "lxml API" --url / lxml/) \
-		|| (echo "not generating epydoc API documentation")
+apipdf: apidoc inplace
+	rm -fr doc/api/_build
+	@[ -x "`which sphinx-build`" ] \
+		&& (echo "Generating API PDF docs ..." && \
+			make -C doc/api latexpdf) \
+		|| (echo "not generating Sphinx autodoc API PDF documentation")
 
 pdf: apipdf
 	$(PYTHON) doc/mklatex.py doc/pdf . ${LXMLVERSION}
@@ -164,6 +163,8 @@ docclean:
 	$(MAKE) -C doc/s5 clean
 	rm -f doc/html/*.html
 	rm -fr doc/html/api
+	rm -f doc/api/lxml*.rst
+	rm -fr doc/api/_build
 	rm -fr doc/pdf
 
 realclean: clean docclean
