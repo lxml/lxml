@@ -108,7 +108,7 @@ ftest_inplace: inplace
 apidoc: clean docclean inplace3
 	@[ -x "`which sphinx-apidoc`" ] \
 		&& (echo "Generating API docs ..." && \
-			sphinx-apidoc -e -P -T -o doc/api src/lxml \
+			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
 				"*includes" "*tests" "*pyclasslookup.py" "*usedoctest.py" "*html/_html5builder.py") \
 		|| (echo "not generating Sphinx autodoc API rst files")
 
