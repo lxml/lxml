@@ -2,6 +2,18 @@
 lxml changelog
 ==============
 
+4.6.0 (2020-??-??)
+==================
+
+Bugs fixed
+----------
+
+* ``TreeBuilder.close()`` raised ``AssertionError`` in some error cases where it
+  should have raised ``XMLSyntaxError``.  It now raises a combined exception to
+  keep up backwards compatibility, while switching to ``XMLSyntaxError`` as an
+  interface.
+
+
 4.5.2 (2020-07-09)
 ==================
 
