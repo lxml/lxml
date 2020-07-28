@@ -1,5 +1,14 @@
 # SAX-like interfaces
 
+class XMLSyntaxAssertionError(XMLSyntaxError, AssertionError):
+    """
+    An XMLSyntaxError that additionally inherits from AssertionError for
+    ElementTree / backwards compatibility reasons.
+
+    This class may get replaced by a plain XMLSyntaxError in a future version.
+    """
+
+
 ctypedef enum _SaxParserEvents:
     SAX_EVENT_START    = 1 << 0
     SAX_EVENT_END      = 1 << 1
@@ -805,10 +814,13 @@ cdef class TreeBuilder(_SaxParserTarget):
         u"""close(self)
 
         Flushes the builder buffers, and returns the toplevel document
-        element.
+        element.  Raises XMLSyntaxError on inconsistencies.
         """
-        assert not self._element_stack, u"missing end tags"
-        assert self._last is not None, u"missing toplevel element"
+        if self._element_stack:
+            raise XMLSyntaxAssertionError("missing end tags")
+        # TODO: this does not necessarily seem like an error case.  Why not just return None?
+        if self._last is None:
+            raise XMLSyntaxAssertionError("missing toplevel element")
         return self._last
 
     def data(self, data):
