@@ -352,7 +352,6 @@ class Cleaner(object):
             # We should get rid of any <param> tags not inside <applet>;
             # These are not really valid anyway.
             for el in list(doc.iter('param')):
-                found_parent = False
                 parent = el.getparent()
                 while parent is not None and parent.tag not in ('applet', 'object'):
                     parent = parent.getparent()
