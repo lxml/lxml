@@ -2,9 +2,11 @@
 # (probably in a test; this may not match the DTD exactly, but we
 # should document just how it differs).
 
-# Data taken from http://www.w3.org/TR/html401/index/elements.html
-# and http://www.w3.org/community/webed/wiki/HTML/New_HTML5_Elements
-# for html5_tags.
+"""
+Data taken from https://www.w3.org/TR/html401/index/elements.html
+and https://www.w3.org/community/webed/wiki/HTML/New_HTML5_Elements
+for html5_tags.
+"""
 
 empty_tags = frozenset([
     'area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
