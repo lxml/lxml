@@ -105,7 +105,7 @@ ftest_build: build
 ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
-apidoc: docclean inplace3
+apidoc: docclean
 	@[ -x "`which sphinx-apidoc`" ] \
 		&& (echo "Generating API docs ..." && \
 			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
@@ -113,7 +113,7 @@ apidoc: docclean inplace3
 				"*.so" "*.pyd") \
 		|| (echo "not generating Sphinx autodoc API rst files")
 
-apihtml: apidoc
+apihtml: apidoc inplace3
 	@[ -x "`which sphinx-build`" ] \
 		&& (echo "Generating API docs ..." && \
 			make -C doc/api html) \
@@ -127,7 +127,7 @@ html: apihtml website s5
 s5:
 	$(MAKE) -C doc/s5 slides
 
-apipdf: apidoc
+apipdf: apidoc inplace3
 	rm -fr doc/api/_build
 	@[ -x "`which sphinx-build`" ] \
 		&& (echo "Generating API PDF docs ..." && \
