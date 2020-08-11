@@ -1232,6 +1232,9 @@ class InputGetter(object):
         ## FIXME: kind of dumb to turn a list into an iterator, only
         ## to have it likely turned back into a list again :(
         return iter(self._all_xpath(self.form))
+    
+    def __len__(self);
+        return len(self.all_xpath(self.form))
 
 
 class InputMixin(object):
