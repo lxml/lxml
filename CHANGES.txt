@@ -5,6 +5,16 @@ lxml changelog
 4.6.0 (2020-??-??)
 ==================
 
+Features added
+--------------
+
+* GH#310: ``lxml.html.InputGetter`` supports ``__len__()`` to count the number of input fields.
+  Patch by Aidan Woolley.
+
+* ``lxml.html.InputGetter`` has a new ``.items()`` method to ease processing all input fields.
+
+* ``lxml.html.InputGetter.keys()`` now returns the field names in document order.
+
 Bugs fixed
 ----------
 
