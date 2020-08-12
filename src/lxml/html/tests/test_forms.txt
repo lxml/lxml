@@ -49,8 +49,20 @@ u'http://example.org/form.html'
 u'http://example.org/test'
 >>> f.method
 'GET'
+
 >>> f.inputs # doctest:+NOPARSE_MARKUP
 <InputGetter for form 0>
+>>> len(f.inputs)
+20
+>>> len(list(f.inputs))
+20
+>>> len(f.inputs.keys())
+15
+>>> len(f.inputs.items())
+15
+>>> len([f.inputs[name] for name in f.inputs.keys()])
+15
+
 >>> hidden = f.inputs['hidden_field']
 >>> hidden.checkable
 False
@@ -162,6 +174,8 @@ hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2
 >>> fields = f.fields
 >>> fields # doctest:+NOPARSE_MARKUP
 <FieldsDict for form 0>
+>>> len(fields)
+20
 >>> for name, value in sorted(fields.items()):
 ...     print('%s: %r' % (name, value))
 check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
@@ -195,6 +209,8 @@ textarea_field: 'some text'
 <Element form at ...>
 >>> tree.forms[0].fields # doctest: +NOPARSE_MARKUP
 <FieldsDict for form 0>
+>>> len(tree.forms[0].fields)
+2
 >>> list(tree.forms[0].fields.keys())
 ['foo']
 >>> list(tree.forms[0].fields.items())

@@ -1176,7 +1176,8 @@ class InputGetter(object):
     ``form.inputs['field_name']``.  If there are a set of checkboxes
     with the same name, they are returned as a list (a `CheckboxGroup`
     which also allows value setting).  Radio inputs are handled
-    similarly.
+    similarly.  Use ``.keys()`` and ``.items()`` to process all fields
+    in this way.
 
     You can also iterate over this to get all input elements.  This
     won't return the same thing as if you get all the names, as
@@ -1195,7 +1196,7 @@ class InputGetter(object):
     ## a dictionary-like object or list-like object
 
     def __getitem__(self, name):
-        fields = [field for field in self if field.get('name') == name]
+        fields = [field for field in self if field.name == name]
         if not fields:
             raise KeyError("No input element with the name %r" % name)
 
@@ -1214,17 +1215,39 @@ class InputGetter(object):
 
     def __contains__(self, name):
         for field in self:
-            if field.get('name') == name:
+            if field.name == name:
                 return True
         return False
 
     def keys(self):
-        names = set()
+        """
+        Returns all unique field names, in document order.
+
+        :return: A list of all unique field names.
+        """
+        names = []
+        seen = {None}
         for el in self:
-            names.add(el.name)
-        if None in names:
-            names.remove(None)
-        return list(names)
+            name = el.name
+            if name not in seen:
+                names.append(name)
+                seen.add(name)
+        return names
+
+    def items(self):
+        """
+        Returns all fields with their names, similar to dict.items().
+
+        :return: A list of (name, field) tuples.
+        """
+        items = []
+        seen = set()
+        for el in self:
+            name = el.name
+            if name not in seen:
+                seen.add(name)
+                items.append((name, self[name]))
+        return items
 
     def __iter__(self):
         return self.form.iter('select', 'input', 'textarea')
