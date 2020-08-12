@@ -1183,8 +1183,6 @@ class InputGetter(object):
     checkboxes and radio elements are returned individually.
     """
 
-    _name_xpath = etree.XPath(".//*[@name = $name and (local-name(.) = 'select' or local-name(.) = 'input' or local-name(.) = 'textarea')]")
-
     def __init__(self, form):
         self.form = form
 
@@ -1197,27 +1195,28 @@ class InputGetter(object):
     ## a dictionary-like object or list-like object
 
     def __getitem__(self, name):
-        results = self._name_xpath(self.form, name=name)
-        if results:
-            type = results[0].get('type')
-            if type == 'radio' and len(results) > 1:
-                group = RadioGroup(results)
-                group.name = name
-                return group
-            elif type == 'checkbox' and len(results) > 1:
-                group = CheckboxGroup(results)
-                group.name = name
-                return group
-            else:
-                # I don't like throwing away elements like this
-                return results[0]
+        fields = [field for field in self if field.get('name') == name]
+        if not fields:
+            raise KeyError("No input element with the name %r" % name)
+
+        input_type = fields[0].get('type')
+        if input_type == 'radio' and len(fields) > 1:
+            group = RadioGroup(fields)
+            group.name = name
+            return group
+        elif input_type == 'checkbox' and len(fields) > 1:
+            group = CheckboxGroup(fields)
+            group.name = name
+            return group
         else:
-            raise KeyError(
-                "No input element with the name %r" % name)
+            # I don't like throwing away elements like this
+            return fields[0]
 
     def __contains__(self, name):
-        results = self._name_xpath(self.form, name=name)
-        return bool(results)
+        for field in self:
+            if field.get('name') == name:
+                return True
+        return False
 
     def keys(self):
         names = set()
