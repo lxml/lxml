@@ -1184,7 +1184,6 @@ class InputGetter(object):
     """
 
     _name_xpath = etree.XPath(".//*[@name = $name and (local-name(.) = 'select' or local-name(.) = 'input' or local-name(.) = 'textarea')]")
-    _all_xpath = etree.XPath(".//*[local-name() = 'select' or local-name() = 'input' or local-name() = 'textarea']")
 
     def __init__(self, form):
         self.form = form
@@ -1229,12 +1228,10 @@ class InputGetter(object):
         return list(names)
 
     def __iter__(self):
-        ## FIXME: kind of dumb to turn a list into an iterator, only
-        ## to have it likely turned back into a list again :(
-        return iter(self._all_xpath(self.form))
-    
+        return self.form.iter('select', 'input', 'textarea')
+
     def __len__(self):
-        return len(self._all_xpath(self.form))
+        return sum(1 for _ in self)
 
 
 class InputMixin(object):
