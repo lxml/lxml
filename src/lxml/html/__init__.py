@@ -1234,7 +1234,7 @@ class InputGetter(object):
         return iter(self._all_xpath(self.form))
     
     def __len__(self):
-        return len(self.all_xpath(self.form))
+        return len(self._all_xpath(self.form))
 
 
 class InputMixin(object):
