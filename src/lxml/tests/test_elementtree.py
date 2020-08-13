@@ -26,7 +26,7 @@ from .common_imports import (
     BytesIO, etree, HelperTestCase,
     ElementTree, cElementTree, ET_VERSION, CET_VERSION,
     filter_by_version, fileInTestDir, canonicalize, tmpfile,
-    _str, _bytes, unicode, next, IS_PYTHON2
+    _str, _bytes, unicode, IS_PYTHON2
 )
 
 if cElementTree is not None and (CET_VERSION <= (1,0,7) or sys.version_info[0] >= 3):

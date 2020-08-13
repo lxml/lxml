@@ -10,7 +10,7 @@ import unittest
 import tempfile, os, os.path, sys
 
 from .common_imports import etree, html, BytesIO, fileInTestDir, _bytes, _str
-from .common_imports import SillyFileLike, HelperTestCase, write_to_file, next
+from .common_imports import SillyFileLike, HelperTestCase, write_to_file
 
 try:
     unicode
