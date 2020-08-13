@@ -4,7 +4,7 @@
 Web IO test cases (wsgiref)
 """
 
-from __future__ import with_statement, absolute_import
+from __future__ import absolute_import
 
 import unittest
 import textwrap
