@@ -1,3 +1,11 @@
+"""
+Common helpers and adaptations for Py2/3.
+To be used in tests.
+"""
+
+# Slows down test runs by factors. Enable to debug proxy handling issues.
+DEBUG_PROXY_ISSUES = False  # True
+
 import gc
 import os
 import os.path
@@ -161,7 +169,8 @@ except AttributeError:
 
 class HelperTestCase(unittest.TestCase):
     def tearDown(self):
-        gc.collect()
+        if DEBUG_PROXY_ISSUES:
+            gc.collect()
 
     def parse(self, text, parser=None):
         f = BytesIO(text) if isinstance(text, bytes) else StringIO(text)
