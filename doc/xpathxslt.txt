@@ -40,7 +40,7 @@ The usual setup procedure:
 
   >>> import sys
   >>> if sys.version_info[0] == 2:
-  ...     str = __builtins__['unicode']
+  ...     from __builtin__ import unicode as str
 
 
 XPath
