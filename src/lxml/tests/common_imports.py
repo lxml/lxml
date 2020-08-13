@@ -72,15 +72,6 @@ def filter_by_version(test_class, version_dict, current_version):
 import doctest
 
 try:
-    next
-except NameError:
-    def next(it):
-        return it.next()
-else:
-    locals()['next'] = next
-
-
-try:
     import pytest
 except ImportError:
     class skipif(object):
