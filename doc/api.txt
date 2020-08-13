@@ -47,11 +47,6 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
   ...     if isinstance(s, str): s = s.encode("UTF-8")
   ...     return BytesIO(s)
 
-  >>> from collections import deque
-
-  >>> try: unicode = unicode
-  ... except NameError: unicode = str
-
 
 lxml.etree
 ----------
@@ -265,6 +260,7 @@ breadth-first traversal, it is almost as simple if you use the
       </d>
     </root>
 
+    >>> from collections import deque
     >>> queue = deque([root])
     >>> while queue:
     ...    el = queue.popleft()  # pop next element
