@@ -38,8 +38,9 @@ The usual setup procedure:
   ...        if isinstance(s, str): s = s.encode("UTF-8")
   ...        return BytesIO(s)
 
-  >>> try: unicode = __builtins__["unicode"]
-  ... except (NameError, KeyError): unicode = str
+  >>> import sys
+  >>> if sys.version_info[0] == 2:
+  ...     str = __builtins__['unicode']
 
 
 XPath
@@ -485,22 +486,22 @@ document:
   'Text'
 
 but, as opposed to normal ElementTree objects, can also be turned into an (XML
-or text) string by applying the str() function:
+or text) string by applying the ``bytes()`` function (``str()`` in Python 2):
+
+.. sourcecode:: pycon
+
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+The result is always a plain string, encoded as requested by the ``xsl:output``
+element in the stylesheet.  If you want a Python Unicode/Text string instead,
+you should set this encoding to ``UTF-8`` (unless the `ASCII` default
+is sufficient).  This allows you to call the builtin ``str()`` function on
+the result (``unicode()`` in Python 2):
 
 .. sourcecode:: pycon
 
   >>> str(result)
-  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
-
-The result is always a plain string, encoded as requested by the
-``xsl:output`` element in the stylesheet.  If you want a Python unicode string
-instead, you should set this encoding to ``UTF-8`` (unless the `ASCII` default
-is sufficient).  This allows you to call the builtin ``unicode()`` function on
-the result:
-
-.. sourcecode:: pycon
-
-  >>> unicode(result)
   u'<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 You can use other encodings at the cost of multiple recoding.  Encodings that
@@ -519,7 +520,7 @@ are not supported by Python will result in an error:
   >>> transform = etree.XSLT(xslt_tree)
 
   >>> result = transform(doc)
-  >>> unicode(result)
+  >>> str(result)
   Traceback (most recent call last):
     ...
   LookupError: unknown encoding: UCS4
@@ -579,32 +580,32 @@ First, let's try passing in a simple integer expression:
 .. sourcecode:: pycon
 
   >>> result = transform(doc_root, a="5")
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>5</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>5</foo>\n'
 
 You can use any valid XPath expression as parameter value:
 
 .. sourcecode:: pycon
 
   >>> result = transform(doc_root, a="/a/b/text()")
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 It's also possible to pass an XPath object as a parameter:
 
 .. sourcecode:: pycon
 
   >>> result = transform(doc_root, a=etree.XPath("/a/b/text()"))
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 Passing a string expression looks like this:
 
 .. sourcecode:: pycon
 
   >>> result = transform(doc_root, a="'A'")
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>A</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>A</foo>\n'
 
 To pass a string that (potentially) contains quotes, you can use the
 ``.strparam()`` class method.  Note that it does not escape the
@@ -616,8 +617,8 @@ value.
   >>> plain_string_value = etree.XSLT.strparam(
   ...                          """ It's "Monty Python" """)
   >>> result = transform(doc_root, a=plain_string_value)
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo> It\'s "Monty Python" </foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo> It\'s "Monty Python" </foo>\n'
 
 If you need to pass parameters that are not legal Python identifiers,
 pass them inside of a dictionary:
@@ -634,8 +635,8 @@ pass them inside of a dictionary:
   ... </xsl:stylesheet>'''))
 
   >>> result = transform(doc_root, **{'non-python-identifier': '5'})
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>5</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>5</foo>\n'
 
 
 
@@ -664,8 +665,8 @@ error log.
 
   >>> doc_root = etree.XML('<a><b>Text</b></a>')
   >>> result = transform(doc_root)
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
   >>> print(transform.error_log)
   <string>:0:0:ERROR:XSLT:ERR_OK: STARTING
@@ -707,8 +708,8 @@ operations, as you do not have to instantiate a stylesheet yourself:
 .. sourcecode:: pycon
 
   >>> result = doc.xslt(xslt_tree, a="'A'")
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>A</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>A</foo>\n'
 
 This is a shortcut for the following code:
 
@@ -716,8 +717,8 @@ This is a shortcut for the following code:
 
   >>> transform = etree.XSLT(xslt_tree)
   >>> result = transform(doc, a="'A'")
-  >>> str(result)
-  '<?xml version="1.0"?>\n<foo>A</foo>\n'
+  >>> bytes(result)
+  b'<?xml version="1.0"?>\n<foo>A</foo>\n'
 
 
 Dealing with stylesheet complexity
