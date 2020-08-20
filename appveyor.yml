@@ -12,6 +12,11 @@ environment:
   - python: 36-x64
   - python: 35
   - python: 35-x64
+  - python: 39
+  - python: 39-x64
+  - python: 38
+    arch: arm64
+    env: STATIC_DEPS=true
 
 install:
     - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
