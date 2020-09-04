@@ -215,6 +215,14 @@ def publish(dirname, lxml_path, release):
     menu = Element("div", {'class': 'sidemenu', 'id': 'sidemenu'})
     SubElement(menu, 'div', {'class': 'menutrigger', 'onclick': 'trigger_menu(event)'}).text = "Menu"
     menu_div = SubElement(menu, 'div', {'class': 'menu'})
+
+    banner = SubElement(menu_div, 'div', {'class': 'banner'})
+    SubElement(banner, 'img', src="python-xml.png")
+    banner_link = SubElement(banner, 'a', href="index.html#support-the-project")
+    banner_link.text = "Like the tool? "
+    SubElement(banner_link, 'br').tail = "Help make it better! "
+    SubElement(banner_link, 'br').tail = "Your donation helps!"
+
     # build HTML pages and parse them back
     for section, text_files in SITE_STRUCTURE:
         section_head = make_menu_section_head(section, menu_div)

@@ -79,7 +79,7 @@ div.contents.topic > p > a {
         border-right: groove gray;
         border-bottom: groove gray;
         padding-right: 1ex;
-        background: #FFFAFA url(python-xml.png) no-repeat top right;
+        background: #FFFAFA /* url(python-xml.png) no-repeat top right */ ;
     }
 
     html > body div.sidemenu {
@@ -105,7 +105,7 @@ div.contents.topic > p > a {
         text-align: left;
         border: groove gray;
         padding-right: 1ex;
-        background: #FFFAFA url(python-xml.png) no-repeat top right;
+        background: #FFFAFA /* url(python-xml.png) no-repeat top right */ ;
     }
 
     div.sidemenu:hover > div.menu,
@@ -157,6 +157,24 @@ div.sidemenu > div.menu ul {
     line-height: 1em;
     margin: 1ex;
     padding-left: 1em;
+}
+
+div.banner {
+    font-size: 133%;
+    border: 2px solid red;
+    color: darkgreen;
+    line-height: 1em;
+    margin: 1ex;
+    padding: 2px;
+}
+
+div.banner > a {
+    color: darkgreen;
+}
+
+div.banner > img {
+    position: absolute;
+    right: 0;
 }
 
 /*** headings ***/
