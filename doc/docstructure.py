@@ -22,7 +22,7 @@ SITE_STRUCTURE = [
     ]
 
 HREF_MAP = {
-    "API reference" : "apidoc/index.html"
+    "API reference" : "apidoc/lxml.html"
 }
 
 BASENAME_MAP = {
