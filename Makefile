@@ -119,7 +119,7 @@ apihtml: apidoc inplace3
 			make -C doc/api html) \
 		|| (echo "not generating Sphinx autodoc API documentation")
 
-website: inplace3
+website: inplace3 docclean
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) doc/mkhtml.py doc/html . ${LXMLVERSION}
 
 html: apihtml website s5
@@ -134,7 +134,7 @@ apipdf: apidoc inplace3
 			make -C doc/api latexpdf) \
 		|| (echo "not generating Sphinx autodoc API PDF documentation")
 
-pdf: apipdf
+pdf: apipdf pdfclean
 	$(PYTHON) doc/mklatex.py doc/pdf . ${LXMLVERSION}
 	(cd doc/pdf && pdflatex lxmldoc.tex \
 		    && pdflatex lxmldoc.tex \
@@ -163,6 +163,8 @@ clean:
 docclean:
 	$(MAKE) -C doc/s5 clean
 	rm -f doc/html/*.html
+
+pdfclean:
 	rm -fr doc/pdf
 
 apidocclean:
