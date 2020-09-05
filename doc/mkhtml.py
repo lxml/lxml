@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
 from lxml.etree import (parse, fromstring, ElementTree,
                         Element, SubElement, XPath, XML)
+import glob
+import hashlib
 import os
 import re
 import sys
@@ -199,9 +201,19 @@ def publish(dirname, lxml_path, release):
     doc_dir = os.path.join(lxml_path, 'doc')
     script = os.path.join(doc_dir, 'rest2html.py')
     pubkey = os.path.join(doc_dir, 'pubkey.asc')
-    stylesheet_url = 'style.css'
+    stylesheet_file = 'style.css'
+    style_file_pattern = "style_%s.css"
 
     shutil.copy(pubkey, dirname)
+    for old_stylesheet in glob.iglob(os.path.join(dirname, style_file_pattern % "*")):
+        os.unlink(old_stylesheet)
+    with open(os.path.join(dirname, stylesheet_file), 'rb') as f:
+        css = f.read()
+        checksum = hashlib.sha256(css).hexdigest()[:32]
+
+        stylesheet_url = style_file_pattern % checksum
+        with open(os.path.join(dirname, stylesheet_url), 'wb') as out:
+            out.write(css)
 
     href_map = HREF_MAP.copy()
     changelog_basename = 'changes-%s' % release
