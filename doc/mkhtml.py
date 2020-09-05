@@ -202,9 +202,12 @@ def publish(dirname, lxml_path, release):
     script = os.path.join(doc_dir, 'rest2html.py')
     pubkey = os.path.join(doc_dir, 'pubkey.asc')
     stylesheet_file = 'style.css'
-    style_file_pattern = "style_%s.css"
 
     shutil.copy(pubkey, dirname)
+    # FIXME: find a way to make hashed filenames work both locally and in the versioned directories.
+    stylesheet_url = stylesheet_file
+    """
+    style_file_pattern = "style_%s.css"
     for old_stylesheet in glob.iglob(os.path.join(dirname, style_file_pattern % "*")):
         os.unlink(old_stylesheet)
     with open(os.path.join(dirname, stylesheet_file), 'rb') as f:
@@ -214,6 +217,7 @@ def publish(dirname, lxml_path, release):
         stylesheet_url = style_file_pattern % checksum
         with open(os.path.join(dirname, stylesheet_url), 'wb') as out:
             out.write(css)
+    """
 
     href_map = HREF_MAP.copy()
     changelog_basename = 'changes-%s' % release
