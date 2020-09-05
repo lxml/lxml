@@ -146,6 +146,20 @@ def inject_donate_buttons(lxml_path, rst2html_script, tree):
     finance_div.addnext(legal)
 
 
+def inject_banner(parent):
+    banner = parent.makeelement('div', {'class': 'banner'})
+    parent.insert(0, banner)
+
+    banner_image = SubElement(banner, 'div', {'class': "banner_image"})
+    SubElement(banner_image, 'img', src="python-xml-title.png")
+
+    banner_text = SubElement(banner, 'div', {'class': "banner_link"})
+    banner_link = SubElement(banner_text, 'a', href="index.html#support-the-project")
+    banner_link.text = "Like the tool? "
+    SubElement(banner_link, 'br', {'class': "first"}).tail = "Help making it better! "
+    SubElement(banner_link, 'br', {'class': "second"}).tail = "Your donation helps!"
+
+
 def rest2html(script, source_path, dest_path, stylesheet_url):
     command = ('%s %s %s --stylesheet=%s --link-stylesheet %s > %s' %
                (sys.executable, script, RST2HTML_OPTIONS,
@@ -215,13 +229,7 @@ def publish(dirname, lxml_path, release):
     menu = Element("div", {'class': 'sidemenu', 'id': 'sidemenu'})
     SubElement(menu, 'div', {'class': 'menutrigger', 'onclick': 'trigger_menu(event)'}).text = "Menu"
     menu_div = SubElement(menu, 'div', {'class': 'menu'})
-
-    banner = SubElement(menu_div, 'div', {'class': 'banner'})
-    SubElement(banner, 'img', src="python-xml.png")
-    banner_link = SubElement(banner, 'a', href="index.html#support-the-project")
-    banner_link.text = "Like the tool? "
-    SubElement(banner_link, 'br').tail = "Help make it better! "
-    SubElement(banner_link, 'br').tail = "Your donation helps!"
+    inject_banner(menu_div)
 
     # build HTML pages and parse them back
     for section, text_files in SITE_STRUCTURE:
@@ -241,6 +249,9 @@ def publish(dirname, lxml_path, release):
 
                 rest2html(script, path, outpath, stylesheet_url)
                 tree = parse(outpath)
+
+                page_div = tree.getroot()[1][0]  # html->body->div[class=document]
+                inject_banner(page_div)
 
                 if filename == 'main.txt':
                     # inject donation buttons

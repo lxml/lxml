@@ -161,20 +161,34 @@ div.sidemenu > div.menu ul {
 
 div.banner {
     font-size: 133%;
-    border: 2px solid red;
+    border: 2px solid darkred;
     color: darkgreen;
     line-height: 1em;
     margin: 1ex;
-    padding: 2px;
+    padding: 3pt;
 }
 
-div.banner > a {
+div.banner_link > a {
     color: darkgreen;
 }
 
-div.banner > img {
-    position: absolute;
-    right: 0;
+div.banner_image img {
+    max-height: 3em;
+    max-width: 60pt;
+    float: right;
+}
+
+div.document > div.banner {
+    text-align: center;
+}
+
+@media (min-width: 480pt) {
+    div.document > div.banner br.first {
+        display: none;
+    }
+    div.document > div.banner img {
+        max-height: 2em;
+    }
 }
 
 /*** headings ***/
