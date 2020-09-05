@@ -105,7 +105,7 @@ ftest_build: build
 ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
-apidoc: docclean
+apidoc: apidocclean
 	@[ -x "`which sphinx-apidoc`" ] \
 		&& (echo "Generating API docs ..." && \
 			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
@@ -163,12 +163,14 @@ clean:
 docclean:
 	$(MAKE) -C doc/s5 clean
 	rm -f doc/html/*.html
+	rm -fr doc/pdf
+
+apidocclean:
 	rm -fr doc/html/api
 	rm -f doc/api/lxml*.rst
 	rm -fr doc/api/_build
-	rm -fr doc/pdf
 
-realclean: clean docclean
+realclean: clean docclean apidocclean
 	find src -name '*.c' -exec rm -f {} \;
 	rm -f TAGS
 	$(PYTHON) setup.py clean -a --without-cython
