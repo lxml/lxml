@@ -6,6 +6,7 @@ include MANIFEST.in Makefile requirements.txt
 include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.rst TODO.txt
 include tools/*.py tools/manylinux/*.sh
 include src/lxml/*.c src/lxml/html/*.c
+include doc/html/*.png
 recursive-include src *.pyx *.pxd *.pxi *.py
 recursive-include src/lxml lxml.etree.h lxml.etree_api.h etree.h etree_api.h etree_defs.h lxml_endian.h
 recursive-include src/lxml/isoschematron *.rng *.xsl *.txt
@@ -13,7 +14,6 @@ recursive-include src/lxml/tests *.rng *.rnc *.xslt *.xml *.dtd *.xsd *.sch *.ht
 recursive-include src/lxml/html/tests *.data *.txt
 recursive-include samples *.xml
 recursive-include benchmark *.py
-recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc tagpython*.png Makefile
+recursive-include doc *.py *.txt *.html *.css *.xml *.mgp pubkey.asc Makefile
 recursive-include doc/s5/ui *.gif *.htc *.png *.js
 recursive-include doc/s5/ep2008 *.py *.png *.rng
-include doc/*.py
