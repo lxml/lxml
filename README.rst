@@ -28,8 +28,9 @@ your own benefit back to support the project, consider sending us
 money through GitHub Sponsors, Tidelift or PayPal that we can use
 to buy us free time for the maintenance of this great library, to
 fix bugs in the software, review and integrate code contributions,
-and improving its features and documentation.  Please read the
-Legal Notice below, at the bottom of this page.
+to improve its features and documentation, or to just take a deep
+breath and have a cup of tea every once in a while.
+Please read the Legal Notice below, at the bottom of this page.
 Thank you for your support.
 
 .. class:: center
