@@ -1078,7 +1078,12 @@ cdef class C14NWriterTarget:
                 self._declared_ns_stack[-1].append((uri, prefix))
                 return f'{prefix}:{tag}' if prefix else tag, tag, uri
 
-        raise ValueError(f'Namespace "{uri}" is not declared in scope')
+        if not uri:
+            # As soon as a default namespace is defined,
+            # anything that has no namespace (and thus, no prefix) goes there.
+            return tag, tag, uri
+
+        raise ValueError(f'Namespace "{uri}" of name "{tag}" is not declared in scope')
 
     def data(self, data):
         if not self._ignored_depth:
