@@ -9,6 +9,7 @@ cache:
 
 python:
   - 3.9
+  - 3.8
   - 2.7
   - 3.8
   - 3.7
@@ -30,16 +31,16 @@ env:
 
 matrix:
   include:
-    - python: 3.8
+    - python: 3.9
       env:
         - STATIC_DEPS=false
         - EXTRA_DEPS="docutils pygments sphinx sphinx-rtd-theme"
       script: make html
-    - python: 3.8
+    - python: 3.9
       env:
         - STATIC_DEPS=false
         - EXTRA_DEPS="coverage<5"
-    - python: 3.8
+    - python: 3.9
       env:
         - STATIC_DEPS=true
         - LIBXML2_VERSION=2.9.2  # minimum version requirements
@@ -48,16 +49,16 @@ matrix:
       env: STATIC_DEPS=false
     - python: pypy3
       env: STATIC_DEPS=false
-    - python: 3.8
+    - python: 3.9
       env: STATIC_DEPS=false
       arch: arm64
-    - python: 3.8
+    - python: 3.9
       env: STATIC_DEPS=true
       arch: arm64
-    - python: 3.8
+    - python: 3.9
       env: STATIC_DEPS=false
       arch: ppc64le
-    - python: 3.8
+    - python: 3.9
       env: STATIC_DEPS=true
       arch: ppc64le
   allow_failures:
