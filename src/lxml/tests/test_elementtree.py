@@ -50,6 +50,17 @@ def et_needs_pyversion(*version):
     return wrap
 
 
+def et_exclude_pyversion(*version):
+    def wrap(method):
+        @wraps(method)
+        def testfunc(self, *args):
+            if self.etree is not etree and sys.version_info[:len(version)] == version:
+                raise unittest.SkipTest("requires ET in Python %s" % '.'.join(map(str, version)))
+            return method(self, *args)
+        return testfunc
+    return wrap
+
+
 class _ETreeTestCaseBase(HelperTestCase):
     etree = None
     required_versions_ET = {}
@@ -4641,6 +4652,7 @@ class _C14NTest(unittest.TestCase):
         #'<doc xmlns:x="http://example.com/x"><b xmlns:y="http://example.com/y" a3="3" y:a1="1" y:a2="2"></b></doc>')
 
     @et_needs_pyversion(3, 8, 7)
+    @et_exclude_pyversion(3, 9, 0)
     def test_c14n_namespaces(self):
         c14n_roundtrip = self.c14n_roundtrip
         # Namespace issues
