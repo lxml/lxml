@@ -277,6 +277,7 @@ See the websites of lxml
 * `older releases <http://lxml.de/4.3/#old-versions>`_
 
 .. _`lxml 4.6.0`: /files/lxml-4.6.0.tgz
+.. _`lxml 4.5.2`: /files/lxml-4.5.2.tgz
 .. _`lxml 4.5.1`: /files/lxml-4.5.1.tgz
 .. _`lxml 4.5.0`: /files/lxml-4.5.0.tgz
 .. _`lxml 4.4.3`: /files/lxml-4.4.3.tgz
