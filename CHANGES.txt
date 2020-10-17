@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-4.6.0 (2020-??-??)
+4.6.0 (2020-10-17)
 ==================
 
 Features added
@@ -14,6 +14,9 @@ Features added
 * ``lxml.html.InputGetter`` has a new ``.items()`` method to ease processing all input fields.
 
 * ``lxml.html.InputGetter.keys()`` now returns the field names in document order.
+
+* GH-309: The API documentation is now generated using ``sphinx-apidoc``.
+  Patch by Chris Mayo.
 
 Bugs fixed
 ----------
