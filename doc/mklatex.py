@@ -220,7 +220,7 @@ def publish(dirname, lxml_path, release):
         if r'\href' not in line:
             return line
         line = replace_interdoc_hyperrefs(build_hyperref, line)
-        return replace_docinternal_hyperrefs(r'\hyperref[\1]', line)
+        return replace_docinternal_hyperrefs(r'\\hyperref[\1]', line)
 
     # Building pages
     for section, text_files in SITE_STRUCTURE:
