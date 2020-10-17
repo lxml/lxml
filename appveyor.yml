@@ -14,6 +14,9 @@ environment:
   - python: 36-x64
   - python: 35
   - python: 35-x64
+  - python: 39
+    arch: arm64
+    env: STATIC_DEPS=true
   - python: 38
     arch: arm64
     env: STATIC_DEPS=true
