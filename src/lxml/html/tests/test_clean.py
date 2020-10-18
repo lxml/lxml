@@ -103,6 +103,16 @@ class CleanerTest(unittest.TestCase):
             '<p><span>Cy<!-- xx -->an</span><!-- XXX --></p>',
             cleaner.clean_html(html))
 
+    def test_sneaky_noscript_in_style(self):
+        # This gets parsed as <noscript> -> <style>"...</noscript>..."</style>
+        # thus passing the </noscript> through into the output.
+        html = '<noscript><style><a title="</noscript><img src=x onerror=alert(1)>">'
+        s = lxml.html.fragment_fromstring(html)
+
+        self.assertEqual(
+            b'<noscript><style>/* deleted */</style></noscript>',
+            lxml.html.tostring(clean_html(s)))
+
 
 def test_suite():
     suite = unittest.TestSuite()

@@ -536,6 +536,9 @@ class Cleaner(object):
             return True
         if 'expression(' in style:
             return True
+        if '</noscript' in style:
+            # e.g. '<noscript><style><a title="</noscript><img src=x onerror=alert(1)>">'
+            return True
         return False
 
     def clean_html(self, html):
