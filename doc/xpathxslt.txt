@@ -63,6 +63,10 @@ comparison`_ to learn when to use which.  Their semantics when used on
 Elements and ElementTrees are the same as for the ``xpath()`` method described
 here.
 
+Note that the ``.find*()`` methods are usually faster than the full-blown XPath
+support.  They also support incremental tree processing through the ``.iterfind()``
+method, whereas XPath always collects all results before returning them.
+
 .. _`performance comparison`: performance.html#xpath
 
 
