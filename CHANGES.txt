@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+4.6.1 (2020-10-18)
+==================
+
+Bugs fixed
+----------
+
+* A vulnerability was discovered in the HTML Cleaner by Yaniv Nizry, which allowed
+  JavaScript to pass through.  The cleaner now removes more sneaky "style" content.
+
+
 4.6.0 (2020-10-17)
 ==================
 
