@@ -63,6 +63,7 @@ ElementTree_.
      7.2  Why doesn't ``findall()`` support full XPath expressions?
      7.3  How can I find out which namespace prefixes are used in a document?
      7.4  How can I specify a default namespace for XPath expressions?
+     7.5  How can I modify the tree during iteration?
 
 
 The code examples below use the `'lxml.etree`` module:
@@ -1241,3 +1242,38 @@ How can I specify a default namespace for XPath expressions?
 You can't.  In XPath, there is no such thing as a default namespace.  Just use
 an arbitrary prefix and let the namespace dictionary of the XPath evaluators
 map it to your namespace.  See also the question above.
+
+
+How can I modify the tree during iteration?
+-------------------------------------------
+
+lxml's iterators need to hold on to an element in the tree in order to remember
+their current position.  Therefore, tree modifications between two calls into the
+iterator can lead to surprising results if such an element is deleted or moved
+around, for example.
+
+If your code risks modifying elements that the iterator might still need, and
+you know that the number of elements returned by the iterator is small, then just
+read them all into a list (or use ``.findall()``), and iterate over that list.
+
+If the number of elements can be larger and you really want to process the tree
+incrementally, you can often use a read-ahead generator to make the iterator
+advance beyond the critical point before touching the tree structure.
+
+For example:
+
+.. sourcecode:: python
+
+    from itertools import islice
+    from collections import deque
+
+    def readahead(iterator, count=1):
+        iterator = iter(iterator)  # allow iterables as well
+        elements = deque(islice(iterator, 0, count))
+        for element in iterator:
+            elements.append(element)
+            yield elements.popleft()
+        yield from elements
+
+    for element in readahead(root.iterfind("path/to/children")):
+        element.getparent().remove(element)
