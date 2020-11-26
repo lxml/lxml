@@ -8,8 +8,9 @@ details.
 
 from __future__ import absolute_import
 
-import re
 import copy
+import re
+import sys
 try:
     from urlparse import urlsplit
     from urllib import unquote_plus
@@ -69,7 +70,8 @@ _replace_css_import = re.compile(
     r'@\s*import', re.I).sub
 
 _looks_like_tag_content = re.compile(
-    r'</?[a-zA-Z]+|\son[a-zA-Z]+\s*=', re.ASCII).search
+    r'</?[a-zA-Z]+|\son[a-zA-Z]+\s*=',
+    *((re.ASCII,) if sys.version_info[0] >= 3 else ())).search
 
 # All kinds of schemes besides just javascript: that can cause
 # execution:
