@@ -113,6 +113,16 @@ class CleanerTest(unittest.TestCase):
             b'<noscript><style>/* deleted */</style></noscript>',
             lxml.html.tostring(clean_html(s)))
 
+    def test_sneaky_js_in_math_style(self):
+        # This gets parsed as <math> -> <style>"..."</style>
+        # thus passing any tag/script/whatever content through into the output.
+        html = '<math><style><img src=x onerror=alert(1)></style></math>'
+        s = lxml.html.fragment_fromstring(html)
+
+        self.assertEqual(
+            b'<math><style>/* deleted */</style></math>',
+            lxml.html.tostring(clean_html(s)))
+
 
 def test_suite():
     suite = unittest.TestSuite()

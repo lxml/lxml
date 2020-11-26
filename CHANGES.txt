@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+4.6.2 (2020-11-26)
+==================
+
+Bugs fixed
+----------
+
+* A vulnerability (CVE-2020-27783) was discovered in the HTML Cleaner by Yaniv Nizry,
+  which allowed JavaScript to pass through.  The cleaner now removes more sneaky
+  "style" content.
+
+
 4.6.1 (2020-10-18)
 ==================
 

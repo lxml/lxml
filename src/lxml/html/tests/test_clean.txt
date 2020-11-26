@@ -104,7 +104,11 @@
 >>> print(Cleaner(page_structure=False, comments=False).clean_html(doc))
 <html>
   <head>
-    <style>/* deleted */</style>
+    <style>
+      body {background-image: url()};
+      div {background-image: url()};
+      div {color: };
+    </style>
   </head>
   <body>
     <!-- I am interpreted for EVIL! -->
@@ -126,7 +130,11 @@
 >>> print(Cleaner(page_structure=False, safe_attrs_only=False).clean_html(doc))
 <html>
   <head>
-    <style>/* deleted */</style>
+    <style>
+      body {background-image: url()};
+      div {background-image: url()};
+      div {color: };
+    </style>
   </head>
   <body>
     <a href="">a link</a>
@@ -190,7 +198,11 @@
     <link rel="alternate" type="text/rss" src="evil-rss">
     <link rel="alternate" type="text/rss" href="http://example.com">
     <link rel="stylesheet" type="text/rss" href="http://example.com">
-    <style>/* deleted */</style>
+    <style>
+      body {background-image: url()};
+      div {background-image: url()};
+      div {color: };
+    </style>
   </head>
   <body>
     <a href="">a link</a>

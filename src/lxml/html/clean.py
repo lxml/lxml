@@ -61,12 +61,15 @@ __all__ = ['clean_html', 'clean', 'Cleaner', 'autolink', 'autolink_html',
 
 # This is an IE-specific construct you can have in a stylesheet to
 # run some Javascript:
-_css_javascript_re = re.compile(
-    r'expression\s*\(.*?\)', re.S|re.I)
+_replace_css_javascript = re.compile(
+    r'expression\s*\(.*?\)', re.S|re.I).sub
 
 # Do I have to worry about @\nimport?
-_css_import_re = re.compile(
-    r'@\s*import', re.I)
+_replace_css_import = re.compile(
+    r'@\s*import', re.I).sub
+
+_looks_like_tag_content = re.compile(
+    r'</?[a-zA-Z]+|\son[a-zA-Z]+\s*=', re.ASCII).search
 
 # All kinds of schemes besides just javascript: that can cause
 # execution:
@@ -304,8 +307,8 @@ class Cleaner(object):
             if not self.inline_style:
                 for el in _find_styled_elements(doc):
                     old = el.get('style')
-                    new = _css_javascript_re.sub('', old)
-                    new = _css_import_re.sub('', new)
+                    new = _replace_css_javascript('', old)
+                    new = _replace_css_import('', new)
                     if self._has_sneaky_javascript(new):
                         # Something tricky is going on...
                         del el.attrib['style']
@@ -317,9 +320,9 @@ class Cleaner(object):
                         el.drop_tree()
                         continue
                     old = el.text or ''
-                    new = _css_javascript_re.sub('', old)
+                    new = _replace_css_javascript('', old)
                     # The imported CSS can do anything; we just can't allow:
-                    new = _css_import_re.sub('', old)
+                    new = _replace_css_import('', new)
                     if self._has_sneaky_javascript(new):
                         # Something tricky is going on...
                         el.text = '/* deleted */'
@@ -538,6 +541,9 @@ class Cleaner(object):
             return True
         if '</noscript' in style:
             # e.g. '<noscript><style><a title="</noscript><img src=x onerror=alert(1)>">'
+            return True
+        if _looks_like_tag_content(style):
+            # e.g. '<math><style><img src=x onerror=alert(1)></style></math>'
             return True
         return False
 
