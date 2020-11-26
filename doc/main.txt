@@ -159,8 +159,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 4.6.1`_, released 2020-10-18
-(`changes for 4.6.1`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 4.6.2`_, released 2020-11-26
+(`changes for 4.6.2`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -256,7 +256,9 @@ See the websites of lxml
 ..
    and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-4.6.1.pdf
+.. _`PDF documentation`: lxmldoc-4.6.2.pdf
+
+* `lxml 4.6.2`_, released 2020-11-26 (`changes for 4.6.2`_)
 
 * `lxml 4.6.1`_, released 2020-10-18 (`changes for 4.6.1`_)
 
@@ -278,6 +280,7 @@ See the websites of lxml
 
 * `older releases <http://lxml.de/4.3/#old-versions>`_
 
+.. _`lxml 4.6.2`: /files/lxml-4.6.2.tgz
 .. _`lxml 4.6.1`: /files/lxml-4.6.1.tgz
 .. _`lxml 4.6.0`: /files/lxml-4.6.0.tgz
 .. _`lxml 4.5.2`: /files/lxml-4.5.2.tgz
@@ -288,7 +291,7 @@ See the websites of lxml
 .. _`lxml 4.4.1`: /files/lxml-4.4.1.tgz
 .. _`lxml 4.4.0`: /files/lxml-4.4.0.tgz
 
-.. _`changes for 4.6.1`: /changes-4.6.1.html
+.. _`changes for 4.6.2`: /changes-4.6.2.html
 .. _`changes for 4.6.0`: /changes-4.6.0.html
 .. _`changes for 4.5.2`: /changes-4.5.2.html
 .. _`changes for 4.5.1`: /changes-4.5.1.html
