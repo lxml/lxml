@@ -292,6 +292,7 @@ See the websites of lxml
 .. _`lxml 4.4.0`: /files/lxml-4.4.0.tgz
 
 .. _`changes for 4.6.2`: /changes-4.6.2.html
+.. _`changes for 4.6.1`: /changes-4.6.1.html
 .. _`changes for 4.6.0`: /changes-4.6.0.html
 .. _`changes for 4.5.2`: /changes-4.5.2.html
 .. _`changes for 4.5.1`: /changes-4.5.1.html
