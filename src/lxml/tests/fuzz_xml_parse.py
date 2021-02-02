@@ -18,5 +18,6 @@ def test_etree_xml(data):
     pass
   return
 
-atheris.Setup(sys.argv, test_etree_xml, enable_python_coverage=True)
-atheris.Fuzz()
+if __name__ == "__main__":
+    atheris.Setup(sys.argv, test_etree_xml, enable_python_coverage=True)
+    atheris.Fuzz()
