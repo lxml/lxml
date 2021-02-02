@@ -11,12 +11,12 @@ import sys
 from lxml import etree
 
 def test_etree_xml(data):
-  fdp = atheris.FuzzedDataProvider(data)
-  try:
-    root = etree.XML(fdp.ConsumeUnicode(sys.maxsize))
-  except etree.XMLSyntaxError:
-    pass
-  return
+    fdp = atheris.FuzzedDataProvider(data)
+    try:
+        root = etree.XML(fdp.ConsumeUnicode(sys.maxsize))
+    except etree.XMLSyntaxError:
+        pass
+    return
 
 if __name__ == "__main__":
     atheris.Setup(sys.argv, test_etree_xml, enable_python_coverage=True)
