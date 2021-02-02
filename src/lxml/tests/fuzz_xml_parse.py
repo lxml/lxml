@@ -1,26 +1,22 @@
-
 """
-
 Fuzzes the lxml.etree.XML function with the Atheris fuzzer.
 
 The goal is to catch unhandled exceptions and potential 
 memory corruption issues in auto-generated code.
-
 """
 
 import atheris
 import sys
 
-from lxml import etree as et
+from lxml import etree
 
-def TestOneInput(data):
+def test_etree_xml(data):
   fdp = atheris.FuzzedDataProvider(data)
-
   try:
-    root = et.XML(fdp.ConsumeUnicode(sys.maxsize))
-  except et.XMLSyntaxError:
-    None
+    root = etree.XML(fdp.ConsumeUnicode(sys.maxsize))
+  except etree.XMLSyntaxError:
+    pass
   return
 
-atheris.Setup(sys.argv, TestOneInput, enable_python_coverage=True)
+atheris.Setup(sys.argv, test_etree_xml, enable_python_coverage=True)
 atheris.Fuzz()
