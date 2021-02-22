@@ -81,3 +81,4 @@ script:
   - ccache -s || true
   - CFLAGS="-O0 -g -fPIC" PYTHONUNBUFFERED=x make test
   - ccache -s || true
+  - python -c "from lxml import etree"
