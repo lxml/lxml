@@ -8,7 +8,7 @@ cache:
     - libs
 
 python:
-  - nightly
+  - nightly 
   - 3.9
   - 2.7
   - 3.8
