@@ -123,6 +123,21 @@ class CleanerTest(unittest.TestCase):
             b'<math><style>/* deleted */</style></math>',
             lxml.html.tostring(clean_html(s)))
 
+    def test_formaction_attribute_in_button_input(self):
+        # The formaction attribute overrides the form's action and should be
+        # treated as a malicious link attribute
+        html = ('<form id="test"><input type="submit" formaction="javascript:alert(1)"></form>'
+        '<button form="test" formaction="javascript:alert(1)">X</button>')
+        expected = ('<div><form id="test"><input type="submit" formaction=""></form>'
+        '<button form="test" formaction="">X</button></div>')
+        cleaner = Cleaner(
+            forms=False,
+            safe_attrs_only=False,
+        )
+        self.assertEqual(
+            expected,
+            cleaner.clean_html(html))
+
 
 def test_suite():
     suite = unittest.TestSuite()
