@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+4.6.3 (2021-03-21)
+==================
+
+Bugs fixed
+----------
+
+* A vulnerability (CVE-2021-28957) was discovered in the HTML Cleaner by Kevin Chung,
+  which allowed JavaScript to pass through.  The cleaner now removes the HTML5
+  ``formaction`` attribute.
+
+
 4.6.2 (2020-11-26)
 ==================
 
