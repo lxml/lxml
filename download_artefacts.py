@@ -65,14 +65,16 @@ def download1(wheel_url, dest_dir):
                 and file_path.stat().st_size == int(w.headers["Content-Length"])):
             logger.info(f"Already have {wheel_name}")
         else:
+            temp_file_path = file_path.with_suffix(".tmp")
             try:
-                with open(file_path, "wb") as f:
+                with open(temp_file_path, "wb") as f:
                     shutil.copyfileobj(w, f)
             except:
-                if file_path.exists():
-                    file_path.unlink()
+                if temp_file_path.exists():
+                    temp_file_path.unlink()
                 raise
             else:
+                temp_file_path.replace(file_path)
                 logger.info(f"Finished downloading {wheel_name}")
     return wheel_name
 
