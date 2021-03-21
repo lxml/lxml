@@ -90,6 +90,14 @@ def download(urls, dest_dir, jobs=PARALLEL_DOWNLOADS):
             raise
 
 
+def dedup(it):
+    seen = set()
+    for value in it:
+        if value not in seen:
+            seen.add(value)
+            yield value
+
+
 def roundrobin(*iterables):
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
     # Recipe credited to George Sakkis
@@ -117,10 +125,10 @@ def main(*args):
         dest_dir.mkdir()
 
     start_time = datetime.datetime.now().replace(microsecond=0)
-    urls = roundrobin(
+    urls = roundrobin(*map(dedup, [
         find_github_files(version),
         find_appveyor_files(version),
-    )
+    ]))
     count = sum(1 for _ in enumerate(download(urls, dest_dir)))
     duration = datetime.datetime.now().replace(microsecond=0) - start_time
     logger.info(f"Downloaded {count} files in {duration}.")
