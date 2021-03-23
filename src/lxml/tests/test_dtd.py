@@ -403,6 +403,10 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(etree.tostring(doc),
                          _bytes(data))
 
+    def test_entity_system_url(self):
+        xml = etree.parse(BytesIO('<!DOCTYPE test [ <!ENTITY TestReference SYSTEM "./foo.bar"> ]><a/>'))
+        self.assertEqual(xml.docinfo.internalDTD.entities()[0].system_url, "./foo.bar")
+
 
 def test_suite():
     suite = unittest.TestSuite()

@@ -258,6 +258,11 @@ cdef class _DTDEntityDecl:
         _assertValidDTDNode(self, self._c_node)
         return funicodeOrNone(self._c_node.content)
 
+    @property
+    def system_url(self):
+        _assertValidDTDNode(self, self._c_node)
+        return funicodeOrNone(self._c_node.SystemID)
+
 
 ################################################################################
 # DTD
