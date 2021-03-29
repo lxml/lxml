@@ -146,11 +146,11 @@ ElementTree.  Nonetheless, some differences and incompatibilities exist:
   not.  This means that a comment text "text" that ElementTree serializes as
   "<!-- text -->" will become "<!--text-->" in lxml.
 
-* When the string '*' is used as tag filter in the ``Element.getiterator()``
-  method, ElementTree returns all elements in the tree, including comments and
-  processing instructions. lxml.etree only returns real Elements, i.e. tree
-  nodes that have a string tag name.  Without a filter, both libraries iterate
-  over all nodes.
+* When the string ``'*'`` is used as tag filter in the ``Element.iter()`` and
+  ``.find*()`` methods, ElementTree returns all elements in the tree, including
+  comments and processing instructions. lxml.etree only returns real Elements,
+  i.e. tree nodes that have a string tag name.  Without a filter, both libraries
+  iterate over all nodes.
 
   Note that currently only lxml.etree supports passing the ``Element`` factory
   function as filter to select only Elements.  Both libraries support passing
