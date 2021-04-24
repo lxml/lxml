@@ -8,6 +8,7 @@ cache:
     - libs
 
 python:
+  - nightly 
   - 3.9
   - 2.7
   - 3.8
@@ -61,6 +62,7 @@ matrix:
       env: STATIC_DEPS=true
       arch: ppc64le
   allow_failures:
+    - python: nightly
     - python: pypy
     - python: pypy3
 
@@ -79,3 +81,5 @@ script:
   - ccache -s || true
   - CFLAGS="-O0 -g -fPIC" PYTHONUNBUFFERED=x make test
   - ccache -s || true
+  - python setup.py install
+  - python -c "from lxml import etree"
