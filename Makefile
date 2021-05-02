@@ -16,9 +16,15 @@ MANYLINUX_LIBXML2_VERSION=2.9.10
 MANYLINUX_LIBXSLT_VERSION=1.1.34
 MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
 MANYLINUX_LDFLAGS=-flto
-MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
-MANYLINUX_IMAGE_686=quay.io/pypa/manylinux1_i686
-MANYLINUX_IMAGE_AARCH64=quay.io/pypa/manylinux2014_aarch64
+
+MANYLINUX_IMAGES= \
+	manylinux1_x86_64 \
+	manylinux1_i686 \
+	manylinux_2_24_x86_64 \
+	manylinux_2_24_i686 \
+	manylinux_2_24_aarch64 \
+	manylinux_2_24_ppc64le \
+	manylinux_2_24_s390x
 
 AARCH64_ENV=-e AR="/opt/rh/devtoolset-9/root/usr/bin/gcc-ar" \
 		-e NM="/opt/rh/devtoolset-9/root/usr/bin/gcc-nm" \
@@ -55,19 +61,22 @@ require-cython:
 qemu-user-static:
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-wheel_manylinux: wheel_manylinux64 wheel_manylinux32 wheel_manylinuxaarch64
-wheel_manylinuxaarch64: qemu-user-static
+wheel_manylinux: $(addprefix wheel_,$(MANYLINUX_IMAGES))
+$(addprefix wheel_,$(filter-out %_x86_64, $(filter-out %_i686, $(MANYLINUX_IMAGES)))): qemu-user-static
 
-wheel_manylinux32 wheel_manylinux64 wheel_manylinuxaarch64: dist/lxml-$(LXMLVERSION).tar.gz
+wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
-		$(if $(patsubst %aarch64,,$@),,$(AARCH64_ENV)) \
+		-e AR=gcc-ar \
+		-e NM=gcc-nm \
+		-e RANLIB=gcc-ranlib \
 		-e CFLAGS="$(MANYLINUX_CFLAGS) $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
 		-e LDFLAGS="$(MANYLINUX_LDFLAGS)" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
-		-e WHEELHOUSE=wheelhouse_$(subst wheel_,,$@) \
-		$(if $(filter $@,wheel_manylinuxaarch64),$(MANYLINUX_IMAGE_AARCH64),$(if $(patsubst %32,,$@),$(MANYLINUX_IMAGE_X86_64),$(MANYLINUX_IMAGE_686))) \
+		-e WHEELHOUSE=$(subst wheel_,wheelhouse/,$@) \
+		$(if $(patsubst %aarch64,,$@),,$(AARCH64_ENV)) \
+		quay.io/pypa/$(subst wheel_,,$@) \
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
 wheel:
