@@ -98,6 +98,15 @@ valgrind_test_inplace: inplace
 	valgrind --tool=memcheck --leak-check=full --num-callers=30 --suppressions=valgrind-python.supp \
 		$(PYTHON) test.py
 
+fuzz: clean
+	$(MAKE) \
+		CC="/usr/bin/clang" \
+		CFLAGS="$$CFLAGS -fsanitize=fuzzer-no-link -g2" \
+		CXX="/usr/bin/clang++" \
+		CXXFLAGS="-fsanitize=fuzzer-no-link" \
+		inplace3
+	$(PYTHON3) src/lxml/tests/fuzz_xml_parse.py
+
 gdb_test_inplace: inplace
 	@echo "file $(PYTHON)\nrun test.py" > .gdb.command
 	gdb -x .gdb.command -d src -d src/lxml
