@@ -437,6 +437,15 @@ def build_libxml2xslt(download_dir, build_dir,
     if not has_current_lib("libxml2", libxml2_dir):
         cmmi(libxml2_configure_cmd, libxml2_dir, multicore, **call_setup)
 
+    # Fix up libxslt configure script (needed up to and including 1.1.34)
+    # https://gitlab.gnome.org/GNOME/libxslt/-/commit/90c34c8bb90e095a8a8fe8b2ce368bd9ff1837cc
+    with open(os.path.join(libxslt_dir, "configure"), 'rb') as f:
+        config_script = f.read()
+    if b' --libs print ' in config_script:
+        config_script = config_script.replace(b' --libs print ', b' --libs ')
+        with open(os.path.join(libxslt_dir, "configure"), 'wb') as f:
+            f.write(config_script)
+
     # build libxslt
     libxslt_configure_cmd = configure_cmd + [
         '--without-python',
