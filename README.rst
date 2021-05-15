@@ -69,6 +69,12 @@ Another supporter of the lxml project is
 Project income report
 ---------------------
 
+* Total project income in 2020: EUR 6065,86  (506.49 € / month)
+
+  - Tidelift: EUR 4064.77
+  - Paypal: EUR 1401.09
+  - other: EUR 600.00
+
 * Total project income in 2019: EUR 717.52  (59.79 € / month)
 
   - Tidelift: EUR 360.30
