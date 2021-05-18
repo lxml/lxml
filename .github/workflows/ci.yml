@@ -34,6 +34,7 @@ jobs:
           - os: ubuntu-18.04
             python-version: 3.9
             env: { COVERAGE: true }
+            extra_hash: "-coverage"
           # Ubuntu sub-jobs:
           # ================
           # Pypy
@@ -52,7 +53,7 @@ jobs:
             python-version: 2.7
             env: { MACOSX_DEPLOYMENT_TARGET: 10.14 }
           - os: macos-10.15
-            python-version: 3.8
+            python-version: 3.9
             env: { MACOSX_DEPLOYMENT_TARGET: 10.14 }
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
