@@ -22,7 +22,7 @@ jobs:
         # Tests [amd64]
         #
         os: [ubuntu-18.04]
-        python-version: [2.7, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10-dev]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10-dev]
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:

@@ -45,7 +45,7 @@ if [ "$COVERAGE" == "true" ]; then python -m pip install coverage; fi
 
 # Build
 CFLAGS="-O0 -g -fPIC" python -u setup.py build_ext --inplace \
-      $(if [ -n "${PYTHON_VERSION##2.*}" -a -n "${PYTHON_VERSION##3.[34]*}" ]; then echo -n " -j7 "; fi ) \
+      $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [ "$COVERAGE" == "true" ]; then echo -n "--with-coverage"; fi )
 
 ccache -s || true
