@@ -43,7 +43,7 @@ fi
 python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS}
 if [ "$COVERAGE" == "true" ]; then
   python -m pip install coverage
-  python -m pip install --pre 'Cython>=3'
+  python -m pip install --pre 'Cython>=3.0a0'
 fi
 
 # Build
