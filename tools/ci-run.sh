@@ -41,7 +41,7 @@ if [ -z "${PYTHON_VERSION##*-dev}" ];
   else python -m pip install -r requirements.txt;
 fi
 python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS}
-if [ "$COVERAGE" == "true" ]; then python -m pip install coverage; fi
+if [ "$COVERAGE" == "true" ]; then python -m pip install coverage 'Cython>=3''; fi
 
 # Build
 CFLAGS="-O0 -g -fPIC" python -u setup.py build_ext --inplace \
