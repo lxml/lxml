@@ -27,10 +27,12 @@ jobs:
 
         include:
           # Temporary - Allow failure on all 3.10-dev jobs until beta comes out
-          - python-version: 3.10-dev
+          - os: ubuntu-18.04
+            python-version: 3.10-dev
             allowed_failure: true
           # Temporary - Allow failure on all 3.10-dev jobs until beta comes out
-          - python-version: 3.10-dev
+          - os: ubuntu-18.04
+            python-version: 3.10-dev
             env: { COVERAGE: true }
           # Ubuntu sub-jobs:
           # ================
