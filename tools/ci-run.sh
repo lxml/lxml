@@ -40,16 +40,17 @@ if [ -z "${PYTHON_VERSION##*-dev}" ];
   then python -m pip install --install-option=--no-cython-compile https://github.com/cython/cython/archive/master.zip;
   else python -m pip install -r requirements.txt;
 fi
-python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS}
+python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
 if [ "$COVERAGE" == "true" ]; then
-  python -m pip install coverage
-  python -m pip install --pre 'Cython>=3.0a0'
+  python -m pip install coverage || exit 1
+  python -m pip install --pre 'Cython>=3.0a0' || exit 1
 fi
 
 # Build
 CFLAGS="-O0 -g -fPIC" python -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
-      $(if [ "$COVERAGE" == "true" ]; then echo -n "--with-coverage"; fi )
+      $(if [ "$COVERAGE" == "true" ]; then echo -n "--with-coverage"; fi ) \
+      || exit 1
 
 ccache -s || true
 
