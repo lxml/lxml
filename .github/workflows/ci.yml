@@ -39,9 +39,11 @@ jobs:
           # Pypy
           - os: ubuntu-18.04
             python-version: pypy-2.7
+            env: { STATIC_DEPS: false }
             allowed_failure: true
           - os: ubuntu-18.04
             python-version: pypy-3.7
+            env: { STATIC_DEPS: false }
             allowed_failure: true
 
           # MacOS sub-jobs
