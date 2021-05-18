@@ -3036,7 +3036,10 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_html_prefix_nsmap(self):
         etree = self.etree
         el = etree.HTML('<hha:page-description>aa</hha:page-description>').find('.//page-description')
-        self.assertEqual({'hha': None}, el.nsmap)
+        if etree.LIBXML_VERSION < (2, 9, 11):
+            self.assertEqual({'hha': None}, el.nsmap)
+        else:
+            self.assertEqual({}, el.nsmap)
 
     def test_getchildren(self):
         Element = self.etree.Element
