@@ -99,5 +99,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: pycoverage_html
-          path: coverage-report-html
+          path: coverage*
           if-no-files-found: ignore
