@@ -45,9 +45,9 @@ jobs:
           - os: ubuntu-18.04
             python-version: 3.9
             env: {
-              STATIC_DEPS: true
-              LIBXML2_VERSION: 2.9.2
-              LIBXSLT_VERSION: 1.1.27
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.9.2,
+              LIBXSLT_VERSION: 1.1.27,
             }
             extra_hash: "-oldlibs"
             allowed_failure: true   # shouldn't fail but currently does...
