@@ -36,6 +36,21 @@ jobs:
             env: { COVERAGE: true }
             extra_hash: "-coverage"
             allowed_failure: true   # shouldn't fail but currently does...
+          - os: ubuntu-18.04
+            python-version: 3.9
+            env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
+            extra_hash: "-docs"
+            allowed_failure: true   # shouldn't fail but currently does...
+          # Old library setup with minimum version requirements
+          - os: ubuntu-18.04
+            python-version: 3.9
+            env: {
+              STATIC_DEPS: true
+              LIBXML2_VERSION: 2.9.2
+              LIBXSLT_VERSION: 1.1.27
+            }
+            extra_hash: "-oldlibs"
+            allowed_failure: true   # shouldn't fail but currently does...
           # Ubuntu sub-jobs:
           # ================
           # Pypy
@@ -96,6 +111,10 @@ jobs:
         continue-on-error: ${{ matrix.allowed_failure || false }}
         env: ${{ matrix.env }}
         run: bash ./tools/ci-run.sh
+
+      - name: Build docs
+        if: ${{ contains( env.EXTRA_DEPS, "sphinx") }}
+        run: make html
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v2
