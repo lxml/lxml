@@ -113,7 +113,7 @@ jobs:
         run: bash ./tools/ci-run.sh
 
       - name: Build docs
-        if: ${{ contains( env.EXTRA_DEPS, 'sphinx') }}
+        if: contains( env.EXTRA_DEPS, 'sphinx')
         run: make html
 
       - name: Upload Coverage Report
