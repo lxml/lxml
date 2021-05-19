@@ -25,10 +25,13 @@ import setupinfo
 # override these and pass --static for a static build. See
 # doc/build.txt for more information. If you do not pass --static
 # changing this will have no effect.
-STATIC_INCLUDE_DIRS = []
-STATIC_LIBRARY_DIRS = []
-STATIC_CFLAGS = []
-STATIC_BINARIES = []
+def static_env_list(name, separator=None):
+    return [x.strip() for x in os.environ.get(name, "").split(separator) if x.strip()]
+
+STATIC_INCLUDE_DIRS = static_env_list("LXML_STATIC_INCLUDE_DIRS", separator=os.pathsep)
+STATIC_LIBRARY_DIRS = static_env_list("LXML_STATIC_LIBRARY_DIRS", separator=os.pathsep)
+STATIC_CFLAGS = static_env_list("LXML_STATIC_CFLAGS")
+STATIC_BINARIES = static_env_list("LXML_STATIC_BINARIES", separator=os.pathsep)
 
 # create lxml-version.h file
 versioninfo.create_version_h()
