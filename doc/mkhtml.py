@@ -194,7 +194,7 @@ def convert_changelog(lxml_path, changelog_file_path, rst2html_script, styleshee
         out_file.close()
 
 
-def publish(dirname, lxml_path, release):
+def publish(dirname, lxml_path, release, with_donations=True):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 
@@ -245,7 +245,8 @@ def publish(dirname, lxml_path, release):
     menu = Element("div", {'class': 'sidemenu', 'id': 'sidemenu'})
     SubElement(menu, 'div', {'class': 'menutrigger', 'onclick': 'trigger_menu(event)'}).text = "Menu"
     menu_div = SubElement(menu, 'div', {'class': 'menu'})
-    inject_banner(menu_div)
+    if with_donations:
+        inject_banner(menu_div)
 
     # build HTML pages and parse them back
     for section, text_files in SITE_STRUCTURE:
@@ -266,13 +267,14 @@ def publish(dirname, lxml_path, release):
                 rest2html(script, path, outpath, stylesheet_url)
                 tree = parse(outpath)
 
-                page_div = tree.getroot()[1][0]  # html->body->div[class=document]
-                inject_banner(page_div)
+                if with_donations:
+                    page_div = tree.getroot()[1][0]  # html->body->div[class=document]
+                    inject_banner(page_div)
 
-                if filename == 'main.txt':
-                    # inject donation buttons
-                    #inject_flatter_button(tree)
-                    inject_donate_buttons(lxml_path, script, tree)
+                    if filename == 'main.txt':
+                        # inject donation buttons
+                        #inject_flatter_button(tree)
+                        inject_donate_buttons(lxml_path, script, tree)
 
                 trees[filename] = (tree, basename, outpath)
                 build_menu(tree, basename, section_head)
@@ -324,4 +326,7 @@ def publish(dirname, lxml_path, release):
 
 
 if __name__ == '__main__':
-    publish(sys.argv[1], sys.argv[2], sys.argv[3])
+    no_donations = '--no-donations' in sys.argv[1:]
+    if no_donations:
+        sys.argv.remove('--no-donations')
+    publish(sys.argv[1], sys.argv[2], sys.argv[3], with_donations=not no_donations)
