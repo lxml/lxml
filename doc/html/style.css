@@ -321,6 +321,18 @@ html > .pagequote {
     position: fixed;
 }
 
+div.admonition {
+    border: solid 1px;
+    border-radius: 1ex;
+    margin: 0.5ex;
+    padding: 0.5ex 1.5ex 0.5ex 1.5ex;
+    background: lightyellow;
+}
+
+div.admonition > .admonition-title {
+    background: yellow;
+}
+
 code {
     color: Black;
     background-color: #f0f0f0;
