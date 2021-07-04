@@ -1,9 +1,10 @@
 import copy
+from io import BytesIO
 from itertools import *
 
 import benchbase
 from benchbase import (with_attributes, with_text, onlylib,
-                       serialized, children, nochange, BytesIO)
+                       serialized, children, nochange)
 
 TEXT  = "some ASCII text"
 UTEXT = u"some klingon: \F8D2"
