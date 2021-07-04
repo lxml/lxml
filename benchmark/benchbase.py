@@ -474,7 +474,8 @@ def main(benchmark_class):
     if import_lxml:
         from lxml import etree
         _etrees.append(etree)
-        print("Using lxml %s" % etree.__version__)
+        print("Using lxml %s (with libxml2 %s)" % (
+            etree.__version__, '.'.join(map(str, etree.LIBXML_VERSION))))
 
         try:
             sys.argv.remove('-fel')
