@@ -199,23 +199,23 @@ And another couple of timings `from a benchmark`_ that Fredrik Lundh
 parsers.  First, parsing a 274KB XML file containing Shakespeare's
 Hamlet::
 
-  xml.etree.ElementTree.parse done in 0.017 seconds
+  xml.etree.ElementTree.parse done in 0.006 seconds
   xml.etree.cElementTree.parse done in 0.007 seconds
-  xml.etree.cElementTree.XMLParser.feed(): 6636 nodes read in 0.007 seconds
-  lxml.etree.parse done in 0.003 seconds
-  drop_whitespace.parse done in 0.003 seconds
+  xml.etree.cElementTree.XMLParser.feed(): 6636 nodes read in 0.006 seconds
+  lxml.etree.parse done in 0.004 seconds
+  drop_whitespace.parse done in 0.004 seconds
   lxml.etree.XMLParser.feed(): 6636 nodes read in 0.004 seconds
-  minidom tree read in 0.080 seconds
+  minidom tree read in 0.066 seconds
 
 And a 3.4MB XML file containing the Old Testament::
 
-  xml.etree.ElementTree.parse done in 0.038 seconds
-  xml.etree.cElementTree.parse done in 0.030 seconds
-  xml.etree.cElementTree.XMLParser.feed(): 25317 nodes read in 0.030 seconds
-  lxml.etree.parse done in 0.016 seconds
-  drop_whitespace.parse done in 0.015 seconds
-  lxml.etree.XMLParser.feed(): 25317 nodes read in 0.022 seconds
-  minidom tree read in 0.288 seconds
+  xml.etree.ElementTree.parse done in 0.037 seconds
+  xml.etree.cElementTree.parse done in 0.036 seconds
+  xml.etree.cElementTree.XMLParser.feed(): 25317 nodes read in 0.036 seconds
+  lxml.etree.parse done in 0.025 seconds
+  drop_whitespace.parse done in 0.022 seconds
+  lxml.etree.XMLParser.feed(): 25317 nodes read in 0.026 seconds
+  minidom tree read in 0.194 seconds
 
 .. _`from a benchmark`: http://svn.effbot.org/public/elementtree-1.3/benchmark.py
 .. _`used to promote cElementTree`: http://effbot.org/zone/celementtree.htm#benchmarks
@@ -225,43 +225,42 @@ of the process in KB before and after parsing (using os.fork() to
 make sure we start from a clean state each time).  For the 274KB
 hamlet.xml file::
 
-  Memory usage: 7284
-  xml.etree.ElementTree.parse done in 0.017 seconds
-  Memory usage: 9432 (+2148)
+  Memory usage: 9256
+  xml.etree.ElementTree.parse done in 0.006 seconds
+  Memory usage: 12764 (+3508)
   xml.etree.cElementTree.parse done in 0.007 seconds
-  Memory usage: 9432 (+2152)
-  xml.etree.cElementTree.XMLParser.feed(): 6636 nodes read in 0.007 seconds
-  Memory usage: 9448 (+2164)
-  lxml.etree.parse done in 0.003 seconds
-  Memory usage: 11032 (+3748)
-  drop_whitespace.parse done in 0.003 seconds
-  Memory usage: 10224 (+2940)
+  Memory usage: 12764 (+3508)
+  xml.etree.cElementTree.XMLParser.feed(): 6636 nodes read in 0.006 seconds
+  Memory usage: 12720 (+3464)
+  lxml.etree.parse done in 0.004 seconds
+  Memory usage: 15052 (+5796)
+  drop_whitespace.parse done in 0.004 seconds
+  Memory usage: 14040 (+4784)
   lxml.etree.XMLParser.feed(): 6636 nodes read in 0.004 seconds
-  Memory usage: 11804 (+4520)
-  minidom tree read in 0.080 seconds
-  Memory usage: 12324 (+5040)
+  Memory usage: 15812 (+6556)
+  minidom tree read in 0.066 seconds
+  Memory usage: 15332 (+6076)
 
 And for the 3.4MB Old Testament XML file::
 
-  Memory usage: 10420
-  xml.etree.ElementTree.parse done in 0.038 seconds
-  Memory usage: 20660 (+10240)
-  xml.etree.cElementTree.parse done in 0.030 seconds
-  Memory usage: 20660 (+10240)
-  xml.etree.cElementTree.XMLParser.feed(): 25317 nodes read in 0.030 seconds
-  Memory usage: 20844 (+10424)
-  lxml.etree.parse done in 0.016 seconds
-  Memory usage: 27624 (+17204)
-  drop_whitespace.parse done in 0.015 seconds
-  Memory usage: 24468 (+14052)
-  lxml.etree.XMLParser.feed(): 25317 nodes read in 0.022 seconds
-  Memory usage: 29844 (+19424)
-  minidom tree read in 0.288 seconds
-  Memory usage: 28788 (+18368)
+  Memory usage: 12456
+  xml.etree.ElementTree.parse done in 0.037 seconds
+  Memory usage: 23288 (+10832)
+  xml.etree.cElementTree.parse done in 0.036 seconds
+  Memory usage: 23288 (+10832)
+  xml.etree.cElementTree.XMLParser.feed(): 25317 nodes read in 0.036 seconds
+  Memory usage: 23644 (+11220)
+  lxml.etree.parse done in 0.025 seconds
+  Memory usage: 31404 (+18948)
+  drop_whitespace.parse done in 0.022 seconds
+  Memory usage: 28752 (+16296)
+  lxml.etree.XMLParser.feed(): 25317 nodes read in 0.026 seconds
+  Memory usage: 33924 (+21500)
+  minidom tree read in 0.194 seconds
+  Memory usage: 31284 (+18828)
 
 As can be seen from the sizes, both lxml.etree and cElementTree are
-rather memory friendly compared to the pure Python libraries
-ElementTree and (especially) minidom.  Comparing to older CPython
+rather memory friendly and fast.  Comparing to older CPython
 versions, the memory footprint of the minidom library was considerably
 reduced in CPython 3.3, by about a factor of 4 in this case.
 
