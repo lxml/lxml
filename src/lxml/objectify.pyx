@@ -609,8 +609,10 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
         """
         cetree.setNodeText(self._c_node, s)
 
+
 cdef class NumberElement(ObjectifiedDataElement):
     cdef object _parse_value
+
     def _setValueParser(self, function):
         u"""Set the function that parses the Python value from a string.
 
@@ -655,26 +657,62 @@ cdef class NumberElement(ObjectifiedDataElement):
     def __add__(self, other):
         return _numericValueOf(self) + _numericValueOf(other)
 
+    def __radd__(self, other):
+        return _numericValueOf(other) + _numericValueOf(self)
+
     def __sub__(self, other):
         return _numericValueOf(self) - _numericValueOf(other)
+
+    def __rsub__(self, other):
+        return _numericValueOf(other) - _numericValueOf(self)
 
     def __mul__(self, other):
         return _numericValueOf(self) * _numericValueOf(other)
 
+    def __rmul__(self, other):
+        return _numericValueOf(other) * _numericValueOf(self)
+
     def __div__(self, other):
         return _numericValueOf(self) / _numericValueOf(other)
+
+    def __rdiv__(self, other):
+        return _numericValueOf(other) / _numericValueOf(self)
 
     def __truediv__(self, other):
         return _numericValueOf(self) / _numericValueOf(other)
 
+    def __rtruediv__(self, other):
+        return _numericValueOf(other) / _numericValueOf(self)
+
+    def __floordiv__(self, other):
+        return _numericValueOf(self) // _numericValueOf(other)
+
+    def __rfloordiv__(self, other):
+        return _numericValueOf(other) // _numericValueOf(self)
+
     def __mod__(self, other):
         return _numericValueOf(self) % _numericValueOf(other)
+
+    def __rmod__(self, other):
+        return _numericValueOf(other) % _numericValueOf(self)
+
+    def __divmod__(self, other):
+        return divmod(_numericValueOf(self), _numericValueOf(other))
+
+    def __rdivmod__(self, other):
+        return divmod(_numericValueOf(other), _numericValueOf(self))
 
     def __pow__(self, other, modulo):
         if modulo is None:
             return _numericValueOf(self) ** _numericValueOf(other)
         else:
             return pow(_numericValueOf(self), _numericValueOf(other), modulo)
+
+    def __rpow__(self, other, modulo):
+        if modulo is None:
+            return _numericValueOf(other) ** _numericValueOf(self)
+        else:
+            return pow(_numericValueOf(other), _numericValueOf(self), modulo)
 
     def __neg__(self):
         return - _numericValueOf(self)
@@ -685,7 +723,7 @@ cdef class NumberElement(ObjectifiedDataElement):
     def __abs__(self):
         return abs( _numericValueOf(self) )
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(_numericValueOf(self))
 
     def __invert__(self):
@@ -694,17 +732,33 @@ cdef class NumberElement(ObjectifiedDataElement):
     def __lshift__(self, other):
         return _numericValueOf(self) << _numericValueOf(other)
 
+    def __rlshift__(self, other):
+        return _numericValueOf(other) << _numericValueOf(self)
+
     def __rshift__(self, other):
         return _numericValueOf(self) >> _numericValueOf(other)
+
+    def __rrshift__(self, other):
+        return _numericValueOf(other) >> _numericValueOf(self)
 
     def __and__(self, other):
         return _numericValueOf(self) & _numericValueOf(other)
 
+    def __rand__(self, other):
+        return _numericValueOf(other) & _numericValueOf(self)
+
     def __or__(self, other):
         return _numericValueOf(self) | _numericValueOf(other)
 
+    def __ror__(self, other):
+        return _numericValueOf(other) | _numericValueOf(self)
+
     def __xor__(self, other):
         return _numericValueOf(self) ^ _numericValueOf(other)
+
+    def __rxor__(self, other):
+        return _numericValueOf(other) ^ _numericValueOf(self)
+
 
 cdef class IntElement(NumberElement):
     def _init(self):
@@ -713,6 +767,7 @@ cdef class IntElement(NumberElement):
     def __index__(self):
         return int(_parseNumber(self))
 
+
 cdef class LongElement(NumberElement):
     def _init(self):
         self._parse_value = long
@@ -720,9 +775,11 @@ cdef class LongElement(NumberElement):
     def __index__(self):
         return int(_parseNumber(self))
 
+
 cdef class FloatElement(NumberElement):
     def _init(self):
         self._parse_value = float
+
 
 cdef class StringElement(ObjectifiedDataElement):
     u"""String data class.
@@ -745,7 +802,7 @@ cdef class StringElement(ObjectifiedDataElement):
         else:
             return len(text)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(textOf(self._c_node))
 
     def __richcmp__(self, other, int op):
@@ -757,22 +814,26 @@ cdef class StringElement(ObjectifiedDataElement):
     def __add__(self, other):
         text  = _strValueOf(self)
         other = _strValueOf(other)
-        if text is None:
-            return other
-        if other is None:
-            return text
         return text + other
+
+    def __radd__(self, other):
+        text  = _strValueOf(self)
+        other = _strValueOf(other)
+        return other + text
 
     def __mul__(self, other):
         if isinstance(self, StringElement):
-            return textOf((<StringElement>self)._c_node) * _numericValueOf(other)
+            return (textOf((<StringElement>self)._c_node) or '') * _numericValueOf(other)
         elif isinstance(other, StringElement):
-            return _numericValueOf(self) * textOf((<StringElement>other)._c_node)
+            return _numericValueOf(self) * (textOf((<StringElement>other)._c_node) or '')
         else:
-            raise TypeError, u"invalid types for * operator"
+            return NotImplemented
+
+    def __rmul__(self, other):
+        return _numericValueOf(other) * (textOf((<StringElement>self)._c_node) or '')
 
     def __mod__(self, other):
-        return _strValueOf(self) % other
+        return (_strValueOf(self) or '') % other
 
     def __int__(self):
         return int(textOf(self._c_node))
@@ -786,6 +847,7 @@ cdef class StringElement(ObjectifiedDataElement):
     def __complex__(self):
         return complex(textOf(self._c_node))
 
+
 cdef class NoneElement(ObjectifiedDataElement):
     def __str__(self):
         return u"None"
@@ -793,7 +855,7 @@ cdef class NoneElement(ObjectifiedDataElement):
     def __repr__(self):
         return "None"
 
-    def __nonzero__(self):
+    def __bool__(self):
         return False
 
     def __richcmp__(self, other, int op):
@@ -821,8 +883,14 @@ cdef class BoolElement(IntElement):
     def _init(self):
         self._parse_value = __parseBool
 
-    def __nonzero__(self):
+    def __bool__(self):
         return __parseBool(textOf(self._c_node))
+
+    def __int__(self):
+        return 0 + __parseBool(textOf(self._c_node))
+
+    def __float__(self):
+        return 0.0 + __parseBool(textOf(self._c_node))
 
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
@@ -840,12 +908,14 @@ cdef class BoolElement(IntElement):
     def pyval(self):
         return __parseBool(textOf(self._c_node))
 
+
 def __checkBool(s):
     cdef int value = -1
     if s is not None:
         value = __parseBoolAsInt(s)
     if value == -1:
         raise ValueError
+
 
 cpdef bint __parseBool(s) except -1:
     cdef int value
@@ -855,6 +925,7 @@ cpdef bint __parseBool(s) except -1:
     if value == -1:
         raise ValueError, f"Invalid boolean value: '{s}'"
     return value
+
 
 cdef inline int __parseBoolAsInt(text) except -2:
     if text == 'false':
@@ -867,8 +938,10 @@ cdef inline int __parseBoolAsInt(text) except -2:
         return 1
     return -1
 
+
 cdef object _parseNumber(NumberElement element):
     return element._parse_value(textOf(element._c_node))
+
 
 cdef object _strValueOf(obj):
     if python._isString(obj):
@@ -879,6 +952,7 @@ cdef object _strValueOf(obj):
         return u''
     return unicode(obj)
 
+
 cdef object _numericValueOf(obj):
     if isinstance(obj, NumberElement):
         return _parseNumber(<NumberElement>obj)
@@ -888,6 +962,7 @@ cdef object _numericValueOf(obj):
     except AttributeError:
         pass
     return obj
+
 
 cdef _richcmpPyvals(left, right, int op):
     left  = getattr(left,  'pyval', left)
