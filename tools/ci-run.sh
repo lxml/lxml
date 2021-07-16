@@ -61,6 +61,8 @@ CFLAGS="-Og -g -fPIC" PYTHONUNBUFFERED=x make test || exit 1
 python setup.py install || exit 1
 python -c "from lxml import etree" || exit 1
 
-CFLAGS="-O3 -g1 -march=generic -fPIC" make clean bdist_wheel || exit 1
+CFLAGS="-O3 -g1 -march=generic -fPIC -flto" \
+  LDFLAGS="-flto" \
+  make clean bdist_wheel || exit 1
 
 ccache -s || true
