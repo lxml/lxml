@@ -80,7 +80,7 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: 10.14
       LIBXML2_VERSION: 2.9.10
       LIBXSLT_VERSION: 1.1.34
-      COVERAGE=false
+      COVERAGE: false
       GCC_VERSION: 8
       USE_CCACHE: 1
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
