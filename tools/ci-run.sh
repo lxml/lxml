@@ -14,6 +14,7 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 60
 
   export CC="gcc"
+  export PATH="/usr/lib/ccache:$PATH"
 
 elif [ -z "${OS_NAME##macos*}" ]; then
   export CC="clang -Wno-deprecated-declarations"
