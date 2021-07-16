@@ -103,7 +103,7 @@ jobs:
         if: startsWith(runner.os, 'Linux')
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt', '.github/**/ci.yml', '**/ci-run.sh') }}
+          key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload docs
         uses: actions/upload-artifact@v2
-        if: contains( env.EXTRA_DEPS, 'sphinx')
+        if: ${{ matrix.extra_hash == '-docs' }}
         with:
           name: website_html
           path: doc/html
