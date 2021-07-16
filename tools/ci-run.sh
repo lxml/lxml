@@ -48,7 +48,7 @@ if [ "$COVERAGE" == "true" ]; then
 fi
 
 # Build
-CFLAGS="-Og -g -fPIC" python -u setup.py build_ext --inplace \
+CFLAGS="-Og -g -fPIC -Wall -Wextra" python -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [ "$COVERAGE" == "true" ]; then echo -n " --with-coverage"; fi ) \
       || exit 1
@@ -58,9 +58,9 @@ ccache -s || true
 # Run tests
 CFLAGS="-Og -g -fPIC" PYTHONUNBUFFERED=x make test || exit 1
 
-python setup.py bdist_wheel || exit 1
-
 python setup.py install || exit 1
 python -c "from lxml import etree" || exit 1
+
+CFLAGS="-O3 -g1 -march=generic -fPIC" make clean bdist_wheel || exit 1
 
 ccache -s || true
