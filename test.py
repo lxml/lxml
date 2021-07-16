@@ -545,8 +545,8 @@ def main(argv):
     # Set up tracing before we start importing things
     cov = None
     if cfg.run_tests and cfg.coverage:
-        from coverage import coverage
-        cov = coverage(omit=['test.py'])
+        from coverage import Coverage
+        cov = Coverage(omit=['test.py'])
 
     # Finding and importing
     test_files = get_test_files(cfg)
