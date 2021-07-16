@@ -5,7 +5,7 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   echo "Installing requirements [apt]"
   sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
   sudo apt update -y -q
-  sudo apt install -y -q ccache gcc-$GCC_VERSION libxml2 libxml2-dev libxslt1.1 libxslt1-dev || exit 1
+  sudo apt install -y -q ccache gcc-$GCC_VERSION libxml2=$LIBXML2_VERSION libxml2-dev=$LIBXML2_VERSION libxslt1.1 libxslt1-dev || exit 1
   sudo /usr/sbin/update-ccache-symlinks
   echo "/usr/lib/ccache" >> $GITHUB_PATH # export ccache to path
 
