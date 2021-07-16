@@ -43,7 +43,7 @@ if [ -z "${PYTHON_VERSION##*-dev}" ];
 fi
 python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
 if [ "$COVERAGE" == "true" ]; then
-  python -m pip install coverage || exit 1
+  python -m pip install "coverage<5" || exit 1
   python -m pip install --pre 'Cython>=3.0a0' || exit 1
 fi
 
