@@ -69,9 +69,9 @@ jobs:
             allowed_failure: true   # Unicode parsing fails in Py3
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
-    # From testing, the runs tend to take ~3 minutes, so a limit of 10 minutes should be enough. This can always be
+    # From testing, the runs tend to take ~3 minutes, so a limit of 20 minutes should be enough. This can always be
     # changed in the future if needed.
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: ${{ matrix.os }}
 
     env:
