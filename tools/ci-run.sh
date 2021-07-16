@@ -63,6 +63,6 @@ python -c "from lxml import etree" || exit 1
 
 CFLAGS="-O3 -g1 -march=generic -fPIC -flto" \
   LDFLAGS="-flto" \
-  make clean bdist_wheel || exit 1
+  make clean wheel || exit 1
 
 ccache -s || true
