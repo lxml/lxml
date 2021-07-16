@@ -74,9 +74,9 @@ jobs:
             allowed_failure: true   # Unicode parsing fails
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
-    # From testing, the runs tend to take ~20 minutes, so a limit of 30 minutes should be enough. This can always be
+    # From testing, the runs tend to take ~3 minutes, so a limit of 10 minutes should be enough. This can always be
     # changed in the future if needed.
-    timeout-minutes: 30
+    timeout-minutes: 10
     runs-on: ${{ matrix.os }}
 
     env:
@@ -84,6 +84,7 @@ jobs:
       PYTHON_VERSION: ${{ matrix.python-version }}
       LIBXML2_VERSION: 2.9.10
       LIBXSLT_VERSION: 1.1.34
+      GCC_VERSION: 8
       USE_CCACHE: 1
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
@@ -115,6 +116,14 @@ jobs:
       - name: Build docs
         if: contains( env.EXTRA_DEPS, 'sphinx')
         run: make html
+
+      - name: Upload docs
+        uses: actions/upload-artifact@v2
+        if: contains( env.EXTRA_DEPS, 'sphinx')
+        with:
+          name: website_html
+          path: doc/html
+          if-no-files-found: ignore
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v2
