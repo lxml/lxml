@@ -131,7 +131,7 @@ jobs:
 
       - name: Upload Wheel
         uses: actions/upload-artifact@v2
-        if: ${{ env.STATIC_DEPS == 'true' && env.COVERAGE == 'false' }}
+        if: ${{ matrix.env.STATIC_DEPS == 'true' && env.COVERAGE == 'false' }}
         with:
           name: wheels-${{ runner.os }}
           path: dist/*.whl
