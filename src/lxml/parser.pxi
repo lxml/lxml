@@ -182,11 +182,11 @@ __GLOBAL_PARSER_CONTEXT.initMainParserContext()
 ## support for Python unicode I/O
 ############################################################
 
-# name of Python unicode encoding as known to libxml2
-cdef const_char* _UNICODE_ENCODING = NULL
+# name of Python Py_UNICODE encoding as known to libxml2
+cdef const_char* _PY_UNICODE_ENCODING = NULL
 
 cdef int _setupPythonUnicode() except -1:
-    u"""Sets _UNICODE_ENCODING to the internal encoding name of Python unicode
+    u"""Sets _PY_UNICODE_ENCODING to the internal encoding name of Python unicode
     strings if libxml2 supports reading native Python unicode.  This depends
     on iconv and the local Python installation, so we simply check if we find
     a matching encoding handler.
@@ -211,9 +211,9 @@ cdef int _setupPythonUnicode() except -1:
             return 0
     enchandler = tree.xmlFindCharEncodingHandler(enc)
     if enchandler is not NULL:
-        global _UNICODE_ENCODING
+        global _PY_UNICODE_ENCODING
         tree.xmlCharEncCloseFunc(enchandler)
-        _UNICODE_ENCODING = enc
+        _PY_UNICODE_ENCODING = enc
     return 0
 
 cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
@@ -1029,7 +1029,7 @@ cdef class _BaseParser:
         cdef Py_ssize_t py_buffer_len
         cdef int buffer_len, c_kind
         cdef const_char* c_text
-        cdef const_char* c_encoding = _UNICODE_ENCODING
+        cdef const_char* c_encoding = _PY_UNICODE_ENCODING
         cdef bint is_pep393_string = (
             python.PEP393_ENABLED and python.PyUnicode_IS_READY(utext))
         if is_pep393_string:
@@ -1272,27 +1272,28 @@ cdef class _FeedParser(_BaseParser):
         the ``parse()`` function concurrently.
         """
         cdef _ParserContext context
+        cdef bytes bstring
         cdef xmlparser.xmlParserCtxt* pctxt
-        cdef Py_ssize_t py_buffer_len
-        cdef const_char* c_data
+        cdef Py_ssize_t py_buffer_len, ustart
+        cdef const_char* char_data
         cdef const_char* c_encoding
         cdef int buffer_len
         cdef int error
         cdef bint recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+
         if isinstance(data, bytes):
             if self._default_encoding is None:
                 c_encoding = NULL
             else:
                 c_encoding = self._default_encoding
-            c_data = _cstr(data)
+            char_data = _cstr(data)
             py_buffer_len = python.PyBytes_GET_SIZE(data)
+            ustart = 0
         elif isinstance(data, unicode):
-            if _UNICODE_ENCODING is NULL:
-                raise ParserError, \
-                    u"Unicode parsing is not supported on this platform"
-            c_encoding = _UNICODE_ENCODING
-            c_data = python.PyUnicode_AS_DATA(data)
-            py_buffer_len = python.PyUnicode_GET_DATA_SIZE(data)
+            c_encoding = b"UTF-8"
+            char_data = NULL
+            py_buffer_len = len(<unicode> data)
+            ustart = 0
         else:
             raise TypeError, u"Parsing requires string data"
 
@@ -1309,19 +1310,21 @@ cdef class _FeedParser(_BaseParser):
             # out the character encoding (at least four bytes),
             # however if we give it all we got, we'll have nothing for
             # *mlParseChunk() and things go wrong.
-            buffer_len = 4 if py_buffer_len > 4 else <int>py_buffer_len
+            buffer_len = 0
+            if char_data is not NULL:
+                buffer_len = 4 if py_buffer_len > 4 else <int>py_buffer_len
             orig_loader = _register_document_loader()
             if self._for_html:
                 error = _htmlCtxtResetPush(
-                    pctxt, c_data, buffer_len, c_filename, c_encoding,
+                    pctxt, char_data, buffer_len, c_filename, c_encoding,
                     self._parse_options)
             else:
                 xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
-                    pctxt, c_data, buffer_len, c_filename, c_encoding)
+                    pctxt, char_data, buffer_len, c_filename, c_encoding)
             _reset_document_loader(orig_loader)
             py_buffer_len -= buffer_len
-            c_data += buffer_len
+            char_data += buffer_len
             if error:
                 raise MemoryError()
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
@@ -1330,30 +1333,19 @@ cdef class _FeedParser(_BaseParser):
 
         fixup_error = 0
         while py_buffer_len > 0 and (error == 0 or recover):
-            with nogil:
-                if py_buffer_len > limits.INT_MAX:
-                    buffer_len = limits.INT_MAX
-                else:
-                    buffer_len = <int>py_buffer_len
-                if self._for_html:
-                    c_node = pctxt.node  # last node where the parser stopped
-                    orig_loader = _register_document_loader()
-                    error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
-                    _reset_document_loader(orig_loader)
-                    # and now for the fun part: move node names to the dict
-                    if pctxt.myDoc:
-                        fixup_error = _fixHtmlDictSubtreeNames(
-                            pctxt.dict, pctxt.myDoc, c_node)
-                        if pctxt.myDoc.dict and pctxt.myDoc.dict is not pctxt.dict:
-                            xmlparser.xmlDictFree(pctxt.myDoc.dict)
-                            pctxt.myDoc.dict = pctxt.dict
-                            xmlparser.xmlDictReference(pctxt.dict)
-                else:
-                    orig_loader = _register_document_loader()
-                    error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
-                    _reset_document_loader(orig_loader)
+            if char_data is NULL:
+                # Unicode parsing by converting chunks to UTF-8
+                buffer_len = 2**19  # len(bytes) <= 4 * (2**19) == 2 MiB
+                bstring = (<unicode> data)[ustart : ustart+buffer_len].encode('UTF-8')
+                ustart += buffer_len
+                py_buffer_len -= buffer_len  # may end up < 0
+                error, fixup_error = _parse_data_chunk(pctxt, <const char*> bstring, <int> len(bstring))
+            else:
+                # Direct byte string parsing.
+                buffer_len = <int>py_buffer_len if py_buffer_len <= limits.INT_MAX else limits.INT_MAX
+                error, fixup_error = _parse_data_chunk(pctxt, char_data, buffer_len)
                 py_buffer_len -= buffer_len
-                c_data += buffer_len
+                char_data += buffer_len
 
             if fixup_error:
                 context.store_exception(MemoryError())
@@ -1424,6 +1416,30 @@ cdef class _FeedParser(_BaseParser):
             return (<_Document>result).getroot()
         else:
             return result
+
+
+cdef (int, int) _parse_data_chunk(xmlparser.xmlParserCtxt* c_ctxt,
+                                  const char* char_data, int buffer_len):
+    fixup_error = 0
+    with nogil:
+        if c_ctxt.html:
+            c_node = c_ctxt.node  # last node where the parser stopped
+            orig_loader = _register_document_loader()
+            error = htmlparser.htmlParseChunk(c_ctxt, char_data, buffer_len, 0)
+            _reset_document_loader(orig_loader)
+            # and now for the fun part: move node names to the dict
+            if c_ctxt.myDoc:
+                fixup_error = _fixHtmlDictSubtreeNames(
+                    c_ctxt.dict, c_ctxt.myDoc, c_node)
+                if c_ctxt.myDoc.dict and c_ctxt.myDoc.dict is not c_ctxt.dict:
+                    xmlparser.xmlDictFree(c_ctxt.myDoc.dict)
+                    c_ctxt.myDoc.dict = c_ctxt.dict
+                    xmlparser.xmlDictReference(c_ctxt.dict)
+        else:
+            orig_loader = _register_document_loader()
+            error = xmlparser.xmlParseChunk(c_ctxt, char_data, buffer_len, 0)
+            _reset_document_loader(orig_loader)
+    return (error, fixup_error)
 
 
 cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
@@ -1770,7 +1786,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 StringIO(text), filename, None)
-        if _UNICODE_ENCODING is NULL and not is_pep393_string:
+        if _PY_UNICODE_ENCODING is NULL and not is_pep393_string:
             text = (<unicode>text).encode('utf8')
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 BytesIO(text), filename, "UTF-8")

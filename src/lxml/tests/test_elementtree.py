@@ -3519,20 +3519,69 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(root[0].tag, "a")
         self.assertEqual(root[0].get("test"), "works")
 
-    def test_feed_parser_unicode(self):
+    def test_feed_parser_unicode_ascii(self):
         parser = self.XMLParser()
 
-        parser.feed(_str('<ro'))
-        parser.feed(_str('ot><'))
-        parser.feed(_str('a test="works"/'))
-        parser.feed(_str('></root'))
-        parser.feed(_str('>'))
+        parser.feed(_bytes(u'<?xml version='))
+        parser.feed(_bytes(u'"1.0"?><ro'))
+        parser.feed(_bytes(u'ot><'))
+        parser.feed(_bytes(u'a test="works"/'))
+        parser.feed(_bytes(u'></root'))
+        parser.feed(_bytes(u'>'))
 
         root = parser.close()
 
         self.assertEqual(root.tag, "root")
         self.assertEqual(root[0].tag, "a")
         self.assertEqual(root[0].get("test"), "works")
+
+    @et_needs_pyversion(3)
+    def test_feed_parser_unicode_astral(self):
+        parser = self.XMLParser()
+
+        astral_chunk = u'-- \U00010143 --'  # astral (4 bytes/chr)
+        latin1_chunk = u'-- \xf8 --'  # Latin1 (1 byte/chr)
+
+        parser.feed(u'<ro')  # ASCII (1 byte/chr)
+        parser.feed(u'ot><')
+        parser.feed(u'a test="w\N{DIAMETER SIGN}rks">')  # BMP (2 bytes/chr)
+        parser.feed(astral_chunk)
+        parser.feed(latin1_chunk)
+        parser.feed(u'</a></root')
+        parser.feed(u'>')
+
+        root = parser.close()
+
+        self.assertEqual(root.tag, "root")
+        self.assertEqual(root[0].tag, "a")
+        self.assertEqual(root[0].get("test"), u"w\N{DIAMETER SIGN}rks")
+        self.assertEqual(root[0].text, astral_chunk + latin1_chunk)
+
+    @et_needs_pyversion(3)
+    def test_feed_parser_unicode_astral_large(self):
+        parser = self.XMLParser()
+
+        astral_chunk = u'-- \U00010143 --' * (2 ** 16)  # astral (4 bytes/chr)
+        latin1_chunk = u'-- \xf8 --'  # Latin1 (1 byte/chr)
+
+        parser.feed(u'<ro')
+        parser.feed(u'ot><')  # ASCII (1 byte/chr)
+        parser.feed(u'a test="w\N{DIAMETER SIGN}rks">')  # BMP (2 bytes/chr)
+        parser.feed(astral_chunk)
+        parser.feed((astral_chunk + u"</a> <a>" + astral_chunk) * 16)
+        parser.feed(latin1_chunk)
+        parser.feed(u'</a></root')
+        parser.feed(u'>')
+
+        root = parser.close()
+
+        self.assertEqual(root.tag, "root")
+        self.assertEqual(root[0].get("test"), u"w\N{DIAMETER SIGN}rks")
+        for child in root[:-1]:
+            self.assertEqual(child.tag, "a")
+            self.assertEqual(child.text, astral_chunk * 2)
+        self.assertEqual(root[-1].tag, "a")
+        self.assertEqual(root[-1].text, astral_chunk + latin1_chunk)
 
     required_versions_ET['test_feed_parser_error_close_empty'] = (1,3)
     def test_feed_parser_error_close_empty(self):
