@@ -54,15 +54,10 @@ class HtmlParserTestCase(HelperTestCase):
                          _bytes("page Ã¡ title").decode('utf8'))
 
     def test_wide_unicode_xml(self):
-        if sys.maxunicode < 1114111:
-            return  # skip test
-        element = self.etree.HTML(_bytes(
-            '<html><body><p>\\U00026007</p></body></html>'
-        ).decode('unicode_escape'))
+        element = self.etree.HTML(u'<html><body><p>\U00026007</p></body></html>')
         p_text = element.findtext('.//p')
-        self.assertEqual(1, len(p_text))
-        self.assertEqual(_bytes('\\U00026007').decode('unicode_escape'),
-                         p_text)
+        self.assertEqual(1 if sys.maxunicode >= 1114111 else 2, len(p_text))
+        self.assertEqual(u'\U00026007', p_text)
 
     def test_html_ids(self):
         parser = self.etree.HTMLParser(recover=False)
