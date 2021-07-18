@@ -2,6 +2,20 @@
 lxml changelog
 ==============
 
+4.7.0 (2021-??-??)
+==================
+
+* Chunked Unicode string parsing via ``parser.feed()`` now encodes the input data
+  to the native UTF-8 encoding directly, instead of going through ``Py_UNICODE`` /
+  ``wchar_t`` encoding first, which previously required duplicate recoding in most cases.
+
+* GH#317: A new property ``system_url`` was added to DTD entities.
+  Patch by Thirdegree.
+
+* GH#314: The ``STATIC_*`` variables in ``setup.py`` can now be passed via env vars.
+  Patch by Isaac Jurado.
+
+
 4.6.3 (2021-03-21)
 ==================
 
