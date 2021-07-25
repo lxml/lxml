@@ -50,6 +50,11 @@ for other ways to support the lxml project,
 as well as commercial consulting, customisations and trainings on lxml and
 fast Python XML processing.
 
+Note that we are not accepting donations in crypto currencies.
+Much of the development and hosting for lxml is done in a carbon-neutral way
+or with compensated and very low emissions.
+Crypto currencies do not fit into that ambition.
+
 .. |Donate| image:: https://lxml.de/paypal_btn_donateCC_LG.png
             :width: 160
             :height: 47
