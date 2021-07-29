@@ -862,15 +862,17 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
         elif hasattr(f, 'write'):
             writer   = _FilelikeWriter(f, compression=compression)
             c_buffer = writer._createOutputBuffer(NULL)
-            with writer.error_log:
-                bytes_count = c14n.xmlC14NDocSaveTo(
-                    c_doc, NULL, exclusive, c_inclusive_ns_prefixes,
-                    with_comments, c_buffer)
+            try:
+                with writer.error_log:
+                    bytes_count = c14n.xmlC14NDocSaveTo(
+                        c_doc, NULL, exclusive, c_inclusive_ns_prefixes,
+                        with_comments, c_buffer)
+            finally:
                 error = tree.xmlOutputBufferClose(c_buffer)
-                if bytes_count < 0:
-                    error = bytes_count
-                elif error != -1:
-                    error = xmlerror.XML_ERR_OK
+            if bytes_count < 0:
+                error = bytes_count
+            elif error != -1:
+                error = xmlerror.XML_ERR_OK
         else:
             raise TypeError(f"File or filename expected, got '{python._fqtypename(f).decode('UTF-8')}'")
     finally:
