@@ -7,11 +7,10 @@ C extensions to efficiently access public functions and classes of lxml,
 without going through the Python API.
 
 The API is described in the file `etreepublic.pxd`_, which is directly
-c-importable by extension modules implemented in Pyrex_ or Cython_.
+c-importable by extension modules implemented in Cython_.
 
 .. _`etreepublic.pxd`: https://github.com/lxml/lxml/blob/master/src/lxml/includes/etreepublic.pxd
-.. _Cython: http://cython.org
-.. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+.. _Cython: https://cython.org
 
 .. contents::
 ..
@@ -45,7 +44,7 @@ Writing external modules in Cython
 ----------------------------------
 
 This is the easiest way of extending lxml at the C level.  A Cython_
-(or Pyrex_) module should start like this::
+module should start like this::
 
     # My Cython extension
 
