@@ -6,7 +6,9 @@ Tests specific to the lxml.objectify API
 
 from __future__ import absolute_import
 
-import unittest, operator
+import operator
+import random
+import unittest
 
 from .common_imports import (
     etree, HelperTestCase, fileInTestDir, doctest, make_doctest, _bytes, _str, BytesIO
@@ -2641,6 +2643,9 @@ class ObjectifyTestCase(HelperTestCase):
           <l>4294967296</l>
           <l>-4294967296</l>
           <f>1.1</f>
+          <f>.1</f>
+          <f>.1E23</f>
+          <f>.1E-23</f>
           <b>true</b>
           <b>false</b>
           <s>Strange things happen, where strings collide</s>
@@ -2649,6 +2654,11 @@ class ObjectifyTestCase(HelperTestCase):
           <s>t</s>
           <s>f</s>
           <s></s>
+          <s>12_34</s>
+          <s>1.2_34</s>
+          <s>34E</s>
+          <s>.E</s>
+          <s>.</s>
           <s>None</s>
           <n xsi:nil="true" />
         </root>
@@ -2656,19 +2666,64 @@ class ObjectifyTestCase(HelperTestCase):
         root = XML(xml)
 
         for i in root.i:
-            self.assertTrue(isinstance(i, objectify.IntElement))
+            self.assertTrue(isinstance(i, objectify.IntElement), (i.text, type(i)))
         for l in root.l:
-            self.assertTrue(isinstance(l, objectify.IntElement))
+            self.assertTrue(isinstance(l, objectify.IntElement), (l.text, type(l)))
         for f in root.f:
-            self.assertTrue(isinstance(f, objectify.FloatElement))  
+            self.assertTrue(isinstance(f, objectify.FloatElement), (f.text, type(f)))
         for b in root.b:
-            self.assertTrue(isinstance(b, objectify.BoolElement))
+            self.assertTrue(isinstance(b, objectify.BoolElement), (b.text, type(b)))
         self.assertEqual(True,  root.b[0])
         self.assertEqual(False, root.b[1])
         for s in root.s:
-            self.assertTrue(isinstance(s, objectify.StringElement))
-        self.assertTrue(isinstance(root.n, objectify.NoneElement))
+            self.assertTrue(isinstance(s, objectify.StringElement), (s.text, type(s)))
+        self.assertTrue(isinstance(root.n, objectify.NoneElement), root.n)
         self.assertEqual(None, root.n)
+
+    def test_standard_lookup_fuzz(self):
+        SPACES = ('',) * 10 + ('\t', 'x', '\n', '\r\n', u'\xA0', u'\x0A', u'\u200A', u'\u200B')
+        DIGITS = ('', '0', '1', '11', '21', '345678', '9'*20)
+
+        def space(_choice=random.choice):
+            return _choice(SPACES)
+
+        fuzz = [
+            '<t>%s</t>\n' % (space() + sign + digits + point + fraction + exp + exp_sign + exp_digits + special + space())
+            for sign in ('', '+', '-')
+            for digits in DIGITS
+            for point in ('', '.')
+            for fraction in DIGITS
+            for exp in ('', 'E')
+            for exp_sign in ('', '+', '-')
+            for exp_digits in DIGITS
+            for special in ('', 'INF', 'inf', 'NaN', 'nan', 'an', 'na', 'ana', 'nf')
+        ]
+
+        root = self.XML(_bytes('''\
+        <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        ''' + ''.join(fuzz) + '''
+        </root>
+        '''))
+
+        test_count = 0
+        for el in root.iterchildren():
+            text = el.text
+            expected_type = objectify.ObjectifiedElement
+            if text:
+                try:
+                    int(text)
+                    expected_type = objectify.IntElement
+                except ValueError:
+                    try:
+                        float(text)
+                        expected_type = objectify.FloatElement
+                    except ValueError:
+                        expected_type = objectify.StringElement
+
+            self.assertTrue(isinstance(el, expected_type), (text, expected_type, type(el)))
+            test_count += 1
+        self.assertEqual(len(fuzz), test_count)
+
 
 def test_suite():
     suite = unittest.TestSuite()

@@ -943,6 +943,121 @@ cdef object _parseNumber(NumberElement element):
     return element._parse_value(textOf(element._c_node))
 
 
+cdef enum NumberParserState:
+    NPS_SPACE_PRE = 0
+    NPS_SIGN = 1
+    NPS_DIGITS = 2
+    NPS_POINT_LEAD = 3
+    NPS_POINT = 4
+    NPS_FRACTION = 5
+    NPS_EXP = 6
+    NPS_EXP_SIGN = 7
+    NPS_DIGITS_EXP = 8
+    NPS_SPACE_TAIL = 9
+    NPS_INF1 = 20
+    NPS_INF2 = 21
+    NPS_INF3 = 22
+    NPS_NAN1 = 23
+    NPS_NAN2 = 24
+    NPS_NAN3 = 25
+    NPS_ERROR = 99
+
+
+ctypedef fused bytes_unicode:
+    bytes
+    unicode
+
+
+cdef _checkNumber(bytes_unicode s, bint allow_float):
+    cdef Py_UCS4 c
+    cdef NumberParserState state = NPS_SPACE_PRE
+
+    for c in s:
+        if c.isdigit() if (bytes_unicode is unicode) else c in b'0123456789':
+            if state in (NPS_DIGITS, NPS_FRACTION, NPS_DIGITS_EXP):
+                pass
+            elif state in (NPS_SPACE_PRE, NPS_SIGN):
+                state = NPS_DIGITS
+            elif state in (NPS_POINT_LEAD, NPS_POINT):
+                state = NPS_FRACTION
+            elif state in (NPS_EXP, NPS_EXP_SIGN):
+                state = NPS_DIGITS_EXP
+            else:
+                state = NPS_ERROR
+        else:
+            if c == u'.':
+                if state in (NPS_SPACE_PRE, NPS_SIGN):
+                    state = NPS_POINT_LEAD
+                elif state == NPS_DIGITS:
+                    state = NPS_POINT
+                else:
+                    state = NPS_ERROR
+                if not allow_float:
+                    state = NPS_ERROR
+            elif c in u'-+':
+                if state == NPS_SPACE_PRE:
+                    state = NPS_SIGN
+                elif state == NPS_EXP:
+                    state = NPS_EXP_SIGN
+                else:
+                    state = NPS_ERROR
+            elif c == u'E':
+                if state in (NPS_DIGITS, NPS_POINT, NPS_FRACTION):
+                    state = NPS_EXP
+                else:
+                    state = NPS_ERROR
+                if not allow_float:
+                    state = NPS_ERROR
+            # Allow INF and NaN. XMLSchema requires case, we don't, like Python.
+            elif c in u'iI':
+                state = NPS_INF1 if allow_float and state in (NPS_SPACE_PRE, NPS_SIGN) else NPS_ERROR
+            elif c in u'fF':
+                state = NPS_INF3 if state == NPS_INF2 else NPS_ERROR
+            elif c in u'aA':
+                state = NPS_NAN2 if state == NPS_NAN1 else NPS_ERROR
+            elif c in u'nN':
+                # Python also allows [+-]NaN, so let's accept that.
+                if state in (NPS_SPACE_PRE, NPS_SIGN):
+                    state = NPS_NAN1 if allow_float else NPS_ERROR
+                elif state == NPS_NAN2:
+                    state = NPS_NAN3
+                elif state == NPS_INF1:
+                    state = NPS_INF2
+                else:
+                    state = NPS_ERROR
+            # Allow spaces around text values.
+            else:
+                if c.isspace() if (bytes_unicode is unicode) else c in b'\x09\x0a\x0b\x0c\x0d\x20':
+                    if state in (NPS_SPACE_PRE, NPS_SPACE_TAIL):
+                        pass
+                    elif state in (NPS_DIGITS, NPS_POINT, NPS_FRACTION, NPS_DIGITS_EXP, NPS_INF3, NPS_NAN3):
+                        state = NPS_SPACE_TAIL
+                    else:
+                        state = NPS_ERROR
+                else:
+                    state = NPS_ERROR
+
+            if state == NPS_ERROR:
+                break
+
+    if state not in (NPS_DIGITS, NPS_FRACTION, NPS_POINT, NPS_DIGITS_EXP, NPS_INF3, NPS_NAN3, NPS_SPACE_TAIL):
+        raise ValueError
+
+
+cdef _checkInt(s):
+    if python.IS_PYTHON2 and type(s) is bytes:
+        return _checkNumber(<bytes>s, allow_float=False)
+    else:
+        return _checkNumber(<unicode>s, allow_float=False)
+
+
+cdef _checkFloat(s):
+    if python.IS_PYTHON2 and type(s) is bytes:
+        return _checkNumber(<bytes>s, allow_float=True)
+    else:
+        return _checkNumber(<unicode>s, allow_float=True)
+
+
 cdef object _strValueOf(obj):
     if python._isString(obj):
         return obj
@@ -1104,7 +1219,7 @@ def pytypename(obj):
     return _pytypename(obj)
 
 cdef _registerPyTypes():
-    pytype = PyType(u'int', int, IntElement)
+    pytype = PyType(u'int', _checkInt, IntElement)  # wraps functions for Python
     pytype.xmlSchemaTypes = (u"integer", u"int", u"short", u"byte", u"unsignedShort",
                              u"unsignedByte", u"nonPositiveInteger",
                              u"negativeInteger", u"long", u"nonNegativeInteger",
@@ -1115,7 +1230,7 @@ cdef _registerPyTypes():
     pytype = PyType(u'long', None, IntElement)
     pytype.register()
 
-    pytype = PyType(u'float', float, FloatElement, repr)
+    pytype = PyType(u'float', _checkFloat, FloatElement, repr)  # wraps _parseFloat for Python
     pytype.xmlSchemaTypes = (u"double", u"float")
     pytype.register()
 
