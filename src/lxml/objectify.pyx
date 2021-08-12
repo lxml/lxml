@@ -881,35 +881,35 @@ cdef class BoolElement(IntElement):
     Python's bool type.
     """
     def _init(self):
-        self._parse_value = __parseBool
+        self._parse_value = _parseBool  # wraps as Python callable
 
     def __bool__(self):
-        return __parseBool(textOf(self._c_node))
+        return _parseBool(textOf(self._c_node))
 
     def __int__(self):
-        return 0 + __parseBool(textOf(self._c_node))
+        return 0 + _parseBool(textOf(self._c_node))
 
     def __float__(self):
-        return 0.0 + __parseBool(textOf(self._c_node))
+        return 0.0 + _parseBool(textOf(self._c_node))
 
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
 
     def __hash__(self):
-        return hash(__parseBool(textOf(self._c_node)))
+        return hash(_parseBool(textOf(self._c_node)))
 
     def __str__(self):
-        return unicode(__parseBool(textOf(self._c_node)))
+        return unicode(_parseBool(textOf(self._c_node)))
 
     def __repr__(self):
-        return repr(__parseBool(textOf(self._c_node)))
+        return repr(_parseBool(textOf(self._c_node)))
 
     @property
     def pyval(self):
-        return __parseBool(textOf(self._c_node))
+        return _parseBool(textOf(self._c_node))
 
 
-def __checkBool(s):
+cdef _checkBool(s):
     cdef int value = -1
     if s is not None:
         value = __parseBoolAsInt(s)
@@ -917,7 +917,7 @@ def __checkBool(s):
         raise ValueError
 
 
-cpdef bint __parseBool(s) except -1:
+cdef bint _parseBool(s) except -1:
     cdef int value
     if s is None:
         return False
@@ -1090,7 +1090,7 @@ cdef dict _PYTYPE_DICT = {}
 cdef dict _SCHEMA_TYPE_DICT = {}
 cdef list _TYPE_CHECKS = []
 
-def __lower_bool(b):
+cdef unicode _lower_bool(b):
     return u"true" if b else u"false"
 
 cdef _pytypename(obj):
@@ -1119,7 +1119,7 @@ cdef _registerPyTypes():
     pytype.xmlSchemaTypes = (u"double", u"float")
     pytype.register()
 
-    pytype = PyType(u'bool', __checkBool, BoolElement, __lower_bool)
+    pytype = PyType(u'bool', _checkBool, BoolElement, _lower_bool)  # wraps functions for Python
     pytype.xmlSchemaTypes = (u"boolean",)
     pytype.register()
 
