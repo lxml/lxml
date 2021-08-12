@@ -110,7 +110,7 @@ extra_options['packages'] = [
 
 
 def setup_extra_options():
-    is_interesting_package = re.compile('^(libxml|libxslt|libexslt)$').match
+    is_interesting_package = re.compile('^(libxml|libxslt|libexslt|libiconv)$').match
     def extract_files(directories, pattern='*'):
         def get_files(root, dir_path, files):
             return [ (root, dir_path, filename)
