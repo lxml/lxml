@@ -196,7 +196,9 @@ setup(
     # `Unknown distribution option: 'bugtrack_url'`
     # which distract folks from real causes of problems when troubleshooting
     # bugtrack_url="https://bugs.launchpad.net/lxml",
-
+    project_urls={
+        "Source": "https://github.com/lxml/lxml",
+    },
     description=(
         "Powerful and Pythonic XML processing library"
         " combining libxml2/libxslt with the ElementTree API."

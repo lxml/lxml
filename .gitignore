@@ -1,6 +1,7 @@
 *.pyc
 .tox
 .idea
+.vscode
 build
 dist
 wheelhouse
