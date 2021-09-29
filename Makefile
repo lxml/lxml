@@ -24,7 +24,8 @@ MANYLINUX_IMAGES= \
 	manylinux_2_24_i686 \
 	manylinux_2_24_aarch64 \
 	manylinux_2_24_ppc64le \
-	manylinux_2_24_s390x
+	manylinux_2_24_s390x \
+	musllinux_1_1_x86_64
 
 AARCH64_ENV=-e AR="/opt/rh/devtoolset-9/root/usr/bin/gcc-ar" \
 		-e NM="/opt/rh/devtoolset-9/root/usr/bin/gcc-nm" \
