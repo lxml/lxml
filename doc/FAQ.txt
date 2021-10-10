@@ -117,11 +117,11 @@ wrote a nice article about high-performance aspects when `parsing
 large files with lxml`_.
 
 .. _`lxml.etree Tutorial`:      tutorial.html
-.. _`tutorial for ElementTree`: https://effbot.org/zone/element.htm
+.. _`tutorial for ElementTree`: http://web.archive.org/web/20200720191942/https://effbot.org/zone/element.htm
 .. _`extended etree API`:        api.html
 .. _`objectify documentation`:  objectify.html
-.. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
-.. _`element library`:          https://effbot.org/zone/element-lib.htm
+.. _`Python XML processing with lxml`: http://web.archive.org/web/20190522191656/http://infohost.nmt.edu/tcc/help/pubs/pylxml/web/index.html
+.. _`element library`:          http://web.archive.org/web/20200703234431/http://www.effbot.org/zone/element-lib.htm
 .. _`parsing large files with lxml`: http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
 
 
@@ -143,7 +143,7 @@ web page`_.
 The `generated API documentation`_ is a comprehensive API reference
 for the lxml package.
 
-.. _`ElementTree API`: https://effbot.org/zone/element-index.htm
+.. _`ElementTree API`: http://web.archive.org/web/20200703191710/http://www.effbot.org/zone/element-index.htm
 .. _`the web page`:    https://lxml.de/#documentation
 .. _`generated API documentation`: api/index.html
 
