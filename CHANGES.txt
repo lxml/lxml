@@ -2,6 +2,19 @@
 lxml changelog
 ==============
 
+4.6.4 (2021-10-15)
+==================
+
+Features added
+--------------
+
+* GH#317: A new property ``system_url`` was added to DTD entities.
+  Patch by Thirdegree.
+
+* GH#314: The ``STATIC_*`` variables in ``setup.py`` can now be passed via env vars.
+  Patch by Isaac Jurado.
+
+
 4.6.3 (2021-03-21)
 ==================
 
