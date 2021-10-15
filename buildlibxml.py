@@ -38,14 +38,14 @@ def download_and_extract_windows_binaries(destdir):
         if release_path in filename
     ]
 
-    if platform.machine() == 'ARM64':
+    if sys.version_info < (3, 5):
+        arch = 'vs2008.' + arch
+    elif platform.machine() == 'ARM64':
         arch = "win-arm64"
     elif sys.maxsize > 2**32:
         arch = "win64"
     else:
         arch = "win32"
-    if sys.version_info < (3, 5):
-        arch = 'vs2008.' + arch
 
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
