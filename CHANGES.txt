@@ -5,13 +5,19 @@ lxml changelog
 4.7.0 (2021-??-??)
 ==================
 
-* ``lxml.objectify`` previously accepted non-XML numbers with underscores (like "1_000")
-  as integers or float values in Python 3.6 and later. It now adheres to the number
-  format of the XML spec again.
+Features added
+--------------
 
 * Chunked Unicode string parsing via ``parser.feed()`` now encodes the input data
   to the native UTF-8 encoding directly, instead of going through ``Py_UNICODE`` /
   ``wchar_t`` encoding first, which previously required duplicate recoding in most cases.
+
+Bugs fixed
+----------
+
+* ``lxml.objectify`` previously accepted non-XML numbers with underscores (like "1_000")
+  as integers or float values in Python 3.6 and later. It now adheres to the number
+  format of the XML spec again.
 
 
 4.6.4 (2021-10-15)
