@@ -2,6 +2,8 @@ version: 1.0.{build}
 
 environment:
   matrix:
+  - python: 310
+  - python: 310-x64
   - python: 39
   - python: 39-x64
   - python: 27
@@ -14,6 +16,9 @@ environment:
   - python: 36-x64
   - python: 35
   - python: 35-x64
+  - python: 310
+    arch: arm64
+    env: STATIC_DEPS=true
   - python: 39
     arch: arm64
     env: STATIC_DEPS=true
