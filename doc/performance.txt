@@ -131,7 +131,7 @@ executes entirely at the C level, without any interaction with Python
 code.  The results are rather impressive, especially for UTF-8, which
 is native to libxml2.  While 20 to 40 times faster than (c)ElementTree
 1.2 (which was part of the standard library before Python 2.7/3.2),
-lxml is still more than 10 times as fast as the much improved
+lxml is still several times faster than the much improved
 ElementTree 1.3 in recent Python versions::
 
   lxe: tostring_utf16  (S-TR T1)    5.9340 msec/pass
