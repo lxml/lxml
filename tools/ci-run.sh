@@ -41,7 +41,11 @@ if [ -z "${PYTHON_VERSION##*-dev}" ];
   then python -m pip install --install-option=--no-cython-compile https://github.com/cython/cython/archive/master.zip;
   else python -m pip install -r requirements.txt;
 fi
-python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
+if [ -z "${PYTHON_VERSION##2*}" ]; then
+  python -m pip install -U beautifulsoup4==4.9.3 cssselect==1.1.0 html5lib==1.1 rnc2rng==2.6.5 ${EXTRA_DEPS} || exit 1
+else
+  python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
+fi
 if [ "$COVERAGE" == "true" ]; then
   python -m pip install "coverage<5" || exit 1
   python -m pip install --pre 'Cython>=3.0a0' || exit 1
