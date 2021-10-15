@@ -9,6 +9,13 @@ lxml changelog
   to the native UTF-8 encoding directly, instead of going through ``Py_UNICODE`` /
   ``wchar_t`` encoding first, which previously required duplicate recoding in most cases.
 
+
+4.6.4 (2021-10-15)
+==================
+
+Features added
+--------------
+
 * GH#317: A new property ``system_url`` was added to DTD entities.
   Patch by Thirdegree.
 
