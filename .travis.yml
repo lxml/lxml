@@ -73,7 +73,7 @@ install:
         then pip install --install-option=--no-cython-compile https://github.com/cython/cython/archive/master.zip;
         else pip install -r requirements.txt;
       fi
-    - pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS}
+    - pip install -U beautifulsoup4 cssselect html5lib rnc2rng==2.6.5 ${EXTRA_DEPS}
 
 script:
   - CFLAGS="-O0 -g -fPIC" python -u setup.py build_ext --inplace
