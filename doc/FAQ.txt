@@ -1239,8 +1239,8 @@ Element.  Its children will then inherit this prefix for serialization.
 How can I specify a default namespace for XPath expressions?
 ------------------------------------------------------------
 
-You can't.  In XPath, there is no such thing as a default namespace.  Just use
-an arbitrary prefix and let the namespace dictionary of the XPath evaluators
+You can't.  In XPath 1.0, there is no such thing as a default namespace.  Just
+use an arbitrary prefix and let the namespace dictionary of the XPath evaluators
 map it to your namespace.  See also the question above.
 
 
