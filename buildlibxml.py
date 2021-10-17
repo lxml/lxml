@@ -1,4 +1,4 @@
-import os, re, sys, subprocess
+import os, re, sys, subprocess, platform
 import tarfile
 from distutils import log, version
 from contextlib import closing
@@ -38,9 +38,14 @@ def download_and_extract_windows_binaries(destdir):
         if release_path in filename
     ]
 
-    arch = "win64" if sys.maxsize > 2**32 else "win32"
     if sys.version_info < (3, 5):
         arch = 'vs2008.' + arch
+    elif platform.machine() == 'ARM64':
+        arch = "win-arm64"
+    elif sys.maxsize > 2**32:
+        arch = "win64"
+    else:
+        arch = "win32"
 
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
