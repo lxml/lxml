@@ -255,4 +255,7 @@ an appropriate version of Cython installed.
 if OPTION_RUN_TESTS:
     print("Running tests.")
     import test
-    sys.exit( test.main(sys.argv[:1]) )
+    try:
+        sys.exit( test.main(sys.argv[:1]) )
+    except ImportError:
+        pass  # we assume that the binaries were not built with this setup.py run
