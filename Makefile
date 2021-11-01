@@ -3,7 +3,7 @@ PYTHON3?=python3
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
-LXMLVERSION:=$(shell sed -ne '/__version__/s|.*__version__\s*=\s*"\([^"]*\)".*|\1|p' src/lxml/__init__.py)
+LXMLVERSION:=$(shell $(PYTHON3) -c 'import re; print(re.findall(r"__version__\s*=\s*\"([^\"]+)\"", open("src/lxml/__init__.py").read())[0])' )
 
 PARALLEL?=$(shell $(PYTHON) -c 'import sys; print("-j7" if sys.version_info >= (3, 5) else "")' )
 PARALLEL3?=$(shell $(PYTHON3) -c 'import sys; print("-j7" if sys.version_info >= (3, 5) else "")' )
@@ -12,6 +12,7 @@ PY3_WITH_CYTHON?=$(shell $(PYTHON3) -c 'import Cython.Build.Dependencies' >/dev/
 CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 CYTHON3_WITH_COVERAGE?=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
+PYTHON_BUILD_VERSION ?= *
 MANYLINUX_LIBXML2_VERSION=2.9.10
 MANYLINUX_LIBXSLT_VERSION=1.1.34
 MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
@@ -26,10 +27,6 @@ MANYLINUX_IMAGES= \
 	manylinux_2_24_ppc64le \
 	manylinux_2_24_s390x \
 	musllinux_1_1_x86_64
-
-AARCH64_ENV=-e AR="/opt/rh/devtoolset-9/root/usr/bin/gcc-ar" \
-		-e NM="/opt/rh/devtoolset-9/root/usr/bin/gcc-nm" \
-		-e RANLIB="/opt/rh/devtoolset-9/root/usr/bin/gcc-ranlib"
 
 .PHONY: all inplace inplace3 rebuild-sdist sdist build require-cython wheel_manylinux wheel
 
@@ -75,8 +72,8 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		-e LDFLAGS="$(MANYLINUX_LDFLAGS)" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
+		-e PYTHON_BUILD_VERSION="$(PYTHON_BUILD_VERSION)" \
 		-e WHEELHOUSE=$(subst wheel_,wheelhouse/,$@) \
-		$(if $(patsubst %aarch64,,$@),,$(AARCH64_ENV)) \
 		quay.io/pypa/$(subst wheel_,,$@) \
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
