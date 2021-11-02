@@ -98,13 +98,13 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: wheelhouse*/lxml-*.whl
+        files: wheelhouse/*/lxml-*.whl
 
     - name: Upload wheels
       uses: actions/upload-artifact@v2
       with:
         name: wheels-${{ matrix.image }}
-        path: wheelhouse*/*-m*linux*.whl  # manylinux / musllinux
+        path: wheelhouse/*/*-m*linux*.whl  # manylinux / musllinux
         if-no-files-found: ignore
 
   non-Linux:
