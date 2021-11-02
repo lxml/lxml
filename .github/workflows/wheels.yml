@@ -118,7 +118,7 @@ jobs:
         python_version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"]
 
     runs-on: ${{ matrix.os }}
-    env: { LIBXML2_VERSION: 2.9.10, LIBXSLT_VERSION: 1.1.34, MACOSX_DEPLOYMENT_TARGET: 10.14 }
+    env: { LIBXML2_VERSION: 2.9.10, LIBXSLT_VERSION: 1.1.34, MACOSX_DEPLOYMENT_TARGET: 10.9 }
 
     steps:
     - uses: actions/checkout@v2
