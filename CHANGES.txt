@@ -20,7 +20,7 @@ Bugs fixed
   format of the XML spec again.
 
 
-4.6.4 (2021-10-15)
+4.6.4 (2021-11-01)
 ==================
 
 Features added

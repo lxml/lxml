@@ -159,7 +159,7 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 4.6.4`_, released 2021-10-15
+The latest version is `lxml 4.6.4`_, released 2021-11-01
 (`changes for 4.6.4`_).  `Older versions <#old-versions>`_
 are listed below.
 
@@ -258,7 +258,7 @@ See the websites of lxml
 
 .. _`PDF documentation`: lxmldoc-4.6.4.pdf
 
-* `lxml 4.6.4`_, released 2021-10-15 (`changes for 4.6.4`_)
+* `lxml 4.6.4`_, released 2021-11-01 (`changes for 4.6.4`_)
 
 * `lxml 4.6.3`_, released 2021-03-21 (`changes for 4.6.3`_)
 
