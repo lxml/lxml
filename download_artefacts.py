@@ -15,17 +15,19 @@ from urllib.parse import urljoin
 logger = logging.getLogger()
 
 PARALLEL_DOWNLOADS = 6
-GITHUB_PACKAGE_URL = "https://github.com/lxml/lxml-wheels"
+GITHUB_PACKAGE_URL = "https://github.com/lxml/lxml"
 APPVEYOR_PACKAGE_URL = "https://ci.appveyor.com/api/projects/scoder/lxml"
 APPVEYOR_BUILDJOBS_URL = "https://ci.appveyor.com/api/buildjobs"
 
 
 def find_github_files(version, base_package_url=GITHUB_PACKAGE_URL):
+    file_url_pattern = r'href="([^"]+/releases/download/[^"]+\.(?:whl|tar\.gz))"'
     url = f"{base_package_url}/releases/tag/lxml-{version}"
+
     with urlopen(url) as p:
         page = p.read().decode()
 
-    for wheel_url, _ in itertools.groupby(sorted(re.findall(r'href="([^"]+\.whl)"', page))):
+    for wheel_url, _ in itertools.groupby(sorted(re.findall(file_url_pattern, page))):
         yield urljoin(base_package_url, wheel_url)
 
 
