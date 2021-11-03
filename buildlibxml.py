@@ -121,6 +121,7 @@ def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_d
 ## Routines to download and build libxml2/xslt from sources:
 
 LIBXML2_LOCATION = 'http://xmlsoft.org/sources/'
+LIBXSLT_LOCATION = 'http://xmlsoft.org/sources/'
 LIBICONV_LOCATION = 'https://ftp.gnu.org/pub/gnu/libiconv/'
 ZLIB_LOCATION = 'https://zlib.net/'
 match_libfile_version = re.compile('^[^-]*-([.0-9-]+)[.].*').match
@@ -214,7 +215,15 @@ def download_libxml2(dest_dir, version=None):
     #version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
     version_re = re.compile(r'libxml2-([0-9.]+[0-9]).tar.gz')
     filename = 'libxml2-%s.tar.gz'
-    return download_library(dest_dir, LIBXML2_LOCATION, 'libxml2',
+
+    if version == "2.9.12":
+        # Temporarily using the latest master (2.9.12+) until there is a release that supports lxml again.
+        from_location = "https://gitlab.gnome.org/GNOME/libxml2/-/archive/dea91c97debeac7c1aaf9c19f79029809e23a353/"
+        version = "dea91c97debeac7c1aaf9c19f79029809e23a353"
+    else:
+        from_location = LIBXML2_LOCATION
+
+    return download_library(dest_dir, from_location, 'libxml2',
                             version_re, filename, version=version)
 
 
@@ -223,7 +232,7 @@ def download_libxslt(dest_dir, version=None):
     #version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
     version_re = re.compile(r'libxslt-([0-9.]+[0-9]).tar.gz')
     filename = 'libxslt-%s.tar.gz'
-    return download_library(dest_dir, LIBXML2_LOCATION, 'libxslt',
+    return download_library(dest_dir, LIBXSLT_LOCATION, 'libxslt',
                             version_re, filename, version=version)
 
 
@@ -441,6 +450,9 @@ def build_libxml2xslt(download_dir, build_dir,
     except Exception:
         pass # this isn't required, so ignore any errors
     if not has_current_lib("libxml2", libxml2_dir):
+        if not os.path.exists(os.path.join(libxml2_dir, "configure")):
+            # Allow building from git sources by running autoconf etc.
+            libxml2_configure_cmd[0] = "./autogen.sh"
         cmmi(libxml2_configure_cmd, libxml2_dir, multicore, **call_setup)
 
     # Fix up libxslt configure script (needed up to and including 1.1.34)
