@@ -20,6 +20,7 @@ build_wheel() {
         RUN_TESTS=true \
         LDFLAGS="$LDFLAGS -fPIC" \
         CFLAGS="$CFLAGS -fPIC" \
+        ACLOCAL_PATH=/usr/share/aclocal/ \
         ${pybin}/pip \
             wheel \
             "$source" \
