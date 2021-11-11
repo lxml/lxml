@@ -123,6 +123,26 @@ class CleanerTest(unittest.TestCase):
             b'<math><style>/* deleted */</style></math>',
             lxml.html.tostring(clean_html(s)))
 
+    def test_sneaky_import_in_style(self):
+        # Prevent "@@importimport" -> "@import" replacement.
+        style_codes = [
+            "@@importimport(extstyle.css)",
+            "@ @  import import(extstyle.css)",
+            "@ @ importimport(extstyle.css)",
+            "@@  import import(extstyle.css)",
+            "@ @import import(extstyle.css)",
+            "@@importimport()",
+        ]
+        for style_code in style_codes:
+            html = '<style>%s</style>' % style_code
+            s = lxml.html.fragment_fromstring(html)
+
+            cleaned = lxml.html.tostring(clean_html(s))
+            self.assertEqual(
+                b'<style>/* deleted */</style>',
+                cleaned,
+                "%s  ->  %s" % (style_code, cleaned))
+
     def test_formaction_attribute_in_button_input(self):
         # The formaction attribute overrides the form's action and should be
         # treated as a malicious link attribute
