@@ -1,3 +1,5 @@
+import base64
+import gzip
 import unittest
 from lxml.tests.common_imports import make_doctest
 
@@ -142,6 +144,49 @@ class CleanerTest(unittest.TestCase):
                 b'<style>/* deleted */</style>',
                 cleaned,
                 "%s  ->  %s" % (style_code, cleaned))
+
+    def test_svg_data_links(self):
+        # Remove SVG images with potentially insecure content.
+        svg = b'<svg onload="alert(123)" />'
+        svgz = gzip.compress(svg)
+        svg_b64 = base64.b64encode(svg).decode('ASCII')
+        svgz_b64 = base64.b64encode(svgz).decode('ASCII')
+        urls = [
+            "data:image/svg+xml;base64," + svg_b64,
+            "data:image/svg+xml-compressed;base64," + svgz_b64,
+        ]
+        for url in urls:
+            html = '<img src="%s">' % url
+            s = lxml.html.fragment_fromstring(html)
+
+            cleaned = lxml.html.tostring(clean_html(s))
+            self.assertEqual(
+                b'<img src="">',
+                cleaned,
+                "%s  ->  %s" % (url, cleaned))
+
+    def test_image_data_links(self):
+        data = b'123'
+        data_b64 = base64.b64encode(data).decode('ASCII')
+        urls = [
+            "data:image/jpeg;base64," + data_b64,
+            "data:image/apng;base64," + data_b64,
+            "data:image/png;base64," + data_b64,
+            "data:image/gif;base64," + data_b64,
+            "data:image/webp;base64," + data_b64,
+            "data:image/bmp;base64," + data_b64,
+            "data:image/tiff;base64," + data_b64,
+            "data:image/x-icon;base64," + data_b64,
+        ]
+        for url in urls:
+            html = '<img src="%s">' % url
+            s = lxml.html.fragment_fromstring(html)
+
+            cleaned = lxml.html.tostring(clean_html(s))
+            self.assertEqual(
+                html.encode("UTF-8"),
+                cleaned,
+                "%s  ->  %s" % (url, cleaned))
 
     def test_formaction_attribute_in_button_input(self):
         # The formaction attribute overrides the form's action and should be
