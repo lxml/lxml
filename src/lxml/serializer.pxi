@@ -1049,6 +1049,18 @@ cdef class C14NWriterTarget:
                 return f'{{{uri}}}{name}'
         raise ValueError(f'Prefix {prefix} of QName "{prefixed_name}" is not declared in scope')
 
+    cdef _compare_unicode_strings(self, val_a, val_b):
+        val_a = self._ensure_unicode_string(val_a)
+        val_b = self._ensure_unicode_string(val_b)
+        return val_a == val_b
+
+    cdef _ensure_unicode_string(self, val):
+        try:
+            val = val.decode()
+        except (UnicodeDecodeError, AttributeError):
+            pass
+        return val
+
     cdef _qname(self, qname, uri=None):
         if uri is None:
             uri, tag = qname[1:].rsplit('}', 1) if qname[:1] == '{' else ('', qname)
@@ -1057,7 +1069,7 @@ cdef class C14NWriterTarget:
 
         prefixes_seen = set()
         for u, prefix in self._iter_namespaces(self._declared_ns_stack):
-            if u == uri and prefix not in prefixes_seen:
+            if self._compare_unicode_strings(u, uri) and prefix not in prefixes_seen:
                 return f'{prefix}:{tag}' if prefix else tag, tag, uri
             prefixes_seen.add(prefix)
 
@@ -1075,7 +1087,7 @@ cdef class C14NWriterTarget:
             return tag, tag, uri
 
         for u, prefix in self._iter_namespaces(self._ns_stack):
-            if u == uri:
+            if self._compare_unicode_strings(u, uri):
                 self._declared_ns_stack[-1].append((uri, prefix))
                 return f'{prefix}:{tag}' if prefix else tag, tag, uri
 
@@ -1160,7 +1172,7 @@ cdef class C14NWriterTarget:
         # Write namespace declarations in prefix order ...
         if new_namespaces:
             attr_list = [
-                (u'xmlns:' + prefix if prefix else u'xmlns', uri)
+                (u'xmlns:' + self._ensure_unicode_string(prefix) if prefix else 'xmlns', uri)
                 for uri, prefix in new_namespaces
             ]
             attr_list.sort()
