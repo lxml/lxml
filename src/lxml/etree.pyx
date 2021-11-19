@@ -170,6 +170,20 @@ cdef dict _DEFAULT_NAMESPACE_PREFIXES = {
     b"http://codespeak.net/lxml/objectify/pytype" : b"py",
 }
 
+# To avoid runtime encoding overhead, we keep a Unicode copy
+# of the uri-prefix mapping as (str, str) items view (list in Py2).
+cdef object _DEFAULT_NAMESPACE_PREFIXES_ITEMS = []
+
+cdef _update_default_namespace_prefixes_items():
+    cdef bytes ns, prefix
+    global _DEFAULT_NAMESPACE_PREFIXES_ITEMS
+    _DEFAULT_NAMESPACE_PREFIXES_ITEMS = {
+        ns.decode('utf-8') : prefix.decode('utf-8')
+        for ns, prefix in _DEFAULT_NAMESPACE_PREFIXES.items()
+    }.items()
+
+_update_default_namespace_prefixes_items()
+
 cdef object _check_internal_prefix = re.compile(b"ns\d+$").match
 
 def register_namespace(prefix, uri):
@@ -190,6 +204,7 @@ def register_namespace(prefix, uri):
         if k == uri_utf or v == prefix_utf:
             del _DEFAULT_NAMESPACE_PREFIXES[k]
     _DEFAULT_NAMESPACE_PREFIXES[uri_utf] = prefix_utf
+    _update_default_namespace_prefixes_items()
 
 
 # Error superclass for ElementTree compatibility
