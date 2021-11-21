@@ -26,7 +26,7 @@ except:
 # use pre-built libraries on Windows
 
 def download_and_extract_windows_binaries(destdir):
-    url = "https://github.com/mhils/libxml2-win-binaries/releases"
+    url = "https://github.com/lxml/libxml2-win-binaries/releases"
     filenames = list(_list_dir_urllib(url))
 
     release_path = "/download/%s/" % find_max_version(
