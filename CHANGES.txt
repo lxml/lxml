@@ -15,6 +15,9 @@ Features added
 Bugs fixed
 ----------
 
+* The standard namespace prefixes were mishandled during "C14N2" serialisation on Python 3.
+  See https://mail.python.org/archives/list/lxml@python.org/thread/6ZFBHFOVHOS5GFDOAMPCT6HM5HZPWQ4Q/
+
 * ``lxml.objectify`` previously accepted non-XML numbers with underscores (like "1_000")
   as integers or float values in Python 3.6 and later. It now adheres to the number
   format of the XML spec again.
@@ -25,7 +28,7 @@ Bugs fixed
 Other changes
 -------------
 
-* Wheels include libxml2 2.9.12+ and libxslt 1.1.34.
+* Wheels include libxml2 2.9.12+ and libxslt 1.1.34 (also on Windows).
 
 
 4.6.4 (2021-11-01)
