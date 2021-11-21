@@ -111,6 +111,8 @@ extra_options['packages'] = [
 
 def setup_extra_options():
     is_interesting_package = re.compile('^(libxml|libxslt|libexslt)$').match
+    is_interesting_header = re.compile('^(zconf|zlib|.*charset)\.h$').match
+
     def extract_files(directories, pattern='*'):
         def get_files(root, dir_path, files):
             return [ (root, dir_path, filename)
@@ -123,6 +125,12 @@ def setup_extra_options():
                 rel_dir = root[len(dir_path)+1:]
                 if is_interesting_package(rel_dir):
                     file_list.extend(get_files(root, rel_dir, files))
+                elif not rel_dir:
+                    # include also top-level header files (zlib/iconv)
+                    file_list.extend(
+                        item for item in get_files(root, rel_dir, files)
+                        if is_interesting_header(item[-1])
+                    )
         return file_list
 
     def build_packages(files):
@@ -137,7 +145,7 @@ def setup_extra_options():
             if package_path in packages:
                 root, package_files = packages[package_path]
                 if root != root_path:
-                    print("conflicting directories found for include package '%s': %s and %s"
+                    print("WARNING: conflicting directories found for include package '%s': %s and %s"
                           % (package_path, root_path, root))
                     continue
             else:

@@ -19,6 +19,9 @@ Bugs fixed
   as integers or float values in Python 3.6 and later. It now adheres to the number
   format of the XML spec again.
 
+* LP#1939031: Static wheels of lxml now contain the header files of zlib and libiconv
+  (in addition to the already provided headers of libxml2/libxslt/libexslt).
+
 Other changes
 -------------
 
