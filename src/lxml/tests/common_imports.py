@@ -69,6 +69,13 @@ def filter_by_version(test_class, version_dict, current_version):
         if expected_version > current_version:
             setattr(test_class, name, dummy_test_method)
 
+
+def needs_libxml(*version):
+    return unittest.skipIf(
+        etree.LIBXML_VERSION >= version,
+        "needs libxml2 >= %s.%s.%s" % (version + (0, 0, 0))[:3])
+
+
 import doctest
 
 try:
