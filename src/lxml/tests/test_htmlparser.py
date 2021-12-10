@@ -10,7 +10,7 @@ import unittest
 import tempfile, os, os.path, sys
 
 from .common_imports import etree, html, BytesIO, fileInTestDir, _bytes, _str
-from .common_imports import SillyFileLike, HelperTestCase, write_to_file
+from .common_imports import SillyFileLike, HelperTestCase, write_to_file, needs_libxml
 
 try:
     unicode
@@ -53,7 +53,8 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(element.findtext('.//h1'),
                          _bytes("page Ã¡ title").decode('utf8'))
 
-    def test_wide_unicode_xml(self):
+    @needs_libxml(2, 9, 5)  # not sure, at least 2.9.4 fails
+    def test_wide_unicode_html(self):
         if sys.maxunicode < 1114111:
             return  # skip test
         element = self.etree.HTML(_bytes(

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import unittest
 import sys
 
-from .common_imports import StringIO, etree, HelperTestCase, _str, _bytes, _chr
+from .common_imports import StringIO, etree, HelperTestCase, _str, _bytes, _chr, needs_libxml
 
 try:
     unicode
@@ -34,6 +34,7 @@ class UnicodeTestCase(HelperTestCase):
         tree = etree.XML('<p>%s</p>' % uni)
         self.assertEqual(uni, tree.text)
 
+    @needs_libxml(2, 9, 5)  # not sure, at least 2.9.4 fails
     def test_wide_unicode_xml(self):
         if sys.maxunicode < 1114111:
             return  # skip test
