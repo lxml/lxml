@@ -72,7 +72,7 @@ def filter_by_version(test_class, version_dict, current_version):
 
 def needs_libxml(*version):
     return unittest.skipIf(
-        etree.LIBXML_VERSION >= version,
+        etree.LIBXML_VERSION < version,
         "needs libxml2 >= %s.%s.%s" % (version + (0, 0, 0))[:3])
 
 
