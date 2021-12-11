@@ -126,7 +126,7 @@ class CleanerTest(unittest.TestCase):
             lxml.html.tostring(clean_html(s)))
 
     def test_sneaky_import_in_style(self):
-        # Prevent "@@importimport" -> "@import" replacement.
+        # Prevent "@@importimport" -> "@import" replacement etc.
         style_codes = [
             "@@importimport(extstyle.css)",
             "@ @  import import(extstyle.css)",
@@ -134,6 +134,11 @@ class CleanerTest(unittest.TestCase):
             "@@  import import(extstyle.css)",
             "@ @import import(extstyle.css)",
             "@@importimport()",
+            "@@importimport()  ()",
+            "@/* ... */import()",
+            "@im/* ... */port()",
+            "@ @import/* ... */import()",
+            "@    /* ... */      import()",
         ]
         for style_code in style_codes:
             html = '<style>%s</style>' % style_code
@@ -142,6 +147,41 @@ class CleanerTest(unittest.TestCase):
             cleaned = lxml.html.tostring(clean_html(s))
             self.assertEqual(
                 b'<style>/* deleted */</style>',
+                cleaned,
+                "%s  ->  %s" % (style_code, cleaned))
+
+    def test_sneaky_schemes_in_style(self):
+        style_codes = [
+            "javasjavascript:cript:",
+            "javascriptjavascript::",
+            "javascriptjavascript:: :",
+            "vbjavascript:cript:",
+        ]
+        for style_code in style_codes:
+            html = '<style>%s</style>' % style_code
+            s = lxml.html.fragment_fromstring(html)
+
+            cleaned = lxml.html.tostring(clean_html(s))
+            self.assertEqual(
+                b'<style>/* deleted */</style>',
+                cleaned,
+                "%s  ->  %s" % (style_code, cleaned))
+
+    def test_sneaky_urls_in_style(self):
+        style_codes = [
+            "url(data:image/svg+xml;base64,...)",
+            "url(javasjavascript:cript:)",
+            "url(javasjavascript:cript: ::)",
+            "url(vbjavascript:cript:)",
+            "url(vbjavascript:cript: :)",
+        ]
+        for style_code in style_codes:
+            html = '<style>%s</style>' % style_code
+            s = lxml.html.fragment_fromstring(html)
+
+            cleaned = lxml.html.tostring(clean_html(s))
+            self.assertEqual(
+                b'<style>url()</style>',
                 cleaned,
                 "%s  ->  %s" % (style_code, cleaned))
 
@@ -180,6 +220,29 @@ class CleanerTest(unittest.TestCase):
         ]
         for url in urls:
             html = '<img src="%s">' % url
+            s = lxml.html.fragment_fromstring(html)
+
+            cleaned = lxml.html.tostring(clean_html(s))
+            self.assertEqual(
+                html.encode("UTF-8"),
+                cleaned,
+                "%s  ->  %s" % (url, cleaned))
+
+    def test_image_data_links_in_style(self):
+        data = b'123'
+        data_b64 = base64.b64encode(data).decode('ASCII')
+        urls = [
+            "data:image/jpeg;base64," + data_b64,
+            "data:image/apng;base64," + data_b64,
+            "data:image/png;base64," + data_b64,
+            "data:image/gif;base64," + data_b64,
+            "data:image/webp;base64," + data_b64,
+            "data:image/bmp;base64," + data_b64,
+            "data:image/tiff;base64," + data_b64,
+            "data:image/x-icon;base64," + data_b64,
+        ]
+        for url in urls:
+            html = '<style> url(%s) </style>' % url
             s = lxml.html.fragment_fromstring(html)
 
             cleaned = lxml.html.tostring(clean_html(s))

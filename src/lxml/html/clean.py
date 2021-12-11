@@ -76,22 +76,20 @@ _looks_like_tag_content = re.compile(
 # All kinds of schemes besides just javascript: that can cause
 # execution:
 _find_image_dataurls = re.compile(
-    r'^data:image/(.+);base64,', re.I).findall
-_is_possibly_malicious_scheme = re.compile(
+    r'data:image/(.+);base64,', re.I).findall
+_possibly_malicious_schemes = re.compile(
     r'(javascript|jscript|livescript|vbscript|data|about|mocha):',
     re.I).findall
 # SVG images can contain script content
-_is_unsafe_image_type = re.compile(r"(xml|svg)", re.I).findall
+_is_unsafe_image_type = re.compile(r"(xml|svg)", re.I).search
 
-def _is_javascript_scheme(s):
-    is_image_url = False
+def _has_javascript_scheme(s):
+    safe_image_urls = 0
     for image_type in _find_image_dataurls(s):
-        is_image_url = True
         if _is_unsafe_image_type(image_type):
             return True
-    if is_image_url:
-        return False
-    return bool(_is_possibly_malicious_scheme(s))
+        safe_image_urls += 1
+    return len(_possibly_malicious_schemes(s)) > safe_image_urls
 
 _substitute_whitespace = re.compile(r'[\s\x00-\x08\x0B\x0C\x0E-\x19]+').sub
 
@@ -522,7 +520,7 @@ class Cleaner(object):
     def _remove_javascript_link(self, link):
         # links like "j a v a s c r i p t:" might be interpreted in IE
         new = _substitute_whitespace('', unquote_plus(link))
-        if _is_javascript_scheme(new):
+        if _has_javascript_scheme(new):
             # FIXME: should this be None to delete?
             return ''
         return link
@@ -544,7 +542,7 @@ class Cleaner(object):
         style = style.replace('\\', '')
         style = _substitute_whitespace('', style)
         style = style.lower()
-        if 'javascript:' in style:
+        if _has_javascript_scheme(style):
             return True
         if 'expression(' in style:
             return True
