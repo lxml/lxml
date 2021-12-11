@@ -2,6 +2,19 @@
 lxml changelog
 ==============
 
+4.6.5 (2021-12-??)
+==================
+
+Bugs fixed
+----------
+
+* A vulnerability (GHSL-2021-1038) in the HTML cleaner allowed sneaking script
+  content through SVG images.
+
+* A vulnerability (GHSL-2021-1037) in the HTML cleaner allowed sneaking script
+  content through CSS imports and other crafted constructs.
+
+
 4.6.4 (2021-11-01)
 ==================
 
