@@ -232,7 +232,7 @@ Old Versions
 ------------
 
 See the websites of lxml
-`4.6 <http://lxml.de/4.5/>`_,
+`4.6 <http://lxml.de/4.6/>`_,
 `4.5 <http://lxml.de/4.5/>`_,
 `4.4 <http://lxml.de/4.4/>`_,
 `4.3 <http://lxml.de/4.3/>`_,
@@ -281,6 +281,7 @@ See the websites of lxml
 
 * `older releases <http://lxml.de/4.4/#old-versions>`_
 
+.. _`lxml 4.7.0`: /files/lxml-4.7.0.tgz
 .. _`lxml 4.6.5`: /files/lxml-4.6.5.tgz
 .. _`lxml 4.6.4`: /files/lxml-4.6.4.tgz
 .. _`lxml 4.6.3`: /files/lxml-4.6.3.tgz
