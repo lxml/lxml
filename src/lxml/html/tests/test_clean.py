@@ -1,5 +1,6 @@
 import base64
 import gzip
+import io
 import unittest
 from lxml.tests.common_imports import make_doctest
 
@@ -188,7 +189,11 @@ class CleanerTest(unittest.TestCase):
     def test_svg_data_links(self):
         # Remove SVG images with potentially insecure content.
         svg = b'<svg onload="alert(123)" />'
-        svgz = gzip.compress(svg)
+        gzout = io.BytesIO()
+        f = gzip.GzipFile(fileobj=gzout, mode='wb')
+        f.write(svg)
+        f.close()
+        svgz = gzout.getvalue()
         svg_b64 = base64.b64encode(svg).decode('ASCII')
         svgz_b64 = base64.b64encode(svgz).decode('ASCII')
         urls = [
