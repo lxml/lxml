@@ -159,8 +159,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 4.6.5`_, released 2021-12-12
-(`changes for 4.6.5`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 4.7.0`_, released 2021-12-13
+(`changes for 4.7.0`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -232,6 +232,7 @@ Old Versions
 ------------
 
 See the websites of lxml
+`4.6 <http://lxml.de/4.5/>`_,
 `4.5 <http://lxml.de/4.5/>`_,
 `4.4 <http://lxml.de/4.4/>`_,
 `4.3 <http://lxml.de/4.3/>`_,
@@ -256,7 +257,9 @@ See the websites of lxml
 ..
    and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-4.6.5.pdf
+.. _`PDF documentation`: lxmldoc-4.7.0.pdf
+
+* `lxml 4.7.0`_, released 2021-12-13 (`changes for 4.7.0`_)
 
 * `lxml 4.6.5`_, released 2021-12-12 (`changes for 4.6.5`_)
 
@@ -276,15 +279,7 @@ See the websites of lxml
 
 * `lxml 4.5.0`_, released 2020-01-29 (`changes for 4.5.0`_)
 
-* `lxml 4.4.3`_, released 2020-01-28 (`changes for 4.4.3`_)
-
-* `lxml 4.4.2`_, released 2019-11-25 (`changes for 4.4.2`_)
-
-* `lxml 4.4.1`_, released 2019-08-11 (`changes for 4.4.1`_)
-
-* `lxml 4.4.0`_, released 2019-07-27 (`changes for 4.4.0`_)
-
-* `older releases <http://lxml.de/4.3/#old-versions>`_
+* `older releases <http://lxml.de/4.4/#old-versions>`_
 
 .. _`lxml 4.6.5`: /files/lxml-4.6.5.tgz
 .. _`lxml 4.6.4`: /files/lxml-4.6.4.tgz
@@ -295,11 +290,8 @@ See the websites of lxml
 .. _`lxml 4.5.2`: /files/lxml-4.5.2.tgz
 .. _`lxml 4.5.1`: /files/lxml-4.5.1.tgz
 .. _`lxml 4.5.0`: /files/lxml-4.5.0.tgz
-.. _`lxml 4.4.3`: /files/lxml-4.4.3.tgz
-.. _`lxml 4.4.2`: /files/lxml-4.4.2.tgz
-.. _`lxml 4.4.1`: /files/lxml-4.4.1.tgz
-.. _`lxml 4.4.0`: /files/lxml-4.4.0.tgz
 
+.. _`changes for 4.7.0`: /changes-4.7.0.html
 .. _`changes for 4.6.5`: /changes-4.6.5.html
 .. _`changes for 4.6.4`: /changes-4.6.4.html
 .. _`changes for 4.6.3`: /changes-4.6.3.html
@@ -309,7 +301,3 @@ See the websites of lxml
 .. _`changes for 4.5.2`: /changes-4.5.2.html
 .. _`changes for 4.5.1`: /changes-4.5.1.html
 .. _`changes for 4.5.0`: /changes-4.5.0.html
-.. _`changes for 4.4.3`: /changes-4.4.3.html
-.. _`changes for 4.4.2`: /changes-4.4.2.html
-.. _`changes for 4.4.1`: /changes-4.4.1.html
-.. _`changes for 4.4.0`: /changes-4.4.0.html
