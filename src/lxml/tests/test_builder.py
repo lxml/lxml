@@ -10,6 +10,7 @@ import unittest
 
 from lxml import etree
 from lxml.builder import E
+from lxml.html.builder import E as HE
 
 from .common_imports import HelperTestCase, _bytes
 
@@ -33,6 +34,13 @@ class BuilderTestCase(HelperTestCase):
 
     def test_cdata_solo(self):
         self.assertRaises(ValueError, E.b, 'Hello', etree.CDATA('World'))
+
+    def test_html_builder(self):
+        html = HE.html(
+            HE.head(HE.title("H-T-M-L!")),
+            HE.body(HE.p("TexT"))
+        )
+        self.assertEqual("TexT", html.findtext(".//p"))
 
 
 def test_suite():
