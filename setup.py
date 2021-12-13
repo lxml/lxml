@@ -180,12 +180,20 @@ def setup_extra_options():
 
         header_packages = build_packages(extract_files(include_dirs))
 
+        package_filename = "__init__.py"
         for package_path, (root_path, filenames) in header_packages.items():
             if not package_path:
-                # No need to add anything to 'lxml.includes' since it has a wildcard include.
-                continue
+                # lxml.includes -> lxml.includes.extlibs
+                package_path = "extlibs"
             package = 'lxml.includes.' + package_path
             packages.append(package)
+
+            # create '__init__.py' to make sure it's considered a package
+            if package_filename not in filenames:
+                with open(os.path.join(root_path, package_filename), 'wb') as f:
+                    pass
+                filenames.append(package_filename)
+
             assert package not in package_data
             package_data[package] = filenames
             assert package not in package_dir
