@@ -181,12 +181,14 @@ def setup_extra_options():
         header_packages = build_packages(extract_files(include_dirs))
 
         for package_path, (root_path, filenames) in header_packages.items():
-            if package_path:
-                package = 'lxml.includes.' + package_path
-                packages.append(package)
-            else:
-                package = 'lxml.includes'
+            if not package_path:
+                # No need to add anything to 'lxml.includes' since it has a wildcard include.
+                continue
+            package = 'lxml.includes.' + package_path
+            packages.append(package)
+            assert package not in package_data
             package_data[package] = filenames
+            assert package not in package_dir
             package_dir[package] = root_path
 
     return extra_opts
