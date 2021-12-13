@@ -179,7 +179,7 @@ like to know.  Please contact us on the `mailing list`_, and please specify
 the version of lxml, libxml2, libxslt and Python you were using, as well as
 your operating system type (Linux, Windows, MacOS-X, ...).
 
-.. _`mailing list`: http://lxml.de/mailinglist/
+.. _`mailing list`: https://lxml.de/mailinglist/
 
 
 Building an egg or wheel

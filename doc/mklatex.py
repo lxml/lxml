@@ -211,7 +211,7 @@ def publish(dirname, lxml_path, release):
             anchor = extension.split('#')[-1]
             return r"\hyperref[%s]" % anchor
         elif extension != 'html':
-            return r'\href{http://lxml.de/%s.%s}' % (
+            return r'\href{https://lxml.de/%s.%s}' % (
                 outname, extension)
         else:
             return r"\hyperref[_part_%s.tex]" % outname

@@ -121,7 +121,7 @@ def inject_flatter_button(tree):
         '<p style="text-align: center;">Like working with lxml? '
         'Happy about the time that it just saved you? <br />'
         'Show your appreciation with <a href="http://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit">Flattr</a>.<br />'
-        '<a class="FlattrButton" style="display:none;" rev="flattr;button:compact;" href="http://lxml.de/"></a>'
+        '<a class="FlattrButton" style="display:none;" rev="flattr;button:compact;" href="https://lxml.de/"></a>'
         '</p>'
         ))
 
@@ -301,7 +301,7 @@ def publish(dirname, lxml_path, release, with_donations=True):
     </html>
     '''))
     sitemap_menu = copy.deepcopy(menu)
-    SubElement(SubElement(sitemap_menu[-1], 'li'), 'a', href='http://lxml.de/files/').text = 'Download files'
+    SubElement(SubElement(sitemap_menu[-1], 'li'), 'a', href='https://lxml.de/files/').text = 'Download files'
     sitemap[-1].append(sitemap_menu)  # append to body
     ElementTree(sitemap).write(os.path.join(dirname, 'sitemap.html'))
 

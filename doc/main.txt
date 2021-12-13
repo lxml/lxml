@@ -166,7 +166,7 @@ are listed below.
 Please take a look at the
 `installation instructions <installation.html>`_ !
 
-This complete web site (including the generated API documentation) is
+This complete website (including the generated API documentation) is
 part of the source distribution, so if you want to download the
 documentation for offline use, take the source archive and copy the
 ``doc/html`` directory out of the source tree, or use the
@@ -175,11 +175,7 @@ documentation for offline use, take the source archive and copy the
 The latest `installable developer sources <https://github.com/lxml/lxml/archive/master.zip>`_
 are available from Github.  It's also possible to check out
 the latest development version of lxml from Github directly, using a command
-like this (assuming you use hg and have hg-git installed)::
-
-  hg clone git+ssh://git@github.com/lxml/lxml.git lxml
-
-Alternatively, if you use git, this should work as well::
+like this::
 
   git clone https://github.com/lxml/lxml.git lxml
 
@@ -198,11 +194,10 @@ Mailing list
 
 Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 
-You can search the archive with Gmane_ or Google_.
+You can also `search the archive`_ for past questions and discussions.
 
-.. _`mailing list`: http://lxml.de/mailinglist/
-.. _Gmane: http://blog.gmane.org/gmane.comp.python.lxml.devel
-.. _Google: http://www.google.com/webhp?q=site:comments.gmane.org%2Fgmane.comp.python.lxml.devel+
+.. _`search the archive`: https://mail.python.org/archives/list/lxml@python.org/
+.. _`mailing list`: https://lxml.de/mailinglist/
 
 
 Bug tracker
@@ -212,7 +207,7 @@ lxml uses the `launchpad bug tracker`_.  If you are sure you found a
 bug in lxml, please file a bug report there.  If you are not sure
 whether some unexpected behaviour of lxml is a bug or not, please
 check the documentation and ask on the `mailing list`_ first.  Do not
-forget to search the archive (e.g. with Gmane_)!
+forget to `search the archive`_!
 
 .. _`launchpad bug tracker`: https://launchpad.net/lxml/
 
@@ -225,37 +220,37 @@ itself are shipped under the `MIT license`_. There should therefore be no
 obstacle to using lxml in your codebase.
 
 .. _`BSD license`: https://github.com/lxml/lxml/blob/master/doc/licenses/BSD.txt
-.. _`MIT license`: http://www.opensource.org/licenses/mit-license.html
+.. _`MIT license`: https://opensource.org/licenses/mit-license.html
 
 
 Old Versions
 ------------
 
 See the websites of lxml
-`4.6 <http://lxml.de/4.6/>`_,
-`4.5 <http://lxml.de/4.5/>`_,
-`4.4 <http://lxml.de/4.4/>`_,
-`4.3 <http://lxml.de/4.3/>`_,
-`4.2 <http://lxml.de/4.2/>`_,
-`4.1 <http://lxml.de/4.1/>`_,
-`4.0 <http://lxml.de/4.0/>`_,
-`3.8 <http://lxml.de/3.8/>`_,
-`3.7 <http://lxml.de/3.7/>`_,
-`3.6 <http://lxml.de/3.6/>`_,
-`3.5 <http://lxml.de/3.5/>`_,
-`3.4 <http://lxml.de/3.4/>`_,
-`3.3 <http://lxml.de/3.3/>`_,
-`3.2 <http://lxml.de/3.2/>`_,
-`3.1 <http://lxml.de/3.1/>`_,
-`3.0 <http://lxml.de/3.0/>`_,
-`2.3 <http://lxml.de/2.3/>`_,
-`2.2 <http://lxml.de/2.2/>`_,
-`2.1 <http://lxml.de/2.1/>`_,
-`2.0 <http://lxml.de/2.0/>`_,
-`1.3 <http://lxml.de/1.3/>`_
+`4.6 <https://lxml.de/4.6/>`_,
+`4.5 <https://lxml.de/4.5/>`_,
+`4.4 <https://lxml.de/4.4/>`_,
+`4.3 <https://lxml.de/4.3/>`_,
+`4.2 <https://lxml.de/4.2/>`_,
+`4.1 <https://lxml.de/4.1/>`_,
+`4.0 <https://lxml.de/4.0/>`_,
+`3.8 <https://lxml.de/3.8/>`_,
+`3.7 <https://lxml.de/3.7/>`_,
+`3.6 <https://lxml.de/3.6/>`_,
+`3.5 <https://lxml.de/3.5/>`_,
+`3.4 <https://lxml.de/3.4/>`_,
+`3.3 <https://lxml.de/3.3/>`_,
+`3.2 <https://lxml.de/3.2/>`_,
+`3.1 <https://lxml.de/3.1/>`_,
+`3.0 <https://lxml.de/3.0/>`_,
+`2.3 <https://lxml.de/2.3/>`_,
+`2.2 <https://lxml.de/2.2/>`_,
+`2.1 <https://lxml.de/2.1/>`_,
+`2.0 <https://lxml.de/2.0/>`_,
+`1.3 <https://lxml.de/1.3/>`_
 
 ..
-   and the `latest in-development version <http://lxml.de/dev/>`_.
+   and the `latest in-development version <https://lxml.de/dev/>`_.
 
 .. _`PDF documentation`: lxmldoc-4.7.1.pdf
 
@@ -281,7 +276,7 @@ See the websites of lxml
 
 * `lxml 4.5.0`_, released 2020-01-29 (`changes for 4.5.0`_)
 
-* `older releases <http://lxml.de/4.4/#old-versions>`_
+* `older releases <https://lxml.de/4.5/#old-versions>`_
 
 .. _`lxml 4.7.1`: /files/lxml-4.7.1.tgz
 .. _`lxml 4.7.0`: /files/lxml-4.7.0.tgz

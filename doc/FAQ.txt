@@ -683,7 +683,7 @@ Since as a user of lxml you are likely a programmer, you might find
 `this article on bug reports`_ an interesting read.
 
 .. _`bug tracker`: https://bugs.launchpad.net/lxml/
-.. _`mailing list`: http://lxml.de/mailinglist/
+.. _`mailing list`: https://lxml.de/mailinglist/
 .. _`this article on bug reports`: http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 
