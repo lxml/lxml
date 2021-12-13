@@ -9,10 +9,10 @@ Bugs fixed
 ----------
 
 * A vulnerability (GHSL-2021-1038) in the HTML cleaner allowed sneaking script
-  content through SVG images.
+  content through SVG images (CVE-2021-43818).
 
 * A vulnerability (GHSL-2021-1037) in the HTML cleaner allowed sneaking script
-  content through CSS imports and other crafted constructs.
+  content through CSS imports and other crafted constructs (CVE-2021-43818).
 
 
 4.6.4 (2021-11-01)
