@@ -49,8 +49,9 @@ answered in the FAQ_.
 Documentation
 -------------
 
-The complete lxml documentation is available for download as `PDF
-documentation`_.  The HTML documentation from this web site is part of
+.. The complete lxml documentation is available for download as `PDF documentation`_.
+
+The HTML documentation from this web site is part of
 the normal `source download <#download>`_.
 
 * Tutorials:
@@ -169,8 +170,9 @@ Please take a look at the
 This complete website (including the generated API documentation) is
 part of the source distribution, so if you want to download the
 documentation for offline use, take the source archive and copy the
-``doc/html`` directory out of the source tree, or use the
-`PDF documentation`_.
+``doc/html`` directory out of the source tree.
+
+.. , or use the `PDF documentation`_.
 
 The latest `installable developer sources <https://github.com/lxml/lxml/archive/master.zip>`_
 are available from Github.  It's also possible to check out
