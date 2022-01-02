@@ -862,7 +862,7 @@ for possible approaches to solve your specific problem:
   Remember that lxml is fast anyway, so concurrency may not even be worth it.
 
 * look out for fancy XSLT stuff like foreign document access or
-  passing in subtrees trough XSLT variables.  This might or might not
+  passing in subtrees through XSLT variables.  This might or might not
   work, depending on your specific usage.  Again, later versions of
   lxml and libxslt provide safer support here.
 
