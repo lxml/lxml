@@ -195,7 +195,7 @@ def parse_text_ftplist(s):
 
 def parse_html_filelist(s):
     re_href = re.compile(
-        r'<a\s+(?:[^>]*\s+)?href=["\']([^;?"\']+?)[;?"\']',
+        r'''<a[^>]*\shref=["']([^;?"']+?)[;?"']''',
         re.I|re.M)
     links = set(re_href.findall(s))
     for link in links:
