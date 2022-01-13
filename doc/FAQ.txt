@@ -431,10 +431,10 @@ Which version of libxml2 and libxslt should I use or require?
 It really depends on your application, but the rule of thumb is: more recent
 versions contain less bugs and provide more features.
 
-* Do not use libxml2 2.6.27 if you want to use XPath (including XSLT).  You
-  will get crashes when XPath errors occur during the evaluation (e.g. for
-  unknown functions).  This happens inside the evaluation call to libxml2, so
-  there is nothing that lxml can do about it.
+* Do not use the stock libxml2 versions 2.9.11 or 2.9.12.  They are incompatible
+  with lxml and lead to excess output on serialisation.  For static builds
+  against 2.9.12, lxml automatically downloads a post-release version that
+  contains a work-around.
 
 * Try to use versions of both libraries that were released together.  At least
   the libxml2 version should not be older than the libxslt version.
@@ -446,10 +446,8 @@ versions contain less bugs and provide more features.
   leaks were fixed over time.  If you encounter crashes or memory leaks in
   XPath applications, try a more recent version of libxml2.
 
-* For parsing and fixing broken HTML, lxml requires at least libxml2 2.6.21.
-
 * For the normal tree handling, however, any libxml2 version starting with
-  2.6.20 should do.
+  2.7.x should do.
 
 Read the `release notes of libxml2`_ and the `release notes of libxslt`_ to
 see when (or if) a specific bug has been fixed.
