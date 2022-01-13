@@ -479,6 +479,13 @@ documents and resources.
 .. _`document resolvers`: resolvers.html
 .. _`controlling access`: resolvers.html#i-o-access-control-in-xslt
 
+.. note::
+
+   Due to a bug in libxslt the usage of ``<xsl:strip-space elements="*"/>``
+   in an XSLT stylesheet can lead to crashes or memory failures. It is therefore
+   advised not to use ``xsl:strip-space`` in stylesheets used with lxml.
+
+   For details see: https://gitlab.gnome.org/GNOME/libxslt/-/issues/14
 
 XSLT result objects
 -------------------
