@@ -444,6 +444,14 @@ def check_build_dependencies():
     xml2_ok = check_min_version(xml2_version, '2.7.0', 'libxml2')
     xslt_ok = check_min_version(xslt_version, '1.1.23', 'libxslt')
 
+    if not OPTION_BUILD_LIBXML2XSLT and xml2_version in ('2.9.11', '2.9.12'):
+        print("\n"
+              "WARNING: The stock libxml2 versions 2.9.11 and 2.9.12 are incompatible"
+              " with this lxml version. "
+              "They produce excess content on serialisation. "
+              "Use a different library version or a static build."
+              "\n")
+
     if xml2_version and xslt_version:
         print("Building against libxml2 %s and libxslt %s" % (xml2_version, xslt_version))
     else:
