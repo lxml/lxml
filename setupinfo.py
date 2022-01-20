@@ -365,7 +365,7 @@ def run_command(cmd, *args):
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout_data, errors = p.communicate()
 
-    if errors:
+    if p.returncode != 0 and errors:
         return ''
     return decode_input(stdout_data).strip()
 
