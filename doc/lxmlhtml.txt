@@ -489,8 +489,13 @@ The module ``lxml.html.clean`` provides a ``Cleaner`` class for cleaning up
 HTML pages.  It supports removing embedded or script content, special tags,
 CSS style annotations and much more.
 
-Say, you have an evil web page from an untrusted source that contains lots of
-content that upsets browsers and tries to run evil code on the client side:
+Note: the HTML Cleaner in ``lxml.html.clean`` is **not** considered
+appropriate **for security sensitive environments**.
+See e.g. `bleach <https://pypi.org/project/bleach/>`_ for an alternative.
+
+Say, you have an overburdened web page from a hideous source which contains
+lots of content that upsets browsers and tries to run unnecessary code on the
+client side:
 
 .. sourcecode:: pycon
 
@@ -521,7 +526,7 @@ content that upsets browsers and tries to run evil code on the client side:
     ...  </body>
     ... </html>'''
 
-To remove the all suspicious content from this unparsed document, use the
+To remove the all superfluous content from this unparsed document, use the
 ``clean_html`` function:
 
 .. sourcecode:: pycon
