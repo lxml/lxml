@@ -4599,6 +4599,26 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual('child1', c2.getprevious().tag)
         self.assertEqual('abc', c2.getprevious().tail)
 
+    def test_parse_source_pathlike(self):
+        etree = self.etree
+        tounicode = self.etree.tounicode
+
+        class Path(object):
+            def __init__(self, path):
+                self.path = path
+
+            def __fspath__(self):
+                return self.path
+
+        if sys.version_info >= (3,6):
+            tree = etree.parse(Path(fileInTestDir('test.xml')))
+            self.assertEqual(_bytes('<a><b></b></a>'),
+                             canonicalize(tounicode(tree)))
+        else:
+            with self.assertRaises(TypeError) as cm:
+                etree.parse(Path(fileInTestDir('test.xml')))
+            self.assertEqual(str(cm.exception),"cannot parse from 'Path'")
+
     # helper methods
 
     def _writeElement(self, element, encoding='us-ascii', compression=0):

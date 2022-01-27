@@ -1585,6 +1585,9 @@ cdef bint _isFilePath(const_xmlChar* c_path):
 cdef object _encodeFilename(object filename):
     u"""Make sure a filename is 8-bit encoded (or None).
     """
+    if hasattr(filename, u"__fspath__") and python.PY_VERSION_HEX >= 0x03060000:
+        filename = os_fspath(filename)
+
     if filename is None:
         return None
     elif isinstance(filename, bytes):
@@ -1599,7 +1602,7 @@ cdef object _encodeFilename(object filename):
                 pass
         return filename8
     else:
-        raise TypeError("Argument must be string or unicode.")
+        raise TypeError("Argument must be string, unicode or PathLike.")
 
 cdef object _decodeFilename(const_xmlChar* c_path):
     u"""Make the filename a unicode string if we are in Py3.

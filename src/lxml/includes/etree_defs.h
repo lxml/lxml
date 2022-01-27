@@ -247,6 +247,22 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
 #endif
 
+#if PY_MAJOR_VERSION < 3
+#define _isStringOrPathLike(obj)   (PyString_CheckExact(obj)  || \
+                                    PyUnicode_CheckExact(obj) || \
+                                    PyType_IsSubtype(Py_TYPE(obj), &PyBaseString_Type))
+#else
+#if PY_MINOR_VERSION < 6
+/* builtin subtype type checks are almost as fast as exact checks in Py2.7+
+ * and Unicode is more common in Py3 */
+#define _isStringOrPathLike(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
+#else
+#define _isStringOrPathLike(obj)   (PyUnicode_Check(obj) || \
+                                    PyBytes_Check(obj)   || \
+                                    PyObject_HasAttrString(obj, "__fspath__"))
+#endif
+#endif
+
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \
          ((c_node)->type == XML_COMMENT_NODE) || \

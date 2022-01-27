@@ -121,6 +121,7 @@ cdef extern from "includes/etree_defs.h": # redefines some functions as macros
     cdef void lxml_free(void* mem)
     cdef void* lxml_unpack_xmldoc_capsule(object capsule, bint* is_owned) except? NULL
     cdef bint _isString(object obj)
+    cdef bint _isStringOrPathLike(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)
     cdef bint LXML_UNICODE_STRINGS
