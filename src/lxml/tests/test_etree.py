@@ -4618,6 +4618,23 @@ class ETreeOnlyTestCase(HelperTestCase):
             with self.assertRaises(TypeError) as cm:
                 etree.parse(Path(fileInTestDir('test.xml')))
             self.assertEqual(str(cm.exception),"cannot parse from 'Path'")
+    
+    def test_iterparse_source_pathlike(self):
+        iterparse = self.etree.iterparse
+
+        class Path(object):
+            def __init__(self, path):
+                self.path = path
+
+            def __fspath__(self):
+                return self.path
+
+        if sys.version_info >= (3,6):
+            events = list(iterparse(Path(fileInTestDir('test.xml'))))
+            self.assertEqual(2, len(events))
+        else:
+            with self.assertRaises(TypeError) as cm:
+                list(iterparse(Path(fileInTestDir('test.xml'))))
 
     # helper methods
 
