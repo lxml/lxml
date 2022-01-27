@@ -195,6 +195,31 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0] = f.read().decode("UTF-16")
             finally:
                 os.unlink(f.name)
+    
+    def test_xslt_write_output_file_pathlike(self):
+        class Path(object):
+            def __init__(self,path):
+                self.path = path
+            def __fspath__(self):
+                return self.path
+
+        with self._xslt_setup() as res:
+            f = NamedTemporaryFile(delete=False)
+            try:
+                try:
+                    if sys.version_info >= (3,6):
+                        res[0].write_output(Path(f.name), compression=9)
+                    else:
+                        with self.assertRaises(TypeError) as cm:
+                            res[0].write_output(Path(f.name), compression=9)
+                        self.assertEqual(str(cm.exception),"File or filename expected, got 'Path'")
+                        res[0].write_output(f.name, compression=9) #Otherwise the test cannot continue
+                finally:
+                    f.close()
+                with gzip.GzipFile(f.name) as f:
+                    res[0] = f.read().decode("UTF-16")
+            finally:
+                os.unlink(f.name)
 
     def test_xslt_write_output_file_path_urlescaped(self):
         # libxml2 should not unescape file paths.

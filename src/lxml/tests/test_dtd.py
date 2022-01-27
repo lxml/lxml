@@ -24,6 +24,25 @@ class ETreeDtdTestCase(HelperTestCase):
 
         dtd = etree.DTD(fileInTestDir("test.dtd"))
         self.assertTrue(dtd.validate(root))
+    
+    def test_dtd_file_pathlike(self):
+        parse = etree.parse
+        tree = parse(fileInTestDir("test.xml"))
+        root = tree.getroot()
+
+        class Path(object):
+            def __init__(self,path):
+                self.path = path
+            def __fspath__(self):
+                return self.path
+
+        if sys.version_info >= (3,6):
+            dtd = etree.DTD(Path(fileInTestDir("test.dtd")))
+            self.assertTrue(dtd.validate(root))
+        else:
+            with self.assertRaises(etree.DTDParseError) as cm:
+                etree.DTD(Path(fileInTestDir("test.dtd")))
+            self.assertEqual(str(cm.exception),'file must be a filename, file-like or path-like object')
 
     def test_dtd_stringio(self):
         root = etree.XML(_bytes("<b/>"))
