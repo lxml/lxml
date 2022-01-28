@@ -1870,7 +1870,8 @@ cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc) except NULL:
 
 cdef _Document _parseDocument(source, _BaseParser parser, base_url):
     cdef _Document doc
-    if _isStringOrPathLike(source):
+    source = _getFSPathOrObject(source)
+    if _isString(source):
         # parse the file directly from the filesystem
         doc = _parseDocumentFromURL(_encodeFilename(source), parser)
         # fix base URL if requested

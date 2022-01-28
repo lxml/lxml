@@ -627,7 +627,8 @@ cdef object _open_utf8_file
 
 @contextmanager
 def _open_utf8_file(file, compression=0):
-    if _isStringOrPathLike(file):
+    file = _getFSPathOrObject(file)
+    if _isString(file):
         if compression:
             with gzip.GzipFile(file, mode='wb', compresslevel=compression) as zf:
                 yield utf8_writer(zf)
@@ -723,7 +724,8 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
             with GzipFile(fileobj=bytes_out, mode='wb', compresslevel=compression) as gzip_file:
                 gzip_file.write(data)
             data = bytes_out.getvalue()
-        if _isStringOrPathLike(f):
+        f = _getFSPathOrObject(f)
+        if _isString(f):
             filename8 = _encodeFilename(f)
             with open(filename8, 'wb') as f:
                 f.write(data)
@@ -787,7 +789,8 @@ cdef _FilelikeWriter _create_output_buffer(
         raise LookupError(
             f"unknown encoding: '{c_enc.decode('UTF-8') if c_enc is not NULL else u''}'")
     try:
-        if _isStringOrPathLike(f):
+        f = _getFSPathOrObject(f)
+        if _isString(f):
             filename8 = _encodeFilename(f)
             if b'%' in filename8 and (
                     # Exclude absolute Windows paths and file:// URLs.
@@ -852,7 +855,8 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
             _convert_ns_prefixes(c_doc.dict, inclusive_ns_prefixes)
             if inclusive_ns_prefixes else NULL)
 
-        if _isStringOrPathLike(f):
+        f = _getFSPathOrObject(f)
+        if _isString(f):
             filename8 = _encodeFilename(f)
             c_filename = _cstr(filename8)
             with nogil:

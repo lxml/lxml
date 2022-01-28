@@ -207,13 +207,7 @@ class ETreeXSLTTestCase(HelperTestCase):
             f = NamedTemporaryFile(delete=False)
             try:
                 try:
-                    if sys.version_info >= (3,6):
-                        res[0].write_output(Path(f.name), compression=9)
-                    else:
-                        with self.assertRaises(TypeError) as cm:
-                            res[0].write_output(Path(f.name), compression=9)
-                        self.assertEqual(str(cm.exception),"File or filename expected, got 'Path'")
-                        res[0].write_output(f.name, compression=9) #Otherwise the test cannot continue
+                    res[0].write_output(Path(f.name), compression=9)
                 finally:
                     f.close()
                 with gzip.GzipFile(f.name) as f:

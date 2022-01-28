@@ -56,7 +56,8 @@ cdef class XMLSchema(_Validator):
             self._doc = _documentFactory(c_doc, doc._parser)
             parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(c_doc)
         elif file is not None:
-            if _isStringOrPathLike(file):
+            file = _getFSPathOrObject(file)
+            if _isString(file):
                 filename = _encodeFilename(file)
                 parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
             else:

@@ -279,7 +279,8 @@ cdef class DTD(_Validator):
     def __init__(self, file=None, *, external_id=None):
         _Validator.__init__(self)
         if file is not None:
-            if _isStringOrPathLike(file):
+            file = _getFSPathOrObject(file)
+            if _isString(file):
                 file = _encodeFilename(file)
                 with self._error_log:
                     orig_loader = _register_document_loader()

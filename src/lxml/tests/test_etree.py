@@ -4610,14 +4610,9 @@ class ETreeOnlyTestCase(HelperTestCase):
             def __fspath__(self):
                 return self.path
 
-        if sys.version_info >= (3,6):
-            tree = etree.parse(Path(fileInTestDir('test.xml')))
-            self.assertEqual(_bytes('<a><b></b></a>'),
-                             canonicalize(tounicode(tree)))
-        else:
-            with self.assertRaises(TypeError) as cm:
-                etree.parse(Path(fileInTestDir('test.xml')))
-            self.assertEqual(str(cm.exception),"cannot parse from 'Path'")
+        tree = etree.parse(Path(fileInTestDir('test.xml')))
+        self.assertEqual(_bytes('<a><b></b></a>'),
+                         canonicalize(tounicode(tree)))
     
     def test_iterparse_source_pathlike(self):
         iterparse = self.etree.iterparse
@@ -4629,12 +4624,8 @@ class ETreeOnlyTestCase(HelperTestCase):
             def __fspath__(self):
                 return self.path
 
-        if sys.version_info >= (3,6):
-            events = list(iterparse(Path(fileInTestDir('test.xml'))))
-            self.assertEqual(2, len(events))
-        else:
-            with self.assertRaises(TypeError) as cm:
-                list(iterparse(Path(fileInTestDir('test.xml'))))
+        events = list(iterparse(Path(fileInTestDir('test.xml'))))
+        self.assertEqual(2, len(events))
 
     # helper methods
 
@@ -4929,17 +4920,11 @@ class ETreeC14NTestCase(HelperTestCase):
                 return self.path
 
         tree = self.parse(_bytes('<a><b/></a>'))
-        if sys.version_info >= (3,6):
-            with tmpfile() as filename:
-                tree.write_c14n(Path(filename))
-                data = read_file(filename, 'rb')
-            self.assertEqual(_bytes('<a><b></b></a>'),
-                            data)
-        else:
-            with tmpfile() as filename:
-                with self.assertRaises(TypeError) as cm:
-                    tree.write_c14n(Path(filename))
-                self.assertEqual(str(cm.exception), "File or filename expected, got 'Path'")
+        with tmpfile() as filename:
+            tree.write_c14n(Path(filename))
+            data = read_file(filename, 'rb')
+        self.assertEqual(_bytes('<a><b></b></a>'),
+                        data)
 
     def test_c14n_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
@@ -4958,18 +4943,12 @@ class ETreeC14NTestCase(HelperTestCase):
                 return self.path
 
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
-        if sys.version_info >= (3,6):
-            with tmpfile() as filename:
-                tree.write_c14n(Path(filename), compression=9)
-                with gzip.open(filename, 'rb') as f:
-                    data = f.read()
-            self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
-                            data)
-        else:
-            with tmpfile() as filename:
-                with self.assertRaises(TypeError) as cm:
-                    tree.write_c14n(Path(filename), compression=9)
-                self.assertEqual(str(cm.exception), "File or filename expected, got 'Path'")
+        with tmpfile() as filename:
+            tree.write_c14n(Path(filename), compression=9)
+            with gzip.open(filename, 'rb') as f:
+                data = f.read()
+        self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
+                        data)
 
     def test_c14n2_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
@@ -5269,17 +5248,11 @@ class ETreeWriteTestCase(HelperTestCase):
                 return self.path
 
         tree = self.parse(_bytes('<a><b/></a>'))
-        if sys.version_info >= (3,6):
-            with tmpfile() as filename:
-                tree.write(Path(filename))
-                data = read_file(filename, 'rb')
-            self.assertEqual(_bytes('<a><b/></a>'),
-                            data)
-        else:
-            with tmpfile() as filename:
-                with self.assertRaises(TypeError) as cm:
-                    tree.write(Path(filename))
-                self.assertEqual(str(cm.exception),"File or filename expected, got 'Path'")
+        with tmpfile() as filename:
+            tree.write(Path(filename))
+            data = read_file(filename, 'rb')
+        self.assertEqual(_bytes('<a><b/></a>'),
+                        data)
 
     def test_write_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
@@ -5299,18 +5272,12 @@ class ETreeWriteTestCase(HelperTestCase):
                 return self.path
 
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
-        if sys.version_info >= (3,6):
-            with tmpfile() as filename:
-                tree.write(Path(filename), compression=9)
-                with gzip.open(filename, 'rb') as f:
-                    data = f.read()
-            self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
-                            data)
-        else:
-            with tmpfile() as filename:
-                with self.assertRaises(TypeError) as cm:
-                    tree.write(Path(filename), compression=9)
-                self.assertEqual(str(cm.exception),"File or filename expected, got 'Path'")
+        with tmpfile() as filename:
+            tree.write(Path(filename), compression=9)
+            with gzip.open(filename, 'rb') as f:
+                data = f.read()
+        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+                        data)
 
     def test_write_file_gzip_parse(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))

@@ -7,7 +7,6 @@ Test cases related to XML Schema parsing and validation
 from __future__ import absolute_import
 
 import unittest
-import sys
 
 from .common_imports import etree, BytesIO, HelperTestCase, fileInTestDir, make_doctest
 
@@ -396,14 +395,9 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
             def __fspath__(self):
                 return self.path
 
-        if sys.version_info >= (3,6):
-            schema = etree.XMLSchema(file=Path(fileInTestDir('test.xsd')))
-            tree_valid = self.parse('<a><b></b></a>')
-            self.assertTrue(schema.validate(tree_valid))
-        else:
-            with self.assertRaises(TypeError) as cm:
-                etree.XMLSchema(file=Path(fileInTestDir('test.xsd')))
-            self.assertEqual(str(cm.exception),"cannot parse from 'Path'")
+        schema = etree.XMLSchema(file=Path(fileInTestDir('test.xsd')))
+        tree_valid = self.parse('<a><b></b></a>')
+        self.assertTrue(schema.validate(tree_valid))
 
 
 class ETreeXMLSchemaResolversTestCase(HelperTestCase):

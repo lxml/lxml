@@ -50,7 +50,7 @@ from lxml cimport python
 from lxml.includes cimport tree, config
 from lxml.includes.tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from lxml.includes.tree cimport const_xmlChar, xmlChar, _xcstr
-from lxml.python cimport _cstr, _isString, _isStringOrPathLike
+from lxml.python cimport _cstr, _isString
 from lxml.includes cimport xpath
 from lxml.includes cimport c14n
 
@@ -63,12 +63,6 @@ from libc.string cimport const_char
 
 cdef object os_path_abspath
 from os.path import abspath as os_path_abspath
-
-cdef object os_fspath
-try:
-    from os import fspath as os_fspath # py3.6+
-except ImportError:
-    os_fspath = None
 
 cdef object BytesIO, StringIO
 from io import BytesIO, StringIO

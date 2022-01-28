@@ -247,20 +247,10 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
 #endif
 
-#if PY_MAJOR_VERSION < 3
-#define _isStringOrPathLike(obj)   (PyString_CheckExact(obj)  || \
-                                    PyUnicode_CheckExact(obj) || \
-                                    PyType_IsSubtype(Py_TYPE(obj), &PyBaseString_Type))
+#if PY_VERSION_HEX >= 0x03060000
+#define PY_FSPath(obj) (PyOS_FSPath(obj))
 #else
-#if PY_MINOR_VERSION < 6
-/* builtin subtype type checks are almost as fast as exact checks in Py2.7+
- * and Unicode is more common in Py3 */
-#define _isStringOrPathLike(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
-#else
-#define _isStringOrPathLike(obj)   (PyUnicode_Check(obj) || \
-                                    PyBytes_Check(obj)   || \
-                                    PyObject_HasAttrString(obj, "__fspath__"))
-#endif
+#define PY_FSPath(obj) (NULL)
 #endif
 
 #define _isElement(c_node) \

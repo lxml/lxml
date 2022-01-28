@@ -1582,12 +1582,28 @@ cdef bint _isFilePath(const_xmlChar* c_path):
     # assume it's a relative path
     return REL_FILE_PATH
 
+cdef object _getFSPathOrObject(object obj):
+    u"""
+    Get the __fspath__ attribute of an object
+    if it exists otherwise the original object
+    is returned
+    """
+    if python.PY_VERSION_HEX >= 0x03060000:
+        try:
+            fspath = python.PY_FSPath(obj)
+        except TypeError:
+            return obj
+        return fspath
+    elif hasattr(obj, '__fspath__'):
+        fspath = obj.__fspath__
+        if callable(fspath):
+            return fspath()
+        raise ValueError('__fspath__ is not callable')
+    return obj
+
 cdef object _encodeFilename(object filename):
     u"""Make sure a filename is 8-bit encoded (or None).
     """
-    if hasattr(filename, u"__fspath__") and python.PY_VERSION_HEX >= 0x03060000:
-        filename = os_fspath(filename)
-
     if filename is None:
         return None
     elif isinstance(filename, bytes):

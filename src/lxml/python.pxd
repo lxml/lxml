@@ -121,13 +121,13 @@ cdef extern from "includes/etree_defs.h": # redefines some functions as macros
     cdef void lxml_free(void* mem)
     cdef void* lxml_unpack_xmldoc_capsule(object capsule, bint* is_owned) except? NULL
     cdef bint _isString(object obj)
-    cdef bint _isStringOrPathLike(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)
     cdef bint LXML_UNICODE_STRINGS
     cdef bint IS_PYTHON2
     cdef bint IS_PYTHON3  # legacy, avoid
     cdef bint IS_PYPY
+    cdef object PY_FSPath(object obj)
 
 cdef extern from "lxml_endian.h":
     cdef bint PY_BIG_ENDIAN  # defined in later Py3.x versions
