@@ -1618,7 +1618,7 @@ cdef object _encodeFilename(object filename):
                 pass
         return filename8
     else:
-        raise TypeError("Argument must be string, unicode or PathLike.")
+        raise TypeError("Argument must be string or unicode.")
 
 cdef object _decodeFilename(const_xmlChar* c_path):
     u"""Make the filename a unicode string if we are in Py3.
