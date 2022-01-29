@@ -127,7 +127,7 @@ cdef extern from "includes/etree_defs.h": # redefines some functions as macros
     cdef bint IS_PYTHON2
     cdef bint IS_PYTHON3  # legacy, avoid
     cdef bint IS_PYPY
-    cdef object PY_FSPath(object obj)
+    cdef object PY_FSPath "lxml_PyOS_FSPath" (object obj)
 
 cdef extern from "lxml_endian.h":
     cdef bint PY_BIG_ENDIAN  # defined in later Py3.x versions

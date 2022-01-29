@@ -248,9 +248,9 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #endif
 
 #if PY_VERSION_HEX >= 0x03060000
-#define PY_FSPath(obj) (PyOS_FSPath(obj))
+#define lxml_PyOS_FSPath(obj) (PyOS_FSPath(obj))
 #else
-#define PY_FSPath(obj) (NULL)
+#define lxml_PyOS_FSPath(obj) (NULL)
 #endif
 
 #define _isElement(c_node) \
