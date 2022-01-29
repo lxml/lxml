@@ -9,7 +9,7 @@ import unittest, sys
 from .common_imports import (
     etree, html, BytesIO, _bytes, _str,
     HelperTestCase, make_doctest, skipIf,
-    fileInTestDir, fileUrlInTestDir
+    fileInTestDir, fileUrlInTestDir, SimpleFSPath
 )
 
 
@@ -30,13 +30,7 @@ class ETreeDtdTestCase(HelperTestCase):
         tree = parse(fileInTestDir("test.xml"))
         root = tree.getroot()
 
-        class Path(object):
-            def __init__(self,path):
-                self.path = path
-            def __fspath__(self):
-                return self.path
-
-        dtd = etree.DTD(Path(fileInTestDir("test.dtd")))
+        dtd = etree.DTD(SimpleFSPath(fileInTestDir("test.dtd")))
         self.assertTrue(dtd.validate(root))
 
     def test_dtd_stringio(self):

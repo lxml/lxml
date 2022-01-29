@@ -29,7 +29,7 @@ except NameError: # Python 3
     basestring = str
 
 from .common_imports import (
-    etree, BytesIO, HelperTestCase, fileInTestDir, _bytes, make_doctest, skipif
+    etree, BytesIO, HelperTestCase, fileInTestDir, _bytes, make_doctest, skipif, SimpleFSPath
 )
 
 
@@ -197,17 +197,11 @@ class ETreeXSLTTestCase(HelperTestCase):
                 os.unlink(f.name)
     
     def test_xslt_write_output_file_pathlike(self):
-        class Path(object):
-            def __init__(self,path):
-                self.path = path
-            def __fspath__(self):
-                return self.path
-
         with self._xslt_setup() as res:
             f = NamedTemporaryFile(delete=False)
             try:
                 try:
-                    res[0].write_output(Path(f.name), compression=9)
+                    res[0].write_output(SimpleFSPath(f.name), compression=9)
                 finally:
                     f.close()
                 with gzip.GzipFile(f.name) as f:

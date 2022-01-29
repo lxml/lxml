@@ -8,7 +8,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from .common_imports import etree, BytesIO, HelperTestCase, fileInTestDir, make_doctest
+from .common_imports import etree, BytesIO, HelperTestCase, fileInTestDir, make_doctest, SimpleFSPath
 
 
 class ETreeXMLSchemaTestCase(HelperTestCase):
@@ -388,14 +388,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         etree.XMLSchema(schema_element)
 
     def test_xmlschema_pathlike(self):
-        class Path(object):
-            def __init__(self, path):
-                self.path = path
-
-            def __fspath__(self):
-                return self.path
-
-        schema = etree.XMLSchema(file=Path(fileInTestDir('test.xsd')))
+        schema = etree.XMLSchema(file=SimpleFSPath(fileInTestDir('test.xsd')))
         tree_valid = self.parse('<a><b></b></a>')
         self.assertTrue(schema.validate(tree_valid))
 
