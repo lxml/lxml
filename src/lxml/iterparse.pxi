@@ -72,6 +72,7 @@ cdef class iterparse:
                  html=False, recover=None, huge_tree=False, collect_ids=True,
                  XMLSchema schema=None):
         if not hasattr(source, 'read'):
+            source = _getFSPathOrObject(source)
             self._filename = source
             if python.IS_PYTHON2:
                 source = _encodeFilename(source)

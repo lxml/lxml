@@ -25,6 +25,7 @@ from .common_imports import etree, StringIO, BytesIO, HelperTestCase
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url, tmpfile
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
+from .common_imports import SimpleFSPath
 
 print("""
 TESTED VERSION: %s""" % etree.__version__ + """
@@ -4599,6 +4600,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual('child1', c2.getprevious().tag)
         self.assertEqual('abc', c2.getprevious().tail)
 
+    def test_parse_source_pathlike(self):
+        etree = self.etree
+        tounicode = self.etree.tounicode
+
+        tree = etree.parse(SimpleFSPath(fileInTestDir('test.xml')))
+        self.assertEqual(_bytes('<a><b></b></a>'),
+                         canonicalize(tounicode(tree)))
+    
+    def test_iterparse_source_pathlike(self):
+        iterparse = self.etree.iterparse
+
+        events = list(iterparse(SimpleFSPath(fileInTestDir('test.xml'))))
+        self.assertEqual(2, len(events))
+
     # helper methods
 
     def _writeElement(self, element, encoding='us-ascii', compression=0):
@@ -4883,6 +4898,14 @@ class ETreeC14NTestCase(HelperTestCase):
             data = read_file(filename, 'rb')
         self.assertEqual(_bytes('<a><b></b></a>'),
                           data)
+    
+    def test_c14n_file_pathlike(self):
+        tree = self.parse(_bytes('<a><b/></a>'))
+        with tmpfile() as filename:
+            tree.write_c14n(SimpleFSPath(filename))
+            data = read_file(filename, 'rb')
+        self.assertEqual(_bytes('<a><b></b></a>'),
+                        data)
 
     def test_c14n_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
@@ -4892,6 +4915,15 @@ class ETreeC14NTestCase(HelperTestCase):
                 data = f.read()
         self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
                           data)
+    
+    def test_c14n_file_gzip_pathlike(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        with tmpfile() as filename:
+            tree.write_c14n(SimpleFSPath(filename), compression=9)
+            with gzip.open(filename, 'rb') as f:
+                data = f.read()
+        self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
+                        data)
 
     def test_c14n2_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
@@ -5182,6 +5214,14 @@ class ETreeWriteTestCase(HelperTestCase):
             data = read_file(filename, 'rb')
         self.assertEqual(_bytes('<a><b/></a>'),
                           data)
+    
+    def test_write_file_pathlike(self):
+        tree = self.parse(_bytes('<a><b/></a>'))
+        with tmpfile() as filename:
+            tree.write(SimpleFSPath(filename))
+            data = read_file(filename, 'rb')
+        self.assertEqual(_bytes('<a><b/></a>'),
+                        data)
 
     def test_write_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
@@ -5191,6 +5231,15 @@ class ETreeWriteTestCase(HelperTestCase):
                 data = f.read()
         self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
                           data)
+
+    def test_write_file_gzip_pathlike(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        with tmpfile() as filename:
+            tree.write(SimpleFSPath(filename), compression=9)
+            with gzip.open(filename, 'rb') as f:
+                data = f.read()
+        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+                        data)
 
     def test_write_file_gzip_parse(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))

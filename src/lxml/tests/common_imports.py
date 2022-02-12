@@ -251,6 +251,12 @@ class LargeFileLikeUnicode(LargeFileLike):
             yield self.chars
         yield _str('</root>')
 
+class SimpleFSPath(object):
+    def __init__(self, path):
+        self.path = path
+    def __fspath__(self):
+        return self.path
+
 def fileInTestDir(name):
     _testdir = os.path.dirname(__file__)
     return os.path.join(_testdir, name)

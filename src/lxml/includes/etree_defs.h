@@ -247,6 +247,12 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
 #endif
 
+#if PY_VERSION_HEX >= 0x03060000
+#define lxml_PyOS_FSPath(obj) (PyOS_FSPath(obj))
+#else
+#define lxml_PyOS_FSPath(obj) (NULL)
+#endif
+
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \
          ((c_node)->type == XML_COMMENT_NODE) || \
