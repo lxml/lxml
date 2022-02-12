@@ -38,9 +38,8 @@ import_lxml__etree()
 
 __version__ = etree.__version__
 
-import math
-cdef object _float_is_inf = math.isinf
-cdef object _float_is_nan = math.isnan
+cdef object _float_is_inf, _float_is_nan
+from math import isinf as _float_is_inf, isnan as _float_is_nan
 
 cdef object re
 import re
