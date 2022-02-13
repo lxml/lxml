@@ -38,6 +38,9 @@ import_lxml__etree()
 
 __version__ = etree.__version__
 
+cdef object _float_is_inf, _float_is_nan
+from math import isinf as _float_is_inf, isnan as _float_is_nan
+
 cdef object re
 import re
 
@@ -1205,8 +1208,17 @@ cdef dict _PYTYPE_DICT = {}
 cdef dict _SCHEMA_TYPE_DICT = {}
 cdef list _TYPE_CHECKS = []
 
-cdef unicode _lower_bool(b):
-    return u"true" if b else u"false"
+cdef unicode _xml_bool(value):
+    return u"true" if value else u"false"
+
+cdef unicode _xml_float(value):
+    if _float_is_inf(value):
+        if value > 0:
+            return u"INF"
+        return u"-INF"
+    if _float_is_nan(value):
+        return u"NaN"
+    return unicode(repr(value))
 
 cdef _pytypename(obj):
     return u"str" if python._isString(obj) else _typename(obj)
@@ -1230,11 +1242,11 @@ cdef _registerPyTypes():
     pytype = PyType(u'long', None, IntElement)
     pytype.register()
 
-    pytype = PyType(u'float', _checkFloat, FloatElement, repr)  # wraps _parseFloat for Python
+    pytype = PyType(u'float', _checkFloat, FloatElement, _xml_float)  # wraps functions for Python
     pytype.xmlSchemaTypes = (u"double", u"float")
     pytype.register()
 
-    pytype = PyType(u'bool', _checkBool, BoolElement, _lower_bool)  # wraps functions for Python
+    pytype = PyType(u'bool', _checkBool, BoolElement, _xml_bool)  # wraps functions for Python
     pytype.xmlSchemaTypes = (u"boolean",)
     pytype.register()
 
