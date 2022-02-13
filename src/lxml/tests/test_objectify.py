@@ -873,6 +873,10 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertTrue(isinstance(value, objectify.BoolElement))
         self.assertEqual(value, False)
 
+    def test_data_element_bool_text(self):
+        self.assertEqual(objectify.DataElement(False).text, "false")
+        self.assertEqual(objectify.DataElement(True).text, "true")
+
     def test_type_str(self):
         Element = self.Element
         SubElement = self.etree.SubElement
@@ -1114,6 +1118,11 @@ class ObjectifyTestCase(HelperTestCase):
         f = 2305064300557.0
         value = objectify.DataElement(f)
         self.assertEqual(hash(value), hash(f))
+
+    def test_data_element_float_special_value_text(self):
+        self.assertEqual(objectify.DataElement(float("inf")).text, "INF")
+        self.assertEqual(objectify.DataElement(float("-inf")).text, "-INF")
+        self.assertEqual(objectify.DataElement(float("nan")).text, "NaN")
 
     def test_data_element_xsitypes(self):
         for xsi, objclass in xsitype2objclass.items():
