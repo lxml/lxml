@@ -70,6 +70,8 @@ jobs:
           - image: manylinux_2_24_aarch64
             pyversion: "*"
         include:
+          - image: manylinux2014_aarch64
+            pyversion: "cp36*"
           - image: manylinux_2_24_aarch64
             pyversion: "cp37*"
           - image: manylinux_2_24_aarch64
