@@ -2,6 +2,7 @@
 
 cdef object ET
 cdef object partial
+cdef type _QName
 
 cdef class ElementMaker:
     cdef readonly dict _nsmap

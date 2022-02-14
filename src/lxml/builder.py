@@ -42,6 +42,7 @@ The ``E`` Element factory for generating XML documents.
 from __future__ import absolute_import
 
 import lxml.etree as ET
+_QName = ET.QName
 
 from functools import partial
 
@@ -203,7 +204,10 @@ class ElementMaker(object):
     def __call__(self, tag, *children, **attrib):
         typemap = self._typemap
 
-        if self._namespace is not None and tag[0] != '{':
+        if not isinstance(tag, str) and isinstance(tag, _QName):
+            # A QName is explicitly qualified, do not look at self._namespace.
+            tag = tag.text
+        elif self._namespace is not None and tag[0] != '{':
             tag = self._namespace + tag
         elem = self._makeelement(tag, nsmap=self._nsmap)
         if attrib:
