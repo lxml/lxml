@@ -2,6 +2,26 @@
 lxml changelog
 ==============
 
+4.8 (2022-??-??)
+================
+
+Features added
+--------------
+
+* GH#337: Path-like objects are now supported throughout the API instead of just strings.
+  Patch by Henning Janssen.
+
+* The ``ElementMaker`` now supports ``QName`` values as tags, which always override
+  the default namespace of the factory.
+
+Bugs fixed
+----------
+
+* GH#338: In lxml.objectify, the XSI float annotation "nan" and "inf" were spelled in
+  lower case, whereas XML Schema datatypes define them as "NaN" and "INF" respectively.
+  Patch by Tobias Deiminger.
+
+
 4.7.1 (2021-12-13)
 ==================
 
