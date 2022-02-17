@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-4.8 (2022-??-??)
-================
+4.8.0 (2022-02-17)
+==================
 
 Features added
 --------------
@@ -20,6 +20,11 @@ Bugs fixed
 * GH#338: In lxml.objectify, the XSI float annotation "nan" and "inf" were spelled in
   lower case, whereas XML Schema datatypes define them as "NaN" and "INF" respectively.
   Patch by Tobias Deiminger.
+
+Other changes
+-------------
+
+* Built with Cython 0.29.28.
 
 
 4.7.1 (2021-12-13)
