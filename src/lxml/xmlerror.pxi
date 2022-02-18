@@ -806,16 +806,17 @@ cdef __initErrorConstants():
 
 
 class ErrorLevels(object):
-    u"Libxml2 error levels"
+    """Libxml2 error levels"""
 
 class ErrorDomains(object):
-    u"Libxml2 error domains"
+    """Libxml2 error domains"""
 
 class ErrorTypes(object):
-    u"Libxml2 error types"
+    """Libxml2 error types"""
 
 class RelaxNGErrorTypes(object):
-    u"Libxml2 RelaxNG error types"
+    """Libxml2 RelaxNG error types"""
+
 
 # --- BEGIN: GENERATED CONSTANTS ---
 
