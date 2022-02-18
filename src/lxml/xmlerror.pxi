@@ -801,7 +801,7 @@ cdef __initErrorConstants():
             setattr(cls, name, value)
             reverse_dict[value] = name
 
-    # discard the global tuple references after use
+    # discard the global string references after use
     __ERROR_LEVELS = __ERROR_DOMAINS = __PARSER_ERROR_TYPES = __RELAXNG_ERROR_TYPES = None
 
 
