@@ -1,7 +1,7 @@
 import os, re, sys, subprocess, platform
 import tarfile
 from distutils import log, version
-from contextlib import closing
+from contextlib import closing, contextmanager
 from ftplib import FTP
 
 try:
@@ -120,8 +120,8 @@ def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_d
 
 ## Routines to download and build libxml2/xslt from sources:
 
-LIBXML2_LOCATION = 'http://xmlsoft.org/sources/'
-LIBXSLT_LOCATION = 'http://xmlsoft.org/sources/'
+LIBXML2_LOCATION = 'https://download.gnome.org/sources/libxml2/'
+LIBXSLT_LOCATION = 'https://download.gnome.org/sources/libxslt/'
 LIBICONV_LOCATION = 'https://ftp.gnu.org/pub/gnu/libiconv/'
 ZLIB_LOCATION = 'https://zlib.net/'
 match_libfile_version = re.compile('^[^-]*-([.0-9-]+)[.].*').match
@@ -176,6 +176,21 @@ def _list_dir_urllib(url):
     return files
 
 
+def http_find_latest_version_directory(url):
+    with closing(urlopen(url)) as res:
+        charset = _find_content_encoding(res)
+        data = res.read()
+    # e.g. <a href="1.0/">
+    directories = [
+        (int(v[0]), int(v[1]))
+        for v in re.findall(r' href=["\']([0-9]+)\.([0-9]+)/?["\']', data.decode(charset))
+    ]
+    if not directories:
+        return url
+    latest_dir = "%s.%s" % max(directories)
+    return urljoin(url, latest_dir) + "/"
+
+
 def http_listfiles(url, re_pattern):
     with closing(urlopen(url)) as res:
         charset = _find_content_encoding(res)
@@ -210,18 +225,28 @@ def tryint(s):
         return s
 
 
+@contextmanager
+def py2_tarxz(filename):
+    import tempfile
+    with tempfile.TemporaryFile() as tmp:
+        subprocess.check_call(["xz", "-dc", filename], stdout=tmp.fileno())
+        tmp.seek(0)
+        with closing(tarfile.TarFile(fileobj=tmp)) as tf:
+            yield tf
+
+
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
     #version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
-    version_re = re.compile(r'libxml2-([0-9.]+[0-9]).tar.gz')
-    filename = 'libxml2-%s.tar.gz'
+    version_re = re.compile(r'libxml2-([0-9.]+[0-9]).tar.xz')
+    filename = 'libxml2-%s.tar.xz'
 
     if version == "2.9.12":
         # Temporarily using the latest master (2.9.12+) until there is a release that supports lxml again.
         from_location = "https://gitlab.gnome.org/GNOME/libxml2/-/archive/dea91c97debeac7c1aaf9c19f79029809e23a353/"
         version = "dea91c97debeac7c1aaf9c19f79029809e23a353"
     else:
-        from_location = LIBXML2_LOCATION
+        from_location = http_find_latest_version_directory(LIBXML2_LOCATION)
 
     return download_library(dest_dir, from_location, 'libxml2',
                             version_re, filename, version=version)
@@ -230,9 +255,10 @@ def download_libxml2(dest_dir, version=None):
 def download_libxslt(dest_dir, version=None):
     """Downloads libxslt, returning the filename where the library was downloaded"""
     #version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
-    version_re = re.compile(r'libxslt-([0-9.]+[0-9]).tar.gz')
-    filename = 'libxslt-%s.tar.gz'
-    return download_library(dest_dir, LIBXSLT_LOCATION, 'libxslt',
+    version_re = re.compile(r'libxslt-([0-9.]+[0-9]).tar.xz')
+    filename = 'libxslt-%s.tar.xz'
+    from_location = http_find_latest_version_directory(LIBXSLT_LOCATION)
+    return download_library(dest_dir, from_location, 'libxslt',
                             version_re, filename, version=version)
 
 
@@ -278,6 +304,7 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
             if location.startswith('ftp://'):
                 fns = remote_listdir(location)
             else:
+                print(location)
                 fns = http_listfiles(location, '(%s)' % filename.replace('%s', '(?:[0-9.]+[0-9])'))
             version = find_max_version(name, fns, version_re)
         except IOError:
@@ -312,16 +339,21 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
 
 def unpack_tarball(tar_filename, dest):
     print('Unpacking %s into %s' % (os.path.basename(tar_filename), dest))
-    tar = tarfile.open(tar_filename)
+    if sys.version_info[0] < 3 and tar_filename.endswith('.xz'):
+        # Py 2.7 lacks lzma support
+        tar_cm = py2_tarxz(tar_filename)
+    else:
+        tar_cm = closing(tarfile.open(tar_filename))
+
     base_dir = None
-    for member in tar:
-        base_name = member.name.split('/')[0]
-        if base_dir is None:
-            base_dir = base_name
-        elif base_dir != base_name:
-            print('Unexpected path in %s: %s' % (tar_filename, base_name))
-    tar.extractall(dest)
-    tar.close()
+    with tar_cm as tar:
+        for member in tar:
+            base_name = member.name.split('/')[0]
+            if base_dir is None:
+                base_dir = base_name
+            elif base_dir != base_name:
+                print('Unexpected path in %s: %s' % (tar_filename, base_name))
+        tar.extractall(dest)
     return os.path.join(dest, base_dir)
 
 
