@@ -600,6 +600,8 @@ a name (or ``None``) as argument and can then be used as decorator.
 If the class has the same name as the tag, you can also leave out the call
 and use the blank decorator instead:
 
+.. sourcecode:: pycon
+
   >>> @honk_elements
   ... class honkel(HonkNSElement):
   ...    @property
