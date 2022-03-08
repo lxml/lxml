@@ -826,6 +826,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         u"""set(self, key, value)
 
         Sets an element attribute.
+        In HTML documents (not XML or XHTML), the value None is allowed and creates
+        an attribute without value (just the attribute name).
         """
         _assertValidNode(self)
         _setAttributeValue(self, key, value)
