@@ -24,7 +24,7 @@ class TestBasicFeatures(unittest.TestCase):
             # `get_rel_links` not really
             self.assertEqual(child.base_url, base_url)
 
-    def test_set_extension(self):
+    def test_set_empty_attribute(self):
         e = html.Element('e')
         e.set('a')
         e.set('b', None)
