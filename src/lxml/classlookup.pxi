@@ -553,13 +553,16 @@ def set_element_class_lookup(ElementClassLookup lookup = None):
 
     .. warning::
 
-        Setting the default element class to something other than a
-        :class:`ParserBasedElementClassLookup` will prevent
-        :meth:`~lxml.etree.XMLParser.set_element_class_lookup` from working.
+        This should only be changed by applications, not by library packages.
+        In most cases, parser specific lookups should be preferred,
+        which can be configured via
+        :meth:`~lxml.etree.XMLParser.set_element_class_lookup`
+        (and the same for HTML parsers).
 
-        Amongst other issues, this will break :mod:`lxml.html` and
-        :mod:`lxml.objectify`'s extensions as they rely on lookups configured
-        on their respective parsers.
+        Globally replacing the element class lookup by something other than a
+        :class:`ParserBasedElementClassLookup` will prevent parser specific lookup
+        schemes from working. Several tools rely on parser specific lookups,
+        including :mod:`lxml.html` and :mod:`lxml.objectify`.
     """
     if lookup is None or lookup._lookup_function is NULL:
         _setElementClassLookupFunction(NULL, None)
