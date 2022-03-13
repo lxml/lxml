@@ -549,7 +549,24 @@ cdef void _setElementClassLookupFunction(
 def set_element_class_lookup(ElementClassLookup lookup = None):
     u"""set_element_class_lookup(lookup = None)
 
-    Set the global default element class lookup method.
+    Set the global element class lookup method.
+
+    This defines the main entry point for looking up element implementations.
+    The standard implementation uses the :class:`ParserBasedElementClassLookup`
+    to delegate to different lookup schemes for each parser. 
+
+    .. warning::
+
+        This should only be changed by applications, not by library packages.
+        In most cases, parser specific lookups should be preferred,
+        which can be configured via
+        :meth:`~lxml.etree.XMLParser.set_element_class_lookup`
+        (and the same for HTML parsers).
+
+        Globally replacing the element class lookup by something other than a
+        :class:`ParserBasedElementClassLookup` will prevent parser specific lookup
+        schemes from working. Several tools rely on parser specific lookups,
+        including :mod:`lxml.html` and :mod:`lxml.objectify`.
     """
     if lookup is None or lookup._lookup_function is NULL:
         _setElementClassLookupFunction(NULL, None)
