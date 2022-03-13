@@ -549,7 +549,11 @@ cdef void _setElementClassLookupFunction(
 def set_element_class_lookup(ElementClassLookup lookup = None):
     u"""set_element_class_lookup(lookup = None)
 
-    Set the global default element class lookup method.
+    Set the global element class lookup method.
+
+    This defines the main entry point for looking up element implementations.
+    The standard implementation uses the :class:`ParserBasedElementClassLookup`
+    to delegate to different lookup schemes for each parser. 
 
     .. warning::
 
