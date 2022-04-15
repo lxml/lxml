@@ -38,7 +38,7 @@ def download_and_extract_windows_binaries(destdir):
         if release_path in filename
     ]
 
-    if platform.machine() == 'ARM64':
+    if platform.machine() == 'ARM64' or os.getenv('VSCMD_ARG_TGT_ARCH') == 'arm64':
         arch = "win-arm64"
     elif sys.maxsize > 2**32:
         arch = "win64"
