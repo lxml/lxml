@@ -2,6 +2,24 @@
 lxml changelog
 ==============
 
+4.9.0 (2022-0?-??)
+==================
+
+Bugs fixed
+----------
+
+* GH#341: The mixin inheritance order in ``lxml.html`` was corrected.
+  Patch by xmo-odoo.
+
+Other changes
+-------------
+
+* Built with Cython 0.29.29 to adapt to changes in Python 3.11.
+
+* Wheels include zlib 1.2.12, libxml2 2.9.14 and libxslt 1.1.35
+  (libxml2 2.9.12+ and libxslt 1.1.34 on Windows).
+
+
 4.8.0 (2022-02-17)
 ==================
 
