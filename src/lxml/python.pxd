@@ -8,11 +8,16 @@ cdef extern from *:
 cdef extern from "Python.h":
     """
     #if defined(CYTHON_PEP393_ENABLED) && CYTHON_PEP393_ENABLED
-    #if PY_VERSION_HEX >= 0x030C0000 && !defined(PyUnicode_IS_READY)
+    #if PY_VERSION_HEX >= 0x030C0000
+      #undef PyUnicode_IS_READY
       #define PyUnicode_IS_READY(s)  (1)
+      #undef PyUnicode_READY
       #define PyUnicode_READY(s)  (0)
+      #undef PyUnicode_AS_DATA
       #define PyUnicode_AS_DATA(s)  (0)
+      #undef PyUnicode_GET_DATA_SIZE
       #define PyUnicode_GET_DATA_SIZE(s)  (0)
+      #undef PyUnicode_GET_SIZE
       #define PyUnicode_GET_SIZE(s)  (0)
     #endif
     #elif PY_VERSION_HEX <= 0x03030000

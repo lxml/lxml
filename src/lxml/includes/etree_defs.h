@@ -78,13 +78,6 @@
 #  define PyFile_AsFile(o)                   (NULL)
 #endif
 
-#if PY_VERSION_HEX <= 0x03030000 && !(defined(CYTHON_PEP393_ENABLED) && CYTHON_PEP393_ENABLED)
-  #define PyUnicode_IS_READY(op)    (0)
-  #define PyUnicode_GET_LENGTH(u)   PyUnicode_GET_SIZE(u)
-  #define PyUnicode_KIND(u)         (sizeof(Py_UNICODE))
-  #define PyUnicode_DATA(u)         ((void*)PyUnicode_AS_UNICODE(u))
-#endif
-
 #if IS_PYPY
 #  ifndef PyUnicode_FromFormat
 #    define PyUnicode_FromFormat  PyString_FromFormat
