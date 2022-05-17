@@ -6,6 +6,23 @@ cdef extern from *:
     cdef bint PEP393_ENABLED "CYTHON_PEP393_ENABLED"
 
 cdef extern from "Python.h":
+    """
+    #if defined(CYTHON_PEP393_ENABLED) && CYTHON_PEP393_ENABLED
+    #if PY_VERSION_HEX >= 0x030C0000 && !defined(PyUnicode_IS_READY)
+      #define PyUnicode_IS_READY(s)  (1)
+      #define PyUnicode_READY(s)  (0)
+      #define PyUnicode_AS_DATA(s)  (0)
+      #define PyUnicode_GET_DATA_SIZE(s)  (0)
+      #define PyUnicode_GET_SIZE(s)  (0)
+    #endif
+    #elif PY_VERSION_HEX <= 0x03030000
+      #define PyUnicode_IS_READY(op)    (0)
+      #define PyUnicode_GET_LENGTH(u)   PyUnicode_GET_SIZE(u)
+      #define PyUnicode_KIND(u)         (sizeof(Py_UNICODE))
+      #define PyUnicode_DATA(u)         ((void*)PyUnicode_AS_UNICODE(u))
+    #endif
+    """
+
     ctypedef struct PyObject
     cdef int PY_SSIZE_T_MAX
     cdef int PY_VERSION_HEX
