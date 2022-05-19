@@ -14,10 +14,13 @@ Bugs fixed
 Other changes
 -------------
 
-* Built with Cython 0.29.29 to adapt to changes in Python 3.11.
+* Built with Cython 0.29.30 to adapt to changes in Python 3.11 and 3.12.
 
 * Wheels include zlib 1.2.12, libxml2 2.9.14 and libxslt 1.1.35
   (libxml2 2.9.12+ and libxslt 1.1.34 on Windows).
+
+* GH#343: Windows-AArch64 build support in Visual Studio.
+  Patch by Steve Dower.
 
 
 4.8.0 (2022-02-17)
