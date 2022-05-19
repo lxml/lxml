@@ -17,10 +17,10 @@ cdef extern from "Python.h":
     cdef stdio.FILE* PyFile_AsFile(object p)
 
     # PEP 393
-    cdef bint PyUnicode_IS_READY(object u)
     cdef Py_ssize_t PyUnicode_GET_LENGTH(object u)
     cdef int PyUnicode_KIND(object u)
-    cdef void* PyUnicode_DATA(object u)
+
+    cdef bint PyUnicode_READY(object u) except -1
 
     cdef bytes PyUnicode_AsEncodedString(object u, char* encoding,
                                          char* errors)
@@ -32,9 +32,6 @@ cdef extern from "Python.h":
     cdef object PyUnicode_RichCompare(object o1, object o2, int op)
     cdef bytes PyUnicode_AsUTF8String(object ustring)
     cdef bytes PyUnicode_AsASCIIString(object ustring)
-    cdef char* PyUnicode_AS_DATA(object ustring)
-    cdef Py_ssize_t PyUnicode_GET_DATA_SIZE(object ustring)
-    cdef Py_ssize_t PyUnicode_GET_SIZE(object ustring)
     cdef bytes PyBytes_FromStringAndSize(char* s, Py_ssize_t size)
     cdef bytes PyBytes_FromFormat(char* format, ...)
     cdef Py_ssize_t PyBytes_GET_SIZE(object s)
@@ -120,6 +117,7 @@ cdef extern from "includes/etree_defs.h": # redefines some functions as macros
     cdef void* lxml_realloc(void* mem, size_t count, size_t item_size)
     cdef void lxml_free(void* mem)
     cdef void* lxml_unpack_xmldoc_capsule(object capsule, bint* is_owned) except? NULL
+    cdef char* unicode_data_and_size(object u, Py_ssize_t *len) except NULL;
     cdef bint _isString(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)

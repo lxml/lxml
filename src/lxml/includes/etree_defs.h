@@ -127,6 +127,19 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  define _lx_PySlice_GetIndicesEx(o, l, b, e, s, sl) PySlice_GetIndicesEx(((PySliceObject*)o), l, b, e, s, sl)
 #endif
 
+static const char* unicode_data_and_size(PyObject *unicode, Py_ssize_t *len) {
+#if PY_MAJOR_VERSION < 3
+    *len = PyUnicode_GET_DATA_SIZE(unicode);
+    return PyUnicode_AS_DATA(unicode);
+#else
+    if (PyUnicode_READY(unicode) < 0) {
+        return NULL;
+    }
+    *len = PyUnicode_KIND(unicode) * PyUnicode_GET_LENGTH(unicode);
+    return (const char*)PyUnicode_DATA(unicode);
+#endif
+}
+
 #ifdef WITHOUT_THREADING
 #  undef PyEval_SaveThread
 #  define PyEval_SaveThread() (NULL)
