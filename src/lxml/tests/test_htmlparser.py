@@ -653,6 +653,31 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(self.etree.tostring(html.fragment_fromstring(fragment)),
                          _bytes('<tag attribute=""/>'))
 
+    def test_xhtml_as_html_as_xml(self):
+        # parse XHTML as HTML, serialise as XML
+        # See https://bugs.launchpad.net/lxml/+bug/1965070
+        xhtml = (
+            b'<?xml version="1.0" encoding="UTF-8"?>'
+            b'<html xmlns="http://www.w3.org/1999/xhtml"></html>'
+        )
+        root = html.fromstring(xhtml)
+        print(root.attrib)
+        result = etree.tostring(root)
+        self.assertEqual(result, b'<html xmlns="http://www.w3.org/1999/xhtml"/>')
+
+        # Adding an XHTML doctype makes libxml2 add the namespace, which wasn't parsed as such by the HTML parser.
+        """
+        xhtml = (
+            b'<?xml version="1.0" encoding="UTF-8"?>'
+            b'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
+            b'<html xmlns="http://www.w3.org/1999/xhtml"></html>'
+        )
+        root = html.fromstring(xhtml)
+        print(root.attrib)
+        result = etree.tostring(root)
+        self.assertEqual(result, b'<html xmlns="http://www.w3.org/1999/xhtml"/>')
+        """
+
 
 def test_suite():
     suite = unittest.TestSuite()
