@@ -70,6 +70,8 @@ jobs:
         exclude:
           - image: manylinux_2_24_aarch64
             pyversion: "*"
+          - image: musllinux_1_1_aarch64
+            pyversion: "*"
         include:
           - image: manylinux2014_aarch64
             pyversion: "cp36*"
@@ -80,6 +82,17 @@ jobs:
           - image: manylinux_2_24_aarch64
             pyversion: "cp39*"
           - image: manylinux_2_24_aarch64
+            pyversion: "cp310*"
+
+          - image: musllinux_1_1_aarch64
+            pyversion: "cp36*"
+          - image: musllinux_1_1_aarch64
+            pyversion: "cp37*"
+          - image: musllinux_1_1_aarch64
+            pyversion: "cp38*"
+          - image: musllinux_1_1_aarch64
+            pyversion: "cp39*"
+          - image: musllinux_1_1_aarch64
             pyversion: "cp310*"
 
     steps:
