@@ -39,6 +39,7 @@ run_tests() {
 
 prepare_system() {
     #yum install -y zlib-devel
+    yum -y install xz  || true
     #rm -fr /opt/python/cp34-*
     echo "Python versions found: $(cd /opt/python && echo cp* | sed -e 's|[^ ]*-||g')"
     ${CC:-gcc} --version
