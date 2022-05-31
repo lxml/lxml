@@ -661,7 +661,6 @@ class HtmlParserTestCase(HelperTestCase):
             b'<html xmlns="http://www.w3.org/1999/xhtml"></html>'
         )
         root = html.fromstring(xhtml)
-        print(root.attrib)
         result = etree.tostring(root)
         self.assertEqual(result, b'<html xmlns="http://www.w3.org/1999/xhtml"/>')
 
@@ -673,7 +672,6 @@ class HtmlParserTestCase(HelperTestCase):
             b'<html xmlns="http://www.w3.org/1999/xhtml"></html>'
         )
         root = html.fromstring(xhtml)
-        print(root.attrib)
         result = etree.tostring(root)
         self.assertEqual(result, b'<html xmlns="http://www.w3.org/1999/xhtml"/>')
         """
