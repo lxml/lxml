@@ -35,7 +35,7 @@ jobs:
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          # Temporary - Allow failure on all 3.11-dev jobs until beta comes out.
+          # Temporary - Allow failure on all 3.11-dev jobs until production release comes out.
           - os: ubuntu-18.04
             python-version: 3.11-dev
             allowed_failure: true
