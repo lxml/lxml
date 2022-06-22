@@ -63,7 +63,7 @@ Crypto currencies do not fit into that ambition.
 .. _`doc/main.txt`: https://github.com/lxml/lxml/blob/master/doc/main.txt
 .. _`INSTALL.txt`: http://lxml.de/installation.html
 
-`Travis-CI <https://travis-ci.org/>`_ and `AppVeyor <https://www.appveyor.com/>`_
+`AppVeyor <https://www.appveyor.com/>`_ and `GitHub Actions <https://docs.github.com/en/actions>`_
 support the lxml project with their build and CI servers.
 Jetbrains supports the lxml project by donating free licenses of their
 `PyCharm IDE <https://www.jetbrains.com/pycharm/>`_.
