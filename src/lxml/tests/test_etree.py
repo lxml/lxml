@@ -1463,14 +1463,16 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_walk_after_parse_failure(self):
         # This used to be an issue because libxml2 can leak empty namespaces
         # between failed parser runs.  iterwalk() failed to handle such a tree.
+        parser = etree.XMLParser()
+
         try:
-            etree.XML('''<anot xmlns="1">''')
+            etree.XML('''<anot xmlns="1">''', parser=parser)
         except etree.XMLSyntaxError:
             pass
         else:
             assert False, "invalid input did not fail to parse"
 
-        et = etree.XML('''<root>  </root>''')
+        et = etree.XML('''<root>  </root>''', parser=parser)
         try:
             ns = next(etree.iterwalk(et, events=('start-ns',)))
         except StopIteration:
