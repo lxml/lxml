@@ -420,7 +420,7 @@ cdef int _countNsDefs(xmlNode* c_node):
     count = 0
     c_ns = c_node.nsDef
     while c_ns is not NULL:
-        count += 1
+        count += (c_ns.href is not NULL)
         c_ns = c_ns.next
     return count
 
@@ -431,9 +431,10 @@ cdef int _appendStartNsEvents(xmlNode* c_node, list event_list) except -1:
     count = 0
     c_ns = c_node.nsDef
     while c_ns is not NULL:
-        ns_tuple = (funicode(c_ns.prefix) if c_ns.prefix is not NULL else '',
-                    funicode(c_ns.href))
-        event_list.append( (u"start-ns", ns_tuple) )
-        count += 1
+        if c_ns.href:
+            ns_tuple = (funicodeOrEmpty(c_ns.prefix),
+                        funicode(c_ns.href))
+            event_list.append( (u"start-ns", ns_tuple) )
+            count += 1
         c_ns = c_ns.next
     return count

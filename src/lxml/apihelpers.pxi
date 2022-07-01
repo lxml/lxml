@@ -246,9 +246,10 @@ cdef dict _build_nsmap(xmlNode* c_node):
     while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
         c_ns = c_node.nsDef
         while c_ns is not NULL:
-            prefix = funicodeOrNone(c_ns.prefix)
-            if prefix not in nsmap:
-                nsmap[prefix] = funicodeOrNone(c_ns.href)
+            if c_ns.prefix or c_ns.href:
+                prefix = funicodeOrNone(c_ns.prefix)
+                if prefix not in nsmap:
+                    nsmap[prefix] = funicodeOrNone(c_ns.href)
             c_ns = c_ns.next
         c_node = c_node.parent
     return nsmap
