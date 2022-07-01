@@ -2,6 +2,18 @@
 lxml changelog
 ==============
 
+4.9.1 (2022-07-01)
+==================
+
+Bugs fixed
+----------
+
+* A crash was resolved when using ``iterwalk()`` (or ``canonicalize()``)
+  after parsing certain incorrect input.  Note that ``iterwalk()`` can crash
+  on *valid* input parsed with the same parser *after* failing to parse the
+  incorrect input.
+
+
 4.9.0 (2022-06-01)
 ==================
 
