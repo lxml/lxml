@@ -88,6 +88,9 @@ extra_options['package_data'] = {
         'etree_api.h',
         'lxml.etree.h',
         'lxml.etree_api.h',
+        # Include Cython source files for better traceback output.
+        '*.pyx',
+        '*.pxi',
     ],
     'lxml.includes': [
         '*.pxd', '*.h'
