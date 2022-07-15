@@ -241,6 +241,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         a[0].clear(keep_tail=True)
         self.assertEqual(_bytes('<a aa="A"><b/>B2<c ca="C">C1</c>C2</a>'), tostring(a))
 
+    def test_attrib_is_Mapping(self):
+        try:
+            from collections.abc import Mapping, MutableMapping
+        except ImportError:
+            from collections import Mapping, MutableMapping  # Py2
+
+        Element = self.etree.Element
+        root = Element("root")
+
+        self.assertTrue(isinstance(root.attrib, Mapping))
+        self.assertTrue(isinstance(root.attrib, MutableMapping))
+
     def test_attribute_has_key(self):
         # ET in Py 3.x has no "attrib.has_key()" method
         XML = self.etree.XML

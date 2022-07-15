@@ -2,6 +2,12 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+* LP#1981760: ``Element.attrib`` now registers as ``collections.abc.MutableMapping``.
+
+
 4.9.1 (2022-07-01)
 ==================
 

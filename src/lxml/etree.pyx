@@ -87,6 +87,7 @@ from itertools import islice
 
 cdef object ITER_EMPTY = iter(())
 
+cdef object MutableMapping
 try:
     from collections.abc import MutableMapping  # Py3.3+
 except ImportError:
@@ -113,7 +114,7 @@ class _ImmutableMapping(MutableMapping):
     iterkeys = itervalues = iteritems = __iter__
 
 cdef object IMMUTABLE_EMPTY_MAPPING = _ImmutableMapping()
-del MutableMapping, _ImmutableMapping
+del _ImmutableMapping
 
 
 # the rules
@@ -2567,6 +2568,8 @@ cdef class _Attrib:
         except (TypeError, ValueError):
             return NotImplemented
         return python.PyObject_RichCompare(one, other, op)
+
+MutableMapping.register(_Attrib)
 
 
 @cython.final
