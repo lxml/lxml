@@ -1491,8 +1491,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             # This would be the expected result, because there was no namespace
             pass
         else:
-            # This is a bug in libxml2
-            assert not ns, repr(ns)
+            assert False, "Found unexpected namespace '%s'" % ns
 
     def test_itertext_comment_pi(self):
         # https://bugs.launchpad.net/lxml/+bug/1844674

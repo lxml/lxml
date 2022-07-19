@@ -569,6 +569,9 @@ cdef class _ParserContext(_ResolverContext):
                 self._c_ctxt.disableSAX = 0 # work around bug in libxml2
             else:
                 xmlparser.xmlClearParserCtxt(self._c_ctxt)
+                # work around bug in libxml2 [2.9.10 .. 2.9.14]:
+                # https://gitlab.gnome.org/GNOME/libxml2/-/issues/378
+                self._c_ctxt.nsNr = 0
 
     cdef int prepare(self, bint set_document_loader=True) except -1:
         cdef int result
