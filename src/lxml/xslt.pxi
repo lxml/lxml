@@ -353,7 +353,8 @@ cdef class XSLT:
 
     Keyword arguments of the XSLT call:
 
-    - profile_run: enable XSLT profiling (default: False)
+    - profile_run: enable XSLT profiling and make the profile available
+      as XML document in ``result.xslt_profile`` (default: False)
 
     Other keyword arguments of the call are passed to the stylesheet
     as parameters.
