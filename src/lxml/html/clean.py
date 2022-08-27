@@ -221,15 +221,16 @@ class Cleaner(object):
     safe_attrs_only = True
     safe_attrs = defs.safe_attrs
     add_nofollow = False
-    host_whitelist = ()
+    host_whitelist = []
     whitelist_tags = {'iframe', 'embed'}
 
     def __init__(self, **kw):
         not_an_attribute = object()
+        collection_types = (frozenset, set, tuple, list)
         for name, value in kw.items():
             default = getattr(self, name, not_an_attribute)
             if (default is not None and default is not True and default is not False
-                    and not isinstance(default, (frozenset, set, tuple, list))):
+                    and not isinstance(default, collection_types)):
                 raise TypeError(
                     "Unknown parameter: %s=%r" % (name, value))
             setattr(self, name, value)
@@ -241,6 +242,9 @@ class Cleaner(object):
                 raise ValueError("It does not make sense to pass in both "
                                  "allow_tags and remove_unknown_tags")
             self.remove_unknown_tags = False
+
+        if not isinstance(self.host_whitelist, collection_types):
+            raise TypeError("host_whitelist must be a collection type")
 
     # Used to lookup the primary URL for a given tag that is up for
     # removal:
