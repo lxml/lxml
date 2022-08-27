@@ -490,11 +490,10 @@ class Cleaner(object):
         """
         if self.whitelist_tags is not None and el.tag not in self.whitelist_tags:
             return False
-        scheme, netloc, path, query, fragment = urlsplit(url)
-        netloc = netloc.lower().split(':', 1)[0]
-        if scheme not in ('http', 'https'):
+        parts = urlsplit(url)
+        if parts.scheme not in ('http', 'https'):
             return False
-        if netloc in self.host_whitelist:
+        if parts.hostname in self.host_whitelist:
             return True
         return False
 
