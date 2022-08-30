@@ -178,7 +178,7 @@ def _list_dir_urllib(url):
     return files
 
 
-def http_find_latest_version_directory(url):
+def http_find_latest_version_directory(url, version=None):
     with closing(urlopen(url)) as res:
         charset = _find_content_encoding(res)
         data = res.read()
@@ -189,7 +189,13 @@ def http_find_latest_version_directory(url):
     ]
     if not directories:
         return url
-    latest_dir = "%s.%s" % max(directories)
+    best_version = max(directories)
+    if version:
+        major, minor, _ = version.split(".", 2)
+        major, minor = int(major), int(minor)
+        if (major, minor) in directories:
+            best_version = (major, minor)
+    latest_dir = "%s.%s" % best_version
     return urljoin(url, latest_dir) + "/"
 
 
@@ -248,7 +254,7 @@ def download_libxml2(dest_dir, version=None):
         from_location = "https://gitlab.gnome.org/GNOME/libxml2/-/archive/dea91c97debeac7c1aaf9c19f79029809e23a353/"
         version = "dea91c97debeac7c1aaf9c19f79029809e23a353"
     else:
-        from_location = http_find_latest_version_directory(LIBXML2_LOCATION)
+        from_location = http_find_latest_version_directory(LIBXML2_LOCATION, version=version)
 
     return download_library(dest_dir, from_location, 'libxml2',
                             version_re, filename, version=version)
@@ -259,7 +265,7 @@ def download_libxslt(dest_dir, version=None):
     #version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
     version_re = re.compile(r'libxslt-([0-9.]+[0-9]).tar.xz')
     filename = 'libxslt-%s.tar.xz'
-    from_location = http_find_latest_version_directory(LIBXSLT_LOCATION)
+    from_location = http_find_latest_version_directory(LIBXSLT_LOCATION, version=version)
     return download_library(dest_dir, from_location, 'libxslt',
                             version_re, filename, version=version)
 
