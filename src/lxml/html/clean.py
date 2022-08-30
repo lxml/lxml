@@ -243,7 +243,9 @@ class Cleaner(object):
                                  "allow_tags and remove_unknown_tags")
             self.remove_unknown_tags = False
 
-        if not isinstance(self.host_whitelist, collection_types):
+        if isinstance(self.host_whitelist, collection_types):
+            self.host_whitelist = frozenset(self.host_whitelist)
+        else:
             raise TypeError("host_whitelist must be a collection type")
 
     # Used to lookup the primary URL for a given tag that is up for
