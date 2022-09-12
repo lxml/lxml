@@ -238,29 +238,29 @@ def merge_insert(ins_chunks, doc):
     ins_chunks = list(ins_chunks)
     unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks)
 
-    # add ins tag to the doc
-    leading_space = "" if doc and doc[-1][-1] == " " else " "
-    doc.append("{0}<ins>".format(leading_space))
+    if doc and not doc[-1].endswith(' '):
+        # Fix up the case where the word before the insert didn't end with 
+        # a space
+        doc[-1] += ' '
+    doc.append('<ins>')
 
     for chunk in ins_chunks:
         if chunk in unbalanced_start:
-            leading_space = "" if chunk[-1] == " " else " "
-            if doc and '<ins>' in doc[-1]:
+            leading_space = '' if chunk[-1].endswith(' ') else ' '
+            if doc and doc[-1].strip() == '<ins>':
                 doc.pop()
-                doc.extend([
-                    chunk,
-                    "{0}<ins>".format(leading_space)
-                ])
+                doc.extend([chunk, ('%s<ins>' % leading_space)])
             else:
-                trailing_space = "" if chunk[0] == " " else " "
+                trailing_space = '' if chunk[0].endswith(' ') else ' '
                 doc.extend([
-                    "</ins>{0}".format(trailing_space),
+                    ('</ins>%s' % trailing_space),
                     chunk,
-                    "{0}<ins>".format(leading_space)])
+                    ('%s<ins>' % leading_space)
+                ])
         elif chunk not in unbalanced_end:
             doc.append(chunk)
 
-    if doc and doc[-1] and doc[-1][-1] == " ":
+    if doc and doc[-1] and doc[-1].endswith(' '):
         doc[-1] = doc[-1][:-1]
 
     doc.append("</ins> ")
