@@ -87,6 +87,13 @@ Whitespace is generally ignored for the diff but preserved during the diff:
     second
      <ins>third</ins> </pre>
 
+Ensure we don't preserve the structure of the html during the diff:
+
+    >>> a = "<div id='first'>some old text</div><div id='last'>more old text</div>"
+    >>> b = "<div id='first'>some old text</div><div id='middle'>and new text</div><div id='last'>more old text</div>"
+    >>> print(htmldiff(a, b))
+    <div id="first"><ins>some old text</ins></div> <div id="middle"> <ins>and new</ins> <del>some old</del> text</div><div id="last">more old text</div>
+
 The sixteen combinations::
 
 First "insert start" (del start/middle/end/none):

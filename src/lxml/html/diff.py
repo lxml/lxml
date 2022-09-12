@@ -234,22 +234,38 @@ def expand_tokens(tokens, equal=False):
 def merge_insert(ins_chunks, doc):
     """ doc is the already-handled document (as a list of text chunks);
     here we add <ins>ins_chunks</ins> to the end of that.  """
-    # Though we don't throw away unbalanced_start or unbalanced_end
-    # (we assume there is accompanying markup later or earlier in the
-    # document), we only put <ins> around the balanced portion.
+
+    ins_chunks = list(ins_chunks)
     unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks)
-    doc.extend(unbalanced_start)
-    if doc and not doc[-1].endswith(' '):
-        # Fix up the case where the word before the insert didn't end with 
-        # a space
-        doc[-1] += ' '
-    doc.append('<ins>')
-    if balanced and balanced[-1].endswith(' '):
-        # We move space outside of </ins>
-        balanced[-1] = balanced[-1][:-1]
-    doc.extend(balanced)
-    doc.append('</ins> ')
+
+    # add ins tag to the doc
+    leading_space = "" if doc and doc[-1][-1] == " " else " "
+    doc.append("{0}<ins>".format(leading_space))
+
+    for chunk in ins_chunks:
+        if chunk in unbalanced_start:
+            leading_space = "" if chunk[-1] == " " else " "
+            if doc and '<ins>' in doc[-1]:
+                doc.pop()
+                doc.extend([
+                    chunk,
+                    "{0}<ins>".format(leading_space)
+                ])
+            else:
+                trailing_space = "" if chunk[0] == " " else " "
+                doc.extend([
+                    "</ins>{0}".format(trailing_space),
+                    chunk,
+                    "{0}<ins>".format(leading_space)])
+        elif chunk not in unbalanced_end:
+            doc.append(chunk)
+
+    if doc and doc[-1] and doc[-1][-1] == " ":
+        doc[-1] = doc[-1][:-1]
+
+    doc.append("</ins> ")
     doc.extend(unbalanced_end)
+
 
 # These are sentinels to represent the start and end of a <del>
 # segment, until we do the cleanup phase to turn them into proper
