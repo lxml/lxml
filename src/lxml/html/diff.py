@@ -263,9 +263,8 @@ def merge_insert(ins_chunks, doc):
     if doc and doc[-1] and doc[-1].endswith(' '):
         doc[-1] = doc[-1][:-1]
 
-    doc.append("</ins> ")
+    doc.append('</ins> ')
     doc.extend(unbalanced_end)
-
 
 # These are sentinels to represent the start and end of a <del>
 # segment, until we do the cleanup phase to turn them into proper
