@@ -237,6 +237,7 @@ def merge_insert(ins_chunks, doc):
 
     ins_chunks = list(ins_chunks)
     unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks)
+    unbalanced_tags = unbalanced_start + unbalanced_end
 
     if doc and not doc[-1].endswith(' '):
         # Fix up the case where the word before the insert didn't end with 
@@ -247,24 +248,24 @@ def merge_insert(ins_chunks, doc):
     for chunk in ins_chunks:
         if chunk in balanced:
             doc.append(chunk)
-        elif chunk in unbalanced_start:
-            leading_space = '' if chunk[-1].endswith(' ') else ' '
-            if doc and doc[-1].strip() == '<ins>':
-                doc.pop()
-                doc.extend([chunk, ('%s<ins>' % leading_space)])
+        elif chunk in unbalanced_tags:
+            leading_space = '' if chunk.endswith(' ') else ' '
+            trailing_space = '' if chunk.startswith(' ') else ' '
+            if doc[-1].strip() == '<ins>':
+                doc[-1:] = [chunk, ('%s<ins>' % leading_space)]
             else:
-                trailing_space = '' if chunk[0].endswith(' ') else ' '
                 doc.extend([
                     ('</ins>%s' % trailing_space),
                     chunk,
                     ('%s<ins>' % leading_space)
                 ])
 
-    if doc and doc[-1].endswith(' '):
-        doc[-1] = doc[-1][:-1]
-
-    doc.append('</ins> ')
-    doc.extend(unbalanced_end)
+    if doc[-1].strip() == '<ins>':
+        doc.pop()
+    else:
+        if doc[-1].endswith(' '):
+            doc[-1] = doc[-1][:-1]
+        doc.append('</ins> ')
 
 # These are sentinels to represent the start and end of a <del>
 # segment, until we do the cleanup phase to turn them into proper
