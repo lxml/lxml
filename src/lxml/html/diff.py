@@ -245,7 +245,9 @@ def merge_insert(ins_chunks, doc):
     doc.append('<ins>')
 
     for chunk in ins_chunks:
-        if chunk in unbalanced_start:
+        if chunk in balanced:
+            doc.append(chunk)
+        elif chunk in unbalanced_start:
             leading_space = '' if chunk[-1].endswith(' ') else ' '
             if doc and doc[-1].strip() == '<ins>':
                 doc.pop()
@@ -257,10 +259,8 @@ def merge_insert(ins_chunks, doc):
                     chunk,
                     ('%s<ins>' % leading_space)
                 ])
-        elif chunk not in unbalanced_end:
-            doc.append(chunk)
 
-    if doc and doc[-1] and doc[-1].endswith(' '):
+    if doc and doc[-1].endswith(' '):
         doc[-1] = doc[-1][:-1]
 
     doc.append('</ins> ')
