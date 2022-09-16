@@ -211,7 +211,7 @@ setup(
     author_email="lxml-dev@lxml.de",
     maintainer="lxml dev team",
     maintainer_email="lxml-dev@lxml.de",
-    license="BSD",
+    license="BSD-3-Clause",
     url="https://lxml.de/",
     # Commented out because this causes distutils to emit warnings
     # `Unknown distribution option: 'bugtrack_url'`
