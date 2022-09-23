@@ -363,10 +363,11 @@ def printSetupTimes(benchmark_suites):
     print("Setup times for trees in seconds:")
     for b in benchmark_suites:
         sys.stdout.write("%-3s:     " % b.lib_name)
-        for an in (0,1):
-            for tn in (0,1,2):
-                sys.stdout.write('  %s   ' %
-                    build_treeset_name((), tn, an, False, False)[:2])
+        for at in ([0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]):
+            an = at[0]
+            tn = at[1]
+            sys.stdout.write('  %s   ' %
+                build_treeset_name((), tn, an, False, False)[:2])
         print('')
         for i, tree_times in enumerate(b.setup_times):
             print("     T%d: %s" % (i+1, ' '.join("%6.4f" % t for t in tree_times)))
