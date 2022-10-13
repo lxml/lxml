@@ -302,6 +302,15 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("./tag")),
                          ['tag', 'tag'])
 
+        # use find with path with position index
+        self.assertEqual(elem.find("tag[1]").tag, "tag")
+        self.assertEqual(etree.ElementTree(elem).find("tag[1]").tag, "tag")
+        self.assertEqual(etree.ElementTree(elem).findtext("tag[1]"), "text")
+        self.assertEqual(summarize_list(elem.findall(".//tag[1]")), ["tag", "tag"])
+        self.assertEqual(
+            summarize_list(etree.ElementTree(elem).findall(".//tag[1]")), ["tag", "tag"]
+        )
+
         # FIXME: ET's Path module handles this case incorrectly; this gives
         # a warning in 1.3, and the behaviour will be modified in 1.4.
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/tag")),
@@ -316,6 +325,233 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(summarize_list(elem.findall(".//tag[@class][@id]")),
                          ['tag', 'tag'])
 
+    def test_find_with_namespaces(self):
+        elem = etree.XML(
+            """
+            <body xmlns="nsnone">
+              <tag class='a'>text</tag>
+              <tag class='b'/>
+              <section>
+                <tag class='b' id='inner'>subtext</tag>
+              </section>
+            </body>
+            """
+        )
+        namespaces = {None: "nsnone"}
+
+        self.assertEqual(elem.find("tag", namespaces=namespaces).tag, "{nsnone}tag")
+
+
+        self.assertEqual(
+            etree.ElementTree(elem).find("tag", namespaces=namespaces).tag, "{nsnone}tag"
+        )
+        self.assertEqual(elem.find("section/tag", namespaces=namespaces).tag, "{nsnone}tag")
+        self.assertEqual(
+            etree.ElementTree(elem).find("section/tag", namespaces=namespaces).tag,
+            "{nsnone}tag",
+        )
+        self.assertEqual(elem.findtext("tag", namespaces=namespaces), "text")
+        self.assertEqual(elem.findtext("tog", namespaces=namespaces), None)
+        self.assertEqual(elem.findtext("tog", "default", namespaces=namespaces), "default")
+        self.assertEqual(
+            etree.ElementTree(elem).findtext("tag", namespaces=namespaces), "text"
+        )
+        self.assertEqual(
+            etree.ElementTree(elem).findtext(
+                "tog", default="default", namespaces=namespaces
+            ),
+            "default",
+        )
+        self.assertEqual(elem.findtext("section/tag", namespaces=namespaces), "subtext")
+        self.assertEqual(
+            etree.ElementTree(elem).findtext("section/tag", namespaces=namespaces),
+            "subtext",
+        )
+        self.assertEqual(elem.find("tag[1]", namespaces=namespaces).tag, "{nsnone}tag")
+        self.assertEqual(
+            etree.ElementTree(elem).find("tag[1]", namespaces=namespaces).tag, "{nsnone}tag"
+        )
+
+        self.assertEqual(elem.findtext("tag[1]", namespaces=namespaces), "text")
+        self.assertTrue(elem.findtext("tag[2]", namespaces=namespaces) in {None, ''})
+        self.assertEqual(
+            summarize_list(elem.findall("tag", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("*", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag", "{nsnone}section"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("section/tag", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("section//tag", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+
+        self.assertEqual(
+            summarize_list(elem.findall("section/*", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("section//*", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("section/.//*", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+
+        self.assertEqual(
+            summarize_list(elem.findall("*/tag", namespaces=namespaces)), ["{nsnone}tag"]
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("*/./tag", namespaces=namespaces)), ["{nsnone}tag"]
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("./tag", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall("././tag", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[@class]", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[ @class]", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[@class ]", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[  @class  ]", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[@class='a']", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall('.//tag[@class="a"]', namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[@class='b']", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall('.//tag[@class="b"]', namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall('.//tag[@class = "b"]', namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[@id]", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[@class][@id]", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//section[tag]", namespaces=namespaces)),
+            ["{nsnone}section"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//section[element]", namespaces=namespaces)), []
+        )
+
+        self.assertEqual(
+            summarize_list(
+                elem.findall(".//section[tag='subtext']", namespaces=namespaces)
+            ),
+            ["{nsnone}section"],
+        )
+        self.assertEqual(
+            summarize_list(
+                elem.findall(".//section[tag ='subtext']", namespaces=namespaces)
+            ),
+            ["{nsnone}section"],
+        )
+        self.assertEqual(
+            summarize_list(
+                elem.findall(".//section[tag= 'subtext']", namespaces=namespaces)
+            ),
+            ["{nsnone}section"],
+        )
+        self.assertEqual(
+            summarize_list(
+                elem.findall(".//section[tag = 'subtext']", namespaces=namespaces)
+            ),
+            ["{nsnone}section"],
+        )
+        self.assertEqual(
+            summarize_list(
+                elem.findall(".//section[  tag   =   'subtext'  ]", namespaces=namespaces)
+            ),
+            ["{nsnone}section"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[.='subtext']", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[. ='subtext']", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall('.//tag[.= "subtext"]', namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[. = 'subtext']", namespaces=namespaces)),
+            ["{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[. = 'subtext ']", namespaces=namespaces)),
+            [],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[.= ' subtext']", namespaces=namespaces)), []
+        )
+
+        self.assertEqual(summarize_list(elem.findall("../tag", namespaces=namespaces)), [])
+        self.assertEqual(
+            summarize_list(elem.findall("section/../tag", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(etree.ElementTree(elem).findall("./tag", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(elem.findall(".//tag[1]", namespaces=namespaces)),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
+        self.assertEqual(
+            summarize_list(
+                etree.ElementTree(elem).findall(".//tag[1]", namespaces=namespaces)
+            ),
+            ["{nsnone}tag", "{nsnone}tag"],
+        )
 
 #class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
 #    import xml.etree.ElementTree as etree
