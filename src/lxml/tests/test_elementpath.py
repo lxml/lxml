@@ -85,6 +85,25 @@ class EtreeElementPathTestCase(HelperTestCase):
             [('', 'a'), ('[', ''), ('.', ''), ('', ''), ('=', ''), ('', ''), ('"abc"', ''), (']', '')],
             'a[. = "abc"]',
         )
+        assert_tokens(
+            [('/', ''), ('', 'a'), ('/', ''), ('', 'b'), ('/', ''), ('', 'c'), ('[', ''), ('', '1'), (']', '')],
+            '/a/b/c[1]',
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('/', ''), ('', '{nsnone}c'), ('[', ''), ('', '1'), (']', '')],
+            '/a/b/c[1]',
+            {None:'nsnone'},
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('[', ''), ('', '2'), (']', ''), ('/', ''), ('', '{nsnone}c'), ('[', ''), ('', '1'), (']', '')],
+            '/a/b[2]/c[1]',
+            {None:'nsnone'},
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('[', ''), ('', '100'), (']', '')],
+            '/a/b[100]',
+            {None:'nsnone'}
+        )
 
     def test_xpath_tokenizer(self):
         # Test the XPath tokenizer.  Copied from CPython's "test_xml_etree.py"
@@ -144,6 +163,18 @@ class EtreeElementPathTestCase(HelperTestCase):
         check("@{ns}attr", ['@', '{ns}attr'],
               {'': 'http://www.w3.org/2001/XMLSchema',
                'ns': 'http://www.w3.org/2001/XMLSchema'})
+        check("/doc/section[2]",
+              ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
+              {"":"http://www.w3.org/2001/XMLSchema"}
+        )
+        check("/doc/section[2]",
+              ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
+              {None:"http://www.w3.org/2001/XMLSchema"}
+        )
+        check("/ns:doc/ns:section[2]",
+              ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
+              {"ns":"http://www.w3.org/2001/XMLSchema"}
+        )
 
     def test_find(self):
         """
