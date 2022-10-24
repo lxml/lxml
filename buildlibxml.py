@@ -1,6 +1,6 @@
 import os, re, sys, subprocess, platform
 import tarfile
-from distutils import log, version
+from distutils import log
 from contextlib import closing, contextmanager
 from ftplib import FTP
 
@@ -21,6 +21,10 @@ try:
         multi_make_options = ['-j%d' % (cpus+1)]
 except:
     pass
+
+
+# overridable to control script usage
+sys_platform = sys.platform
 
 
 # use pre-built libraries on Windows
@@ -109,7 +113,7 @@ def unpack_zipfile(zipfn, destdir):
 
 
 def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs):
-    assert sys.platform.startswith('win')
+    assert sys_platform.startswith('win')
     libs = download_and_extract_windows_binaries(download_dir)
     for libname, path in libs.items():
         i = os.path.join(path, 'include')
@@ -450,7 +454,7 @@ def build_libxml2xslt(download_dir, build_dir,
         return found
 
     call_setup = {}
-    if sys.platform == 'darwin':
+    if sys_platform == 'darwin':
         configure_darwin_env(call_setup)
 
     configure_cmd = ['./configure',
@@ -531,3 +535,27 @@ def build_libxml2xslt(download_dir, build_dir,
         if lib in filename and filename.endswith('.a')]
 
     return xml2_config, xslt_config
+
+
+def main():
+    static_include_dirs = []
+    static_library_dirs = []
+    download_dir = "libs"
+
+    if sys_platform.startswith('win'):
+        return get_prebuilt_libxml2xslt(
+            download_dir, static_include_dirs, static_library_dirs)
+    else:
+        return build_libxml2xslt(
+            download_dir, 'build/tmp',
+            static_include_dirs, static_library_dirs,
+            static_cflags=[],
+            static_binaries=[]
+        )
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        # change global sys_platform setting
+        sys_platform = sys.argv[1]
+    main()
