@@ -91,7 +91,7 @@ test_build: build
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON_WITH_COVERAGE)
 	$(PYTHON) -m pip install cython-lint  # Fails on Python < 3.7
-	shopt -s globstar && cython-lint **/*.pyx
+	cython-lint --max-line-length=120 --no-pycodestyle **/*.pyi **/*.pyx || true
 
 test_inplace3: inplace3
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON3_WITH_COVERAGE)
