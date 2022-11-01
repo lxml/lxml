@@ -90,8 +90,8 @@ test_build: build
 
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON_WITH_COVERAGE)
-	$(PYTHON) -m pip install cython-lint
-	cython-lint
+	$(PYTHON) -m pip install cython-lint  # Fails on Python < 3.7
+	shopt -s globstar && cython-lint **/*.pyx
 
 test_inplace3: inplace3
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON3_WITH_COVERAGE)
