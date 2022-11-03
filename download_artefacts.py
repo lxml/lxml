@@ -1,34 +1,29 @@
 #!/usr/bin/python3
 
-import itertools
 import json
 import logging
-import re
 import shutil
 import datetime
 
 from concurrent.futures import ProcessPoolExecutor as Pool, as_completed
 from pathlib import Path
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from urllib.parse import urljoin
 
 logger = logging.getLogger()
 
 PARALLEL_DOWNLOADS = 6
-GITHUB_PACKAGE_URL = "https://github.com/lxml/lxml"
+GITHUB_API_URL = "https://api.github.com/repos/lxml/lxml"
 APPVEYOR_PACKAGE_URL = "https://ci.appveyor.com/api/projects/scoder/lxml"
 APPVEYOR_BUILDJOBS_URL = "https://ci.appveyor.com/api/buildjobs"
 
 
-def find_github_files(version, base_package_url=GITHUB_PACKAGE_URL):
-    file_url_pattern = r'href="([^"]+/releases/download/[^"]+\.(?:whl|tar\.gz))"'
-    url = f"{base_package_url}/releases/tag/lxml-{version}"
+def find_github_files(version, api_url=GITHUB_API_URL):
+    url = f"{api_url}/releases/tags/{version}"
+    release, _ = read_url(url, accept="application/vnd.github+json", as_json=True)
 
-    with urlopen(url) as p:
-        page = p.read().decode()
-
-    for wheel_url, _ in itertools.groupby(sorted(re.findall(file_url_pattern, page))):
-        yield urljoin(base_package_url, wheel_url)
+    for asset in release.get('assets', ()):
+        yield asset['browser_download_url']
 
 
 def find_appveyor_files(version, base_package_url=APPVEYOR_PACKAGE_URL, base_job_url=APPVEYOR_BUILDJOBS_URL):
@@ -55,6 +50,36 @@ def find_appveyor_files(version, base_package_url=APPVEYOR_PACKAGE_URL, base_job
         with urlopen(artifacts_url) as p:
             for artifact in json.load(p):
                 yield urljoin(artifacts_url, artifact['fileName'])
+
+
+def read_url(url, decode=True, accept=None, as_json=False):
+    if accept:
+        request = Request(url, headers={'Accept': accept})
+    else:
+        request = Request(url)
+
+    with urlopen(request) as res:
+        charset = _find_content_encoding(res)
+        content_type = res.headers.get('Content-Type')
+        data = res.read()
+
+    if decode:
+        data = data.decode(charset)
+    if as_json:
+        data = json.loads(data)
+    return data, content_type
+
+
+def _find_content_encoding(response, default='iso8859-1'):
+    from email.message import Message
+    content_type = response.headers.get('Content-Type')
+    if content_type:
+        msg = Message()
+        msg.add_header('Content-Type', content_type)
+        charset = msg.get_content_charset(default)
+    else:
+        charset = default
+    return charset
 
 
 def download1(wheel_url, dest_dir):
