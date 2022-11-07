@@ -52,7 +52,7 @@ def parse_content(content):
             break
     c = None
     for tag in ['content', 'summary', 'title', 'copyright', 'tagline', 'info', 'subtitle', 'fullitem', 'body', 'description', 'content:encoded']:
-        regex = re.compile(r"<%s.*?>(.*)</%s>" % (tag, tag), re.S)
+        regex = re.compile(r"<{}.*?>(.*)</{}>".format(tag, tag), re.S)
         match = regex.search(content)
         if match:
             c = match.group(1)

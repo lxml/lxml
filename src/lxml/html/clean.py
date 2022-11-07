@@ -6,7 +6,6 @@ Removes unwanted tags and content.  See the `Cleaner` class for
 details.
 """
 
-from __future__ import absolute_import
 
 import copy
 import re
@@ -106,7 +105,7 @@ _find_external_links = etree.XPath(
     namespaces={'x':XHTML_NAMESPACE})
 
 
-class Cleaner(object):
+class Cleaner:
     """
     Instances cleans the document of each of the possible offending
     elements.  The cleaning is controlled by attributes; you can
@@ -231,7 +230,7 @@ class Cleaner(object):
             if (default is not None and default is not True and default is not False
                     and not isinstance(default, (frozenset, set, tuple, list))):
                 raise TypeError(
-                    "Unknown parameter: %s=%r" % (name, value))
+                    "Unknown parameter: {}={!r}".format(name, value))
             setattr(self, name, value)
         if self.inline_style is None and 'inline_style' not in kw:
             self.inline_style = self.style

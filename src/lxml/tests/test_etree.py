@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests specific to the extended etree API
 
@@ -7,7 +5,6 @@ Tests that apply to the general ElementTree API should go into
 test_elementtree
 """
 
-from __future__ import absolute_import
 
 from collections import OrderedDict
 import os.path
@@ -29,15 +26,15 @@ from .common_imports import SimpleFSPath
 
 print("""
 TESTED VERSION: %s""" % etree.__version__ + """
-    Python:           %r""" % (sys.version_info,) + """
-    lxml.etree:       %r""" % (etree.LXML_VERSION,) + """
-    libxml used:      %r""" % (etree.LIBXML_VERSION,) + """
-    libxml compiled:  %r""" % (etree.LIBXML_COMPILED_VERSION,) + """
-    libxslt used:     %r""" % (etree.LIBXSLT_VERSION,) + """
-    libxslt compiled: %r""" % (etree.LIBXSLT_COMPILED_VERSION,) + """
-    FS encoding:      %s""" % (sys.getfilesystemencoding(),) + """
-    Default encoding: %s""" % (sys.getdefaultencoding(),) + """
-    Max Unicode:      %s""" % (sys.maxunicode,) + """
+    Python:           {!r}""".format(sys.version_info) + """
+    lxml.etree:       {!r}""".format(etree.LXML_VERSION) + """
+    libxml used:      {!r}""".format(etree.LIBXML_VERSION) + """
+    libxml compiled:  {!r}""".format(etree.LIBXML_COMPILED_VERSION) + """
+    libxslt used:     {!r}""".format(etree.LIBXSLT_VERSION) + """
+    libxslt compiled: {!r}""".format(etree.LIBXSLT_COMPILED_VERSION) + """
+    FS encoding:      {}""".format(sys.getfilesystemencoding()) + """
+    Default encoding: {}""".format(sys.getdefaultencoding()) + """
+    Max Unicode:      {}""".format(sys.maxunicode) + """
 """)
 
 try:
@@ -245,7 +242,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         try:
             from collections.abc import Mapping, MutableMapping
         except ImportError:
-            from collections import Mapping, MutableMapping  # Py2
+            from collections.abc import Mapping, MutableMapping  # Py2
 
         Element = self.etree.Element
         root = Element("root")
@@ -333,7 +330,7 @@ class ETreeOnlyTestCase(HelperTestCase):
                 self.assertSequenceEqual(expected_values, root2.attrib.values())
                 self.assertSequenceEqual(expected_items, root2.attrib.items())
             except AssertionError as exc:
-                exc.args = ("Order of '%s': %s" % (dict_type.__name__, exc.args[0]),) + exc.args[1:]
+                exc.args = ("Order of '{}': {}".format(dict_type.__name__, exc.args[0]),) + exc.args[1:]
                 raise
 
         self.assertEqual(keys, root.attrib.keys())
@@ -982,7 +979,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         assertFalse  = self.assertFalse
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertFalse(attrib)
@@ -1003,7 +1000,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_feed_exception(self):
         # ET doesn't call .close() on errors
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1032,7 +1029,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_fromstring_exception(self):
         # ET doesn't call .close() on errors
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1061,7 +1058,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_feed_no_id_dict(self):
         # test that target parsing works nicely with the no-id-hash setup
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1086,7 +1083,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_comment(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1111,7 +1108,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_pi(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1135,7 +1132,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_cdata(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1158,7 +1155,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_recover(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1642,7 +1639,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         assertEqual = self.assertEqual
         test_url = _str("__nosuch.dtd")
 
-        class check(object):
+        class check:
             resolved = False
 
         class MyResolver(self.etree.Resolver):
@@ -3005,10 +3002,10 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(root))
 
     def test_namespace_cleanup_keep_prefixes(self):
-        xml = ('<root xmlns:n64="NS64" xmlns:foo="FOO" xmlns:unused1="UNUSED" xmlns:no="NO">'
-               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
-               '<foo>foo:bar</foo>'
-               '</root>').encode('utf8')
+        xml = (b'<root xmlns:n64="NS64" xmlns:foo="FOO" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               b'<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               b'<foo>foo:bar</foo>'
+               b'</root>')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root, keep_ns_prefixes=['foo'])
@@ -3020,12 +3017,12 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(root))
 
     def test_namespace_cleanup_keep_prefixes_top(self):
-        xml = ('<root xmlns:n64="NS64" xmlns:unused1="UNUSED" xmlns:no="NO">'
-               '<sub xmlns:foo="FOO">'
-               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
-               '<foo>foo:bar</foo>'
-               '</sub>'
-               '</root>').encode('utf8')
+        xml = (b'<root xmlns:n64="NS64" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               b'<sub xmlns:foo="FOO">'
+               b'<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               b'<foo>foo:bar</foo>'
+               b'</sub>'
+               b'</root>')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(
@@ -3921,7 +3918,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml_header = '<?xml version="1.0" encoding="ascii"?>'
         pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
         sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-        doctype_string = '<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_id)
+        doctype_string = '<!DOCTYPE html PUBLIC "{}" "{}">'.format(pub_id, sys_id)
 
         xml = _bytes(xml_header + doctype_string + '<html><body></body></html>')
 
@@ -3984,7 +3981,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
         sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-        doctype_string = _bytes('<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_id))
+        doctype_string = _bytes('<!DOCTYPE html PUBLIC "{}" "{}">'.format(pub_id, sys_id))
 
         xml = _bytes('<!DOCTYPE root>\n<root/>')
         tree = etree.parse(BytesIO(xml))
@@ -5135,7 +5132,7 @@ class ETreeC14NTestCase(HelperTestCase):
                           s)
     
     def test_python3_problem_bytesio_iterparse(self):
-        content = BytesIO('''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>'''.encode('utf-8'))
+        content = BytesIO(b'''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>''')
         def handle_div_end(event, element):
             if event == 'end' and element.tag.lower().startswith("{http://www.w3.org/1999/xhtml}div"):
                 # for ns_id, ns_uri in element.nsmap.items():
@@ -5149,7 +5146,7 @@ class ETreeC14NTestCase(HelperTestCase):
     
     def test_python3_problem_filebased_iterparse(self):
         with open('test.xml', 'w+b') as f:
-            f.write('''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>'''.encode('utf-8'))
+            f.write(b'''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>''')
         def handle_div_end(event, element):
             if event == 'end' and element.tag.lower() == "{http://www.w3.org/1999/xhtml}div":
                 # for ns_id, ns_uri in element.nsmap.items():
@@ -5163,7 +5160,7 @@ class ETreeC14NTestCase(HelperTestCase):
     
     def test_python3_problem_filebased_parse(self):
         with open('test.xml', 'w+b') as f:
-            f.write('''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>'''.encode('utf-8'))
+            f.write(b'''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>''')
         def serialize_div_element(element):        
             # for ns_id, ns_uri in element.nsmap.items():
             #     print(type(ns_id), type(ns_uri), ns_id, '=', ns_uri)
@@ -5364,7 +5361,7 @@ class XMLPullParserTest(unittest.TestCase):
                          expected)
 
     def test_pull_from_simple_target(self):
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 return 'start(%s)' % tag
             def end(self, tag):
@@ -5388,7 +5385,7 @@ class XMLPullParserTest(unittest.TestCase):
         self.assertEqual('close()', parser.close())
 
     def test_pull_from_simple_target_start_end(self):
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 return 'start(%s)' % tag
             def end(self, tag):
@@ -5445,7 +5442,7 @@ class XMLPullParserTest(unittest.TestCase):
     def test_pull_from_tree_builder_subclass(self):
         class Target(etree.TreeBuilder):
             def end(self, tag):
-                el = super(Target, self).end(tag)
+                el = super().end(tag)
                 el.tag += '-huhu'
                 return el
 
@@ -5473,13 +5470,13 @@ class XMLPullParserTest(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
-    suite.addTests([unittest.makeSuite(XMLPullParserTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeOnlyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeC14NTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeWriteTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeErrorLogTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(XMLPullParserTest)])
 
     # add original doctests from ElementTree selftest modules
     from . import selftest, selftest2

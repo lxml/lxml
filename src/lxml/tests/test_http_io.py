@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Web IO test cases (wsgiref)
 """
 
-from __future__ import absolute_import
 
 import unittest
 import textwrap
@@ -33,7 +30,7 @@ class HttpIOTestCase(HelperTestCase):
     def test_http_client_404(self):
         try:
             self._parse_from_http(_bytes('<root/>'), code=404)
-        except IOError:
+        except OSError:
             self.assertTrue(True)
         else:
             self.assertTrue(False, "expected IOError")
@@ -117,7 +114,7 @@ class HttpIOTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(HttpIOTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(HttpIOTestCase)])
     return suite
 
 

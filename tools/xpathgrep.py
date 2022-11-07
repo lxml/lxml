@@ -109,7 +109,7 @@ def print_result(result, pretty_print, encoding=None, _is_py3=sys.version_info[0
             if isinstance(result, unicode):
                 result += '\n'
             else:
-                result += '\n'.encode('ascii')
+                result += b'\n'
     elif isinstance(result, basestring):
         result += '\n'
     else:
@@ -133,8 +133,7 @@ def print_results(results, pretty_print):
 def iter_input(input, filename, parser, line_by_line):
     if isinstance(input, basestring):
         with open(input, 'rb') as f:
-            for tree in iter_input(f, filename, parser, line_by_line):
-                yield tree
+            yield from iter_input(f, filename, parser, line_by_line)
     else:
         try:
             if line_by_line:
@@ -143,7 +142,7 @@ def iter_input(input, filename, parser, line_by_line):
                         yield et.ElementTree(et.fromstring(line, parser))
             else:
                 yield et.parse(input, parser)
-        except IOError:
+        except OSError:
             e = sys.exc_info()[1]
             error("parsing %r failed: %s: %s",
                   filename, e.__class__.__name__, e)
@@ -166,7 +165,7 @@ def find_in_file(f, xpath, print_name=True, xinclude=False, pretty_print=True, l
             try:
                 if xinclude:
                     tree.xinclude()
-            except IOError:
+            except OSError:
                 e = sys.exc_info()[1]
                 error("XInclude for %r failed: %s: %s",
                       filename, e.__class__.__name__, e)

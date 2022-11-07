@@ -12,7 +12,6 @@ the SAX events of an ElementTree against a SAX ContentHandler.
 See https://lxml.de/sax.html
 """
 
-from __future__ import absolute_import
 
 from xml.sax.handler import ContentHandler
 from lxml import etree
@@ -82,7 +81,7 @@ class ElementTreeContentHandler(ContentHandler):
         if ns_uri:
             el_tag = "{%s}%s" % ns_name_tuple
         elif self._default_ns:
-            el_tag = "{%s}%s" % (self._default_ns, local_name)
+            el_tag = "{{{}}}{}".format(self._default_ns, local_name)
         else:
             el_tag = local_name
         return el_tag
@@ -135,9 +134,9 @@ class ElementTreeContentHandler(ContentHandler):
 
     def startElement(self, name, attributes=None):
         if attributes:
-            attributes = dict(
-                    [((None, k), v) for k, v in attributes.items()]
-                )
+            attributes = {
+                    (None, k): v for k, v in attributes.items()
+                }
         self.startElementNS((None, name), name, attributes)
 
     def endElement(self, name):
@@ -156,7 +155,7 @@ class ElementTreeContentHandler(ContentHandler):
     ignorableWhitespace = characters
 
 
-class ElementTreeProducer(object):
+class ElementTreeProducer:
     """Produces SAX events for an element and children.
     """
     def __init__(self, element_or_tree, content_handler):

@@ -29,7 +29,7 @@ class FeedTestCase(unittest.TestCase):
         unittest.TestCase.__init__(self)
 
     def parse(self):
-        f = open(self.filename, 'r')
+        f = open(self.filename)
         headers = Message(f)
         c = f.read()
         f.close()

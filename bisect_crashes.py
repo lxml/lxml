@@ -1,4 +1,3 @@
-
 import os
 import sys
 import unittest
@@ -53,7 +52,7 @@ class DDTester(DD):
         if not test_cases:
             return '[]'
         test_cases = [ item[-1] for item in test_cases ]
-        return '[%s .. %s]' % (test_cases[0].id(), test_cases[-1].id())
+        return '[{} .. {}]'.format(test_cases[0].id(), test_cases[-1].id())
 
 def dd_tests():
     tests = find_tests()

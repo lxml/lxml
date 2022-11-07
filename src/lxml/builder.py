@@ -39,7 +39,6 @@
 The ``E`` Element factory for generating XML documents.
 """
 
-from __future__ import absolute_import
 
 import lxml.etree as ET
 _QName = ET.QName
@@ -57,7 +56,7 @@ except NameError:
     unicode = str
 
 
-class ElementMaker(object):
+class ElementMaker:
     """Element generator factory.
 
     Unlike the ordinary Element factory, the E factory allows you to pass in

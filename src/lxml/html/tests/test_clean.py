@@ -149,7 +149,7 @@ class CleanerTest(unittest.TestCase):
             self.assertEqual(
                 b'<style>/* deleted */</style>',
                 cleaned,
-                "%s  ->  %s" % (style_code, cleaned))
+                "{}  ->  {}".format(style_code, cleaned))
 
     def test_sneaky_schemes_in_style(self):
         style_codes = [
@@ -166,7 +166,7 @@ class CleanerTest(unittest.TestCase):
             self.assertEqual(
                 b'<style>/* deleted */</style>',
                 cleaned,
-                "%s  ->  %s" % (style_code, cleaned))
+                "{}  ->  {}".format(style_code, cleaned))
 
     def test_sneaky_urls_in_style(self):
         style_codes = [
@@ -184,7 +184,7 @@ class CleanerTest(unittest.TestCase):
             self.assertEqual(
                 b'<style>url()</style>',
                 cleaned,
-                "%s  ->  %s" % (style_code, cleaned))
+                "{}  ->  {}".format(style_code, cleaned))
 
     def test_svg_data_links(self):
         # Remove SVG images with potentially insecure content.
@@ -208,7 +208,7 @@ class CleanerTest(unittest.TestCase):
             self.assertEqual(
                 b'<img src="">',
                 cleaned,
-                "%s  ->  %s" % (url, cleaned))
+                "{}  ->  {}".format(url, cleaned))
 
     def test_image_data_links(self):
         data = b'123'
@@ -231,7 +231,7 @@ class CleanerTest(unittest.TestCase):
             self.assertEqual(
                 html.encode("UTF-8"),
                 cleaned,
-                "%s  ->  %s" % (url, cleaned))
+                "{}  ->  {}".format(url, cleaned))
 
     def test_image_data_links_in_style(self):
         data = b'123'
@@ -254,7 +254,7 @@ class CleanerTest(unittest.TestCase):
             self.assertEqual(
                 html.encode("UTF-8"),
                 cleaned,
-                "%s  ->  %s" % (url, cleaned))
+                "{}  ->  {}".format(url, cleaned))
 
     def test_formaction_attribute_in_button_input(self):
         # The formaction attribute overrides the form's action and should be
@@ -276,5 +276,5 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([make_doctest('test_clean.txt')])
     suite.addTests([make_doctest('test_clean_embed.txt')])
-    suite.addTests(unittest.makeSuite(CleanerTest))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(CleanerTest))
     return suite

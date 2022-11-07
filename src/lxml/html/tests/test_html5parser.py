@@ -34,7 +34,7 @@ try:
 except ImportError:
     html5lib = None
 
-    class BogusModules(object):
+    class BogusModules:
         # See PEP 302 for details on how this works
         def __init__(self, mocks):
             self.mocks = mocks
@@ -230,7 +230,7 @@ class Test_fromstring(unittest.TestCase):
 
     def test_returns_whole_doc_if_input_is_encoded(self):
         parser = DummyParser(root='the doc')
-        input = '<!DOCTYPE html>'.encode('ascii')
+        input = b'<!DOCTYPE html>'
         self.assertEqual(self.call_it(input, parser=parser),
                          'the doc')
 
@@ -380,7 +380,7 @@ class HTMLElementMaker(ElementMaker):
         ElementMaker.__init__(self, **initargs)
 
 
-class DummyParser(object):
+class DummyParser:
     def __init__(self, doc=None, root=None,
                  fragments=None, namespaceHTMLElements=True):
         self.doc = doc or DummyElementTree(root=root)
@@ -398,12 +398,12 @@ class DummyParser(object):
         return self.fragments
 
 
-class DummyTreeBuilder(object):
+class DummyTreeBuilder:
     def __init__(self, namespaceHTMLElements=True):
         self.namespaceHTMLElements = namespaceHTMLElements
 
 
-class DummyElementTree(object):
+class DummyElementTree:
     def __init__(self, root):
         self.root = root
 
@@ -411,14 +411,14 @@ class DummyElementTree(object):
         return self.root
 
 
-class DummyElement(object):
+class DummyElement:
     def __init__(self, tag='tag', tail=None):
         self.tag = tag
         self.tail = tail
 
 
 def xhtml_tag(tag):
-    return '{%s}%s' % (XHTML_NAMESPACE, tag)
+    return '{{{}}}{}'.format(XHTML_NAMESPACE, tag)
 
 
 XHTML_TEST_DOCUMENT = '''

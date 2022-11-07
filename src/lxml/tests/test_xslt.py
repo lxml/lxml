@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to XSLT processing
 """
 
-from __future__ import absolute_import
 
 import io
 import sys
@@ -115,11 +112,11 @@ class ETreeXSLTTestCase(HelperTestCase):
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output encoding="%(ENCODING)s"/>
+  <xsl:output encoding="{ENCODING}"/>
   <xsl:template match="/">
     <foo><xsl:value-of select="/a/b/text()" /></foo>
   </xsl:template>
-</xsl:stylesheet>''' % {'ENCODING': encoding})
+</xsl:stylesheet>'''.format(ENCODING=encoding))
 
         st = etree.XSLT(style)
         res = st(tree)
@@ -158,7 +155,7 @@ class ETreeXSLTTestCase(HelperTestCase):
             res[0] = f.getvalue().decode('UTF-16')
 
     def test_xslt_write_output_failure(self):
-        class Writer(object):
+        class Writer:
             def write(self, data):
                 raise ValueError("FAILED!")
 
@@ -178,7 +175,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0].write_output(f)
                 finally:
                     f.close()
-                with io.open(f.name, encoding='UTF-16') as f:
+                with open(f.name, encoding='UTF-16') as f:
                     res[0] = f.read()
             finally:
                 os.unlink(f.name)
@@ -241,7 +238,7 @@ class ETreeXSLTTestCase(HelperTestCase):
             tempdir = mkdtemp()
             try:
                 res[0].write_output(os.path.join(tempdir, 'missing_subdir', 'out.xml'))
-            except IOError:
+            except OSError:
                 res[0] = ''
             else:
                 self.fail("IOError not raised")
@@ -2090,12 +2087,12 @@ class Py3XSLTTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeEXSLTTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXSLTExtFuncTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXSLTExtElementTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXSLTTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeEXSLTTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXSLTExtFuncTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXSLTExtElementTestCase)])
     if is_python3:
-        suite.addTests([unittest.makeSuite(Py3XSLTTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(Py3XSLTTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/extensions.txt')])
     suite.addTests(

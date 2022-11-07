@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for different Element class lookup mechanisms.
 """
 
 
-from __future__ import absolute_import
 
 import unittest, gc
 
@@ -109,7 +106,7 @@ class ClassLookupTestCase(HelperTestCase):
 
     def tearDown(self):
         etree.set_element_class_lookup()
-        super(ClassLookupTestCase, self).tearDown()
+        super().tearDown()
 
     def test_namespace_lookup(self):
         class TestElement(etree.ElementBase):
@@ -394,8 +391,8 @@ class ClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ProxyTestCase)])
-    suite.addTests([unittest.makeSuite(ClassLookupTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ProxyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ClassLookupTestCase)])
     return suite
 
 if __name__ == '__main__':

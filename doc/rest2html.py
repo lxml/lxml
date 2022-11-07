@@ -43,12 +43,12 @@ def pygments_directive(name, arguments, options, content, lineno,
         lexer = TextLexer()
     # take an arbitrary option if more than one is given
     formatter = options and VARIANTS[options.keys()[0]] or DEFAULT
-    parsed = highlight(u'\n'.join(content), lexer, formatter)
+    parsed = highlight('\n'.join(content), lexer, formatter)
     return [nodes.raw('', parsed, format='html')]
 
 pygments_directive.arguments = (1, 0, 1)
 pygments_directive.content = 1
-pygments_directive.options = dict([(key, directives.flag) for key in VARIANTS])
+pygments_directive.options = {key: directives.flag for key in VARIANTS}
 
 directives.register_directive('sourcecode', pygments_directive)
 

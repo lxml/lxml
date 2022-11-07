@@ -74,7 +74,6 @@ import traceback
 
 from unittest import TextTestResult
 
-__metaclass__ = type
 
 def stderr(text):
     sys.stderr.write(text)
@@ -366,7 +365,7 @@ class CustomTestResult(TextTestResult):
             if pos + len(" (...)") > self._maxWidth:
                 s = s[:self._maxWidth - 3] + "..."
             else:
-                s = "%s...%s" % (s[:pos + 2], s[pos + 5 - self._maxWidth:])
+                s = "{}...{}".format(s[:pos + 2], s[pos + 5 - self._maxWidth:])
         return s
 
     def printErrors(self):
@@ -380,7 +379,7 @@ class CustomTestResult(TextTestResult):
     def printTraceback(self, kind, test, err):
         self.stream.writeln()
         self.stream.writeln()
-        self.stream.writeln("%s: %s" % (kind, test))
+        self.stream.writeln("{}: {}".format(kind, test))
         self.stream.writeln(self.formatError(err))
         self.stream.writeln()
 
@@ -515,13 +514,13 @@ def main(argv):
             try:
                 cfg.level = int(v)
             except ValueError:
-                stderr('%s: invalid level: %s' % (argv[0], v))
+                stderr('{}: invalid level: {}'.format(argv[0], v))
                 stderr('run %s -h for help')
                 return 1
         elif k == '--all-levels':
             cfg.level = None
         else:
-            stderr('%s: invalid option: %s' % (argv[0], k))
+            stderr('{}: invalid option: {}'.format(argv[0], k))
             stderr('run %s -h for help')
             return 1
     if args:
@@ -529,7 +528,7 @@ def main(argv):
     if len(args) > 1:
         cfg.test_regex = args[1]
     if len(args) > 2:
-        stderr('%s: too many arguments: %s' % (argv[0], args[2]))
+        stderr('{}: too many arguments: {}'.format(argv[0], args[2]))
         stderr('run %s -h for help')
         return 1
     if not cfg.unit_tests and not cfg.functional_tests:

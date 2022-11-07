@@ -188,11 +188,11 @@ def ext_modules(static_include_dirs, static_library_dirs,
         if os.path.exists(dst_file) and os.path.getmtime(dst_file) >= os.path.getmtime(src_file):
             continue
 
-        with io.open(src_file, 'r', encoding='iso8859-1') as f:
+        with open(src_file, encoding='iso8859-1') as f:
             content = f.read()
         for filename in HEADER_FILES:
             content = content.replace('"%s"' % filename, '"lxml.%s"' % filename)
-        with io.open(dst_file, 'w', encoding='iso8859-1') as f:
+        with open(dst_file, 'w', encoding='iso8859-1') as f:
             f.write(content)
 
     return result
@@ -378,7 +378,7 @@ def check_min_version(version, min_version, libname):
     lib_version = tuple(map(int, version.split('.')[:3]))
     req_version = tuple(map(int, min_version.split('.')[:3]))
     if lib_version < req_version:
-        print("Minimum required version of %s is %s. Your system has version %s." % (
+        print("Minimum required version of {} is {}. Your system has version {}.".format(
             libname, min_version, version))
         return False
     return True
@@ -454,7 +454,7 @@ def check_build_dependencies():
               "\n")
 
     if xml2_version and xslt_version:
-        print("Building against libxml2 %s and libxslt %s" % (xml2_version, xslt_version))
+        print("Building against libxml2 {} and libxslt {}".format(xml2_version, xslt_version))
     else:
         print("Building against pre-built libxml2 andl libxslt libraries")
 
@@ -463,7 +463,7 @@ def check_build_dependencies():
 
 def get_flags(prog, option, libname=None):
     if libname:
-        return run_command(prog, '--%s %s' % (option, libname))
+        return run_command(prog, '--{} {}'.format(option, libname))
     else:
         return run_command(prog, '--%s' % option)
 
@@ -527,7 +527,7 @@ def option_value(name, deprecated_for=None):
 
 
 def print_deprecated_option(name, new_name):
-    print("WARN: Option '%s' is deprecated. Use '%s' instead." % (name, new_name))
+    print("WARN: Option '{}' is deprecated. Use '{}' instead.".format(name, new_name))
 
 
 staticbuild = bool(os.environ.get('STATICBUILD', ''))

@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to namespace implementation classes and the
 namespace registry mechanism
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -23,7 +20,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
             return 'bluff'
 
     def setUp(self):
-        super(ETreeNamespaceClassesTestCase, self).setUp()
+        super().setUp()
         lookup = etree.ElementNamespaceClassLookup()
         self.Namespace = lookup.get_namespace
         parser = etree.XMLParser()
@@ -33,7 +30,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
     def tearDown(self):
         etree.set_default_parser()
         del self.Namespace
-        super(ETreeNamespaceClassesTestCase, self).tearDown()
+        super().tearDown()
 
     def test_registry(self):
         ns = self.Namespace('ns01')
@@ -203,7 +200,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeNamespaceClassesTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeNamespaceClassesTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/element_classes.txt')])
     return suite

@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for the ElementPath implementation.
 """
 
-from __future__ import absolute_import
 
 import unittest
 from copy import deepcopy
@@ -293,7 +290,7 @@ class EtreeElementPathTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(EtreeElementPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathTestCase)])
     #suite.addTests([unittest.makeSuite(ElementTreeElementPathTestCase)])
     return suite
 

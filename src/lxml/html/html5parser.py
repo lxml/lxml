@@ -49,7 +49,7 @@ def _find_tag(tree, tag):
     elem = tree.find(tag)
     if elem is not None:
         return elem
-    return tree.find('{%s}%s' % (XHTML_NAMESPACE, tag))
+    return tree.find('{{{}}}{}'.format(XHTML_NAMESPACE, tag))
 
 
 def document_fromstring(html, guess_charset=None, parser=None):

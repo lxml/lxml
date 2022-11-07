@@ -166,7 +166,7 @@ def _find_form_ids(el):
     for index, form in enumerate(forms):
         if form.get('id'):
             if form.get('name'):
-                yield '%s or %s' % (form.get('id'),
+                yield '{} or {}'.format(form.get('id'),
                                      form.get('name'))
             else:
                 yield form.get('id')
@@ -179,7 +179,7 @@ def _find_form_ids(el):
 ## Error filling
 ############################################################
 
-class DefaultErrorCreator(object):
+class DefaultErrorCreator:
     insert_before = True
     block_inside = True
     error_container_tag = 'div'

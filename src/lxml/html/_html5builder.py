@@ -12,14 +12,14 @@ from html5lib.treebuilders import _base, etree as etree_builders
 from lxml import html, etree
 
 
-class DocumentType(object):
+class DocumentType:
 
     def __init__(self, name, publicId, systemId):
         self.name = name
         self.publicId = publicId
         self.systemId = systemId
 
-class Document(object):
+class Document:
 
     def __init__(self):
         self._elementTree = None
@@ -77,7 +77,7 @@ class TreeBuilder(_base.TreeBuilder):
         if self.doctype and self.doctype.name:
             buf.append('<!DOCTYPE %s' % self.doctype.name)
             if self.doctype.publicId is not None or self.doctype.systemId is not None:
-                buf.append(' PUBLIC "%s" "%s"' % (self.doctype.publicId,
+                buf.append(' PUBLIC "{}" "{}"'.format(self.doctype.publicId,
                                                   self.doctype.systemId))
             buf.append('>')
         buf.append('<html></html>')

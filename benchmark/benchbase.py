@@ -17,7 +17,7 @@ def exec_(code, glob):
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
 
 _TEXT  = "some ASCII text" * TREE_FACTOR
-_UTEXT = u"some klingon: \F8D2" * TREE_FACTOR
+_UTEXT = r"some klingon: \F8D2" * TREE_FACTOR
 _ATTRIBUTES = {
     '{attr}test1' : _TEXT,
     '{attr}test2' : _TEXT,
@@ -106,7 +106,7 @@ def nochange(function):
 class SkippedTest(Exception):
     pass
 
-class TreeBenchMark(object):
+class TreeBenchMark:
     atoz = string.ascii_lowercase
     repeat100  = range(100)
     repeat500  = range(500)
@@ -182,9 +182,9 @@ class TreeBenchMark(object):
             else:
                 append(" %s = SubElement(e%d, %s)" % (var, level-1, arg))
             if elem.text:
-                append(" %s.text = %r" % (var, elem.text))
+                append(" {}.text = {!r}".format(var, elem.text))
             if elem.tail:
-                append(" %s.tail = %r" % (var, elem.tail))
+                append(" {}.tail = {!r}".format(var, elem.tail))
             for e in elem:
                 generate_elem(append, e, level+1)
         # generate code for a function that creates a tree
@@ -357,7 +357,7 @@ def build_treeset_name(trees, tn, an, serialized, children):
     attr = {0:'-', 1:'A'}[an]
     ser  = {True:'X', False:'T'}[serialized]
     chd  = {True:'C', False:'R'}[children]
-    return "%s%s%s%s T%s" % (text, attr, ser, chd, ',T'.join(map(str, trees))[:6])
+    return "{}{}{}{} T{}".format(text, attr, ser, chd, ',T'.join(map(str, trees))[:6])
 
 def printSetupTimes(benchmark_suites):
     print("Setup times for trees in seconds:")
@@ -430,10 +430,10 @@ def runBenchmarks(benchmark_suites, benchmarks):
                 sys.exit(1)
             except Exception:
                 exc_type, exc_value = sys.exc_info()[:2]
-                print("failed: %s: %s" % (exc_type.__name__, exc_value))
+                print("failed: {}: {}".format(exc_type.__name__, exc_value))
                 exc_type = exc_value = None
             else:
-                print("%9.4f msec/pass, best of (%s)" % (
+                print("{:9.4f} msec/pass, best of ({})".format(
                       min(result), ' '.join("%9.4f" % t for t in result)))
 
         if len(benchmark_suites) > 1:
@@ -474,7 +474,7 @@ def main(benchmark_class):
     if import_lxml:
         from lxml import etree
         _etrees.append(etree)
-        print("Using lxml %s (with libxml2 %s)" % (
+        print("Using lxml {} (with libxml2 {})".format(
             etree.__version__, '.'.join(map(str, etree.LIBXML_VERSION))))
 
         try:
@@ -498,7 +498,7 @@ def main(benchmark_class):
                 _etrees.append(cET)
             except ImportError:
                 try:
-                    import xml.etree.cElementTree as cET
+                    import xml.etree.ElementTree as cET
                     _etrees.append(cET)
                 except ImportError:
                     pass
@@ -523,7 +523,7 @@ def main(benchmark_class):
         print("No library to test. Exiting.")
         sys.exit(1)
 
-    print("Running benchmarks in Python %s" % (sys.version_info,))
+    print("Running benchmarks in Python {}".format(sys.version_info))
 
     print("Preparing test suites and trees ...")
     selected = set( sys.argv[1:] )

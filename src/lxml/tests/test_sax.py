@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to SAX I/O
 """
 
-from __future__ import absolute_import
 
 import unittest
 from xml.dom import pulldom
@@ -295,12 +292,12 @@ class ETreeSaxTestCase(HelperTestCase):
         return f.getvalue().replace(_bytes('\n'), _bytes(''))
 
 
-class SimpleContentHandler(ContentHandler, object):
+class SimpleContentHandler(ContentHandler):
     """A SAX content handler that just stores the events"""
 
     def __init__(self):
         self.sax_events = []
-        super(SimpleContentHandler, self).__init__()
+        super().__init__()
 
     def startDocument(self):
         self.sax_events.append(('startDocument',))
@@ -405,8 +402,8 @@ class NSPrefixSaxTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeSaxTestCase)])
-    suite.addTests([unittest.makeSuite(NSPrefixSaxTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeSaxTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(NSPrefixSaxTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/sax.txt')])
     return suite

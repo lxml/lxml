@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 IO test cases that apply to both etree and ElementTree
 """
 
-from __future__ import absolute_import
 
 import unittest
 import tempfile, gzip, os, os.path, gc, shutil
@@ -42,7 +39,7 @@ class _IOTestCaseBase(HelperTestCase):
         if depth == 0:
             return
         for i in range(children):
-            new_element = Element('element_%s_%s' % (depth, i))
+            new_element = Element('element_{}_{}'.format(depth, i))
             self.buildNodes(new_element, children, depth - 1)
             element.append(new_element)
 
@@ -110,8 +107,8 @@ class _IOTestCaseBase(HelperTestCase):
                 after_write = os.listdir(tempfile.gettempdir())
                 self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
                                  self.root_str)
-            except (AssertionError, IOError, OSError):
-                print("Before write: %s, after write: %s" % (
+            except (AssertionError, OSError):
+                print("Before write: {}, after write: {}".format(
                     difference(before_write), difference(after_write))
                 )
                 raise
@@ -129,7 +126,7 @@ class _IOTestCaseBase(HelperTestCase):
             'invalid_file.xml')
         try:
             self.tree.write(filename)
-        except IOError:
+        except OSError:
             pass
         else:
             self.assertTrue(
@@ -363,9 +360,9 @@ if ElementTree:
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeIOTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeIOTestCase)])
     if ElementTree:
-        suite.addTests([unittest.makeSuite(ElementTreeIOTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeIOTestCase)])
     return suite
 
 

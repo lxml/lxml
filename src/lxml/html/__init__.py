@@ -31,7 +31,6 @@
 """The ``lxml.html`` tool set for HTML handling.
 """
 
-from __future__ import absolute_import
 
 __all__ = [
     'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
@@ -48,7 +47,7 @@ from functools import partial
 try:
     from collections.abc import MutableMapping, MutableSet
 except ImportError:
-    from collections import MutableMapping, MutableSet
+    from collections.abc import MutableMapping, MutableSet
 
 from .. import etree
 from . import defs
@@ -186,7 +185,7 @@ class Classes(MutableSet):
         """
         if not value or re.search(r'\s', value):
             raise ValueError("Invalid class name: %r" % value)
-        super(Classes, self).remove(value)
+        super().remove(value)
 
     def __contains__(self, name):
         classes = self._get_class_value()
@@ -236,7 +235,7 @@ class Classes(MutableSet):
         return enabled
 
 
-class HtmlMixin(object):
+class HtmlMixin:
 
     def set(self, key, value=None):
         """set(self, key, value=None)
@@ -245,7 +244,7 @@ class HtmlMixin(object):
         creates a 'boolean' attribute without value, e.g. "<form novalidate></form>"
         for ``form.set('novalidate')``.
         """
-        super(HtmlMixin, self).set(key, value)
+        super().set(key, value)
 
     @property
     def classes(self):
@@ -641,7 +640,7 @@ class HtmlMixin(object):
                 el.set(attrib, new)
 
 
-class _MethodFunc(object):
+class _MethodFunc:
     """
     An object that represents a method on an element as a function;
     the function takes either an element or an HTML string.  It
@@ -750,7 +749,7 @@ class HtmlElementClassLookup(etree.CustomElementClassLookup):
 _looks_like_full_html_unicode = re.compile(
     unicode(r'^\s*<(?:html|!doctype)'), re.I).match
 _looks_like_full_html_bytes = re.compile(
-    r'^\s*<(?:html|!doctype)'.encode('ascii'), re.I).match
+    br'^\s*<(?:html|!doctype)', re.I).match
 
 
 def document_fromstring(html, parser=None, ensure_head_body=False, **kw):
@@ -784,15 +783,15 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     if isinstance(html, bytes):
         if not _looks_like_full_html_bytes(html):
             # can't use %-formatting in early Py3 versions
-            html = ('<html><body>'.encode('ascii') + html +
-                    '</body></html>'.encode('ascii'))
+            html = (b'<html><body>' + html +
+                    b'</body></html>')
     else:
         if not _looks_like_full_html_unicode(html):
             html = '<html><body>%s</body></html>' % html
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     assert _nons(doc.tag) == 'html'
     bodies = [e for e in doc if _nons(e.tag) == 'body']
-    assert len(bodies) == 1, ("too many bodies: %r in %r" % (bodies, html))
+    assert len(bodies) == 1, ("too many bodies: {!r} in {!r}".format(bodies, html))
     body = bodies[0]
     elements = []
     if no_leading_text and body.text and body.text.strip():
@@ -1160,12 +1159,12 @@ class FieldsDict(MutableMapping):
         return len(self.inputs)
 
     def __repr__(self):
-        return '<%s for form %s>' % (
+        return '<{} for form {}>'.format(
             self.__class__.__name__,
             self.inputs.form._name())
 
 
-class InputGetter(object):
+class InputGetter:
 
     """
     An accessor that represents all the input fields in a form.
@@ -1186,7 +1185,7 @@ class InputGetter(object):
         self.form = form
 
     def __repr__(self):
-        return '<%s for form %s>' % (
+        return '<{} for form {}>'.format(
             self.__class__.__name__,
             self.form._name())
 
@@ -1254,7 +1253,7 @@ class InputGetter(object):
         return sum(1 for _ in self)
 
 
-class InputMixin(object):
+class InputMixin:
     """
     Mix-in for all input elements (input, select, and textarea)
     """
@@ -1281,7 +1280,7 @@ class InputMixin(object):
             type_name = ' type=%r' % type_name
         else:
             type_name = ''
-        return '<%s %x name=%r%s>' % (
+        return '<{} {:x} name={!r}{}>'.format(
             self.__class__.__name__, id(self), self.name, type_name)
 
 
@@ -1478,7 +1477,7 @@ class MultipleSelectOptions(SetMixin):
                 "There is not option with the value %r" % item)
 
     def __repr__(self):
-        return '<%s {%s} for select name=%r>' % (
+        return '<{} {{{}}} for select name={!r}>'.format(
             self.__class__.__name__,
             ', '.join([repr(v) for v in self]),
             self.select.name)
@@ -1532,7 +1531,7 @@ class RadioGroup(list):
         return [el.get('value') for el in self]
 
     def __repr__(self):
-        return '%s(%s)' % (
+        return '{}({})'.format(
             self.__class__.__name__,
             list.__repr__(self))
 
@@ -1577,7 +1576,7 @@ class CheckboxGroup(list):
         return [el.get('value') for el in self]
 
     def __repr__(self):
-        return '%s(%s)' % (
+        return '{}({})'.format(
             self.__class__.__name__, list.__repr__(self))
 
 
@@ -1618,7 +1617,7 @@ class CheckboxValues(SetMixin):
                 "No checkbox with value %r" % value)
 
     def __repr__(self):
-        return '<%s {%s} for checkboxes name=%r>' % (
+        return '<{} {{{}}} for checkboxes name={!r}>'.format(
             self.__class__.__name__,
             ', '.join([repr(v) for v in self]),
             self.group.name)
@@ -1795,7 +1794,7 @@ def xhtml_to_html(xhtml):
 __str_replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type"[^>]*>').sub
 __bytes_replace_meta_content_type = re.compile(
-    r'<meta http-equiv="Content-Type"[^>]*>'.encode('ASCII')).sub
+    br'<meta http-equiv="Content-Type"[^>]*>').sub
 
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
@@ -1868,7 +1867,7 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
         if isinstance(html, str):
             html = __str_replace_meta_content_type('', html)
         else:
-            html = __bytes_replace_meta_content_type(bytes(), html)
+            html = __bytes_replace_meta_content_type(b'', html)
     return html
 
 
@@ -1907,7 +1906,7 @@ class HTMLParser(etree.HTMLParser):
     objects.
     """
     def __init__(self, **kwargs):
-        super(HTMLParser, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
 
@@ -1929,7 +1928,7 @@ class XHTMLParser(etree.XMLParser):
     For catalog support, see http://www.xmlsoft.org/catalog.html.
     """
     def __init__(self, **kwargs):
-        super(XHTMLParser, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
 

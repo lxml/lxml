@@ -32,7 +32,7 @@ def webserver(app, port=0, host=None):
     thread.setDaemon(True)
     thread.start()
     try:
-        yield 'http://%s:%s/' % (host, port)  # yield control to 'with' body
+        yield 'http://{}:{}/'.format(host, port)  # yield control to 'with' body
     finally:
         server.shutdown()
         server.server_close()
@@ -69,7 +69,7 @@ def build_web_server(app, port, host=None):
     return server
 
 
-class HTTPRequestCollector(object):
+class HTTPRequestCollector:
     def __init__(self, response_data, response_code=200, headers=()):
         self.requests = []
         self.response_code = response_code

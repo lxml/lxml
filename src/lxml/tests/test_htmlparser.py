@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 HTML parser test cases for etree
 """
 
-from __future__ import absolute_import
 
 import unittest
 import tempfile, os, os.path, sys
@@ -37,7 +34,7 @@ class HtmlParserTestCase(HelperTestCase):
         "<body><h1>page Ã¡ title</h1></body></html>").decode('utf8')
 
     def tearDown(self):
-        super(HtmlParserTestCase, self).tearDown()
+        super().tearDown()
         self.etree.set_default_parser()
 
     def test_module_HTML(self):
@@ -454,7 +451,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_tag(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -476,7 +473,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_empty(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -500,7 +497,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_html(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -524,7 +521,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_html_full(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -548,7 +545,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_parser_target_exceptions(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 raise ValueError("START")
@@ -575,7 +572,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_fromstring_target_exceptions(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 raise ValueError("START")
@@ -679,7 +676,7 @@ class HtmlParserTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(HtmlParserTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(HtmlParserTestCase)])
     return suite
 
 

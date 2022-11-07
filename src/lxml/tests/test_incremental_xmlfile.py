@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for the incremental XML serialisation API.
 """
 
-from __future__ import absolute_import
 
 import io
 import os
@@ -357,7 +354,7 @@ class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
 
 
 class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
-    class SimpleFileLike(object):
+    class SimpleFileLike:
         def __init__(self, target):
             self._target = target
             self.write = target.write
@@ -402,7 +399,7 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         class WriteError(Exception):
             pass
 
-        class Writer(object):
+        class Writer:
             def __init__(self, trigger):
                 self._trigger = trigger
                 self._failed = False
@@ -660,12 +657,12 @@ class AsyncXmlFileTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([
-        unittest.makeSuite(BytesIOXmlFileTestCase),
-        unittest.makeSuite(TempXmlFileTestCase),
-        unittest.makeSuite(TempPathXmlFileTestCase),
-        unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
-        unittest.makeSuite(HtmlFileTestCase),
-        unittest.makeSuite(AsyncXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(BytesIOXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(TempXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(TempPathXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(SimpleFileLikeXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(HtmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(AsyncXmlFileTestCase),
     ])
     return suite
 

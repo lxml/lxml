@@ -205,7 +205,7 @@ def _include(elem, loader=None, base_url=None,
                 node = load_include(href, parse, parser=parser)
                 if node is None:
                     raise FatalIncludeError(
-                        "cannot load %r as %r" % (href, parse)
+                        "cannot load {!r} as {!r}".format(href, parse)
                         )
                 node = _include(node, loader, href, max_depth - 1, {href} | _parent_hrefs)
                 if e.tail:
@@ -217,7 +217,7 @@ def _include(elem, loader=None, base_url=None,
                 text = load_include(href, parse, encoding=e.get("encoding"))
                 if text is None:
                     raise FatalIncludeError(
-                        "cannot load %r as %r" % (href, parse)
+                        "cannot load {!r} as {!r}".format(href, parse)
                         )
                 predecessor = e.getprevious()
                 if predecessor is not None:

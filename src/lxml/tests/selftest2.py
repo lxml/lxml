@@ -17,7 +17,7 @@ from lxml import etree as ElementTree
 def stdout():
     if sys.version_info[0] < 3:
         return sys.stdout
-    class bytes_stdout(object):
+    class bytes_stdout:
         def write(self, data):
             if isinstance(data, bytes):
                 data = data.decode('ISO8859-1')

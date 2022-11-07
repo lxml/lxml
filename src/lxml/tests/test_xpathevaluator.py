@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to XPath evaluation and the XPath class
 """
 
-from __future__ import absolute_import
 
 import unittest, sys
 
@@ -297,7 +294,7 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_extensions_wrong_args(self):
         def foo(evaluator, a, b):
-            return "hello %s and %s" % (a, b)
+            return "hello {} and {}".format(a, b)
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a><b></b></a>')
         e = etree.XPathEvaluator(tree, extensions=[extension])
@@ -734,11 +731,11 @@ if sys.version_info[0] >= 3:
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXPathClassTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXPathClassTestCase)])
     if etree.LIBXSLT_COMPILED_VERSION >= (1,1,25):
-        suite.addTests([unittest.makeSuite(ETreeXPathExsltTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeETXPathClassTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXPathExsltTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeETXPathClassTestCase)])
     suite.addTests([doctest.DocTestSuite()])
     suite.addTests(
         [make_doctest('../../../doc/xpathxslt.txt')])

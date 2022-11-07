@@ -65,7 +65,7 @@ if 'setuptools' in sys.modules:
     except ImportError:
         pass
     else:
-        f = open("requirements.txt", "r")
+        f = open("requirements.txt")
         try:
             deps = [str(req) for req in pkg_resources.parse_requirements(f)]
         finally:
@@ -111,7 +111,7 @@ extra_options['packages'] = [
 
 def setup_extra_options():
     is_interesting_package = re.compile('^(libxml|libxslt|libexslt)$').match
-    is_interesting_header = re.compile('^(zconf|zlib|.*charset)\.h$').match
+    is_interesting_header = re.compile(r'^(zconf|zlib|.*charset)\.h$').match
 
     def extract_files(directories, pattern='*'):
         def get_files(root, dir_path, files):

@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests specific to the Python based class lookup.
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -34,7 +31,7 @@ class PyClassLookupTestCase(HelperTestCase):
 
     def tearDown(self):
         self.parser.set_element_class_lookup(None)
-        super(PyClassLookupTestCase, self).tearDown()
+        super().tearDown()
 
     def _setClassLookup(self, lookup_function):
         class Lookup(PythonElementClassLookup):
@@ -344,7 +341,7 @@ class PyClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(PyClassLookupTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(PyClassLookupTestCase)])
     return suite
 
 if __name__ == '__main__':

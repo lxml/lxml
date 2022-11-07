@@ -7,7 +7,7 @@ from benchbase import (with_attributes, with_text, onlylib,
                        serialized, children, nochange)
 
 TEXT  = "some ASCII text"
-UTEXT = u"some klingon: \F8D2"
+UTEXT = r"some klingon: \F8D2"
 
 ############################################################
 # Benchmarks
@@ -383,13 +383,13 @@ class BenchMark(benchbase.TreeBenchMark):
 
     @nochange
     def bench_findall_path(self, root):
-        root.findall(".//*[%s]/./%s/./*" % (self.SEARCH_TAG, self.SEARCH_TAG))
+        root.findall(".//*[{}]/./{}/./*".format(self.SEARCH_TAG, self.SEARCH_TAG))
 
     @nochange
     @onlylib('lxe')
     def bench_xpath_path(self, root):
         ns, tag = self.SEARCH_TAG[1:].split('}')
-        root.xpath(".//*[p:%s]/./p:%s/./*" % (tag,tag),
+        root.xpath(".//*[p:{}]/./p:{}/./*".format(tag,tag),
                    namespaces = {'p':ns})
 
     @nochange

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, absolute_import
 
 import operator
 import os.path
@@ -57,7 +56,7 @@ def regenerate_file(filename, result):
     new = COMMENT + '\n'.join(result)
 
     # read .pxi source file
-    with open(filename, 'r', encoding="utf-8") as f:
+    with open(filename, encoding="utf-8") as f:
         pre, old, post = split(f)
 
     if new.strip() == '\n'.join(old).strip():

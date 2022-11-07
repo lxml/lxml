@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to XML Schema parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -499,8 +496,8 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeXMLSchemaTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXMLSchemaResolversTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXMLSchemaTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXMLSchemaResolversTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite

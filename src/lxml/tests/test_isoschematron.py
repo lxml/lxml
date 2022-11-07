@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to ISO-Schematron parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 from lxml import isoschematron
@@ -860,7 +857,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeISOSchematronTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeISOSchematronTestCase)])
     suite.addTests(doctest.DocTestSuite(isoschematron))
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])

@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for thread usage in lxml.etree.
 """
 
-from __future__ import absolute_import
 
 import re
 import sys
@@ -165,7 +162,7 @@ class ThreadingTestCase(HelperTestCase):
         <xsl:message terminate="yes">FAIL</xsl:message>
     </xsl:template>
     <!-- extend time for parsing + transform -->
-''' + '\n'.join('<xsl:template match="tag%X" name="tag%x"> <xsl:call-template name="tag%x" /> </xsl:template>' % (i, i, i-1)
+''' + '\n'.join('<xsl:template match="tag{:X}" name="tag{:x}"> <xsl:call-template name="tag{:x}" /> </xsl:template>'.format(i, i, i-1)
                 for i in range(1, 256)) + '''
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTApplyError,
@@ -256,7 +253,7 @@ class ThreadingTestCase(HelperTestCase):
 
         def parse_error_test(thread_no):
             tag = "tag%d" % thread_no
-            xml = "<%s>%s</%s>" % (tag, children, tag.upper())
+            xml = "<{}>{}</{}>".format(tag, children, tag.upper())
             parser = self.etree.XMLParser()
             for _ in range(10):
                 errors = None
@@ -269,7 +266,7 @@ class ThreadingTestCase(HelperTestCase):
                 for error in errors:
                     self.assertTrue(
                         tag in error.message and tag.upper() in error.message,
-                        "%s and %s not found in '%s'" % (
+                        "{} and {} not found in '{}'".format(
                         tag, tag.upper(), error.message))
 
         self.etree.clear_error_log()
@@ -582,8 +579,8 @@ class ThreadPipelineTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ThreadingTestCase)])
-    suite.addTests([unittest.makeSuite(ThreadPipelineTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ThreadingTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ThreadPipelineTestCase)])
     return suite
 
 if __name__ == '__main__':

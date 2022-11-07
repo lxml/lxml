@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to RelaxNG parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -230,7 +227,7 @@ class RelaxNGCompactTestCase(HelperTestCase):
         self.assertFalse(schema.validate(tree_invalid))
 
     def test_relaxng_compact_file_obj(self):
-        with open(fileInTestDir('test.rnc'), 'r') as f:
+        with open(fileInTestDir('test.rnc')) as f:
             schema = etree.RelaxNG(file=f)
 
         tree_valid = self.parse('<a><b>B</b><c>C</c></a>')
@@ -249,11 +246,11 @@ class RelaxNGCompactTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeRelaxNGTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     if rnc2rng is not None:
-        suite.addTests([unittest.makeSuite(RelaxNGCompactTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(RelaxNGCompactTestCase)])
     return suite
 
 if __name__ == '__main__':

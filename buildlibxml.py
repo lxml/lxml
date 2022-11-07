@@ -57,7 +57,7 @@ def download_and_extract_windows_binaries(destdir):
 
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
-        libs[libname] = "%s-%s.%s.zip" % (
+        libs[libname] = "{}-{}.{}.zip".format(
             libname,
             find_max_version(libname, filenames),
             arch,
@@ -72,7 +72,7 @@ def download_and_extract_windows_binaries(destdir):
         if os.path.exists(destfile + ".keep"):
             print('Using local copy of  "{}"'.format(srcfile))
         else:
-            print('Retrieving "%s" to "%s"' % (srcfile, destfile))
+            print('Retrieving "{}" to "{}"'.format(srcfile, destfile))
             urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
             urlretrieve(srcfile, destfile)
         d = unpack_zipfile(destfile, destdir)
@@ -102,7 +102,7 @@ def find_top_dir_of_zipfile(zipfile):
 def unpack_zipfile(zipfn, destdir):
     assert zipfn.endswith('.zip')
     import zipfile
-    print('Unpacking %s into %s' % (os.path.basename(zipfn), destdir))
+    print('Unpacking {} into {}'.format(os.path.basename(zipfn), destdir))
     f = zipfile.ZipFile(zipfn)
     try:
         extracted_dir = os.path.join(destdir, find_top_dir_of_zipfile(f))
@@ -149,7 +149,7 @@ def _find_content_encoding(response, default='iso8859-1'):
 def remote_listdir(url):
     try:
         return _list_dir_urllib(url)
-    except IOError:
+    except OSError:
         assert url.lower().startswith('ftp://')
         print("Requesting with urllib failed. Falling back to ftplib. "
               "Proxy argument will be ignored for %s" % url)
@@ -312,11 +312,11 @@ def find_max_version(libname, filenames, version_re=None):
                              version_string))
     if not versions:
         raise Exception(
-            "Could not find the most current version of %s from the files: %s" % (
+            "Could not find the most current version of {} from the files: {}".format(
                 libname, filenames))
     versions.sort()
     version_string = versions[-1][-1]
-    print('Latest version of %s is %s' % (libname, version_string))
+    print('Latest version of {} is {}'.format(libname, version_string))
     return version_string
 
 
@@ -329,7 +329,7 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
                 print(location)
                 fns = http_listfiles(location, '(%s)' % filename.replace('%s', '(?:[0-9.]+[0-9])'))
             version = find_max_version(name, fns, version_re)
-        except IOError:
+        except OSError:
             # network failure - maybe we have the files already?
             latest = (0,0,0)
             fns = os.listdir(dest_dir)
@@ -353,14 +353,14 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
                '(delete this file if you want to re-download the package)') % (
             name, dest_filename))
     else:
-        print('Downloading %s into %s from %s' % (name, dest_filename, full_url))
+        print('Downloading {} into {} from {}'.format(name, dest_filename, full_url))
         urlcleanup()  # work around FTP bug 27973 in Py2.7.12
         urlretrieve(full_url, dest_filename)
     return dest_filename
 
 
 def unpack_tarball(tar_filename, dest):
-    print('Unpacking %s into %s' % (os.path.basename(tar_filename), dest))
+    print('Unpacking {} into {}'.format(os.path.basename(tar_filename), dest))
     if sys.version_info[0] < 3 and tar_filename.endswith('.xz'):
         # Py 2.7 lacks lzma support
         tar_cm = py2_tarxz(tar_filename)
@@ -374,7 +374,7 @@ def unpack_tarball(tar_filename, dest):
             if base_dir is None:
                 base_dir = base_name
             elif base_dir != base_name:
-                print('Unexpected path in %s: %s' % (tar_filename, base_name))
+                print('Unexpected path in {}: {}'.format(tar_filename, base_name))
         tar.extractall(dest)
     return os.path.join(dest, base_dir)
 
@@ -383,10 +383,10 @@ def call_subprocess(cmd, **kw):
     import subprocess
     cwd = kw.get('cwd', '.')
     cmd_desc = ' '.join(cmd)
-    log.info('Running "%s" in %s' % (cmd_desc, cwd))
+    log.info('Running "{}" in {}'.format(cmd_desc, cwd))
     returncode = subprocess.call(cmd, **kw)
     if returncode:
-        raise Exception('Command "%s" returned code %s' % (cmd_desc, returncode))
+        raise Exception('Command "{}" returned code {}'.format(cmd_desc, returncode))
 
 
 def safe_mkdir(dir):

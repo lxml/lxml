@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
 from lxml.etree import (parse, fromstring, ElementTree,
                         Element, SubElement, XPath, XML)

@@ -42,7 +42,7 @@
 
 
 # Start with some helpers.
-class OutcomeCache(object):
+class OutcomeCache:
     # This class holds test outcomes for configurations.  This avoids
     # running the same test twice.
 
@@ -174,7 +174,7 @@ def oc_test():
 
 
 # Main Delta Debugging algorithm.
-class DD(object):
+class DD:
     # Delta debugging base class.  To use this class for a particular
     # setting, create a subclass with an overloaded `test()' method.
     #
@@ -306,12 +306,12 @@ class DD(object):
 
         if self.debug_test:
             print('')
-            print("test(%s)..." % (self.coerce(c),))
+            print("test({})...".format(self.coerce(c)))
 
         outcome = self._test(c)
 
         if self.debug_test:
-            print("test(%s) = %r" % (self.coerce(c), outcome))
+            print("test({}) = {!r}".format(self.coerce(c), outcome))
 
         if self.cache_outcomes:
             self.outcome_cache.add(c, outcome)
@@ -327,12 +327,12 @@ class DD(object):
     def split(self, c, n):
         """Split C into [C_1, C_2, ..., C_n]."""
         if self.debug_split:
-            print("split(%s, %r)..." % (self.coerce(c), n))
+            print("split({}, {!r})...".format(self.coerce(c), n))
 
         outcome = self._split(c, n)
 
         if self.debug_split:
-            print("split(%s, %r) = %r" % (self.coerce(c), n, outcome))
+            print("split({}, {!r}) = {!r}".format(self.coerce(c), n, outcome))
 
         return outcome
 
@@ -353,12 +353,12 @@ class DD(object):
              to CSUB.  Otherwise, resolve by removing deltas from CSUB."""
 
         if self.debug_resolve:
-            print("resolve(%r, %s, %r)..." % (csub, self.coerce(c), direction))
+            print("resolve({!r}, {}, {!r})...".format(csub, self.coerce(c), direction))
 
         outcome = self._resolve(csub, c, direction)
 
         if self.debug_resolve:
-            print("resolve(%r, %s, %r) = %r" % (csub, self.coerce(c), direction, outcome))
+            print("resolve({!r}, {}, {!r}) = {!r}".format(csub, self.coerce(c), direction, outcome))
 
         return outcome
 
@@ -435,12 +435,12 @@ class DD(object):
         assert self.test(c)  == dd.FAIL
 
         if self.debug_dd:
-            print("dd(%s, %r, %r)..." % (self.pretty(c), r, n))
+            print("dd({}, {!r}, {!r})...".format(self.pretty(c), r, n))
 
         outcome = self._old_dd(c, r, n)
 
         if self.debug_dd:
-            print("dd(%s, %r, %r) = %r" % (self.pretty(c), r, n, outcome))
+            print("dd({}, {!r}, {!r}) = {!r}".format(self.pretty(c), r, n, outcome))
 
         return outcome
 
@@ -471,7 +471,7 @@ class DD(object):
             cs = self.split(c, n)
 
             print('')
-            print("dd (run #%r): trying %s" % (run, ' + '.join(map(str, cs))))
+            print("dd (run #{!r}): trying {}".format(run, ' + '.join(map(str, cs))))
             print('')
 
             # Check subsets
@@ -508,7 +508,7 @@ class DD(object):
                 if ts[i] == self.PASS and tbars[i] == self.PASS:
                     # Interference
                     if self.debug_dd:
-                        print("dd: interference of %s and %s" % (self.pretty(cs[i]), self.pretty(cbars[i])))
+                        print("dd: interference of {} and {}".format(self.pretty(cs[i]), self.pretty(cbars[i])))
 
                     d    = self.dd(cs[i][:], cbars[i] + r)
                     dbar = self.dd(cbars[i][:], cs[i] + r)
@@ -589,12 +589,12 @@ class DD(object):
         self.CC = c
 
         if self.debug_dd:
-            print("dd(%s, %r)..." % (self.pretty(c), n))
+            print("dd({}, {!r})...".format(self.pretty(c), n))
 
         outcome = self._dd(c, n)
 
         if self.debug_dd:
-            print("dd(%s, %r) = %r" % (self.pretty(c), n, outcome))
+            print("dd({}, {!r}) = {!r}".format(self.pretty(c), n, outcome))
 
         return outcome
 
@@ -633,7 +633,7 @@ class DD(object):
             # Check subsets
             for i in range(n):
                 if self.debug_dd:
-                    print("dd: trying %s" % (self.pretty(cs[i]),))
+                    print("dd: trying {}".format(self.pretty(cs[i])))
 
                 (t, cs[i]) = self.test_mix(cs[i], c, self.REMOVE)
 
@@ -722,8 +722,8 @@ class DD(object):
         # We replace the tail recursion from the paper by a loop
         while 1:
             if self.debug_dd:
-                print("dd: c1 = %s" % (self.pretty(c1),))
-                print("dd: c2 = %s" % (self.pretty(c2),))
+                print("dd: c1 = {}".format(self.pretty(c1)))
+                print("dd: c2 = {}".format(self.pretty(c2)))
 
             if self.assume_axioms_hold:
                 t1 = self.PASS
@@ -739,7 +739,7 @@ class DD(object):
             c = self.__listminus(c2, c1)
 
             if self.debug_dd:
-                print("dd: c2 - c1 = %s" % (self.pretty(c),))
+                print("dd: c2 - c1 = {}".format(self.pretty(c)))
 
             if n > len(c):
                 # No further minimizing
@@ -765,7 +765,7 @@ class DD(object):
                 i = int((j + cbar_offset) % n)
 
                 if self.debug_dd:
-                    print("dd: trying %s" % (self.pretty(cs[i]),))
+                    print("dd: trying {}".format(self.pretty(cs[i])))
 
                 (t, csub) = self.test_and_resolve(cs[i], c1, c, self.REMOVE)
                 csub = self.__listunion(c1, csub)
@@ -900,14 +900,14 @@ if __name__ == '__main__':
 
     print("Minimizing failure-inducing input...")
     c = mydd.ddmin([1, 2, 3, 4, 5, 6, 7, 8])  # Invoke DDMIN
-    print("The 1-minimal failure-inducing input is %s" % (c,))
+    print("The 1-minimal failure-inducing input is {}".format(c))
     print("Removing any element will make the failure go away.")
     print('')
 
     print("Computing the failure-inducing difference...")
     (c, c1, c2) = mydd.dd([1, 2, 3, 4, 5, 6, 7, 8])        # Invoke DD
-    print("The 1-minimal failure-inducing difference is %s" % (c,))
-    print("%s passes, %s fails" % (c1, c2))
+    print("The 1-minimal failure-inducing difference is {}".format(c))
+    print("{} passes, {} fails".format(c1, c2))
 
 
 

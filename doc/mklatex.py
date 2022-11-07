@@ -24,7 +24,7 @@ RST2LATEX_OPTIONS = " ".join([
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
-replace_content = re.compile("\{[^\}]*\}").sub
+replace_content = re.compile(r"\{[^\}]*\}").sub
 
 replace_epydoc_macros = re.compile(r'(,\s*amssymb|dvips\s*,\s*)').sub
 replace_rst_macros = re.compile(r'(\\usepackage\{color}|\\usepackage\[[^]]*]\{hyperref})').sub
@@ -71,10 +71,10 @@ def write_chapter(master, title, filename):
     filename = os.path.join(os.path.dirname(filename),
                             "_part_%s" % os.path.basename(filename))
     master.write(r"""
-\chapter{%s}
-\label{%s}
-\input{%s}
-""" % (title, filename, filename))
+\chapter{{{}}}
+\label{{{}}}
+\input{{{}}}
+""".format(title, filename, filename))
 
 
 # the program ----
@@ -93,7 +93,7 @@ def build_pygments_macros(filename):
         f.write('\n')
 
 def copy_epydoc_macros(src, dest, existing_header_lines):
-    doc = open(src, 'r')
+    doc = open(src)
     out = open(dest, "w")
     for line in doc:
         if line.startswith('%% generator') \
@@ -167,7 +167,7 @@ def tex_postprocess(src_path, dest_path, want_header=False, process_line=noop):
         if skipping(l):
             # To-Do minitoc instead of tableofcontents
             continue
-        elif "\hypertarget{old-versions}" in l:
+        elif r"\hypertarget{old-versions}" in l:
             break
         elif "listcnt0" in l:
             l = l.replace("listcnt0", counter_text)
@@ -211,7 +211,7 @@ def publish(dirname, lxml_path, release):
             anchor = extension.split('#')[-1]
             return r"\hyperref[%s]" % anchor
         elif extension != 'html':
-            return r'\href{https://lxml.de/%s.%s}' % (
+            return r'\href{{https://lxml.de/{}.{}}}'.format(
                 outname, extension)
         else:
             return r"\hyperref[_part_%s.tex]" % outname

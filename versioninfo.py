@@ -38,7 +38,7 @@ def changes():
     """Extract part of changelog pertaining to version.
     """
     _version = version()
-    with io.open(os.path.join(get_base_dir(), "CHANGES.txt"), 'r', encoding='utf8') as f:
+    with open(os.path.join(get_base_dir(), "CHANGES.txt"), encoding='utf8') as f:
         lines = []
         for line in f:
             if line.startswith('====='):
@@ -65,7 +65,7 @@ def create_version_h():
 
     # Avoid changing file timestamp if content didn't change.
     if os.path.isfile(file_path):
-        with open(file_path, 'r') as version_h:
+        with open(file_path) as version_h:
             if ('"%s"' % lxml_version) in version_h.read(100):
                 return
 

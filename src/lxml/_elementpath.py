@@ -55,7 +55,6 @@
 # you, if needed.
 ##
 
-from __future__ import absolute_import
 
 import re
 
@@ -83,11 +82,11 @@ def xpath_tokenizer(pattern, namespaces=None):
                 try:
                     if not namespaces:
                         raise KeyError
-                    yield ttype, "{%s}%s" % (namespaces[prefix], uri)
+                    yield ttype, "{{{}}}{}".format(namespaces[prefix], uri)
                 except KeyError:
                     raise SyntaxError("prefix %r not found in prefix map" % prefix)
             elif default_namespace and not parsing_attribute:
-                yield ttype, "{%s}%s" % (default_namespace, tag)
+                yield ttype, "{{{}}}{}".format(default_namespace, tag)
             else:
                 yield token
             parsing_attribute = False
@@ -100,15 +99,13 @@ def prepare_child(next, token):
     tag = token[1]
     def select(result):
         for elem in result:
-            for e in elem.iterchildren(tag):
-                yield e
+            yield from elem.iterchildren(tag)
     return select
 
 def prepare_star(next, token):
     def select(result):
         for elem in result:
-            for e in elem.iterchildren('*'):
-                yield e
+            yield from elem.iterchildren('*')
     return select
 
 def prepare_self(next, token):
@@ -126,8 +123,7 @@ def prepare_descendant(next, token):
         raise SyntaxError("invalid descendant")
     def select(result):
         for elem in result:
-            for e in elem.iterdescendants(tag):
-                yield e
+            yield from elem.iterdescendants(tag)
     return select
 
 def prepare_parent(next, token):
@@ -263,7 +259,7 @@ def _build_path_iterator(path, namespaces):
         # preferring the more convenient '', as long as they aren't ambiguous.
         if None in namespaces:
             if '' in namespaces and namespaces[None] != namespaces['']:
-                raise ValueError("Ambiguous default namespace provided: %r versus %r" % (
+                raise ValueError("Ambiguous default namespace provided: {!r} versus {!r}".format(
                     namespaces[None], namespaces['']))
             cache_key += (namespaces[None],) + tuple(sorted(
                 item for item in namespaces.items() if item[0] is not None))

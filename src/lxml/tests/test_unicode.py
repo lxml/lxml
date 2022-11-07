@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-
 import unittest
 import sys
 
@@ -73,7 +70,7 @@ class UnicodeTestCase(HelperTestCase):
 
     def test_unicode_qname(self):
         qname = etree.QName(uni, uni)
-        tag = "{%s}%s" % (uni, uni)
+        tag = "{{{}}}{}".format(uni, uni)
         self.assertEqual(qname.text, tag)
         self.assertEqual(unicode(qname), tag)
 
@@ -207,6 +204,6 @@ class EncodingsTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(UnicodeTestCase)])
-    suite.addTests([unittest.makeSuite(EncodingsTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(UnicodeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EncodingsTestCase)])
     return suite

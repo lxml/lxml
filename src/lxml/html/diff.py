@@ -1,6 +1,5 @@
 # cython: language_level=3
 
-from __future__ import absolute_import
 
 import difflib
 from lxml import etree
@@ -29,7 +28,7 @@ except NameError:
 ############################################################
 
 def default_markup(text, version):
-    return '<span title="%s">%s</span>' % (
+    return '<span title="{}">{}</span>'.format(
         html_escape(_unicode(version), 1), text)
 
 def html_annotate(doclist, markup=default_markup):
@@ -140,15 +139,13 @@ def markup_serialize_tokens(tokens, markup_func):
     markup_func around text to add annotations.
     """
     for token in tokens:
-        for pre in token.pre_tags:
-            yield pre
+        yield from token.pre_tags
         html = token.html()
         html = markup_func(html, token.annotation)
         if token.trailing_whitespace:
             html += token.trailing_whitespace
         yield html
-        for post in token.post_tags:
-            yield post
+        yield from token.post_tags
 
 
 ############################################################
@@ -221,15 +218,13 @@ def expand_tokens(tokens, equal=False):
     text for the data in the tokens.
     """
     for token in tokens:
-        for pre in token.pre_tags:
-            yield pre
+        yield from token.pre_tags
         if not equal or not token.hide_when_equal:
             if token.trailing_whitespace:
                 yield token.html() + token.trailing_whitespace
             else:
                 yield token.html()
-        for post in token.post_tags:
-            yield post
+        yield from token.post_tags
 
 def merge_insert(ins_chunks, doc):
     """ doc is the already-handled document (as a list of text chunks);
@@ -473,7 +468,7 @@ class token(_unicode):
         return obj
 
     def __repr__(self):
-        return 'token(%s, %r, %r, %r)' % (_unicode.__repr__(self), self.pre_tags,
+        return 'token({}, {!r}, {!r}, {!r})'.format(_unicode.__repr__(self), self.pre_tags,
                                           self.post_tags, self.trailing_whitespace)
 
     def html(self):
@@ -487,7 +482,7 @@ class tag_token(token):
 
     def __new__(cls, tag, data, html_repr, pre_tags=None, 
                 post_tags=None, trailing_whitespace=""):
-        obj = token.__new__(cls, "%s: %s" % (type, data), 
+        obj = token.__new__(cls, "{}: {}".format(type, data), 
                             pre_tags=pre_tags, 
                             post_tags=post_tags, 
                             trailing_whitespace=trailing_whitespace)
@@ -497,7 +492,7 @@ class tag_token(token):
         return obj
 
     def __repr__(self):
-        return 'tag_token(%s, %s, html_repr=%s, post_tags=%r, pre_tags=%r, trailing_whitespace=%r)' % (
+        return 'tag_token({}, {}, html_repr={}, post_tags={!r}, pre_tags={!r}, trailing_whitespace={!r})'.format(
             self.tag, 
             self.data, 
             self.html_repr, 
@@ -699,8 +694,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
     for word in start_words:
         yield html_escape(word)
     for child in el:
-        for item in flatten_el(child, include_hrefs=include_hrefs):
-            yield item
+        yield from flatten_el(child, include_hrefs=include_hrefs)
     if el.tag == 'a' and el.get('href') and include_hrefs:
         yield ('href', el.get('href'))
     if not skip_tag:
@@ -726,8 +720,8 @@ def start_tag(el):
     """
     The text representation of the start tag for a tag.
     """
-    return '<%s%s>' % (
-        el.tag, ''.join([' %s="%s"' % (name, html_escape(value, True))
+    return '<{}{}>'.format(
+        el.tag, ''.join([' {}="{}"'.format(name, html_escape(value, True))
                          for name, value in el.attrib.items()]))
 
 def end_tag(el):
@@ -737,7 +731,7 @@ def end_tag(el):
         extra = ' '
     else:
         extra = ''
-    return '</%s>%s' % (el.tag, extra)
+    return '</{}>{}'.format(el.tag, extra)
 
 def is_word(tok):
     return not tok.startswith('<')

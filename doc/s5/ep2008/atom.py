@@ -61,7 +61,7 @@ def Element(tag, *args, **kw):
     """
     if '{' not in tag:
         # No namespace means the atom namespace
-        tag = '{%s}%s' % (atom_ns, tag)
+        tag = '{{{}}}{}'.format(atom_ns, tag)
     return atom_parser.makeelement(tag, *args, **kw)
 
 def _strftime(d):
@@ -154,9 +154,9 @@ class _LiveList(list):
         name = self.name
         if name is None:
             name = '_LiveList'
-        return '%s(%s)' % (name, list.__repr__(self))
+        return '{}({})'.format(name, list.__repr__(self))
 
-class _findall_property(object):
+class _findall_property:
     """
     Returns a LiveList of all the objects with the given tag.  You can
     append or remove items to the list to add or remove them from the
@@ -182,7 +182,7 @@ class _findall_property(object):
         cur = self.__get__(obj)
         cur[:] = value
 
-class _text_element_property(object):
+class _text_element_property:
     """
     Creates an attribute that returns the text content of the given
     subelement.  E.g., ``title = _text_element_property('title')``
@@ -214,7 +214,7 @@ class _text_element_property(object):
             # FIXME: should it be an error if it doesn't exist?
             obj.remove(el)
 
-class _element_property(object):
+class _element_property:
     """
     Returns a single subelement based on tag.  Setting the attribute
     removes the element and adds a new one.  Deleting it removes the
@@ -241,7 +241,7 @@ class _element_property(object):
         if el is not None:
             obj.remove(el)
 
-class _attr_element_property(object):
+class _attr_element_property:
     """
     Get/set the value of the attribute on this element.
     """
@@ -268,7 +268,7 @@ class _attr_element_property(object):
         if self.attr in obj.attrib:
             del obj.attrib[self.attr]
 
-class _date_element_property(object):
+class _date_element_property:
     """
     Get/set the parsed date value of the text content of a tag.
     """
@@ -292,7 +292,7 @@ class _date_element_property(object):
         if el is not None:
             obj.remove(el)
 
-class _date_text_property(object):
+class _date_text_property:
 
     def __get__(self, obj, type=None):
         if obj is None:
@@ -310,9 +310,9 @@ class _date_text_property(object):
 
 class AtomElement(etree.ElementBase):
     def _get_or_create(self, tag, ns=atom_ns):
-        el = self.find('{%s}%s' % (ns, tag))
+        el = self.find('{{{}}}{}'.format(ns, tag))
         if el is None:
-            el = self.makeelement('{%s}%s' % (ns, tag))
+            el = self.makeelement('{{{}}}{}'.format(ns, tag))
             self.append(el)
         return el
 
@@ -322,15 +322,15 @@ class AtomElement(etree.ElementBase):
         return None
 
     def _atom_iter(self, tag, ns=atom_ns):
-        return self.getiterator('{%s}%s' % (ns, tag))
+        return self.getiterator('{{{}}}{}'.format(ns, tag))
 
     def _atom_findtext(self, tag, ns=atom_ns):
-        return self.findtext('{%s}%s' % (ns, tag))
+        return self.findtext('{{{}}}{}'.format(ns, tag))
 
     def _get_parent(self, tag, ns=atom_ns):
         parent = self
         while 1:
-            if parent.tag == '{%s}%s' % (ns, tag):
+            if parent.tag == '{{{}}}{}'.format(ns, tag):
                 return parent
             parent = parent.getparent()
             if parent is None:
@@ -357,7 +357,7 @@ class AtomElement(etree.ElementBase):
         tag = self.tag
         if '}' in tag:
             tag = tag.split('}', 1)[1]
-        return '<%s.%s atom:%s at %s>' % (
+        return '<{}.{} atom:{} at {}>'.format(
             self.__class__.__module__,
             self.__class__.__name__,
             tag,
@@ -444,7 +444,7 @@ class Category(_EntryElement):
         GData convention of ``{scheme}term``
         """
         if self.scheme is not None:
-            return '{%s}%s' % (self.scheme, self.term)
+            return '{{{}}}{}'.format(self.scheme, self.term)
         else:
             return self.term
 
@@ -573,7 +573,7 @@ class LinkElement(_EntryElement):
     title = _attr_element_property('title', None)
 
     def __repr__(self):
-        return '<%s.%s at %s rel=%r href=%r>' % (
+        return '<{}.{} at {} rel={!r} href={!r}>'.format(
             self.__class__.__module__,
             self.__class__.__name__,
             hex(abs(id(self)))[2:],
@@ -600,7 +600,7 @@ class APPElement(etree.ElementBase):
         tag = self.tag
         if '}' in tag:
             tag = tag.split('}', 1)[1]
-        return '<%s.%s app:%s at %s>' % (
+        return '<{}.{} app:{} at {}>'.format(
             self.__class__.__module__,
             self.__class__.__name__,
             tag,
