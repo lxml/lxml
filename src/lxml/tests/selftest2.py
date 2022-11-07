@@ -15,8 +15,6 @@ except ImportError:
 from lxml import etree as ElementTree
 
 def stdout():
-    if sys.version_info[0] < 3:
-        return sys.stdout
     class bytes_stdout:
         def write(self, data):
             if isinstance(data, bytes):
@@ -37,8 +35,7 @@ def serialize(elem, encoding=None):
     else:
         tree.write(file)
     result = file.getvalue()
-    if sys.version_info[0] >= 3:
-        result = result.decode('ISO8859-1')
+    result = result.decode('ISO8859-1')
     result = result.replace(' />', '/>')
     if result[-1:] == '\n':
         result = result[:-1]

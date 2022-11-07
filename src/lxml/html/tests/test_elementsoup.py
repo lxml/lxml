@@ -119,8 +119,6 @@ def test_suite():
     suite = unittest.TestSuite()
     if BS_INSTALLED:
         suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(SoupParserTestCase)])
-        if sys.version_info[0] < 3:
-            suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])
     return suite
 
 

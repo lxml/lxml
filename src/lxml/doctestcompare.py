@@ -52,8 +52,6 @@ try:
 except NameError:
     _basestring = (str, bytes)
 
-_IS_PYTHON_3 = sys.version_info[0] >= 3
-
 PARSE_HTML = doctest.register_optionflag('PARSE_HTML')
 PARSE_XML = doctest.register_optionflag('PARSE_XML')
 NOPARSE_MARKUP = doctest.register_optionflag('NOPARSE_MARKUP')
@@ -279,7 +277,7 @@ class LXMLOutputChecker(OutputChecker):
         if not attrs:
             return f'<{el.tag}>'
         return f"<{el.tag} {' '.join(attrs)}>"
-    
+
     def format_end_tag(self, el):
         if isinstance(el, etree.CommentBase):
             # FIXME: probably PIs should be handled specially too?
@@ -369,7 +367,7 @@ class LXMLOutputChecker(OutputChecker):
 class LHTMLOutputChecker(LXMLOutputChecker):
     def get_default_parser(self):
         return html_fromstring
-    
+
 def install(html=False):
     """
     Install doctestcompare for all future doctests.
@@ -408,12 +406,9 @@ def temp_install(html=False, del_module=None):
     # __record_outcome to be run, which signals the end of the __run
     # method, at which point we restore the previous check_output
     # implementation.
-    if _IS_PYTHON_3:
-        check_func = frame.f_locals['check'].__func__
-        checker_check_func = checker.check_output.__func__
-    else:
-        check_func = frame.f_locals['check'].im_func
-        checker_check_func = checker.check_output.im_func
+    check_func = frame.f_locals['check'].__func__
+    checker_check_func = checker.check_output.__func__
+
     # Because we can't patch up func_globals, this is the only global
     # in check_output that we care about:
     doctest.etree = etree
@@ -434,19 +429,11 @@ class _RestoreChecker:
         self.install_clone()
         self.install_dt_self()
     def install_clone(self):
-        if _IS_PYTHON_3:
-            self.func_code = self.check_func.__code__
-            self.func_globals = self.check_func.__globals__
-            self.check_func.__code__ = self.clone_func.__code__
-        else:
-            self.func_code = self.check_func.func_code
-            self.func_globals = self.check_func.func_globals
-            self.check_func.func_code = self.clone_func.func_code
+        self.func_code = self.check_func.__code__
+        self.func_globals = self.check_func.__globals__
+        self.check_func.__code__ = self.clone_func.__code__
     def uninstall_clone(self):
-        if _IS_PYTHON_3:
-            self.check_func.__code__ = self.func_code
-        else:
-            self.check_func.func_code = self.func_code
+        self.check_func.__code__ = self.func_code
     def install_dt_self(self):
         self.prev_func = self.dt_self._DocTestRunner__record_outcome
         self.dt_self._DocTestRunner__record_outcome = self
@@ -474,7 +461,7 @@ class _RestoreChecker:
             return self.check_func(*args, **kw)
         finally:
             self.install_clone()
-            
+
 def _find_doctest_frame():
     import sys
     frame = sys._getframe(1)
@@ -486,7 +473,7 @@ def _find_doctest_frame():
         frame = frame.f_back
     raise LookupError(
         "Could not find doctest (only use this function *inside* a doctest)")
-    
+
 __test__ = {
     'basic': '''
     >>> temp_install()
@@ -503,5 +490,3 @@ __test__ = {
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-    
-    

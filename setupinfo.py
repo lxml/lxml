@@ -33,17 +33,14 @@ if hasattr(sys, 'pypy_version_info') or (
 SOURCE_PATH = "src"
 INCLUDE_PACKAGE_PATH = os.path.join(SOURCE_PATH, 'lxml', 'includes')
 
-if sys.version_info[0] >= 3:
-    _system_encoding = sys.getdefaultencoding()
-    if _system_encoding is None:
-        _system_encoding = "iso-8859-1" # :-)
-    def decode_input(data):
-        if isinstance(data, str):
-            return data
-        return data.decode(_system_encoding)
-else:
-    def decode_input(data):
+_system_encoding = sys.getdefaultencoding()
+if _system_encoding is None:
+    _system_encoding = "iso-8859-1" # :-)
+def decode_input(data):
+    if isinstance(data, str):
         return data
+    return data.decode(_system_encoding)
+
 
 def env_var(name):
     value = os.getenv(name)

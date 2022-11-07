@@ -12,8 +12,6 @@
 import re, sys
 
 def stdout():
-    if sys.version_info[0] < 3:
-        return sys.stdout
     class bytes_stdout(object):
         def write(self, data):
             if isinstance(data, bytes):
@@ -48,16 +46,8 @@ def serialize(elem, **options):
     file = BytesIO()
     tree = ElementTree.ElementTree(elem)
     tree.write(file, **options)
-    if sys.version_info[0] < 3:
-        try:
-            encoding = options["encoding"]
-        except KeyError:
-            encoding = "utf-8"
-    else:
-        encoding = 'ISO8859-1'
+    encoding = 'ISO8859-1'
     result = fix_compatibility(file.getvalue().decode(encoding))
-    if sys.version_info[0] < 3:
-        result = result.encode(encoding)
     return result
 
 def summarize(elem):
@@ -973,7 +963,7 @@ def xmlwriter():
     >>> w.data("\n")
     >>> w.element("p", u"reserved characters: <&>")
     >>> w.data("\n")
-    >>> w.element("p", u"detta är också ett stycke")
+    >>> w.element("p", u"detta ï¿½r ocksï¿½ ett stycke")
     >>> w.data("\n")
     >>> w.close(html)
     >>> print(file.getvalue())
@@ -1065,26 +1055,26 @@ def bug_xmltoolkit39():
     """
     non-ascii element and attribute names doesn't work
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><täg />")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tï¿½g />")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g />'
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tag ättr='v&#228;lue' />")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tag ï¿½ttr='v&#228;lue' />")
     >>> tree.attrib
     {u'\\xe4ttr': u'v\\xe4lue'}
     >>> ElementTree.tostring(tree, "utf-8")
     '<tag \\xc3\\xa4ttr="v\\xc3\\xa4lue" />'
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><täg>text</täg>")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tï¿½g>text</tï¿½g>")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g>text</t\\xc3\\xa4g>'
 
-    >>> tree = ElementTree.Element(u"täg")
+    >>> tree = ElementTree.Element(u"tï¿½g")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g />'
 
     >>> tree = ElementTree.Element("tag")
-    >>> tree.set(u"ättr", u"välue")
+    >>> tree.set(u"ï¿½ttr", u"vï¿½lue")
     >>> ElementTree.tostring(tree, "utf-8")
     '<tag \\xc3\\xa4ttr="v\\xc3\\xa4lue" />'
 
@@ -1099,7 +1089,7 @@ def bug_xmltoolkit45():
 
     latin-1 text
     >>> p = HTMLTreeBuilder.TreeBuilder()
-    >>> p.feed("<p>välue</p>")
+    >>> p.feed("<p>vï¿½lue</p>")
     >>> serialize(p.close())
     '<p>v&#228;lue</p>'
 
@@ -1129,7 +1119,7 @@ def bug_xmltoolkit45():
 
     mixed latin-1 text and unicode entities
     >>> p = HTMLTreeBuilder.TreeBuilder()
-    >>> p.feed("<p>&#8221;välue&#8221;</p>")
+    >>> p.feed("<p>&#8221;vï¿½lue&#8221;</p>")
     >>> serialize(p.close())
     '<p>&#8221;v&#228;lue&#8221;</p>'
 

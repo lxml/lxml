@@ -74,10 +74,7 @@ except NameError:
 def __fix_docstring(s):
     if not s:
         return s
-    if sys.version_info[0] >= 3:
-        sub = re.compile(r"^(\s*)u'", re.M).sub
-    else:
-        sub = re.compile(r"^(\s*)b'", re.M).sub
+    sub = re.compile(r"^(\s*)u'", re.M).sub
     return sub(r"\1'", s)
 
 

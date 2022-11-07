@@ -52,9 +52,6 @@ def download_and_extract_windows_binaries(destdir):
     else:
         arch = "win32"
 
-    if sys.version_info < (3, 5):
-        arch = 'vs2008.' + arch
-
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
         libs[libname] = f"{libname}-{find_max_version(libname, filenames)}.{arch}.zip"

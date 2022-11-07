@@ -594,7 +594,6 @@ class AsyncXmlFileTestCase(HelperTestCase):
             except StopIteration as ex:
                 return ex.value
 
-    @skipIf(sys.version_info < (3, 5), "requires support for async-def (Py3.5+)")
     def test_async(self):
         code = textwrap.dedent("""\
         async def test_async_xmlfile(close=True, buffered=True):
