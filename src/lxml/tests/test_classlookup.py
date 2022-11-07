@@ -61,7 +61,7 @@ class ProxyTestCase(HelperTestCase):
                     missing -= 1
                     break
             else:
-                self.assertTrue(False, "element '%s' is missing" % new.tag)
+                self.assertTrue(False, f"element '{new.tag}' is missing")
         self.assertEqual(0, missing)
 
     def test_element_base(self):
@@ -230,7 +230,7 @@ class ClassLookupTestCase(HelperTestCase):
                 elif t == 'entity':
                     return etree.ElementBase
                 else:
-                    raise ValueError('got type %s' % t)
+                    raise ValueError(f'got type {t}')
 
         parser = etree.XMLParser(resolve_entities=False)
         parser.set_element_class_lookup(MyLookup())
@@ -396,4 +396,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

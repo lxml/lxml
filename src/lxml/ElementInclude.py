@@ -158,7 +158,7 @@ def include(elem, loader=None, base_url=None,
     if max_depth is None:
         max_depth = -1
     elif max_depth < 0:
-        raise ValueError("expected non-negative depth or None for 'max_depth', got %r" % max_depth)
+        raise ValueError(f"expected non-negative depth or None for 'max_depth', got {max_depth!r}")
 
     if base_url is None:
         if hasattr(elem, 'getroot'):
@@ -197,15 +197,15 @@ def _include(elem, loader=None, base_url=None,
             if parse == "xml":
                 if href in _parent_hrefs:
                     raise FatalIncludeError(
-                        "recursive include of %r detected" % href
+                        f"recursive include of {href!r} detected"
                         )
                 if max_depth == 0:
                     raise LimitedRecursiveIncludeError(
-                        "maximum xinclude depth reached when including file %s" % href)
+                        f"maximum xinclude depth reached when including file {href}")
                 node = load_include(href, parse, parser=parser)
                 if node is None:
                     raise FatalIncludeError(
-                        "cannot load {!r} as {!r}".format(href, parse)
+                        f"cannot load {href!r} as {parse!r}"
                         )
                 node = _include(node, loader, href, max_depth - 1, {href} | _parent_hrefs)
                 if e.tail:
@@ -217,7 +217,7 @@ def _include(elem, loader=None, base_url=None,
                 text = load_include(href, parse, encoding=e.get("encoding"))
                 if text is None:
                     raise FatalIncludeError(
-                        "cannot load {!r} as {!r}".format(href, parse)
+                        f"cannot load {href!r} as {parse!r}"
                         )
                 predecessor = e.getprevious()
                 if predecessor is not None:
@@ -229,16 +229,16 @@ def _include(elem, loader=None, base_url=None,
                 parent.remove(e)
             else:
                 raise FatalIncludeError(
-                    "unknown parse type in xi:include tag (%r)" % parse
+                    f"unknown parse type in xi:include tag ({parse!r})"
                 )
         elif e.tag == XINCLUDE_FALLBACK:
             parent = e.getparent()
             if parent is not None and parent.tag != XINCLUDE_INCLUDE:
                 raise FatalIncludeError(
-                    "xi:fallback tag must be child of xi:include (%r)" % e.tag
+                    f"xi:fallback tag must be child of xi:include ({e.tag!r})"
                     )
         else:
             raise FatalIncludeError(
-                "Invalid element found in XInclude namespace (%r)" % e.tag
+                f"Invalid element found in XInclude namespace ({e.tag!r})"
                 )
     return elem

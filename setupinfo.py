@@ -91,7 +91,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
 
     use_cython = True
     if CYTHON_INSTALLED and (OPTION_WITH_CYTHON or not all(c_files_exist)):
-        print("Building with Cython %s." % Cython.Compiler.Version.version)
+        print(f"Building with Cython {Cython.Compiler.Version.version}.")
         # generate module cleanup code
         from Cython.Compiler import Options
         Options.generate_cleanup_code = 3
@@ -191,7 +191,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
         with open(src_file, encoding='iso8859-1') as f:
             content = f.read()
         for filename in HEADER_FILES:
-            content = content.replace('"%s"' % filename, '"lxml.%s"' % filename)
+            content = content.replace(f'"{filename}"', f'"lxml.{filename}"')
         with open(dst_file, 'w', encoding='iso8859-1') as f:
             f.write(content)
 
@@ -236,7 +236,7 @@ def extra_setup_args():
             try:
                 _build_ext.run(self)  # old-style class in Py2
             except CompileError as e:
-                print('Compile failed: %s' % e)
+                print(f'Compile failed: {e}')
                 if not seems_to_have_libxml2():
                     print_libxml_error()
                 raise
@@ -274,7 +274,7 @@ def libraries():
     if sys.platform in ('win32',):
         libs = ['libxslt', 'libexslt', 'libxml2', 'iconv']
         if OPTION_STATIC:
-            libs = ['%s_a' % lib for lib in libs]
+            libs = [f'{lib}_a' for lib in libs]
         libs.extend(['zlib', 'WS2_32'])
     elif OPTION_STATIC:
         libs = standard_libs
@@ -386,7 +386,7 @@ def check_min_version(version, min_version, libname):
 
 def get_library_version(prog, libname=None):
     if libname:
-        return run_command(prog, '--modversion %s' % libname)
+        return run_command(prog, f'--modversion {libname}')
     else:
         return run_command(prog, '--version')
 
@@ -454,7 +454,7 @@ def check_build_dependencies():
               "\n")
 
     if xml2_version and xslt_version:
-        print("Building against libxml2 {} and libxslt {}".format(xml2_version, xslt_version))
+        print(f"Building against libxml2 {xml2_version} and libxslt {xslt_version}")
     else:
         print("Building against pre-built libxml2 andl libxslt libraries")
 
@@ -463,9 +463,9 @@ def check_build_dependencies():
 
 def get_flags(prog, option, libname=None):
     if libname:
-        return run_command(prog, '--{} {}'.format(option, libname))
+        return run_command(prog, f'--{option} {libname}')
     else:
-        return run_command(prog, '--%s' % option)
+        return run_command(prog, f'--{option}')
 
 
 def flags(option):
@@ -491,7 +491,7 @@ def get_xcode_isysroot():
 
 def has_option(name):
     try:
-        sys.argv.remove('--%s' % name)
+        sys.argv.remove(f'--{name}')
         return True
     except ValueError:
         pass
@@ -507,7 +507,7 @@ def option_value(name, deprecated_for=None):
         if option == '--' + name:
             if index+1 >= len(sys.argv):
                 raise DistutilsOptionError(
-                    'The option %s requires a value' % option)
+                    f'The option {option} requires a value')
             value = sys.argv[index+1]
             sys.argv[index:index+2] = []
             if deprecated_for:
@@ -527,7 +527,7 @@ def option_value(name, deprecated_for=None):
 
 
 def print_deprecated_option(name, new_name):
-    print("WARN: Option '{}' is deprecated. Use '{}' instead.".format(name, new_name))
+    print(f"WARN: Option '{name}' is deprecated. Use '{new_name}' instead.")
 
 
 staticbuild = bool(os.environ.get('STATICBUILD', ''))

@@ -32,7 +32,7 @@ def webserver(app, port=0, host=None):
     thread.setDaemon(True)
     thread.start()
     try:
-        yield 'http://{}:{}/'.format(host, port)  # yield control to 'with' body
+        yield f'http://{host}:{port}/'  # yield control to 'with' body
     finally:
         server.shutdown()
         server.server_close()
@@ -80,5 +80,5 @@ class HTTPRequestCollector:
         self.requests.append((
             environ.get('PATH_INFO'),
             urlparse.parse_qsl(environ.get('QUERY_STRING'))))
-        start_response('%s OK' % self.response_code, self.headers)
+        start_response(f'{self.response_code} OK', self.headers)
         return [self.response_data]

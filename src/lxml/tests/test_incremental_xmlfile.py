@@ -424,7 +424,7 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
             except WriteError as exc:
                 self.assertTrue('FAILED: ' + trigger in str(exc))
             else:
-                self.assertTrue(False, "exception not raised for '%s'" % trigger)
+                self.assertTrue(False, f"exception not raised for '{trigger}'")
 
 
 class HtmlFileTestCase(_XmlFileTestCaseBase):
@@ -445,7 +445,7 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
         for tag in sorted(void_elements):
             with etree.htmlfile(self._file) as xf:
                 xf.write(etree.Element(tag))
-            self.assertXml('<%s>' % tag)
+            self.assertXml(f'<{tag}>')
             self._file = BytesIO()
 
     def test_method_context_manager_misuse(self):
@@ -668,4 +668,4 @@ def test_suite():
 
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

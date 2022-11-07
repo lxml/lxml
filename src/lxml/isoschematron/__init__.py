@@ -257,7 +257,7 @@ class Schematron(_etree._Validator):
                 root = _etree.parse(file).getroot()
         except Exception:
             raise _etree.SchematronParseError(
-                "No tree or file given: %s" % sys.exc_info()[1])
+                f"No tree or file given: {sys.exc_info()[1]}")
         if root is None:
             raise ValueError("Empty tree")
         if root.tag == _schematron_root:
@@ -275,8 +275,7 @@ class Schematron(_etree._Validator):
             schematron = self._expand(schematron, **expand_params)
         if not schematron_schema_valid(schematron):
             raise _etree.SchematronParseError(
-                "invalid schematron schema: %s" %
-                schematron_schema_valid.error_log)
+                f"invalid schematron schema: {schematron_schema_valid.error_log}")
         if store_schematron:
             self._schematron = schematron
         # add new compile keyword args here if exposing them

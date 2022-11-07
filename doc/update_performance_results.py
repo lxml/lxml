@@ -35,7 +35,7 @@ def update_results(text_file, benchmark_results):
             try:
                 new_time = benchmark_results[key]
             except KeyError:
-                print("Failed to update benchmark results of %r" % d)
+                print(f"Failed to update benchmark results of {d!r}")
                 yield line
             else:
                 yield line.replace(d['time'], new_time)
@@ -46,11 +46,11 @@ def main(log_files, doc_file="doc/performance.txt"):
     if not results:
         return
 
-    print("Found %d benchmark results" % len(results))
+    print(f"Found {len(results)} benchmark results")
     new_text = "".join(update_results(doc_file, results))
     with open(doc_file, 'w') as f:
         f.write(new_text)
-    print("Updated benchmark results in %s" % doc_file)
+    print(f"Updated benchmark results in {doc_file}")
 
 
 if __name__ == '__main__':

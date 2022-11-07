@@ -6,7 +6,7 @@ import os.path
 def error(message, *args):
     if args:
         message = message % args
-    sys.stderr.write('ERROR: %s\n' % message)
+    sys.stderr.write(f'ERROR: {message}\n')
 
 try:
     import lxml.etree as et
@@ -113,7 +113,7 @@ def print_result(result, pretty_print, encoding=None, _is_py3=sys.version_info[0
     elif isinstance(result, basestring):
         result += '\n'
     else:
-        result = '%r\n' % result # '%r' for better number formatting
+        result = f'{result!r}\n' # '%r' for better number formatting
 
     if encoding and encoding != 'unicode' and isinstance(result, unicode):
         result = result.encode(encoding)
@@ -298,7 +298,7 @@ def main(options, args):
     files = args[1:] or [sys.stdin]
 
     if options.root_tag and options.verbose:
-        print('<%s>' % options.root_tag)
+        print(f'<{options.root_tag}>')
 
     found = False
     print_name = len(files) > 1 and not options.root_tag
@@ -314,7 +314,7 @@ def main(options, args):
         )
 
     if options.root_tag and options.verbose:
-        print('</%s>' % options.root_tag)
+        print(f'</{options.root_tag}>')
 
     return found
 

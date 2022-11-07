@@ -418,7 +418,7 @@ class DummyElement:
 
 
 def xhtml_tag(tag):
-    return '{{{}}}{}'.format(XHTML_NAMESPACE, tag)
+    return f'{{{XHTML_NAMESPACE}}}{tag}'
 
 
 XHTML_TEST_DOCUMENT = '''

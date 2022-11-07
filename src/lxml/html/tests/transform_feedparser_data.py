@@ -52,7 +52,7 @@ def parse_content(content):
             break
     c = None
     for tag in ['content', 'summary', 'title', 'copyright', 'tagline', 'info', 'subtitle', 'fullitem', 'body', 'description', 'content:encoded']:
-        regex = re.compile(r"<{}.*?>(.*)</{}>".format(tag, tag), re.S)
+        regex = re.compile(fr"<{tag}.*?>(.*)</{tag}>", re.S)
         match = regex.search(content)
         if match:
             c = match.group(1)
@@ -70,15 +70,14 @@ def parse_content(content):
         'content': c}
 
 def serialize_content(d):
-    s = '''\
-Description: %(Description)s
-Expect: %(Expect)s
+    s = f'''Description: {d['Description']}
+Expect: {d['Expect']}
 Options: 
 
-%(content)s
-''' % d
+{d['content']}
+'''
     if d.get('data') is not None:
-        s += '----------\n%s' % d['data']
+        s += f"----------\n{d['data']}"
     return s
 
 def translate_file(filename):
@@ -88,7 +87,7 @@ def translate_file(filename):
     try:
         output = serialize_content(parse_content(c))
     except:
-        print('Bad data in %s:' % filename)
+        print(f'Bad data in {filename}:')
         print(c)
         traceback.print_exc()
         print('-'*60)

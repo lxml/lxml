@@ -164,7 +164,7 @@ class LXMLOutputChecker(OutputChecker):
         if strip:
             want = norm_whitespace(want).strip()
             got = norm_whitespace(got).strip()
-        want = '^%s$' % re.escape(want)
+        want = f'^{re.escape(want)}$'
         want = want.replace(r'\.\.\.', '.*')
         if re.search(want, got):
             return True
@@ -194,12 +194,12 @@ class LXMLOutputChecker(OutputChecker):
                 want_doc = parser(want)
             except etree.XMLSyntaxError:
                 e = sys.exc_info()[1]
-                errors.append('In example: %s' % e)
+                errors.append(f'In example: {e}')
             try:
                 got_doc = parser(got)
             except etree.XMLSyntaxError:
                 e = sys.exc_info()[1]
-                errors.append('In actual output: %s' % e)
+                errors.append(f'In actual output: {e}')
         if parser is None or errors:
             value = OutputChecker.output_difference(
                 self, example, got, optionflags)
@@ -275,16 +275,16 @@ class LXMLOutputChecker(OutputChecker):
             # FIXME: probably PIs should be handled specially too?
             return '<!--'
         for name, value in sorted(el.attrib.items()):
-            attrs.append('{}="{}"'.format(name, self.format_text(value, False)))
+            attrs.append(f'{name}="{self.format_text(value, False)}"')
         if not attrs:
-            return '<%s>' % el.tag
-        return '<{} {}>'.format(el.tag, ' '.join(attrs))
+            return f'<{el.tag}>'
+        return f"<{el.tag} {' '.join(attrs)}>"
     
     def format_end_tag(self, el):
         if isinstance(el, etree.CommentBase):
             # FIXME: probably PIs should be handled specially too?
             return '-->'
-        return '</%s>' % el.tag
+        return f'</{el.tag}>'
 
     def collect_diff(self, want, got, html, indent):
         parts = []
@@ -326,44 +326,44 @@ class LXMLOutputChecker(OutputChecker):
 
     def collect_diff_tag(self, want, got):
         if not self.tag_compare(want.tag, got.tag):
-            tag = '{} (got: {})'.format(want.tag, got.tag)
+            tag = f'{want.tag} (got: {got.tag})'
         else:
             tag = got.tag
         attrs = []
         any = want.tag == 'any' or 'any' in want.attrib
         for name, value in sorted(got.attrib.items()):
             if name not in want.attrib and not any:
-                attrs.append('+{}="{}"'.format(name, self.format_text(value, False)))
+                attrs.append(f'+{name}="{self.format_text(value, False)}"')
             else:
                 if name in want.attrib:
                     text = self.collect_diff_text(want.attrib[name], value, False)
                 else:
                     text = self.format_text(value, False)
-                attrs.append('{}="{}"'.format(name, text))
+                attrs.append(f'{name}="{text}"')
         if not any:
             for name, value in sorted(want.attrib.items()):
                 if name in got.attrib:
                     continue
-                attrs.append('-{}="{}"'.format(name, self.format_text(value, False)))
+                attrs.append(f'-{name}="{self.format_text(value, False)}"')
         if attrs:
-            tag = '<{} {}>'.format(tag, ' '.join(attrs))
+            tag = f"<{tag} {' '.join(attrs)}>"
         else:
-            tag = '<%s>' % tag
+            tag = f'<{tag}>'
         return tag
 
     def collect_diff_end_tag(self, want, got):
         if want.tag != got.tag:
-            tag = '{} (got: {})'.format(want.tag, got.tag)
+            tag = f'{want.tag} (got: {got.tag})'
         else:
             tag = got.tag
-        return '</%s>' % tag
+        return f'</{tag}>'
 
     def collect_diff_text(self, want, got, strip=True):
         if self.text_compare(want, got, strip):
             if not got:
                 return ''
             return self.format_text(got, strip)
-        text = '{} (got: {})'.format(want, got)
+        text = f'{want} (got: {got})'
         return self.format_text(text, strip)
 
 class LHTMLOutputChecker(LXMLOutputChecker):

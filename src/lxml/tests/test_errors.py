@@ -60,7 +60,7 @@ class ErrorTestCase(HelperTestCase):
             self.assertEqual(e.lineno, 1)
             self.assertEqual(e.offset, 10)
         except Exception as e:
-            self.fail('{}, not {}'.format(fail_msg, type(e)))
+            self.fail(f'{fail_msg}, not {type(e)}')
         else:
             self.fail('test_broken.xml should raise an etree.XMLSyntaxError')
 
@@ -71,4 +71,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

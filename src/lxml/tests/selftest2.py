@@ -76,7 +76,7 @@ def check_string(string):
     len(string)
     for char in string:
         if len(char) != 1:
-            print("expected one-character string, got %r" % char)
+            print(f"expected one-character string, got {char!r}")
     new_string = string + ""
     new_string = string + " "
     string[:0]
@@ -89,7 +89,7 @@ def check_mapping(mapping):
         item = mapping[key]
     mapping["key"] = "value"
     if mapping["key"] != "value":
-        print("expected value string, got %r" % mapping["key"])
+        print(f"expected value string, got {mapping['key']!r}")
 
 def check_element(element):
     if not hasattr(element, "tag"):

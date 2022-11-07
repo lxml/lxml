@@ -40,7 +40,7 @@ def download_and_extract_windows_binaries(destdir):
         if max_release['tag_name'] < release.get('tag_name', ''):
             max_release = release
 
-    url = "https://github.com/lxml/libxml2-win-binaries/releases/download/%s/" % max_release['tag_name']
+    url = f"https://github.com/lxml/libxml2-win-binaries/releases/download/{max_release['tag_name']}/"
     filenames = [asset['name'] for asset in max_release.get('assets', ())]
 
     # Check for native ARM64 build or the environment variable that is set by
@@ -57,11 +57,7 @@ def download_and_extract_windows_binaries(destdir):
 
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
-        libs[libname] = "{}-{}.{}.zip".format(
-            libname,
-            find_max_version(libname, filenames),
-            arch,
-        )
+        libs[libname] = f"{libname}-{find_max_version(libname, filenames)}.{arch}.zip"
 
     if not os.path.exists(destdir):
         os.makedirs(destdir)
@@ -70,9 +66,9 @@ def download_and_extract_windows_binaries(destdir):
         srcfile = urljoin(url, libfn)
         destfile = os.path.join(destdir, libfn)
         if os.path.exists(destfile + ".keep"):
-            print('Using local copy of  "{}"'.format(srcfile))
+            print(f'Using local copy of  "{srcfile}"')
         else:
-            print('Retrieving "{}" to "{}"'.format(srcfile, destfile))
+            print(f'Retrieving "{srcfile}" to "{destfile}"')
             urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
             urlretrieve(srcfile, destfile)
         d = unpack_zipfile(destfile, destdir)
@@ -94,22 +90,21 @@ def find_top_dir_of_zipfile(zipfile):
                 topdir = None
                 break
     assert topdir, (
-        "cannot determine single top-level directory in zip file %s" %
-        zipfile.filename)
+        f"cannot determine single top-level directory in zip file {zipfile.filename}")
     return topdir.rstrip('/')
 
 
 def unpack_zipfile(zipfn, destdir):
     assert zipfn.endswith('.zip')
     import zipfile
-    print('Unpacking {} into {}'.format(os.path.basename(zipfn), destdir))
+    print(f'Unpacking {os.path.basename(zipfn)} into {destdir}')
     f = zipfile.ZipFile(zipfn)
     try:
         extracted_dir = os.path.join(destdir, find_top_dir_of_zipfile(f))
         f.extractall(path=destdir)
     finally:
         f.close()
-    assert os.path.exists(extracted_dir), 'missing: %s' % extracted_dir
+    assert os.path.exists(extracted_dir), f'missing: {extracted_dir}'
     return extracted_dir
 
 
@@ -119,8 +114,8 @@ def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_d
     for libname, path in libs.items():
         i = os.path.join(path, 'include')
         l = os.path.join(path, 'lib')
-        assert os.path.exists(i), 'does not exist: %s' % i
-        assert os.path.exists(l), 'does not exist: %s' % l
+        assert os.path.exists(i), f'does not exist: {i}'
+        assert os.path.exists(l), f'does not exist: {l}'
         static_include_dirs.append(i)
         static_library_dirs.append(l)
 
@@ -316,7 +311,7 @@ def find_max_version(libname, filenames, version_re=None):
                 libname, filenames))
     versions.sort()
     version_string = versions[-1][-1]
-    print('Latest version of {} is {}'.format(libname, version_string))
+    print(f'Latest version of {libname} is {version_string}')
     return version_string
 
 
@@ -353,14 +348,14 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
                '(delete this file if you want to re-download the package)') % (
             name, dest_filename))
     else:
-        print('Downloading {} into {} from {}'.format(name, dest_filename, full_url))
+        print(f'Downloading {name} into {dest_filename} from {full_url}')
         urlcleanup()  # work around FTP bug 27973 in Py2.7.12
         urlretrieve(full_url, dest_filename)
     return dest_filename
 
 
 def unpack_tarball(tar_filename, dest):
-    print('Unpacking {} into {}'.format(os.path.basename(tar_filename), dest))
+    print(f'Unpacking {os.path.basename(tar_filename)} into {dest}')
     if sys.version_info[0] < 3 and tar_filename.endswith('.xz'):
         # Py 2.7 lacks lzma support
         tar_cm = py2_tarxz(tar_filename)
@@ -374,7 +369,7 @@ def unpack_tarball(tar_filename, dest):
             if base_dir is None:
                 base_dir = base_name
             elif base_dir != base_name:
-                print('Unexpected path in {}: {}'.format(tar_filename, base_name))
+                print(f'Unexpected path in {tar_filename}: {base_name}')
         tar.extractall(dest)
     return os.path.join(dest, base_dir)
 
@@ -383,10 +378,10 @@ def call_subprocess(cmd, **kw):
     import subprocess
     cwd = kw.get('cwd', '.')
     cmd_desc = ' '.join(cmd)
-    log.info('Running "{}" in {}'.format(cmd_desc, cwd))
+    log.info(f'Running "{cmd_desc}" in {cwd}')
     returncode = subprocess.call(cmd, **kw)
     if returncode:
-        raise Exception('Command "{}" returned code {}'.format(cmd_desc, returncode))
+        raise Exception(f'Command "{cmd_desc}" returned code {returncode}')
 
 
 def safe_mkdir(dir):
@@ -395,12 +390,12 @@ def safe_mkdir(dir):
 
 
 def cmmi(configure_cmd, build_dir, multicore=None, **call_setup):
-    print('Starting build in %s' % build_dir)
+    print(f'Starting build in {build_dir}')
     call_subprocess(configure_cmd, cwd=build_dir, **call_setup)
     if not multicore:
         make_jobs = multi_make_options
     elif int(multicore) > 1:
-        make_jobs = ['-j%s' % multicore]
+        make_jobs = [f'-j{multicore}']
     else:
         make_jobs = []
     call_subprocess(
@@ -464,7 +459,7 @@ def build_libxml2xslt(download_dir, build_dir,
         lib_file = existing_libs.get(name)
         found = lib_file and os.path.getmtime(lib_file) > os.path.getmtime(build_dir)
         if found:
-            print("Found pre-built '%s'" % name)
+            print(f"Found pre-built '{name}'")
         else:
             # also rebuild all following libs (which may depend on this one)
             _build_all_following[0] = True
@@ -477,13 +472,13 @@ def build_libxml2xslt(download_dir, build_dir,
     configure_cmd = ['./configure',
                      '--disable-dependency-tracking',
                      '--disable-shared',
-                     '--prefix=%s' % prefix,
+                     f'--prefix={prefix}',
                      ]
 
     # build zlib
     zlib_configure_cmd = [
         './configure',
-        '--prefix=%s' % prefix,
+        f'--prefix={prefix}',
     ]
     if not has_current_lib("libz", zlib_dir):
         cmmi(zlib_configure_cmd, zlib_dir, multicore, **call_setup)
@@ -495,8 +490,8 @@ def build_libxml2xslt(download_dir, build_dir,
     # build libxml2
     libxml2_configure_cmd = configure_cmd + [
         '--without-python',
-        '--with-iconv=%s' % prefix,
-        '--with-zlib=%s' % prefix,
+        f'--with-iconv={prefix}',
+        f'--with-zlib={prefix}',
     ]
 
     if not libxml2_version:
@@ -528,7 +523,7 @@ def build_libxml2xslt(download_dir, build_dir,
     # build libxslt
     libxslt_configure_cmd = configure_cmd + [
         '--without-python',
-        '--with-libxml-prefix=%s' % prefix,
+        f'--with-libxml-prefix={prefix}',
         '--without-crypto',
     ]
     if not (has_current_lib("libxslt", libxslt_dir) and has_current_lib("libexslt", libxslt_dir)):

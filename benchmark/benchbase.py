@@ -176,15 +176,15 @@ class TreeBenchMark:
             var = "e" + str(level)
             arg = repr(elem.tag)
             if elem.attrib:
-                arg += ", **%r" % elem.attrib
+                arg += f", **{elem.attrib!r}"
             if level == 1:
-                append(" e1 = Element(%s)" % arg)
+                append(f" e1 = Element({arg})")
             else:
                 append(" %s = SubElement(e%d, %s)" % (var, level-1, arg))
             if elem.text:
-                append(" {}.text = {!r}".format(var, elem.text))
+                append(f" {var}.text = {elem.text!r}")
             if elem.tail:
-                append(" {}.tail = {!r}".format(var, elem.tail))
+                append(f" {var}.tail = {elem.tail!r}")
             for e in elem:
                 generate_elem(append, e, level+1)
         # generate code for a function that creates a tree
@@ -357,7 +357,7 @@ def build_treeset_name(trees, tn, an, serialized, children):
     attr = {0:'-', 1:'A'}[an]
     ser  = {True:'X', False:'T'}[serialized]
     chd  = {True:'C', False:'R'}[children]
-    return "{}{}{}{} T{}".format(text, attr, ser, chd, ',T'.join(map(str, trees))[:6])
+    return f"{text}{attr}{ser}{chd} T{',T'.join(map(str, trees))[:6]}"
 
 def printSetupTimes(benchmark_suites):
     print("Setup times for trees in seconds:")
@@ -430,7 +430,7 @@ def runBenchmarks(benchmark_suites, benchmarks):
                 sys.exit(1)
             except Exception:
                 exc_type, exc_value = sys.exc_info()[:2]
-                print("failed: {}: {}".format(exc_type.__name__, exc_value))
+                print(f"failed: {exc_type.__name__}: {exc_value}")
                 exc_type = exc_value = None
             else:
                 print("{:9.4f} msec/pass, best of ({})".format(
@@ -523,7 +523,7 @@ def main(benchmark_class):
         print("No library to test. Exiting.")
         sys.exit(1)
 
-    print("Running benchmarks in Python {}".format(sys.version_info))
+    print(f"Running benchmarks in Python {sys.version_info}")
 
     print("Preparing test suites and trees ...")
     selected = set( sys.argv[1:] )

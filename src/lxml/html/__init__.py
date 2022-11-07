@@ -155,7 +155,7 @@ class Classes(MutableSet):
         This has no effect if the class is already present.
         """
         if not value or re.search(r'\s', value):
-            raise ValueError("Invalid class name: %r" % value)
+            raise ValueError(f"Invalid class name: {value!r}")
         classes = self._get_class_value().split()
         if value in classes:
             return
@@ -169,7 +169,7 @@ class Classes(MutableSet):
         If the class is not present, do nothing.
         """
         if not value or re.search(r'\s', value):
-            raise ValueError("Invalid class name: %r" % value)
+            raise ValueError(f"Invalid class name: {value!r}")
         classes = [name for name in self._get_class_value().split()
                    if name != value]
         if classes:
@@ -184,7 +184,7 @@ class Classes(MutableSet):
         If the class is not present, raise a KeyError.
         """
         if not value or re.search(r'\s', value):
-            raise ValueError("Invalid class name: %r" % value)
+            raise ValueError(f"Invalid class name: {value!r}")
         super().remove(value)
 
     def __contains__(self, name):
@@ -220,7 +220,7 @@ class Classes(MutableSet):
         false if it was removed (and is now disabled).
         """
         if not value or re.search(r'\s', value):
-            raise ValueError("Invalid class name: %r" % value)
+            raise ValueError(f"Invalid class name: {value!r}")
         classes = self._get_class_value().split()
         try:
             classes.remove(value)
@@ -314,12 +314,10 @@ class HtmlMixin:
         id = self.get('id')
         if not id:
             raise TypeError(
-                "You cannot set a label for an element (%r) that has no id"
-                % self)
+                f"You cannot set a label for an element ({self!r}) that has no id")
         if _nons(label.tag) != 'label':
             raise TypeError(
-                "You can only assign label to a label element (not %r)"
-                % label)
+                f"You can only assign label to a label element (not {label!r})")
         label.set('for', id)
 
     @label.deleter
@@ -475,7 +473,7 @@ class HtmlMixin:
                 return urljoin(base_url, href)
         else:
             raise ValueError(
-                "unexpected value for handle_failures: %r" % handle_failures)
+                f"unexpected value for handle_failures: {handle_failures!r}")
 
         self.rewrite_links(link_repl)
 
@@ -657,7 +655,7 @@ class _MethodFunc:
         if isinstance(doc, basestring):
             if 'copy' in kw:
                 raise TypeError(
-                    "The keyword 'copy' can only be used with element inputs to %s, not a string input" % self.name)
+                    f"The keyword 'copy' can only be used with element inputs to {self.name}, not a string input")
             doc = fromstring(doc, **kw)
         else:
             if 'copy' in kw:
@@ -787,16 +785,16 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
                     b'</body></html>')
     else:
         if not _looks_like_full_html_unicode(html):
-            html = '<html><body>%s</body></html>' % html
+            html = f'<html><body>{html}</body></html>'
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     assert _nons(doc.tag) == 'html'
     bodies = [e for e in doc if _nons(e.tag) == 'body']
-    assert len(bodies) == 1, ("too many bodies: {!r} in {!r}".format(bodies, html))
+    assert len(bodies) == 1, (f"too many bodies: {bodies!r} in {html!r}")
     body = bodies[0]
     elements = []
     if no_leading_text and body.text and body.text.strip():
         raise etree.ParserError(
-            "There is leading text: %r" % body.text)
+            f"There is leading text: {body.text!r}")
     if body.text and body.text.strip():
         elements.append(body.text)
     elements.extend(body)
@@ -849,7 +847,7 @@ def fragment_fromstring(html, create_parent=False, base_url=None,
     el = elements[0]
     if el.tail and el.tail.strip():
         raise etree.ParserError(
-            "Element followed by text: %r" % el.tail)
+            f"Element followed by text: {el.tail!r}")
     el.tail = None
     return el
 
@@ -1029,7 +1027,7 @@ class FormElement(HtmlElement):
                     results.append((name, el.value))
             else:
                 assert tag == 'input', (
-                    "Unexpected tag: %r" % el)
+                    f"Unexpected tag: {el!r}")
                 if el.checkable and not el.checked:
                     continue
                 if el.type in ('submit', 'image', 'reset', 'file'):
@@ -1159,9 +1157,7 @@ class FieldsDict(MutableMapping):
         return len(self.inputs)
 
     def __repr__(self):
-        return '<{} for form {}>'.format(
-            self.__class__.__name__,
-            self.inputs.form._name())
+        return f'<{self.__class__.__name__} for form {self.inputs.form._name()}>'
 
 
 class InputGetter:
@@ -1185,9 +1181,7 @@ class InputGetter:
         self.form = form
 
     def __repr__(self):
-        return '<{} for form {}>'.format(
-            self.__class__.__name__,
-            self.form._name())
+        return f'<{self.__class__.__name__} for form {self.form._name()}>'
 
     ## FIXME: there should be more methods, and it's unclear if this is
     ## a dictionary-like object or list-like object
@@ -1195,7 +1189,7 @@ class InputGetter:
     def __getitem__(self, name):
         fields = [field for field in self if field.name == name]
         if not fields:
-            raise KeyError("No input element with the name %r" % name)
+            raise KeyError(f"No input element with the name {name!r}")
 
         input_type = fields[0].get('type')
         if input_type == 'radio' and len(fields) > 1:
@@ -1277,7 +1271,7 @@ class InputMixin:
     def __repr__(self):
         type_name = getattr(self, 'type', None)
         if type_name:
-            type_name = ' type=%r' % type_name
+            type_name = f' type={type_name!r}'
         else:
             type_name = ''
         return '<{} {:x} name={!r}{}>'.format(
@@ -1375,7 +1369,7 @@ class SelectElement(InputMixin, HtmlElement):
                     break
             else:
                 raise ValueError(
-                    "There is no option with the value of %r" % value)
+                    f"There is no option with the value of {value!r}")
         for el in _options_xpath(self):
             if 'selected' in el.attrib:
                 del el.attrib['selected']
@@ -1458,7 +1452,7 @@ class MultipleSelectOptions(SetMixin):
                 break
         else:
             raise ValueError(
-                "There is no option with the value %r" % item)
+                f"There is no option with the value {item!r}")
 
     def remove(self, item):
         for option in self.options:
@@ -1470,11 +1464,11 @@ class MultipleSelectOptions(SetMixin):
                     del option.attrib['selected']
                 else:
                     raise ValueError(
-                        "The option %r is not currently selected" % item)
+                        f"The option {item!r} is not currently selected")
                 break
         else:
             raise ValueError(
-                "There is not option with the value %r" % item)
+                f"There is not option with the value {item!r}")
 
     def __repr__(self):
         return '<{} {{{}}} for select name={!r}>'.format(
@@ -1512,7 +1506,7 @@ class RadioGroup(list):
                     checked_option = el
                     break
             else:
-                raise ValueError("There is no radio input with the value %r" % value)
+                raise ValueError(f"There is no radio input with the value {value!r}")
         for el in self:
             if 'checked' in el.attrib:
                 del el.attrib['checked']
@@ -1531,9 +1525,7 @@ class RadioGroup(list):
         return [el.get('value') for el in self]
 
     def __repr__(self):
-        return '{}({})'.format(
-            self.__class__.__name__,
-            list.__repr__(self))
+        return f'{self.__class__.__name__}({list.__repr__(self)})'
 
 
 class CheckboxGroup(list):
@@ -1576,8 +1568,7 @@ class CheckboxGroup(list):
         return [el.get('value') for el in self]
 
     def __repr__(self):
-        return '{}({})'.format(
-            self.__class__.__name__, list.__repr__(self))
+        return f'{self.__class__.__name__}({list.__repr__(self)})'
 
 
 class CheckboxValues(SetMixin):
@@ -1601,7 +1592,7 @@ class CheckboxValues(SetMixin):
                 el.set('checked', '')
                 break
         else:
-            raise KeyError("No checkbox with value %r" % value)
+            raise KeyError(f"No checkbox with value {value!r}")
 
     def remove(self, value):
         for el in self.group:
@@ -1610,11 +1601,11 @@ class CheckboxValues(SetMixin):
                     del el.attrib['checked']
                 else:
                     raise KeyError(
-                        "The checkbox with value %r was already unchecked" % value)
+                        f"The checkbox with value {value!r} was already unchecked")
                 break
         else:
             raise KeyError(
-                "No checkbox with value %r" % value)
+                f"No checkbox with value {value!r}")
 
     def __repr__(self):
         return '<{} {{{}}} for checkboxes name={!r}>'.format(
@@ -1743,7 +1734,7 @@ class LabelElement(HtmlElement):
         id = other.get('id')
         if not id:
             raise TypeError(
-                "Element %r has no id attribute" % other)
+                f"Element {other!r} has no id attribute")
         self.set('for', id)
 
     @for_element.deleter

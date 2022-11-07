@@ -166,7 +166,7 @@ class ElementMaker:
 
         def add_cdata(elem, cdata):
             if elem.text:
-                raise ValueError("Can't add a CDATA section. Element already has some text: %r" % elem.text)
+                raise ValueError(f"Can't add a CDATA section. Element already has some text: {elem.text!r}")
             elem.text = cdata
 
         if str not in typemap:

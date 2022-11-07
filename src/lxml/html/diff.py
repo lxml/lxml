@@ -28,8 +28,7 @@ except NameError:
 ############################################################
 
 def default_markup(text, version):
-    return '<span title="{}">{}</span>'.format(
-        html_escape(_unicode(version), 1), text)
+    return f'<span title="{html_escape(_unicode(version), 1)}">{text}</span>'
 
 def html_annotate(doclist, markup=default_markup):
     """
@@ -399,7 +398,7 @@ def locate_unbalanced_start(unbalanced_start, pre_delete, post_delete):
             # Can't move into an insert
             break
         assert name != 'del', (
-            "Unexpected delete tag: %r" % next)
+            f"Unexpected delete tag: {next!r}")
         if name == finding_name:
             unbalanced_start.pop(0)
             pre_delete.append(post_delete.pop(0))
@@ -482,7 +481,7 @@ class tag_token(token):
 
     def __new__(cls, tag, data, html_repr, pre_tags=None, 
                 post_tags=None, trailing_whitespace=""):
-        obj = token.__new__(cls, "{}: {}".format(type, data), 
+        obj = token.__new__(cls, f"{type}: {data}", 
                             pre_tags=pre_tags, 
                             post_tags=post_tags, 
                             trailing_whitespace=trailing_whitespace)
@@ -510,7 +509,7 @@ class href_token(token):
     hide_when_equal = True
 
     def html(self):
-        return ' Link: %s' % self
+        return f' Link: {self}'
 
 def tokenize(html, include_hrefs=True):
     """
@@ -721,7 +720,7 @@ def start_tag(el):
     The text representation of the start tag for a tag.
     """
     return '<{}{}>'.format(
-        el.tag, ''.join([' {}="{}"'.format(name, html_escape(value, True))
+        el.tag, ''.join([f' {name}="{html_escape(value, True)}"'
                          for name, value in el.attrib.items()]))
 
 def end_tag(el):
@@ -731,7 +730,7 @@ def end_tag(el):
         extra = ' '
     else:
         extra = ''
-    return '</{}>{}'.format(el.tag, extra)
+    return f'</{el.tag}>{extra}'
 
 def is_word(tok):
     return not tok.startswith('<')
@@ -758,7 +757,7 @@ def serialize_html_fragment(el, skip_outer=False):
     If skip_outer is true, then don't serialize the outermost tag
     """
     assert not isinstance(el, basestring), (
-        "You should pass in an element, not a string like %r" % el)
+        f"You should pass in an element, not a string like {el!r}")
     html = etree.tostring(el, method="html", encoding=_unicode)
     if skip_outer:
         # Get rid of the extra starting tag:
@@ -773,7 +772,7 @@ def _fixup_ins_del_tags(doc):
     """fixup_ins_del_tags that works on an lxml document in-place
     """
     for tag in ['ins', 'del']:
-        for el in doc.xpath('descendant-or-self::%s' % tag):
+        for el in doc.xpath(f'descendant-or-self::{tag}'):
             if not _contains_block_level_tag(el):
                 continue
             _move_el_inside_block(el, tag=tag)

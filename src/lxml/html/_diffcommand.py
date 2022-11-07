@@ -57,7 +57,7 @@ def read_file(filename):
         c = sys.stdin.read()
     elif not os.path.exists(filename):
         raise OSError(
-            "Input file %s does not exist" % filename)
+            f"Input file {filename} does not exist")
     else:
         with open(filename, 'rb') as f:
             c = f.read()

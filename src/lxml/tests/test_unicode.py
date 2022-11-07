@@ -28,7 +28,7 @@ class UnicodeTestCase(HelperTestCase):
         self.assertEqual(_str('\u1234'), _str('\U00001234'))
 
     def test_unicode_xml(self):
-        tree = etree.XML('<p>%s</p>' % uni)
+        tree = etree.XML(f'<p>{uni}</p>')
         self.assertEqual(uni, tree.text)
 
     @needs_libxml(2, 9, 5)  # not sure, at least 2.9.4 fails
@@ -42,7 +42,7 @@ class UnicodeTestCase(HelperTestCase):
 
     def test_unicode_xml_broken(self):
         uxml = ('<?xml version="1.0" encoding="UTF-8"?>' +
-                '<p>%s</p>' % uni)
+                f'<p>{uni}</p>')
         self.assertRaises(ValueError, etree.XML, uxml)
 
     def test_unicode_tag(self):
@@ -70,7 +70,7 @@ class UnicodeTestCase(HelperTestCase):
 
     def test_unicode_qname(self):
         qname = etree.QName(uni, uni)
-        tag = "{{{}}}{}".format(uni, uni)
+        tag = f"{{{uni}}}{uni}"
         self.assertEqual(qname.text, tag)
         self.assertEqual(unicode(qname), tag)
 
@@ -145,7 +145,7 @@ class UnicodeTestCase(HelperTestCase):
 
 
     def test_unicode_parse_stringio(self):
-        el = etree.parse(StringIO('<p>%s</p>' % uni)).getroot()
+        el = etree.parse(StringIO(f'<p>{uni}</p>')).getroot()
         self.assertEqual(uni, el.text)
 
 ##     def test_parse_fileobject_unicode(self):

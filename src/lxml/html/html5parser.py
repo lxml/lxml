@@ -49,7 +49,7 @@ def _find_tag(tree, tag):
     elem = tree.find(tag)
     if elem is not None:
         return elem
-    return tree.find('{{{}}}{}'.format(XHTML_NAMESPACE, tag))
+    return tree.find(f'{{{XHTML_NAMESPACE}}}{tag}')
 
 
 def document_fromstring(html, guess_charset=None, parser=None):
@@ -104,8 +104,7 @@ def fragments_fromstring(html, no_leading_text=False,
     if children and isinstance(children[0], _strings):
         if no_leading_text:
             if children[0].strip():
-                raise etree.ParserError('There is leading text: %r' %
-                                        children[0])
+                raise etree.ParserError(f'There is leading text: {children[0]!r}')
             del children[0]
     return children
 
@@ -149,7 +148,7 @@ def fragment_fromstring(html, create_parent=False,
         raise etree.ParserError('Multiple elements found')
     result = elements[0]
     if result.tail and result.tail.strip():
-        raise etree.ParserError('Element followed by text: %r' % result.tail)
+        raise etree.ParserError(f'Element followed by text: {result.tail!r}')
     result.tail = None
     return result
 

@@ -30,10 +30,10 @@ if cElementTree is not None and (CET_VERSION <= (1,0,7) or sys.version_info[0] >
     cElementTree = None
 
 if ElementTree is not None:
-    print("Comparing with ElementTree %s" % getattr(ElementTree, "VERSION", "?"))
+    print(f"Comparing with ElementTree {getattr(ElementTree, 'VERSION', '?')}")
 
 if cElementTree is not None:
-    print("Comparing with cElementTree %s" % getattr(cElementTree, "VERSION", "?"))
+    print(f"Comparing with cElementTree {getattr(cElementTree, 'VERSION', '?')}")
 
 
 def et_needs_pyversion(*version):
@@ -41,7 +41,7 @@ def et_needs_pyversion(*version):
         @wraps(method)
         def testfunc(self, *args):
             if self.etree is not etree and sys.version_info < version:
-                raise unittest.SkipTest("requires ET in Python %s" % '.'.join(map(str, version)))
+                raise unittest.SkipTest(f"requires ET in Python {'.'.join(map(str, version))}")
             return method(self, *args)
         return testfunc
     return wrap
@@ -52,7 +52,7 @@ def et_exclude_pyversion(*version):
         @wraps(method)
         def testfunc(self, *args):
             if self.etree is not etree and sys.version_info[:len(version)] == version:
-                raise unittest.SkipTest("requires ET in Python %s" % '.'.join(map(str, version)))
+                raise unittest.SkipTest(f"requires ET in Python {'.'.join(map(str, version))}")
             return method(self, *args)
         return testfunc
     return wrap
@@ -85,7 +85,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             len(string)
             for char in string:
                 self.assertEqual(len(char), 1,
-                        msg="expected one-character string, got %r" % char)
+                        msg=f"expected one-character string, got {char!r}")
             new_string = string + ""
             new_string = string + " "
             string[:0]
@@ -98,16 +98,16 @@ class _ETreeTestCaseBase(HelperTestCase):
                 item = mapping[key]
             mapping["key"] = "value"
             self.assertEqual(mapping["key"], "value",
-                    msg="expected value string, got %r" % mapping["key"])
+                    msg=f"expected value string, got {mapping['key']!r}")
 
         def check_element(element):
             self.assertTrue(self.etree.iselement(element), msg="not an element")
             direlem = dir(element)
             for attr in 'tag', 'attrib', 'text', 'tail':
                 self.assertTrue(hasattr(element, attr),
-                        msg='no %s member' % attr)
+                        msg=f'no {attr} member')
                 self.assertIn(attr, direlem,
-                        msg='no %s visible by dir' % attr)
+                        msg=f'no {attr} visible by dir')
 
             check_string(element.tag)
             check_mapping(element.attrib)
@@ -132,7 +132,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         def check_method(method):
             self.assertTrue(hasattr(method, '__call__'),
-                    msg="%s not callable" % method)
+                    msg=f"{method} not callable")
 
         check_method(element.append)
         check_method(element.extend)
@@ -1116,12 +1116,12 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         for i in range(10):
             f = BytesIO() 
-            root = XML(_bytes('<doc{}>This is a test.</doc{}>'.format(i, i)))
+            root = XML(_bytes(f'<doc{i}>This is a test.</doc{i}>'))
             tree = ElementTree(element=root)
             tree.write(f)
             data = f.getvalue()
             self.assertEqual(
-                _bytes('<doc{}>This is a test.</doc{}>'.format(i, i)),
+                _bytes(f'<doc{i}>This is a test.</doc{i}>'),
                 canonicalize(data))
 
     required_versions_ET['test_write_method_html'] = (1,3)
@@ -1193,7 +1193,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         f = BytesIO()
         for i in range(10):
-            element = Element('tag%s' % i)
+            element = Element(f'tag{i}')
             self._check_element(element)
             tree = ElementTree(element)
             tree.write(f)
@@ -1324,15 +1324,15 @@ class _ETreeTestCaseBase(HelperTestCase):
     def test_extend(self):
         root = self.etree.Element('foo')
         for i in range(3):
-            element = self.etree.SubElement(root, 'a%s' % i)
+            element = self.etree.SubElement(root, f'a{i}')
             element.text = "text%d" % i
             element.tail = "tail%d" % i
 
         elements = []
         for i in range(3):
-            new_element = self.etree.Element("test%s" % i)
-            new_element.text = "TEXT%s" % i
-            new_element.tail = "TAIL%s" % i
+            new_element = self.etree.Element(f"test{i}")
+            new_element.text = f"TEXT{i}"
+            new_element.tail = f"TAIL{i}"
             elements.append(new_element)
 
         root.extend(elements)
@@ -1465,7 +1465,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         a = Element('a')
         for i in range(5):
-            b = SubElement(a, 'b%s' % i)
+            b = SubElement(a, f'b{i}')
             c = SubElement(b, 'c')
         for i in range(5):
             d = Element('d')
@@ -1813,7 +1813,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             a[0])
 
         self.assertXML(
-            _bytes('<%(a)s><%(d)s></%(d)s><%(b)s></%(b)s><%(c)s></%(c)s></%(a)s>' % names),
+            _bytes(f"<{names['a']}><{names['d']}></{names['d']}><{names['b']}></{names['b']}><{names['c']}></{names['c']}></{names['a']}>"),
             a)
 
         e = Element(names['e'])
@@ -1822,7 +1822,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             e,
             a[2])
         self.assertXML(
-            _bytes('<%(a)s><%(d)s></%(d)s><%(b)s></%(b)s><%(e)s></%(e)s><%(c)s></%(c)s></%(a)s>' % names),
+            _bytes(f"<{names['a']}><{names['d']}></{names['d']}><{names['b']}></{names['b']}><{names['e']}></{names['e']}><{names['c']}></{names['c']}></{names['a']}>"),
             a)
 
     def test_insert_beyond_index(self):
@@ -2523,7 +2523,7 @@ class _ETreeTestCaseBase(HelperTestCase):
     def test_ns_access(self):
         ElementTree = self.etree.ElementTree
         ns = 'http://xml.infrae.com/1'
-        f = BytesIO('<x:a xmlns:x="%s"><x:b></x:b></x:a>' % ns)
+        f = BytesIO(f'<x:a xmlns:x="{ns}"><x:b></x:b></x:a>')
         t = ElementTree(file=f)
         a = t.getroot()
         self.assertEqual('{%s}a' % ns,
@@ -2535,7 +2535,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         ElementTree = self.etree.ElementTree
         ns = 'http://xml.infrae.com/1'
         ns2 = 'http://xml.infrae.com/2'
-        f = BytesIO('<x:a xmlns:x="{}" xmlns:y="{}"><x:b></x:b><y:b></y:b></x:a>'.format(ns, ns2))
+        f = BytesIO(f'<x:a xmlns:x="{ns}" xmlns:y="{ns2}"><x:b></x:b><y:b></y:b></x:a>')
         t = ElementTree(file=f)
         a = t.getroot()
         self.assertEqual('{%s}a' % ns,
@@ -2573,7 +2573,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         ns = 'http://xml.infrae.com/1'
         ns2 = 'http://xml.infrae.com/2'
-        f = BytesIO('<a xmlns="{}" xmlns:x="{}"><x:b></x:b><b></b></a>'.format(ns, ns2))
+        f = BytesIO(f'<a xmlns="{ns}" xmlns:x="{ns2}"><x:b></x:b><b></b></a>')
         t = ElementTree(file=f)
 
         a = t.getroot()
@@ -2599,11 +2599,11 @@ class _ETreeTestCaseBase(HelperTestCase):
             a.get('{%s}bar' % ns2))
         try:
             self.assertXML(
-                _bytes('<a xmlns:ns0="{}" xmlns:ns1="{}" ns0:foo="Foo" ns1:bar="Bar"></a>'.format(ns, ns2)),
+                _bytes(f'<a xmlns:ns0="{ns}" xmlns:ns1="{ns2}" ns0:foo="Foo" ns1:bar="Bar"></a>'),
                 a)
         except AssertionError:
             self.assertXML(
-                _bytes('<a xmlns:ns0="{}" xmlns:ns1="{}" ns1:foo="Foo" ns0:bar="Bar"></a>'.format(ns2, ns)),
+                _bytes(f'<a xmlns:ns0="{ns2}" xmlns:ns1="{ns}" ns1:foo="Foo" ns0:bar="Bar"></a>'),
                 a)
 
     def test_ns_move(self):
@@ -2690,7 +2690,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         ns_href = "http://a.b.c"
         one = parse(
-            BytesIO('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
+            BytesIO(f'<foo><bar xmlns:ns="{ns_href}"><ns:baz/></bar></foo>'))
         baz = one.getroot()[0][0]
 
         parsed = parse(BytesIO( tostring(baz) )).getroot()
@@ -2738,7 +2738,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         namespace = 'http://seriously.unknown/namespace/URI'
 
         el = Element('{%s}test' % namespace)
-        self.assertEqual(_bytes('<ns0:test xmlns:ns0="%s"></ns0:test>' % namespace),
+        self.assertEqual(_bytes(f'<ns0:test xmlns:ns0="{namespace}"></ns0:test>'),
             self._writeElement(el))
 
         self.etree.register_namespace(prefix, namespace)
@@ -2895,7 +2895,7 @@ class _ETreeTestCaseBase(HelperTestCase):
     def test_iterparse_large(self):
         iterparse = self.etree.iterparse
         CHILD_COUNT = 12345
-        f = BytesIO('<a>%s</a>' % ('<b>test</b>'*CHILD_COUNT))
+        f = BytesIO(f"<a>{'<b>test</b>' * CHILD_COUNT}</a>")
 
         i = 0
         for key in iterparse(f):
@@ -4223,7 +4223,7 @@ class _ElementSlicingTest(unittest.TestCase):
         """
         e = self.etree.Element('a')
         for i in range(numchildren):
-            self.etree.SubElement(e, 'a%s' % i)
+            self.etree.SubElement(e, f'a{i}')
         return e
 
     def test_getslice_single_index(self):
@@ -4305,7 +4305,7 @@ class _ElementSlicingTest(unittest.TestCase):
 
     def test_setslice_range(self):
         e = self._make_elem_with_children(4)
-        e[1:3] = [self.etree.Element('b%s' % i) for i in range(2)]
+        e[1:3] = [self.etree.Element(f'b{i}') for i in range(2)]
         self.assertEqual(self._subelem_tags(e), ['a0', 'b0', 'b1', 'a3'])
 
         e = self._make_elem_with_children(4)
@@ -4313,19 +4313,19 @@ class _ElementSlicingTest(unittest.TestCase):
         self.assertEqual(self._subelem_tags(e), ['a0', 'b', 'a3'])
 
         e = self._make_elem_with_children(4)
-        e[1:3] = [self.etree.Element('b%s' % i) for i in range(3)]
+        e[1:3] = [self.etree.Element(f'b{i}') for i in range(3)]
         self.assertEqual(self._subelem_tags(e), ['a0', 'b0', 'b1', 'b2', 'a3'])
 
     def test_setslice_steps(self):
         e = self._make_elem_with_children(6)
-        e[1:5:2] = [self.etree.Element('b%s' % i) for i in range(2)]
+        e[1:5:2] = [self.etree.Element(f'b{i}') for i in range(2)]
         self.assertEqual(self._subelem_tags(e), ['a0', 'b0', 'a2', 'b1', 'a4', 'a5'])
 
         e = self._make_elem_with_children(6)
         with self.assertRaises(ValueError):
             e[1:5:2] = [self.etree.Element('b')]
         with self.assertRaises(ValueError):
-            e[1:5:2] = [self.etree.Element('b%s' % i) for i in range(3)]
+            e[1:5:2] = [self.etree.Element(f'b{i}') for i in range(3)]
         with self.assertRaises(ValueError):
             e[1:5:2] = []
         self.assertEqual(self._subelem_tags(e), ['a0', 'a1', 'a2', 'a3', 'a4', 'a5'])
@@ -4338,14 +4338,14 @@ class _ElementSlicingTest(unittest.TestCase):
 
     def test_setslice_negative_steps(self):
         e = self._make_elem_with_children(4)
-        e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(2)]
+        e[2:0:-1] = [self.etree.Element(f'b{i}') for i in range(2)]
         self.assertEqual(self._subelem_tags(e), ['a0', 'b1', 'b0', 'a3'])
 
         e = self._make_elem_with_children(4)
         with self.assertRaises(ValueError):
             e[2:0:-1] = [self.etree.Element('b')]
         with self.assertRaises(ValueError):
-            e[2:0:-1] = [self.etree.Element('b%s' % i) for i in range(3)]
+            e[2:0:-1] = [self.etree.Element(f'b{i}') for i in range(3)]
         with self.assertRaises(ValueError):
             e[2:0:-1] = []
         self.assertEqual(self._subelem_tags(e), ['a0', 'a1', 'a2', 'a3'])
@@ -4652,7 +4652,7 @@ class _C14NTest(unittest.TestCase):
             except unittest.SkipTest:
                 raise
             except Exception as e:
-                print("Subtest {} failed: {}".format(name, e))
+                print(f"Subtest {name} failed: {e}")
                 raise
 
     def _canonicalize(self, input_file, **options):
@@ -4815,7 +4815,7 @@ class _C14NTest(unittest.TestCase):
             input_file: [
                 (filename, configs[filename.rsplit('_', 1)[-1]])
                 for filename in files
-                if filename.startswith('out_%s_' % input_file)
+                if filename.startswith(f'out_{input_file}_')
                 and filename.rsplit('_', 1)[-1] in configs
             ]
             for input_file in input_files
@@ -4839,12 +4839,12 @@ class _C14NTest(unittest.TestCase):
                     config, 'PrefixRewrite') == 'sequential'
                 if 'QNameAware' in config:
                     qattrs = [
-                        "{{{}}}{}".format(el.get('NS'), el.get('Name'))
+                        f"{{{el.get('NS')}}}{el.get('Name')}"
                         for el in config['QNameAware'][1].findall(
                             '{http://www.w3.org/2010/xml-c14n2}QualifiedAttr')
                     ]
                     qtags = [
-                        "{{{}}}{}".format(el.get('NS'), el.get('Name'))
+                        f"{{{el.get('NS')}}}{el.get('Name')}"
                         for el in config['QNameAware'][1].findall(
                             '{http://www.w3.org/2010/xml-c14n2}Element')
                     ]
@@ -4853,11 +4853,11 @@ class _C14NTest(unittest.TestCase):
 
                 # Build subtest description from config.
                 config_descr = ','.join(
-                    "{}={}".format(name, value or ','.join(c.tag.split('}')[-1] for c in children))
+                    f"{name}={value or ','.join(c.tag.split('}')[-1] for c in children)}"
                     for name, (value, children) in sorted(config.items())
                 )
 
-                with self.subTest("{}({})".format(output_file, config_descr)):
+                with self.subTest(f"{output_file}({config_descr})"):
                     if input_file == 'inNsRedecl' and not rewrite_prefixes:
                         self.skipTest(
                             "Redeclared namespace handling is not supported in {}".format(
@@ -5008,4 +5008,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

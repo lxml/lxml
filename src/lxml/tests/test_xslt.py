@@ -109,14 +109,13 @@ class ETreeXSLTTestCase(HelperTestCase):
             expected='<?xml version="1.0" encoding="%(ENCODING)s"?><foo>\\uF8D2</foo>'):
         tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
                                  ).decode("unicode_escape"))
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
+        style = self.parse(f'''<xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output encoding="{ENCODING}"/>
+  <xsl:output encoding="{encoding}"/>
   <xsl:template match="/">
     <foo><xsl:value-of select="/a/b/text()" /></foo>
   </xsl:template>
-</xsl:stylesheet>'''.format(ENCODING=encoding))
+</xsl:stylesheet>''')
 
         st = etree.XSLT(style)
         res = st(tree)
@@ -762,7 +761,7 @@ class ETreeXSLTTestCase(HelperTestCase):
             if ':ERROR:XSLT:' in str(error):
                 break
         else:
-            self.assertFalse(True, 'No XSLT errors found in error log:\n%s' % errors)
+            self.assertFalse(True, f'No XSLT errors found in error log:\n{errors}')
 
     def test_xslt_document_XML_resolver(self):
         # make sure document('') works when custom resolvers are in use
@@ -1459,7 +1458,7 @@ class ETreeXSLTExtFuncTestCase(HelperTestCase):
         def mytext(ctxt, values):
             for value in values:
                 self.assertTrue(hasattr(value, 'tag'),
-                             "%s is not an Element" % type(value))
+                             f"{type(value)} is not an Element")
                 self.assertEqual(value.tag, 'b')
                 self.assertEqual(value.text, 'BBB')
             return 'X'.join([el.tag for el in values])
@@ -1975,7 +1974,7 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
                 test.assertEqual(1, len(content))
                 test.assertEqual('arbitrary', content[0])
                 test.assertEqual('This is ', output_parent.text)
-                output_parent.text += '*-%s-*' % content[0]
+                output_parent.text += f'*-{content[0]}-*'
 
         extensions = {("my", "par"): ExtMyPar(), ("my", "format"): ExtMyFormat()}
         transform = etree.XSLT(style, extensions=extensions)
@@ -2100,4 +2099,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

@@ -24,8 +24,8 @@ from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_d
 from .common_imports import canonicalize, _str, _bytes
 from .common_imports import SimpleFSPath
 
-print("""
-TESTED VERSION: %s""" % etree.__version__ + """
+print(f"""
+TESTED VERSION: {etree.__version__}""" + """
     Python:           {!r}""".format(sys.version_info) + """
     lxml.etree:       {!r}""".format(etree.LXML_VERSION) + """
     libxml used:      {!r}""".format(etree.LIBXML_VERSION) + """
@@ -311,11 +311,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             ('attr_98', 'TOAST-2'),
         ]
         ordered_dict_types = [OrderedDict, lambda x:x]
-        if sys.version_info >= (3, 6):
-            ordered_dict_types.append(dict)
-        else:
-            # Keyword arguments are not ordered in Py<3.6, and thus get sorted.
-            attr_order.sort()
+        ordered_dict_types.append(dict)
         attr_order += items
         expected_keys = [attr[0] for attr in attr_order]
         expected_values = [attr[1] for attr in attr_order]
@@ -330,7 +326,7 @@ class ETreeOnlyTestCase(HelperTestCase):
                 self.assertSequenceEqual(expected_values, root2.attrib.values())
                 self.assertSequenceEqual(expected_items, root2.attrib.items())
             except AssertionError as exc:
-                exc.args = ("Order of '{}': {}".format(dict_type.__name__, exc.args[0]),) + exc.args[1:]
+                exc.args = (f"Order of '{dict_type.__name__}': {exc.args[0]}",) + exc.args[1:]
                 raise
 
         self.assertEqual(keys, root.attrib.keys())
@@ -1488,7 +1484,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             # This would be the expected result, because there was no namespace
             pass
         else:
-            assert False, "Found unexpected namespace '%s'" % ns
+            assert False, f"Found unexpected namespace '{ns}'"
 
     def test_itertext_comment_pi(self):
         # https://bugs.launchpad.net/lxml/+bug/1844674
@@ -2920,17 +2916,17 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_namespaces_reuse_after_move(self):
         ns_href = "http://a.b.c"
         one = self.etree.fromstring(
-            _bytes('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
+            _bytes(f'<foo><bar xmlns:ns="{ns_href}"><ns:baz/></bar></foo>'))
         baz = one[0][0]
 
         two = self.etree.fromstring(
-            _bytes('<root xmlns:ns="%s"/>' % ns_href))
+            _bytes(f'<root xmlns:ns="{ns_href}"/>'))
         two.append(baz)
         del one # make sure the source document is deallocated
 
         self.assertEqual('{%s}baz' % ns_href, baz.tag)
         self.assertEqual(
-            _bytes('<root xmlns:ns="%s"><ns:baz/></root>' % ns_href),
+            _bytes(f'<root xmlns:ns="{ns_href}"><ns:baz/></root>'),
             self.etree.tostring(two))
 
     def test_namespace_cleanup(self):
@@ -3633,7 +3629,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         e = etree.Element('foo')
         for i in range(10):
-            etree.SubElement(e, 'a%s' % i)
+            etree.SubElement(e, f'a{i}')
         for i in range(10):
             self.assertEqual(
                 i,
@@ -3659,7 +3655,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         e = etree.Element('foo')
         for i in range(10):
-            el = etree.SubElement(e, 'a%s' % i)
+            el = etree.SubElement(e, f'a{i}')
             el.text = "text%d" % i
             el.tail = "tail%d" % i
 
@@ -3695,7 +3691,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         e = etree.Element('foo')
         for i in range(10):
-            etree.SubElement(e, 'a%s' % i)
+            etree.SubElement(e, f'a{i}')
 
         new_element = etree.Element("test")
         new_element.text = "TESTTEXT"
@@ -3918,7 +3914,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml_header = '<?xml version="1.0" encoding="ascii"?>'
         pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
         sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-        doctype_string = '<!DOCTYPE html PUBLIC "{}" "{}">'.format(pub_id, sys_id)
+        doctype_string = f'<!DOCTYPE html PUBLIC "{pub_id}" "{sys_id}">'
 
         xml = _bytes(xml_header + doctype_string + '<html><body></body></html>')
 
@@ -3935,7 +3931,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         xml_header = '<?xml version="1.0" encoding="UTF-8"?>'
         sys_id = "some.dtd"
-        doctype_string = '<!DOCTYPE html SYSTEM "%s">' % sys_id
+        doctype_string = f'<!DOCTYPE html SYSTEM "{sys_id}">'
         xml = _bytes(xml_header + doctype_string + '<html><body></body></html>')
 
         tree = etree.parse(BytesIO(xml))
@@ -3981,7 +3977,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
         sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-        doctype_string = _bytes('<!DOCTYPE html PUBLIC "{}" "{}">'.format(pub_id, sys_id))
+        doctype_string = _bytes(f'<!DOCTYPE html PUBLIC "{pub_id}" "{sys_id}">')
 
         xml = _bytes('<!DOCTYPE root>\n<root/>')
         tree = etree.parse(BytesIO(xml))
@@ -4743,7 +4739,7 @@ class _XIncludeTestCase(HelperTestCase):
                     assert not self.called.get(filename)
                     self.called[filename] = True
                     next_data = data.replace(
-                        'test.xml', 'test%d.xml' % len(self.called))
+                        'test.xml', f'test{len(self.called)}.xml')
                     return self.resolve_string(next_data, context)
 
         res_instance = Resolver()
@@ -5363,9 +5359,9 @@ class XMLPullParserTest(unittest.TestCase):
     def test_pull_from_simple_target(self):
         class Target:
             def start(self, tag, attrib):
-                return 'start(%s)' % tag
+                return f'start({tag})'
             def end(self, tag):
-                return 'end(%s)' % tag
+                return f'end({tag})'
             def close(self):
                 return 'close()'
 
@@ -5387,9 +5383,9 @@ class XMLPullParserTest(unittest.TestCase):
     def test_pull_from_simple_target_start_end(self):
         class Target:
             def start(self, tag, attrib):
-                return 'start(%s)' % tag
+                return f'start({tag})'
             def end(self, tag):
-                return 'end(%s)' % tag
+                return f'end({tag})'
             def close(self):
                 return 'close()'
 
@@ -5499,4 +5495,4 @@ def test_suite():
 
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

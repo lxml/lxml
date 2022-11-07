@@ -37,7 +37,7 @@ class FeedTestCase(unittest.TestCase):
             c = headers.get_payload()
         if not headers.keys():
             raise Exception(
-                "File %s has no headers" % self.filename)
+                f"File {self.filename} has no headers")
         self.description = headers['Description']
         self.expect = headers.get('Expect', '')
         self.ignore = headers.get('Ignore')
@@ -67,7 +67,7 @@ class FeedTestCase(unittest.TestCase):
         else:
             transformed = self.input
         assert self.expect is not None, (
-            "No expected output in %s" % self.filename)
+            f"No expected output in {self.filename}")
         checker = LHTMLOutputChecker()
         if not checker.check_output(self.expect, transformed, 0):
             result = checker.output_difference(

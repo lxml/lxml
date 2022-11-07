@@ -76,4 +76,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

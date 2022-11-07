@@ -230,7 +230,7 @@ class Cleaner:
             if (default is not None and default is not True and default is not False
                     and not isinstance(default, (frozenset, set, tuple, list))):
                 raise TypeError(
-                    "Unknown parameter: {}={!r}".format(name, value))
+                    f"Unknown parameter: {name}={value!r}")
             setattr(self, name, value)
         if self.inline_style is None and 'inline_style' not in kw:
             self.inline_style = self.style
@@ -441,9 +441,9 @@ class Cleaner:
                     rel = el.get('rel')
                     if rel:
                         if ('nofollow' in rel
-                                and ' nofollow ' in (' %s ' % rel)):
+                                and ' nofollow ' in (f' {rel} ')):
                             continue
-                        rel = '%s nofollow' % rel
+                        rel = f'{rel} nofollow'
                     else:
                         rel = 'nofollow'
                     el.set('rel', rel)

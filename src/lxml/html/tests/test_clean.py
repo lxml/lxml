@@ -49,7 +49,7 @@ class CleanerTest(unittest.TestCase):
         self.assertEqual(
             result,
             clean_html,
-            msg="Unknown tags not removed. Got: %s" % result,
+            msg=f"Unknown tags not removed. Got: {result}",
         )
 
     def test_safe_attrs_included(self):
@@ -142,14 +142,14 @@ class CleanerTest(unittest.TestCase):
             "@    /* ... */      import()",
         ]
         for style_code in style_codes:
-            html = '<style>%s</style>' % style_code
+            html = f'<style>{style_code}</style>'
             s = lxml.html.fragment_fromstring(html)
 
             cleaned = lxml.html.tostring(clean_html(s))
             self.assertEqual(
                 b'<style>/* deleted */</style>',
                 cleaned,
-                "{}  ->  {}".format(style_code, cleaned))
+                f"{style_code}  ->  {cleaned}")
 
     def test_sneaky_schemes_in_style(self):
         style_codes = [
@@ -159,14 +159,14 @@ class CleanerTest(unittest.TestCase):
             "vbjavascript:cript:",
         ]
         for style_code in style_codes:
-            html = '<style>%s</style>' % style_code
+            html = f'<style>{style_code}</style>'
             s = lxml.html.fragment_fromstring(html)
 
             cleaned = lxml.html.tostring(clean_html(s))
             self.assertEqual(
                 b'<style>/* deleted */</style>',
                 cleaned,
-                "{}  ->  {}".format(style_code, cleaned))
+                f"{style_code}  ->  {cleaned}")
 
     def test_sneaky_urls_in_style(self):
         style_codes = [
@@ -177,14 +177,14 @@ class CleanerTest(unittest.TestCase):
             "url(vbjavascript:cript: :)",
         ]
         for style_code in style_codes:
-            html = '<style>%s</style>' % style_code
+            html = f'<style>{style_code}</style>'
             s = lxml.html.fragment_fromstring(html)
 
             cleaned = lxml.html.tostring(clean_html(s))
             self.assertEqual(
                 b'<style>url()</style>',
                 cleaned,
-                "{}  ->  {}".format(style_code, cleaned))
+                f"{style_code}  ->  {cleaned}")
 
     def test_svg_data_links(self):
         # Remove SVG images with potentially insecure content.
@@ -201,14 +201,14 @@ class CleanerTest(unittest.TestCase):
             "data:image/svg+xml-compressed;base64," + svgz_b64,
         ]
         for url in urls:
-            html = '<img src="%s">' % url
+            html = f'<img src="{url}">'
             s = lxml.html.fragment_fromstring(html)
 
             cleaned = lxml.html.tostring(clean_html(s))
             self.assertEqual(
                 b'<img src="">',
                 cleaned,
-                "{}  ->  {}".format(url, cleaned))
+                f"{url}  ->  {cleaned}")
 
     def test_image_data_links(self):
         data = b'123'
@@ -224,14 +224,14 @@ class CleanerTest(unittest.TestCase):
             "data:image/x-icon;base64," + data_b64,
         ]
         for url in urls:
-            html = '<img src="%s">' % url
+            html = f'<img src="{url}">'
             s = lxml.html.fragment_fromstring(html)
 
             cleaned = lxml.html.tostring(clean_html(s))
             self.assertEqual(
                 html.encode("UTF-8"),
                 cleaned,
-                "{}  ->  {}".format(url, cleaned))
+                f"{url}  ->  {cleaned}")
 
     def test_image_data_links_in_style(self):
         data = b'123'
@@ -247,14 +247,14 @@ class CleanerTest(unittest.TestCase):
             "data:image/x-icon;base64," + data_b64,
         ]
         for url in urls:
-            html = '<style> url(%s) </style>' % url
+            html = f'<style> url({url}) </style>'
             s = lxml.html.fragment_fromstring(html)
 
             cleaned = lxml.html.tostring(clean_html(s))
             self.assertEqual(
                 html.encode("UTF-8"),
                 cleaned,
-                "{}  ->  {}".format(url, cleaned))
+                f"{url}  ->  {cleaned}")
 
     def test_formaction_attribute_in_button_input(self):
         # The formaction attribute overrides the form's action and should be

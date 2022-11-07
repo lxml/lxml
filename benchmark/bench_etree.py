@@ -383,13 +383,13 @@ class BenchMark(benchbase.TreeBenchMark):
 
     @nochange
     def bench_findall_path(self, root):
-        root.findall(".//*[{}]/./{}/./*".format(self.SEARCH_TAG, self.SEARCH_TAG))
+        root.findall(f".//*[{self.SEARCH_TAG}]/./{self.SEARCH_TAG}/./*")
 
     @nochange
     @onlylib('lxe')
     def bench_xpath_path(self, root):
         ns, tag = self.SEARCH_TAG[1:].split('}')
-        root.xpath(".//*[p:{}]/./p:{}/./*".format(tag,tag),
+        root.xpath(f".//*[p:{tag}]/./p:{tag}/./*",
                    namespaces = {'p':ns})
 
     @nochange
@@ -413,12 +413,12 @@ class BenchMark(benchbase.TreeBenchMark):
         if xpath is None:
             ns, tag = self.SEARCH_TAG[1:].split('}')
             xpath = self._bench_xpath_single_xpath = self.etree.XPath(
-                './/p:%s[1]' % tag, namespaces={'p': ns})
+                f'.//p:{tag}[1]', namespaces={'p': ns})
         xpath(root)
 
     @nochange
     def bench_find_single(self, root):
-        root.find(".//%s" % self.SEARCH_TAG)
+        root.find(f".//{self.SEARCH_TAG}")
 
     @nochange
     def bench_iter_single(self, root):
@@ -433,12 +433,12 @@ class BenchMark(benchbase.TreeBenchMark):
         if xpath is None:
             ns, tag = self.SEARCH_TAG[1:].split('}')
             xpath = self._bench_xpath_two_xpath = self.etree.XPath(
-                './/p:%s[position() < 3]' % tag, namespaces={'p': ns})
+                f'.//p:{tag}[position() < 3]', namespaces={'p': ns})
         xpath(root)
 
     @nochange
     def bench_iterfind_two(self, root):
-        it = root.iterfind(".//%s" % self.SEARCH_TAG)
+        it = root.iterfind(f".//{self.SEARCH_TAG}")
         next(it)
         next(it)
 

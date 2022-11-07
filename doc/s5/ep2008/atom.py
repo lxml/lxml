@@ -61,7 +61,7 @@ def Element(tag, *args, **kw):
     """
     if '{' not in tag:
         # No namespace means the atom namespace
-        tag = '{{{}}}{}'.format(atom_ns, tag)
+        tag = f'{{{atom_ns}}}{tag}'
     return atom_parser.makeelement(tag, *args, **kw)
 
 def _strftime(d):
@@ -154,7 +154,7 @@ class _LiveList(list):
         name = self.name
         if name is None:
             name = '_LiveList'
-        return '{}({})'.format(name, list.__repr__(self))
+        return f'{name}({list.__repr__(self)})'
 
 class _findall_property:
     """
@@ -166,7 +166,7 @@ class _findall_property:
     def __init__(self, tag, ns=atom_ns):
         self.tag = tag
         self.ns = ns
-        self.__doc__ = 'Return live list of all the <atom:%s> element' % self.tag
+        self.__doc__ = f'Return live list of all the <atom:{self.tag}> element'
     def __get__(self, obj, type=None):
         if obj is None:
             return self
@@ -177,7 +177,7 @@ class _findall_property:
             obj.remove(item)
         return _LiveList(obj._atom_iter(self.tag, ns=self.ns),
                          on_add=add, on_remove=remove,
-                         name='live_%s_list' % self.tag)
+                         name=f'live_{self.tag}_list')
     def __set__(self, obj, value):
         cur = self.__get__(obj)
         cur[:] = value
@@ -194,7 +194,7 @@ class _text_element_property:
     def __init__(self, tag, strip=True):
         self.tag = tag
         self.strip = strip
-        self.__doc__ = 'Access the <atom:%s> element as text' % self.tag
+        self.__doc__ = f'Access the <atom:{self.tag}> element as text'
     def __get__(self, obj, type=None):
         if obj is None:
             return self
@@ -223,7 +223,7 @@ class _element_property:
     """
     def __init__(self, tag):
         self.tag = tag
-        self.__doc__ = 'Get the <atom:%s> element' % self.tag
+        self.__doc__ = f'Get the <atom:{self.tag}> element'
     def __get__(self, obj, type=None):
         if obj is None:
             return self
@@ -249,7 +249,7 @@ class _attr_element_property:
     def __init__(self, attr, default=NoDefault):
         self.attr = attr
         self.default = default
-        self.__doc__ = 'Access the %s attribute' % self.attr
+        self.__doc__ = f'Access the {self.attr} attribute'
     def __get__(self, obj, type=None):
         if obj is None:
             return self
@@ -276,7 +276,7 @@ class _date_element_property:
     def __init__(self, tag, ns=atom_ns):
         self.tag = tag
         self.ns = ns
-        self.__doc__ = 'Access the date in %s' % self.tag
+        self.__doc__ = f'Access the date in {self.tag}'
     def __get__(self, obj, type=None):
         if obj is None:
             return self
@@ -310,9 +310,9 @@ class _date_text_property:
 
 class AtomElement(etree.ElementBase):
     def _get_or_create(self, tag, ns=atom_ns):
-        el = self.find('{{{}}}{}'.format(ns, tag))
+        el = self.find(f'{{{ns}}}{tag}')
         if el is None:
-            el = self.makeelement('{{{}}}{}'.format(ns, tag))
+            el = self.makeelement(f'{{{ns}}}{tag}')
             self.append(el)
         return el
 
@@ -322,15 +322,15 @@ class AtomElement(etree.ElementBase):
         return None
 
     def _atom_iter(self, tag, ns=atom_ns):
-        return self.getiterator('{{{}}}{}'.format(ns, tag))
+        return self.getiterator(f'{{{ns}}}{tag}')
 
     def _atom_findtext(self, tag, ns=atom_ns):
-        return self.findtext('{{{}}}{}'.format(ns, tag))
+        return self.findtext(f'{{{ns}}}{tag}')
 
     def _get_parent(self, tag, ns=atom_ns):
         parent = self
         while 1:
-            if parent.tag == '{{{}}}{}'.format(ns, tag):
+            if parent.tag == f'{{{ns}}}{tag}':
                 return parent
             parent = parent.getparent()
             if parent is None:
@@ -405,7 +405,7 @@ class Entry(AtomElement):
         """
         assert not self.id, (
             "You cannot make an id if one already exists")
-        self.id = 'uuid:%s' % uuid.uuid4()
+        self.id = f'uuid:{uuid.uuid4()}'
     def author__get(self):
         el = self._atom_get('author')
         if el is None:
@@ -444,7 +444,7 @@ class Category(_EntryElement):
         GData convention of ``{scheme}term``
         """
         if self.scheme is not None:
-            return '{{{}}}{}'.format(self.scheme, self.term)
+            return f'{{{self.scheme}}}{self.term}'
         else:
             return self.term
 
@@ -496,7 +496,7 @@ class TextElement(_EntryElement):
             content = tostring(div)
         else:
             raise AttributeError(
-                "Not an HTML or text content (type=%r)" % self.type)
+                f"Not an HTML or text content (type={self.type!r})")
         from lxml.html import fromstring
         return fromstring(content)
 
@@ -527,7 +527,7 @@ class TextElement(_EntryElement):
             self.text = value
             return
         raise TypeError(
-            "Unknown HTML type: %s" % type(value))
+            f"Unknown HTML type: {type(value)}")
 
     def _html__del(self):
         self.text = None
@@ -552,8 +552,7 @@ class TextElement(_EntryElement):
             value = value.encode('utf8')
         if not isinstance(value, str):
             raise TypeError(
-                "Must set .binary to a str or unicode object (not %s)"
-                % type(value))
+                f"Must set .binary to a str or unicode object (not {type(value)})")
         value = value.encode('base64')
         self.text = value
 

@@ -95,7 +95,4 @@ class CSSSelector(etree.XPath):
         self.css = css
 
     def __repr__(self):
-        return '<{} {} for {!r}>'.format(
-            self.__class__.__name__,
-            hex(abs(id(self)))[2:],
-            self.css)
+        return f'<{self.__class__.__name__} {hex(abs(id(self)))[2:]} for {self.css!r}>'

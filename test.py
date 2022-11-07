@@ -172,7 +172,7 @@ def get_test_files(cfg):
                         results.append(path)
             return
         if '__init__.py' not in files:
-            stderr("%s is not a package" % dir)
+            stderr(f"{dir} is not a package")
             return
         for file in files:
             if file.startswith('test') and file.endswith('.py'):
@@ -270,8 +270,7 @@ def get_test_cases(test_files, cfg, cov=None):
             for test_class in difference:
                 # surround the warning with blank lines, otherwise it tends
                 # to get lost in the noise
-                stderr("\n%s: WARNING: %s not in test suite\n"
-                                      % (file, test_class.__name__))
+                stderr(f"\n{file}: WARNING: {test_class.__name__} not in test suite\n")
         if (cfg.level is not None and
             getattr(test_suite, 'level', 0) > cfg.level):
             continue
@@ -342,7 +341,7 @@ class CustomTestResult(TextTestResult):
                 width = len(name)
                 if width < self._lastWidth:
                     name += " " * (self._lastWidth - width)
-                self.stream.write(": %s" % name)
+                self.stream.write(f": {name}")
                 self._lastWidth = width
             self.stream.flush()
         self.__super_startTest(test)
@@ -365,7 +364,7 @@ class CustomTestResult(TextTestResult):
             if pos + len(" (...)") > self._maxWidth:
                 s = s[:self._maxWidth - 3] + "..."
             else:
-                s = "{}...{}".format(s[:pos + 2], s[pos + 5 - self._maxWidth:])
+                s = f"{s[:pos + 2]}...{s[pos + 5 - self._maxWidth:]}"
         return s
 
     def printErrors(self):
@@ -379,7 +378,7 @@ class CustomTestResult(TextTestResult):
     def printTraceback(self, kind, test, err):
         self.stream.writeln()
         self.stream.writeln()
-        self.stream.writeln("{}: {}".format(kind, test))
+        self.stream.writeln(f"{kind}: {test}")
         self.stream.writeln(self.formatError(err))
         self.stream.writeln()
 
@@ -451,8 +450,8 @@ def main(argv):
 
     # Environment
     if sys.version_info < (3, 7):
-        stderr('%s: need Python 3.7 or later' % argv[0])
-        stderr('your python is %s' % sys.version)
+        stderr(f'{argv[0]}: need Python 3.7 or later')
+        stderr(f'your python is {sys.version}')
         return 1
 
     # Defaults
@@ -514,13 +513,13 @@ def main(argv):
             try:
                 cfg.level = int(v)
             except ValueError:
-                stderr('{}: invalid level: {}'.format(argv[0], v))
+                stderr(f'{argv[0]}: invalid level: {v}')
                 stderr('run %s -h for help')
                 return 1
         elif k == '--all-levels':
             cfg.level = None
         else:
-            stderr('{}: invalid option: {}'.format(argv[0], k))
+            stderr(f'{argv[0]}: invalid option: {k}')
             stderr('run %s -h for help')
             return 1
     if args:
@@ -528,7 +527,7 @@ def main(argv):
     if len(args) > 1:
         cfg.test_regex = args[1]
     if len(args) > 2:
-        stderr('{}: too many arguments: {}'.format(argv[0], args[2]))
+        stderr(f'{argv[0]}: too many arguments: {args[2]}')
         stderr('run %s -h for help')
         return 1
     if not cfg.unit_tests and not cfg.functional_tests:

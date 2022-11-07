@@ -166,14 +166,13 @@ def _find_form_ids(el):
     for index, form in enumerate(forms):
         if form.get('id'):
             if form.get('name'):
-                yield '{} or {}'.format(form.get('id'),
-                                     form.get('name'))
+                yield f"{form.get('id')} or {form.get('name')}"
             else:
                 yield form.get('id')
         elif form.get('name'):
             yield form.get('name')
         else:
-            yield '(unnamed form %s)' % index
+            yield f'(unnamed form {index})'
 
 ############################################################
 ## Error filling
@@ -191,7 +190,7 @@ class DefaultErrorCreator:
         for name, value in kw.items():
             if not hasattr(self, name):
                 raise TypeError(
-                    "Unexpected keyword argument: %s" % name)
+                    f"Unexpected keyword argument: {name}")
             setattr(self, name, value)
 
     def __call__(self, el, is_block, message):
@@ -206,7 +205,7 @@ class DefaultErrorCreator:
             error_el.append(message)
         else:
             assert isinstance(message, basestring), (
-                "Bad message; should be a string or element: %r" % message)
+                f"Bad message; should be a string or element: {message!r}")
             error_el.text = message or self.default_message
         if is_block and self.block_inside:
             if self.insert_before:
@@ -242,7 +241,7 @@ def insert_errors(
             continue
         for error_el, message in _find_elements_for_name(el, name, error):
             assert isinstance(message, (basestring, type(None), ElementBase)), (
-                "Bad message: %r" % message)
+                f"Bad message: {message!r}")
             _insert_error(error_el, message, error_class, error_creator)
 
 def insert_errors_html(html, values, **kw):

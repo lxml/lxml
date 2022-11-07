@@ -36,7 +36,7 @@ STATIC_BINARIES = static_env_list("LXML_STATIC_BINARIES", separator=os.pathsep)
 # create lxml-version.h file
 versioninfo.create_version_h()
 lxml_version = versioninfo.version()
-print("Building lxml version %s." % lxml_version)
+print(f"Building lxml version {lxml_version}.")
 
 OPTION_RUN_TESTS = setupinfo.has_option('run-tests')
 

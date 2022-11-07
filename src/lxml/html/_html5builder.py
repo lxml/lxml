@@ -75,7 +75,7 @@ class TreeBuilder(_base.TreeBuilder):
     def insertRoot(self, name):
         buf = []
         if self.doctype and self.doctype.name:
-            buf.append('<!DOCTYPE %s' % self.doctype.name)
+            buf.append(f'<!DOCTYPE {self.doctype.name}')
             if self.doctype.publicId is not None or self.doctype.systemId is not None:
                 buf.append(' PUBLIC "{}" "{}"'.format(self.doctype.publicId,
                                                   self.doctype.systemId))

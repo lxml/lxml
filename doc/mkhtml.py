@@ -218,7 +218,7 @@ def publish(dirname, lxml_path, release, with_donations=True):
     """
 
     href_map = HREF_MAP.copy()
-    changelog_basename = 'changes-%s' % release
+    changelog_basename = f'changes-{release}'
     href_map['Release Changelog'] = changelog_basename + '.html'
 
     menu_js = textwrap.dedent('''
@@ -278,7 +278,7 @@ def publish(dirname, lxml_path, release, with_donations=True):
                 build_menu(tree, basename, section_head)
 
     # also convert CHANGES.txt
-    convert_changelog(lxml_path, os.path.join(dirname, 'changes-%s.html' % release),
+    convert_changelog(lxml_path, os.path.join(dirname, f'changes-{release}.html'),
                       script, stylesheet_url)
 
     # generate sitemap from menu

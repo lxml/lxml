@@ -123,7 +123,7 @@ class ThreadingTestCase(HelperTestCase):
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:template match="tag" />
     <!-- extend time for parsing + transform -->
-''' + '\n'.join('<xsl:template match="tag%x" />' % i for i in range(200)) + '''
+''' + '\n'.join(f'<xsl:template match="tag{i:x}" />' for i in range(200)) + '''
     <xsl:UnExpectedElement />
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTParseError,
@@ -162,7 +162,7 @@ class ThreadingTestCase(HelperTestCase):
         <xsl:message terminate="yes">FAIL</xsl:message>
     </xsl:template>
     <!-- extend time for parsing + transform -->
-''' + '\n'.join('<xsl:template match="tag{:X}" name="tag{:x}"> <xsl:call-template name="tag{:x}" /> </xsl:template>'.format(i, i, i-1)
+''' + '\n'.join(f'<xsl:template match="tag{i:X}" name="tag{i:x}"> <xsl:call-template name="tag{i-1:x}" /> </xsl:template>'
                 for i in range(1, 256)) + '''
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTApplyError,
@@ -253,7 +253,7 @@ class ThreadingTestCase(HelperTestCase):
 
         def parse_error_test(thread_no):
             tag = "tag%d" % thread_no
-            xml = "<{}>{}</{}>".format(tag, children, tag.upper())
+            xml = f"<{tag}>{children}</{tag.upper()}>"
             parser = self.etree.XMLParser()
             for _ in range(10):
                 errors = None
@@ -266,8 +266,7 @@ class ThreadingTestCase(HelperTestCase):
                 for error in errors:
                     self.assertTrue(
                         tag in error.message and tag.upper() in error.message,
-                        "{} and {} not found in '{}'".format(
-                        tag, tag.upper(), error.message))
+                        f"{tag} and {tag.upper()} not found in '{error.message}'")
 
         self.etree.clear_error_log()
         threads = []
@@ -584,4 +583,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

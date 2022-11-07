@@ -69,7 +69,7 @@ EPYDOC_IMPORT = r"""
 
 def write_chapter(master, title, filename):
     filename = os.path.join(os.path.dirname(filename),
-                            "_part_%s" % os.path.basename(filename))
+                            f"_part_{os.path.basename(filename)}")
     master.write(r"""
 \chapter{{{}}}
 \label{{{}}}
@@ -176,14 +176,14 @@ def tex_postprocess(src_path, dest_path, want_header=False, process_line=noop):
     dest.close()
 
     if not title:
-        raise Exception("Bueee, no title in %s" % src_path)
+        raise Exception(f"Bueee, no title in {src_path}")
     return title, header
 
 def publish(dirname, lxml_path, release):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 
-    book_title = "lxml %s" % release
+    book_title = f"lxml {release}"
 
     doc_dir = os.path.join(lxml_path, 'doc')
     script = os.path.join(doc_dir, 'rest2latex.py')
@@ -237,11 +237,11 @@ def publish(dirname, lxml_path, release):
             outpath = os.path.join(dirname, outname)
             path = os.path.join(doc_dir, filename)
 
-            print("Creating %s" % outname)
+            print(f"Creating {outname}")
             rest2latex(script, path, outpath)
 
             final_name = os.path.join(dirname, os.path.dirname(outname),
-                                      "_part_%s" % os.path.basename(outname))
+                                      f"_part_{os.path.basename(outname)}")
 
             title, hd = tex_postprocess(outpath, final_name,
                                         want_header = not header,
@@ -255,7 +255,7 @@ def publish(dirname, lxml_path, release):
     print("Integrating API docs")
     apidocsname = 'api.tex'
     apipath = os.path.join(dirname, apidocsname)
-    tex_postprocess(apipath, os.path.join(dirname, "_part_%s" % apidocsname),
+    tex_postprocess(apipath, os.path.join(dirname, f"_part_{apidocsname}"),
                     process_line=fix_relative_hyperrefs)
     copy_epydoc_macros(apipath, os.path.join(dirname, '_part_epydoc.tex'),
                        set(header))
@@ -273,16 +273,16 @@ def publish(dirname, lxml_path, release):
             line = line.replace(r'\subsection{', r'\subsection*{')
         return line
 
-    chgname = 'changes-%s.tex' % release
+    chgname = f'changes-{release}.tex'
     chgpath = os.path.join(dirname, chgname)
     rest2latex(script,
                os.path.join(lxml_path, 'CHANGES.txt'),
                chgpath)
-    tex_postprocess(chgpath, os.path.join(dirname, "_part_%s" % chgname),
+    tex_postprocess(chgpath, os.path.join(dirname, f"_part_{chgname}"),
                     process_line=fix_changelog)
 
     # Writing a master file
-    print("Building %s\n" % TARGET_FILE)
+    print(f"Building {TARGET_FILE}\n")
     master = open( os.path.join(dirname, TARGET_FILE), "w")
     for hln in header:
         if hln.startswith(r"\documentclass"):

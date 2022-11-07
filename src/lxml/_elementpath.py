@@ -82,11 +82,11 @@ def xpath_tokenizer(pattern, namespaces=None):
                 try:
                     if not namespaces:
                         raise KeyError
-                    yield ttype, "{{{}}}{}".format(namespaces[prefix], uri)
+                    yield ttype, f"{{{namespaces[prefix]}}}{uri}"
                 except KeyError:
-                    raise SyntaxError("prefix %r not found in prefix map" % prefix)
+                    raise SyntaxError(f"prefix {prefix!r} not found in prefix map")
             elif default_namespace and not parsing_attribute:
-                yield ttype, "{{{}}}{}".format(default_namespace, tag)
+                yield ttype, f"{{{default_namespace}}}{tag}"
             else:
                 yield token
             parsing_attribute = False

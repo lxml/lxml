@@ -39,8 +39,7 @@ class ETreeDtdTestCase(HelperTestCase):
     def test_dtd_parse_invalid(self):
         fromstring = etree.fromstring
         parser = etree.XMLParser(dtd_validation=True)
-        xml = _bytes('<!DOCTYPE b SYSTEM "%s"><b><a/></b>' %
-                     fileInTestDir("test.dtd"))
+        xml = _bytes(f"<!DOCTYPE b SYSTEM \"{fileInTestDir('test.dtd')}\"><b><a/></b>")
         self.assertRaises(etree.XMLSyntaxError,
                           fromstring, xml, parser=parser)
 
@@ -48,7 +47,7 @@ class ETreeDtdTestCase(HelperTestCase):
         fromstring = etree.fromstring
         dtd_filename = fileUrlInTestDir("__nosuch.dtd")
         parser = etree.XMLParser(dtd_validation=True)
-        xml = _bytes('<!DOCTYPE b SYSTEM "%s"><b><a/></b>' % dtd_filename)
+        xml = _bytes(f'<!DOCTYPE b SYSTEM "{dtd_filename}"><b><a/></b>')
         self.assertRaises(etree.XMLSyntaxError,
                           fromstring, xml, parser=parser)
         errors = None
@@ -64,14 +63,12 @@ class ETreeDtdTestCase(HelperTestCase):
 
     def test_dtd_parse_valid(self):
         parser = etree.XMLParser(dtd_validation=True)
-        xml = ('<!DOCTYPE a SYSTEM "%s"><a><b/></a>' %
-               fileUrlInTestDir("test.dtd"))
+        xml = f"<!DOCTYPE a SYSTEM \"{fileUrlInTestDir('test.dtd')}\"><a><b/></a>"
         root = etree.fromstring(xml, parser=parser)
 
     def test_dtd_parse_valid_file_url(self):
         parser = etree.XMLParser(dtd_validation=True)
-        xml = ('<!DOCTYPE a SYSTEM "%s"><a><b/></a>' %
-               fileUrlInTestDir("test.dtd"))
+        xml = f"<!DOCTYPE a SYSTEM \"{fileUrlInTestDir('test.dtd')}\"><a><b/></a>"
         root = etree.fromstring(xml, parser=parser)
 
     def test_dtd_parse_valid_relative(self):
@@ -426,4 +423,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

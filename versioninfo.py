@@ -66,15 +66,14 @@ def create_version_h():
     # Avoid changing file timestamp if content didn't change.
     if os.path.isfile(file_path):
         with open(file_path) as version_h:
-            if ('"%s"' % lxml_version) in version_h.read(100):
+            if (f'"{lxml_version}"') in version_h.read(100):
                 return
 
     with open(file_path, 'w') as version_h:
-        version_h.write('''\
-#ifndef LXML_VERSION_STRING
-#define LXML_VERSION_STRING "%s"
+        version_h.write(f'''#ifndef LXML_VERSION_STRING
+#define LXML_VERSION_STRING "{lxml_version}"
 #endif
-''' % lxml_version)
+''')
 
 
 def get_base_dir():

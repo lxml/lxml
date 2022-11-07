@@ -1134,7 +1134,7 @@ class ObjectifyTestCase(HelperTestCase):
         for xsi, objclass in xsitype2objclass.items():
             # 1 is a valid value for all ObjectifiedDataElement classes
             pyval = 1
-            value = objectify.DataElement(pyval, _xsi="xsd:%s" % xsi)
+            value = objectify.DataElement(pyval, _xsi=f"xsd:{xsi}")
             self.assertTrue(isinstance(value, objclass),
                          "DataElement(%s, _xsi='%s') returns %s, expected %s"
                          % (pyval, xsi, type(value), objclass))
@@ -1143,7 +1143,7 @@ class ObjectifyTestCase(HelperTestCase):
         for xsi, objclass in xsitype2objclass.items():
             # 1 is a valid value for all ObjectifiedDataElement classes
             self.assertRaises(ValueError, objectify.DataElement, 1,
-                              _xsi="foo:%s" % xsi)
+                              _xsi=f"foo:{xsi}")
 
     def test_data_element_pytypes(self):
         for pytype, objclass in pytype2objclass.items():
@@ -2004,7 +2004,7 @@ class ObjectifyTestCase(HelperTestCase):
         root = XML(xml)
         objectify.annotate(root)
 
-        attribs = root.xpath("//@py:%s" % pytype_name,
+        attribs = root.xpath(f"//@py:{pytype_name}",
                              namespaces={"py" : pytype_ns})
         self.assertEqual(0, len(attribs))
         attribs = root.xpath("//@py:test",
@@ -2018,12 +2018,12 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertNotEqual("test", pytype_name.lower())
 
         root = XML(xml)
-        attribs = root.xpath("//@py:%s" % pytype_name,
+        attribs = root.xpath(f"//@py:{pytype_name}",
                              namespaces={"py" : pytype_ns})
         self.assertEqual(0, len(attribs))
 
         objectify.annotate(root)
-        attribs = root.xpath("//@py:%s" % pytype_name,
+        attribs = root.xpath(f"//@py:{pytype_name}",
                              namespaces={"py" : pytype_ns})
         self.assertEqual(7, len(attribs))
 
@@ -2694,7 +2694,7 @@ class ObjectifyTestCase(HelperTestCase):
             return _choice(SPACES)
 
         fuzz = [
-            '<t>%s</t>\n' % (space() + sign + digits + point + fraction + exp + exp_sign + exp_digits + special + space())
+            f'<t>{space() + sign + digits + point + fraction + exp + exp_sign + exp_digits + special + space()}</t>\n'
             for sign in ('', '+', '-')
             for digits in DIGITS
             for point in ('', '.')
@@ -2739,4 +2739,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

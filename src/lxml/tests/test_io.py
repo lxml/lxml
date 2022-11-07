@@ -39,7 +39,7 @@ class _IOTestCaseBase(HelperTestCase):
         if depth == 0:
             return
         for i in range(children):
-            new_element = Element('element_{}_{}'.format(depth, i))
+            new_element = Element(f'element_{depth}_{i}')
             self.buildNodes(new_element, children, depth - 1)
             element.append(new_element)
 
@@ -265,7 +265,7 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_parse_utf8_bom(self):
         utext = _str('Søk på nettet')
-        uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
+        uxml = f'<?xml version="1.0" encoding="UTF-8"?><p>{utext}</p>'
         bom = _bytes('\\xEF\\xBB\\xBF').decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
@@ -283,7 +283,7 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_iterparse_utf8_bom(self):
         utext = _str('Søk på nettet')
-        uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
+        uxml = f'<?xml version="1.0" encoding="UTF-8"?><p>{utext}</p>'
         bom = _bytes('\\xEF\\xBB\\xBF').decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
@@ -303,7 +303,7 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_iterparse_utf16_bom(self):
         utext = _str('Søk på nettet')
-        uxml = '<?xml version="1.0" encoding="UTF-16"?><p>%s</p>' % utext
+        uxml = f'<?xml version="1.0" encoding="UTF-16"?><p>{utext}</p>'
         boms = _bytes('\\xFE\\xFF \\xFF\\xFE').decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(5, len(boms))
@@ -367,4 +367,4 @@ def test_suite():
 
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

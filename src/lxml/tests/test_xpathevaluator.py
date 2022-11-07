@@ -24,7 +24,7 @@ class ETreeXPathTestCase(HelperTestCase):
         actual = str(tree.xpath('number(/a)'))
         expected = ['nan', '1.#qnan', 'nanq']
         if not actual.lower() in expected:
-            self.fail('Expected a NAN value, got %s' % actual)
+            self.fail(f'Expected a NAN value, got {actual}')
         
     def test_xpath_string(self):
         tree = self.parse('<a>Foo</a>')
@@ -141,7 +141,7 @@ class ETreeXPathTestCase(HelperTestCase):
         '''
 
         def lookup(dummy, id):
-            return etree.XML(xml_data).xpath('id(%r)' % id)
+            return etree.XML(xml_data).xpath(f'id({id!r})')
         functions = {(None, 'lookup') : lookup}
 
         root = etree.XML('<dummy/>')
@@ -285,7 +285,7 @@ class ETreeXPathTestCase(HelperTestCase):
         
     def test_xpath_extensions(self):
         def foo(evaluator, a):
-            return 'hello %s' % a
+            return f'hello {a}'
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a><b></b></a>')
         e = etree.XPathEvaluator(tree, extensions=[extension])
@@ -294,7 +294,7 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_extensions_wrong_args(self):
         def foo(evaluator, a, b):
-            return "hello {} and {}".format(a, b)
+            return f"hello {a} and {b}"
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a><b></b></a>')
         e = etree.XPathEvaluator(tree, extensions=[extension])
@@ -585,7 +585,7 @@ class ETreeXPathExsltTestCase(HelperTestCase):
         tree = self.parse('<a><b>2009-11-12</b><b>2008-12-11</b></a>')
 
         aligned_date = tree.xpath(
-            'str:align(string(//b[1]), "%s", "center")' % ('-'*20),
+            f"str:align(string(//b[1]), \"{'-' * 20}\", \"center\")",
             namespaces=self.NSMAP)
         self.assertTrue(aligned_date, str(aligned_date))
         self.assertEqual(aligned_date, '-----2009-11-12-----')
@@ -742,4 +742,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print('to test use test.py %s' % __file__)
+    print(f'to test use test.py {__file__}')

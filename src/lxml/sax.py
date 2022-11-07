@@ -81,7 +81,7 @@ class ElementTreeContentHandler(ContentHandler):
         if ns_uri:
             el_tag = "{%s}%s" % ns_name_tuple
         elif self._default_ns:
-            el_tag = "{{{}}}{}".format(self._default_ns, local_name)
+            el_tag = f"{{{self._default_ns}}}{local_name}"
         else:
             el_tag = local_name
         return el_tag
