@@ -7,8 +7,8 @@ import os.path
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
 
-if (2, 7) != sys.version_info[:2] < (3, 5):
-    print("This lxml version requires Python 2.7, 3.5 or later.")
+if sys.version_info[:2] < (3, 7):
+    print("This lxml version requires Python 3.7 or later.")
     sys.exit(1)
 
 try:
@@ -59,9 +59,6 @@ if versioninfo.is_pre_release():
 extra_options = {}
 if 'setuptools' in sys.modules:
     extra_options['zip_safe'] = False
-    extra_options['python_requires'] = (
-        # NOTE: keep in sync with Trove classifier list below.
-        '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, != 3.4.*')
 
     try:
         import pkg_resources
@@ -254,21 +251,19 @@ an appropriate version of Cython installed.
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Cython',
         # NOTE: keep in sync with 'python_requires' list above.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Programming Language :: C',
         'Operating System :: OS Independent',
         'Topic :: Text Processing :: Markup :: HTML',
         'Topic :: Text Processing :: Markup :: XML',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
+    python_requires = ">=3.7",  # NOTE: keep in sync with Trove classifier list below.
 
     **setup_extra_options()
 )

@@ -7,18 +7,10 @@ environment:
   - python: 310-x64
   - python: 39
   - python: 39-x64
-  - python: 27
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
-  - python: 27-x64
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
   - python: 38
   - python: 38-x64
   - python: 37
   - python: 37-x64
-  - python: 36
-  - python: 36-x64
-  - python: 35
-  - python: 35-x64
   - python: 310
     arch: arm64
     env: STATIC_DEPS=true

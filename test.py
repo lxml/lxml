@@ -451,8 +451,8 @@ def main(argv):
     """Main program."""
 
     # Environment
-    if sys.version_info < (2, 7):
-        stderr('%s: need Python 2.7 or later' % argv[0])
+    if sys.version_info < (3, 7):
+        stderr('%s: need Python 3.7 or later' % argv[0])
         stderr('your python is %s' % sys.version)
         return 1
 
