@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 
 GCC_VERSION=${GCC_VERSION:=8}
+TEST_CFLAGS=
+EXTRA_CFLAGS=
 
 # Set up compilers
 if [ -z "${OS_NAME##ubuntu*}" ]; then
@@ -15,9 +17,13 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
 
   export CC="gcc"
   export PATH="/usr/lib/ccache:$PATH"
+  TEST_CFLAGS="-Og -g -fPIC"
+  EXTRA_CFLAGS="$TEST_CFLAGS -Wall -Wextra"
 
 elif [ -z "${OS_NAME##macos*}" ]; then
   export CC="clang -Wno-deprecated-declarations"
+  TEST_CFLAGS="-Og -g -fPIC"
+  EXTRA_CFLAGS="$TEST_CFLAGS -Wall -Wextra"
 fi
 
 # Log versions in use
@@ -25,11 +31,13 @@ echo "===================="
 echo "|VERSIONS INSTALLED|"
 echo "===================="
 python -c 'import sys; print("Python %s" % (sys.version,))'
-if [ "$CC" ]; then
+if [[ "$CC" ]]; then
   which ${CC%% *}
   ${CC%% *} --version
 fi
-pkg-config --modversion libxml-2.0 libxslt
+if [ -z "${OS_NAME##win*}" ]; then
+    pkg-config --modversion libxml-2.0 libxslt
+fi
 echo "===================="
 
 ccache -s || true
@@ -46,13 +54,13 @@ if [ -z "${PYTHON_VERSION##2*}" ]; then
 else
   python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
 fi
-if [ "$COVERAGE" == "true" ]; then
+if [[ "$COVERAGE" == "true" ]]; then
   python -m pip install "coverage<5" || exit 1
   python -m pip install --pre 'Cython>=3.0a0' || exit 1
 fi
 
 # Build
-CFLAGS="-Og -g -fPIC -Wall -Wextra" python -u setup.py build_ext --inplace \
+CFLAGS="$CFLAGS $EXTRA_CFLAGS" python -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
@@ -60,7 +68,7 @@ CFLAGS="-Og -g -fPIC -Wall -Wextra" python -u setup.py build_ext --inplace \
 ccache -s || true
 
 # Run tests
-CFLAGS="-Og -g -fPIC" PYTHONUNBUFFERED=x make test || exit 1
+CFLAGS="$TEST_CFLAGS" PYTHONUNBUFFERED=x make test || exit 1
 
 python setup.py install || exit 1
 python -c "from lxml import etree" || exit 1
