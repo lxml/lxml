@@ -108,8 +108,15 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup python
+      - name: Setup production Python
         uses: actions/setup-python@v4
+        if: "!endsWith(matrix.python-version, '-dev')"
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup pre-release Python
+        uses: deadsnakes/action@v2
+        if: endsWith(matrix.python-version, '-dev')
         with:
           python-version: ${{ matrix.python-version }}
 
