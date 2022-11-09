@@ -41,10 +41,12 @@ jobs:
             python-version: 3.9
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
+            allowed_failure: true
           - os: ubuntu-18.04
             python-version: 3.11
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
+            allowed_failure: true
           # Coverage setup
           - os: ubuntu-18.04
             python-version: 3.9
