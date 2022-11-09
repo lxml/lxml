@@ -115,7 +115,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Setup pre-release Python
-        uses: deadsnakes/action@v2
+        uses: deadsnakes/action@v2.1.1
         if: endsWith(matrix.python-version, '-dev')
         with:
           python-version: ${{ matrix.python-version }}
