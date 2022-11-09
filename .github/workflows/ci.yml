@@ -31,7 +31,7 @@ jobs:
           - 3.9
           - "3.10"  # quotes to avoid being interpreted as the number 3.1
           - 3.11
-          - 3.12-dev
+          # - 3.12-dev
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
@@ -108,15 +108,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup production Python
+      - name: Setup Python
         uses: actions/setup-python@v4
-        if: "!endsWith(matrix.python-version, '-dev')"
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Setup pre-release Python
-        uses: deadsnakes/action@v2.1.1
-        if: endsWith(matrix.python-version, '-dev')
         with:
           python-version: ${{ matrix.python-version }}
 
