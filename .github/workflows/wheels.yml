@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: 3.9
 
@@ -33,13 +33,13 @@ jobs:
         files: dist/*.tar.gz
 
     - name: Upload sdist
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: sdist
         path: dist/*.tar.gz
 
     - name: Upload website
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: website
         path: doc/html
@@ -96,10 +96,10 @@ jobs:
             pyversion: "cp310*"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.8
 
@@ -117,7 +117,7 @@ jobs:
         files: wheelhouse/*/*-m*linux*.whl  # manylinux / musllinux
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: wheels-${{ matrix.image }}
         path: wheelhouse/*/*-m*linux*.whl  # manylinux / musllinux
@@ -132,16 +132,16 @@ jobs:
         #os: [macos-10.15, windows-latest]
         #os: [macos-10.15, macOS-M1]
         os: [macos-10.15]
-        python_version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.7-v7.3.3", "pypy-3.8-v7.3.7"]
+        python_version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.7-v7.3.9", "pypy-3.8-v7.3.9", "pypy-3.9-v7.3.9"]
 
     runs-on: ${{ matrix.os }}
     env: { LIBXML2_VERSION: 2.9.14, LIBXSLT_VERSION: 1.1.35, MACOSX_DEPLOYMENT_TARGET: 10.15 }
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python_version }}
 
@@ -165,7 +165,7 @@ jobs:
         files: dist/lxml-*.whl
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: wheels-${{ matrix.os }}
         path: dist/lxml-*.whl
