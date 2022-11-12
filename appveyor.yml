@@ -3,6 +3,8 @@ image: Visual Studio 2019
 
 environment:
   matrix:
+  - python: 311
+  - python: 311-x64
   - python: 310
   - python: 310-x64
   - python: 39
@@ -19,6 +21,10 @@ environment:
   - python: 36-x64
   - python: 35
   - python: 35-x64
+
+  - python: 311
+    arch: arm64
+    env: STATIC_DEPS=true
   - python: 310
     arch: arm64
     env: STATIC_DEPS=true
