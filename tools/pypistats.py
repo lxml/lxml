@@ -29,10 +29,23 @@ def aggregate(stats):
     return {category: counts[category] / days[category] for category in counts}
 
 
+def version_sorter(version_and_count):
+    version = version_and_count[0]
+    return tuple(map(int, version.split("."))) if version.replace(".", "").isdigit() else (2**32,)
+
+
 def main():
-    stats = get_pyver_stats()
-    for version, count in sorted(aggregate(stats).items()):
-        print(f"{version:4}: {count:-12.1f} / day")
+    import sys
+    package_name = sys.argv[1] if len(sys.argv) > 1 else PACKAGE
+
+    counts = get_pyver_stats(package=package_name)
+    stats = aggregate(counts)
+    total = sum(stats.values())
+
+    agg_sum = 0.0
+    for version, count in sorted(stats.items(), key=version_sorter):
+        agg_sum += count
+        print(f"{version:4}: {count:-12.1f} / day ({agg_sum / total * 100:-5.1f}%)")
 
 
 if __name__ == '__main__':
