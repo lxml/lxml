@@ -54,7 +54,7 @@ fi
 # Build
 CFLAGS="-Og -g -fPIC -Wall -Wextra" python -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
-      $(if [ "$COVERAGE" == "true" ]; then echo -n " --with-coverage"; fi ) \
+      $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
 
 ccache -s || true
