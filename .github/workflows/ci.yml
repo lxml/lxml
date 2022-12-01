@@ -30,17 +30,20 @@ jobs:
           - 3.8
           - 3.9
           - "3.10"  # quotes to avoid being interpreted as the number 3.1
-          - "3.11-dev"
-          # - "3.12-dev"
+          - 3.11
+          # - 3.12-dev
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          # Temporary - Allow failure on all 3.11-dev jobs until beta comes out.
           - os: ubuntu-18.04
-            python-version: 3.11-dev
+            python-version: 3.11
+          - os: ubuntu-18.04
+            python-version: 3.9
+            env: {STATIC_DEPS: true, WITH_REFNANNY: true}
+            extra_hash: "-refnanny"
             allowed_failure: true
           - os: ubuntu-18.04
-            python-version: 3.11-dev
+            python-version: 3.11
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
             allowed_failure: true
@@ -103,12 +106,12 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
-      - name: Setup python
-        uses: actions/setup-python@v2
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -129,7 +132,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: ${{ matrix.extra_hash == '-docs' }}
         with:
           name: website_html
@@ -137,14 +140,14 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: pycoverage_html
           path: coverage*
           if-no-files-found: ignore
 
       - name: Upload Wheel
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: ${{ matrix.env.STATIC_DEPS == 'true' && env.COVERAGE == 'false' }}
         with:
           name: wheels-${{ runner.os }}
