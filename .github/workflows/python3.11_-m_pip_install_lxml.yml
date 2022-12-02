@@ -1,3 +1,7 @@
+# GitHub Action to prove a failure still exists...
+# * lxml still cannot be successfully installed on Python 3.11 on Windows.
+# When this GitHub Action passes then it can be deleted.
+
 name: pip_install_lxml
 on:
   pull_request:
@@ -22,7 +26,11 @@ jobs:
           sudo apt-get install -y libxml2 libxslt-dev
       - run: pip install --upgrade pip
       - run: pip install --upgrade cython wheel
-      - run: pip install . || true  # This still fails!
+      - run: pip install .  # Trying to prove a failure (a negative)
+      - if: success()  # Reverse success and failure.
+        run: exit 1  # Install has succeed so this GitHub Action can be deleted.
+      - if: failure()
+        run: exit 0  # lxml still fails on Python 3.11 on Windows
   from_pypi:
     strategy:
       fail-fast: false
@@ -34,4 +42,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install --upgrade pip wheel
-      - run: pip install lxml || true  # This still fails!
+      - run: pip install lxml  # Trying to prove a failure (a negative)
+      - if: success()  # Reverse success and failure.
+        run: exit 1  # Install has succeed so this GitHub Action can be deleted.
+      - if: failure()
+        run: exit 0  # lxml still fails on Python 3.11 on Windows
