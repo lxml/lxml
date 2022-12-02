@@ -2,10 +2,24 @@
 lxml changelog
 ==============
 
-Under development
-=================
+4.9.2 (2022-12-02)
+==================
+
+Bugs fixed
+----------
+
+* CVE-2022-2309: A Bug in libxml2 2.9.1[0-4] could let namespace declarations
+  from a failed parser run leak into later parser runs.  This bug was worked around
+  in lxml and resolved in libxml2 2.10.0.
+  https://gitlab.gnome.org/GNOME/libxml2/-/issues/378
+
+Other changes
+-------------
 
 * LP#1981760: ``Element.attrib`` now registers as ``collections.abc.MutableMapping``.
+
+* lxml now has a static build setup for macOS on ARM64 machines (not used for building wheels).
+  Patch by Quentin Leffray.
 
 
 4.9.1 (2022-07-01)
