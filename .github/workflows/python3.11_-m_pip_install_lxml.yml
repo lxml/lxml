@@ -16,7 +16,8 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - run: |
+      - if: startsWith(matrix.os, 'ubuntu')
+        run: |
           sudo apt-get update
           sudo apt-get install -y libxml2 libxslt-dev
       - run: pip install --upgrade pip
