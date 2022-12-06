@@ -133,7 +133,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-2019]
         #os: [macos-10.15, windows-latest]
         #os: [macos-10.15, macOS-M1]
         #os: [macos-10.15]
