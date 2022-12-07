@@ -170,10 +170,10 @@ def _list_dir_ftplib(url):
 
 
 def read_url(url, decode=True, accept=None, as_json=False):
+    headers = {'User-Agent': 'https://github.com/lxml/lxml'}
     if accept:
-        request = Request(url, headers={'Accept': accept})
-    else:
-        request = Request(url)
+        headers['Accept'] = accept
+    request = Request(url, headers=headers)
 
     with closing(urlopen(request)) as res:
         charset = _find_content_encoding(res)
