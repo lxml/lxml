@@ -39,46 +39,46 @@ jobs:
       matrix:
         # Tests [amd64]
         #
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-2019]
         python-version:
-          - 2.7
-          - 3.5
-          - 3.6
-          - 3.7
-          - 3.8
-          - 3.9
+          - "2.7"
+          - "3.5"
+          - "3.6"
+          - "3.7"
+          - "3.8"
+          - "3.9"
           - "3.10"  # quotes to avoid being interpreted as the number 3.1
-          - 3.11
-          # - 3.12-dev
+          - "3.11"
+          # - "3.12-dev"
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
           - os: ubuntu-latest
-            python-version: 3.11
+            python-version: "3.11"
           - os: ubuntu-latest
-            python-version: 3.9
+            python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
             allowed_failure: true
           - os: ubuntu-latest
-            python-version: 3.11
+            python-version: "3.11"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
             allowed_failure: true
           # Coverage setup
           - os: ubuntu-latest
-            python-version: 3.9
+            python-version: "3.9"
             env: { COVERAGE: true }
             extra_hash: "-coverage"
             allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
-            python-version: 3.9
+            python-version: "3.9"
             env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
             extra_hash: "-docs"
             allowed_failure: true   # shouldn't fail but currently does...
           # Old library setup with minimum version requirements
           - os: ubuntu-latest
-            python-version: 3.9
+            python-version: "3.9"
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.9.2,
@@ -105,7 +105,7 @@ jobs:
 
           # Windows sub-jobs
           # ==============
-          - os: windows-latest
+          - os: windows-2019
             env: [{ STATIC_DEPS: true }]  # always static
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
