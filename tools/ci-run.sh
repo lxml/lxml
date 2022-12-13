@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+set -x
+
 GCC_VERSION=${GCC_VERSION:=9}
 TEST_CFLAGS=
 EXTRA_CFLAGS=
