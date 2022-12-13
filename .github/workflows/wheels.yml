@@ -17,7 +17,7 @@ jobs:
         python-version: "3.x"
 
     - name: Install lib dependencies
-      run: sudo apt-get update -y -q && sudo apt-get install -y -q "libxml2=2.9.10*" "libxml2-dev=2.9.10*" libxslt1.1 libxslt1-dev
+      run: sudo apt-get update -y -q && sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev
 
     - name: Install Python dependencies
       run: python -m pip install -U pip setuptools && python -m pip install -U docutils pygments sphinx sphinx-rtd-theme -r requirements.txt
