@@ -121,7 +121,7 @@ jobs:
       LIBXML2_VERSION: 2.9.14
       LIBXSLT_VERSION: 1.1.35
       COVERAGE: false
-      GCC_VERSION: 8
+      GCC_VERSION: 9
       USE_CCACHE: 1
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
