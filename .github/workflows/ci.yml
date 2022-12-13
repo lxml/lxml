@@ -54,8 +54,6 @@ jobs:
 
         include:
           - os: ubuntu-latest
-            python-version: "3.11"
-          - os: ubuntu-latest
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
@@ -104,6 +102,11 @@ jobs:
             allowed_failure: true   # Unicode parsing fails in Py3
 
         exclude:
+          - os: ubuntu-latest
+            python-version: "3.5"
+          - os: ubuntu-latest
+            python-version: "3.6"
+
           # Windows sub-jobs
           # ==============
           - os: windows-2019
