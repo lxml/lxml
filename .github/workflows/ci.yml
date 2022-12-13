@@ -99,6 +99,10 @@ jobs:
             python-version: pypy-3.7
             env: { STATIC_DEPS: false }
             allowed_failure: true
+          - os: ubuntu-latest
+            python-version: pypy-3.8
+            env: { STATIC_DEPS: false }
+            allowed_failure: true
 
           # MacOS sub-jobs
           # ==============
