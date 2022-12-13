@@ -7,8 +7,8 @@ import ssl
 PACKAGE = "lxml"
 
 
-def get_pyver_stats(package=PACKAGE, period="month"):
-    stats_url = f"https://www.pypistats.org/api/packages/{package}/python_minor?period={period}"
+def get_stats(stats_type, package=PACKAGE, period="month"):
+    stats_url = f"https://www.pypistats.org/api/packages/{package}/{stats_type}?period={period}"
 
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -34,18 +34,37 @@ def version_sorter(version_and_count):
     return tuple(map(int, version.split("."))) if version.replace(".", "").isdigit() else (2**32,)
 
 
+def system_sorter(name_and_count):
+    order = ('linux', 'windows', 'darwin')
+    system = name_and_count[0]
+    try:
+        return order.index(system.lower())
+    except ValueError:
+        return len(order)
+
+
+def print_agg_stats(counts, sort_key=None):
+    stats = aggregate(counts)
+    total = sum(stats.values())
+    max_len = max(len(category) for category in stats)
+    agg_sum = 0.0
+    for category, count in sorted(stats.items(), key=sort_key):
+        agg_sum += count
+        print(f"  {category:{max_len}}: {count:-12.1f} / day ({agg_sum / total * 100:-5.1f}%)")
+
+
 def main():
     import sys
     package_name = sys.argv[1] if len(sys.argv) > 1 else PACKAGE
 
-    counts = get_pyver_stats(package=package_name)
-    stats = aggregate(counts)
-    total = sum(stats.values())
+    counts = get_stats("python_minor", package=package_name)
+    print("Downloads by Python version:")
+    print_agg_stats(counts, sort_key=version_sorter)
 
-    agg_sum = 0.0
-    for version, count in sorted(stats.items(), key=version_sorter):
-        agg_sum += count
-        print(f"{version:4}: {count:-12.1f} / day ({agg_sum / total * 100:-5.1f}%)")
+    print()
+    counts = get_stats("system", package=package_name)
+    print("Downloads by system:")
+    print_agg_stats(counts, sort_key=system_sorter)
 
 
 if __name__ == '__main__':
