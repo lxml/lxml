@@ -72,6 +72,7 @@ ccache -s || true
 # Run tests
 CFLAGS="$TEST_CFLAGS" PYTHONUNBUFFERED=x make test || exit 1
 
+python setup.py build || exit 1
 python setup.py install || exit 1
 python -c "from lxml import etree" || exit 1
 
