@@ -103,10 +103,11 @@ jobs:
           - os: macos-latest
             allowed_failure: true   # Unicode parsing fails in Py3
 
+        exclude:
           # Windows sub-jobs
           # ==============
           - os: windows-2019
-            env: [{ STATIC_DEPS: true }]  # always static
+            env: { STATIC_DEPS: false }  # always static
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
     # From testing, the runs tend to take ~3 minutes, so a limit of 20 minutes should be enough. This can always be
