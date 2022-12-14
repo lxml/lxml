@@ -19,7 +19,7 @@ APPVEYOR_BUILDJOBS_URL = "https://ci.appveyor.com/api/buildjobs"
 
 
 def find_github_files(version, api_url=GITHUB_API_URL):
-    url = f"{api_url}/releases/tags/{version}"
+    url = f"{api_url}/releases/tags/lxml-{version}"
     release, _ = read_url(url, accept="application/vnd.github+json", as_json=True)
 
     for asset in release.get('assets', ()):
