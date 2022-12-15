@@ -2,7 +2,7 @@ from lxml.includes.tree cimport xmlDoc
 from lxml.includes.xmlparser cimport xmlSAXHandler
 from lxml.includes.xmlerror cimport xmlStructuredErrorFunc
 
-cdef extern from "libxml/xmlschemas.h":
+cdef extern from "libxml/xmlschemas.h" nogil:
     ctypedef struct xmlSchema
     ctypedef struct xmlSchemaParserCtxt
 

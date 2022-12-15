@@ -4,7 +4,7 @@ from lxml.includes.tree cimport xmlDoc
 from lxml.includes.tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from lxml.includes.xmlparser cimport xmlParserCtxt, xmlSAXHandler, xmlSAXHandlerV1
 
-cdef extern from "libxml/HTMLparser.h":
+cdef extern from "libxml/HTMLparser.h" nogil:
     ctypedef enum htmlParserOption:
         HTML_PARSE_NOERROR    # suppress error reports
         HTML_PARSE_NOWARNING  # suppress warning reports
@@ -24,33 +24,33 @@ cdef extern from "libxml/HTMLparser.h":
     xmlSAXHandlerV1 htmlDefaultSAXHandler
 
     cdef xmlParserCtxt* htmlCreateMemoryParserCtxt(
-        char* buffer, int size) nogil
+        char* buffer, int size)
     cdef xmlParserCtxt* htmlCreateFileParserCtxt(
-        char* filename, char* encoding) nogil
+        char* filename, char* encoding)
     cdef xmlParserCtxt* htmlCreatePushParserCtxt(xmlSAXHandler* sax,
                                                  void* user_data,
                                                  char* chunk, int size,
-                                                 char* filename, int enc) nogil
-    cdef void htmlFreeParserCtxt(xmlParserCtxt* ctxt) nogil
-    cdef void htmlCtxtReset(xmlParserCtxt* ctxt) nogil
-    cdef int htmlCtxtUseOptions(xmlParserCtxt* ctxt, int options) nogil
-    cdef int htmlParseDocument(xmlParserCtxt* ctxt) nogil
+                                                 char* filename, int enc)
+    cdef void htmlFreeParserCtxt(xmlParserCtxt* ctxt)
+    cdef void htmlCtxtReset(xmlParserCtxt* ctxt)
+    cdef int htmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
+    cdef int htmlParseDocument(xmlParserCtxt* ctxt)
     cdef int htmlParseChunk(xmlParserCtxt* ctxt, 
-                            char* chunk, int size, int terminate) nogil
+                            char* chunk, int size, int terminate)
 
     cdef xmlDoc* htmlCtxtReadFile(xmlParserCtxt* ctxt,
                                   char* filename, const_char* encoding,
-                                  int options) nogil
+                                  int options)
     cdef xmlDoc* htmlCtxtReadDoc(xmlParserCtxt* ctxt,
                                  char* buffer, char* URL, const_char* encoding,
-                                 int options) nogil
+                                 int options)
     cdef xmlDoc* htmlCtxtReadIO(xmlParserCtxt* ctxt, 
                                 xmlInputReadCallback ioread, 
                                 xmlInputCloseCallback ioclose, 
                                 void* ioctx,
                                 char* URL, const_char* encoding,
-                                int options) nogil
+                                int options)
     cdef xmlDoc* htmlCtxtReadMemory(xmlParserCtxt* ctxt,
                                     char* buffer, int size,
                                     char* filename, const_char* encoding,
-                                    int options) nogil
+                                    int options)
