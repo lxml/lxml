@@ -6,6 +6,7 @@ import difflib
 from lxml import etree
 from lxml.html import fragment_fromstring
 import re
+from collections import namedtuple
 
 __all__ = ['html_annotate', 'htmldiff']
 
@@ -236,7 +237,7 @@ def merge_insert(ins_chunks, doc):
     here we add <ins>ins_chunks</ins> to the end of that.  """
 
     ins_chunks = list(ins_chunks)
-    unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks)
+    unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks, with_idx=True)
     unbalanced_tags = unbalanced_start + unbalanced_end
 
     if doc and not doc[-1].endswith(' '):
@@ -245,10 +246,8 @@ def merge_insert(ins_chunks, doc):
         doc[-1] += ' '
     doc.append('<ins>')
 
-    for chunk in ins_chunks:
-        if chunk in balanced:
-            doc.append(chunk)
-        elif chunk in unbalanced_tags:
+    for idx, chunk in enumerate(ins_chunks):
+        if (idx, chunk) in unbalanced_tags:
             leading_space = '' if chunk.endswith(' ') else ' '
             trailing_space = '' if chunk.startswith(' ') else ' '
             if doc[-1].strip() == '<ins>':
@@ -259,6 +258,9 @@ def merge_insert(ins_chunks, doc):
                     chunk,
                     ('%s<ins>' % leading_space)
                 ])
+        elif (idx, chunk) in balanced:
+            doc.append(chunk)
+
 
     if doc[-1].strip() == '<ins>':
         doc.pop()
@@ -326,7 +328,9 @@ def cleanup_delete(chunks):
         chunks = doc
     return chunks
 
-def split_unbalanced(chunks):
+IndexedChunk = namedtuple('IndexedChunk', ('idx', 'chunk'))
+
+def split_unbalanced(chunks, with_idx=False):
     """Return (unbalanced_start, balanced, unbalanced_end), where each is
     a list of text and tag chunks.
 
@@ -338,31 +342,32 @@ def split_unbalanced(chunks):
     end = []
     tag_stack = []
     balanced = []
-    for chunk in chunks:
+    for idx, chunk in enumerate(chunks):
+        chunk_to_add = IndexedChunk(idx, chunk) if with_idx else chunk
         if not chunk.startswith('<'):
-            balanced.append(chunk)
+            balanced.append(chunk_to_add)
             continue
         endtag = chunk[1] == '/'
         name = chunk.split()[0].strip('<>/')
         if name in empty_tags:
-            balanced.append(chunk)
+            balanced.append(chunk_to_add)
             continue
         if endtag:
             if tag_stack and tag_stack[-1][0] == name:
-                balanced.append(chunk)
+                balanced.append(chunk_to_add)
                 name, pos, tag = tag_stack.pop()
                 balanced[pos] = tag
             elif tag_stack:
                 start.extend([tag for name, pos, tag in tag_stack])
                 tag_stack = []
-                end.append(chunk)
+                end.append(chunk_to_add)
             else:
-                end.append(chunk)
+                end.append(chunk_to_add)
         else:
-            tag_stack.append((name, len(balanced), chunk))
+            tag_stack.append((name, len(balanced), chunk_to_add))
             balanced.append(None)
     start.extend(
-        [chunk for name, pos, chunk in tag_stack])
+        [chunk_to_add for name, pos, chunk_to_add in tag_stack])
     balanced = [chunk for chunk in balanced if chunk is not None]
     return start, balanced, end
 
