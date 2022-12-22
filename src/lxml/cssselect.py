@@ -92,7 +92,7 @@ class CSSSelector(etree.XPath):
         elif translator == 'xhtml':
             translator = LxmlHTMLTranslator(xhtml=True)
         path = translator.css_to_xpath(css)
-        etree.XPath.__init__(self, path, namespaces=namespaces)
+        super(CSSSelector, self).__init__(path, namespaces=namespaces)
         self.css = css
 
     def __repr__(self):
