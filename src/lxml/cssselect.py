@@ -14,7 +14,7 @@ try:
 except ImportError:
     raise ImportError(
         'cssselect does not seem to be installed. '
-        'See http://packages.python.org/cssselect/')
+        'See https://pypi.org/project/cssselect/')
 
 
 SelectorSyntaxError = external_cssselect.SelectorSyntaxError
