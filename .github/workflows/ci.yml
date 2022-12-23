@@ -53,9 +53,9 @@ jobs:
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          - os: windows-2016
-            python-version: 2.7
-            env: { STATIC_DEPS: true }  # always static
+          #- os: windows-2016
+          #  python-version: 2.7
+          #  env: { STATIC_DEPS: true }  # always static
 
           - os: ubuntu-latest
             python-version: "3.9"
