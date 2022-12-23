@@ -110,6 +110,15 @@ jobs:
     - name: Install dependencies
       run: python -m pip install -r requirements.txt
 
+    - name: Cache [libs]
+      uses: actions/cache@v3
+      with:
+        path: |
+          libs/*.xz
+          libs/*.gz
+          libs/*.zip
+        key: linux-libs
+
     - name: Build Linux wheels
       run: make sdist wheel_${{ matrix.image }}
       env: { STATIC_DEPS: true, PYTHON_BUILD_VERSION: "${{ matrix.pyversion }}" }
@@ -165,6 +174,16 @@ jobs:
 
     - name: Install dependencies
       run: python -m pip install setuptools wheel -r requirements.txt
+
+    - name: Cache [libs]
+      uses: actions/cache@v3
+      if: startsWith(runner.os, 'macos-')
+      with:
+        path: |
+          libs/*.xz
+          libs/*.gz
+          libs/*.zip
+        key: non-linux-libs
 
     - name: Build wheels
       run: make sdist wheel

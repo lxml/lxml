@@ -159,6 +159,16 @@ jobs:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
+      - name: Cache [libs]
+        uses: actions/cache@v3
+        if: ${{ matrix.env.STATIC_DEPS == 'true' }}
+        with:
+          path: |
+            libs/*.xz
+            libs/*.gz
+            libs/*.zip
+          key: libs-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}${{ matrix.extra_hash }}
+
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
         env: ${{ matrix.env }}
