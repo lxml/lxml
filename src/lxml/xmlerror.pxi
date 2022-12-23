@@ -634,7 +634,7 @@ def use_global_python_log(PyErrorLog log not None):
 
 
 # local log functions: forward error to logger object
-cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
+cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) noexcept with gil:
     cdef _BaseErrorLog log_handler
     if c_log_handler is not NULL:
         log_handler = <_BaseErrorLog>c_log_handler
@@ -645,27 +645,27 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
     log_handler._receive(error)
 
 
-cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) nogil:
+cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) noexcept nogil:
     # no Python objects here, may be called without thread context !
     if __DEBUG:
         _forwardError(c_log_handler, error)
 
 
-cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
+cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef cvarargs.va_list args
     cvarargs.va_start(args, msg)
     _receiveGenericError(c_log_handler, xmlerror.XML_FROM_XSLT, msg, args)
     cvarargs.va_end(args)
 
-cdef void _receiveRelaxNGParseError(void* c_log_handler, char* msg, ...) nogil:
+cdef void _receiveRelaxNGParseError(void* c_log_handler, char* msg, ...) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef cvarargs.va_list args
     cvarargs.va_start(args, msg)
     _receiveGenericError(c_log_handler, xmlerror.XML_FROM_RELAXNGP, msg, args)
     cvarargs.va_end(args)
 
-cdef void _receiveRelaxNGValidationError(void* c_log_handler, char* msg, ...) nogil:
+cdef void _receiveRelaxNGValidationError(void* c_log_handler, char* msg, ...) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef cvarargs.va_list args
     cvarargs.va_start(args, msg)
@@ -673,7 +673,7 @@ cdef void _receiveRelaxNGValidationError(void* c_log_handler, char* msg, ...) no
     cvarargs.va_end(args)
 
 # dummy function: no log output at all
-cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
+cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) noexcept nogil:
     pass
 
 
@@ -694,7 +694,7 @@ cdef void _connectGenericErrorLog(log, int c_domain=-1):
 
 
 cdef void _receiveGenericError(void* c_log_handler, int c_domain,
-                               char* msg, cvarargs.va_list args) nogil:
+                               char* msg, cvarargs.va_list args) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef xmlerror.xmlError c_error
     cdef char* c_text

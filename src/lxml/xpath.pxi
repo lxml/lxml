@@ -99,7 +99,7 @@ cdef class _XPathContext(_BaseContext):
 
 
 cdef void _registerExsltFunctionsForNamespaces(
-        void* _c_href, void* _ctxt, const_xmlChar* c_prefix):
+        void* _c_href, void* _ctxt, const_xmlChar* c_prefix) noexcept:
     c_href = <const_xmlChar*> _c_href
     ctxt = <xpath.xmlXPathContext*> _ctxt
 

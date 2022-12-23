@@ -699,10 +699,10 @@ cdef class _FilelikeWriter:
         finally:
             return retval  # and swallow any further exceptions
 
-cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length):
+cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length) except -1:
     return (<_FilelikeWriter>ctxt).write(c_buffer, length)
 
-cdef int _closeFilelikeWriter(void* ctxt):
+cdef int _closeFilelikeWriter(void* ctxt) except -1:
     return (<_FilelikeWriter>ctxt).close()
 
 cdef _tofilelike(f, _Element element, encoding, doctype, method,

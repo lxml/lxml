@@ -402,10 +402,10 @@ cdef class _FileReaderContext:
         finally:
             return c_byte_count  # swallow any exceptions
 
-cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with gil:
+cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) except -1 with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
-cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) nogil:
+cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) except -1 nogil:
     return stdio.fread(c_buffer, 1,  c_size, <stdio.FILE*>ctxt)
 
 ############################################################
@@ -626,10 +626,10 @@ cdef _initParserContext(_ParserContext context,
     if c_ctxt is not NULL:
         context._initParserContext(c_ctxt)
 
-cdef void _forwardParserError(xmlparser.xmlParserCtxt* _parser_context, xmlerror.xmlError* error) with gil:
+cdef void _forwardParserError(xmlparser.xmlParserCtxt* _parser_context, xmlerror.xmlError* error) noexcept with gil:
     (<_ParserContext>_parser_context._private)._error_log._receive(error)
 
-cdef void _receiveParserError(void* c_context, xmlerror.xmlError* error) nogil:
+cdef void _receiveParserError(void* c_context, xmlerror.xmlError* error) noexcept nogil:
     if __DEBUG:
         if c_context is NULL or (<xmlparser.xmlParserCtxt*>c_context)._private is NULL:
             _forwardError(NULL, error)
@@ -1207,7 +1207,7 @@ cdef class _BaseParser:
             context.cleanup()
 
 
-cdef void _initSaxDocument(void* ctxt) with gil:
+cdef void _initSaxDocument(void* ctxt) noexcept with gil:
     xmlparser.xmlSAX2StartDocument(ctxt)
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     c_doc = c_ctxt.myDoc

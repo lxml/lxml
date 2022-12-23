@@ -15,37 +15,37 @@ cdef extern from "libxml/parser.h" nogil:
                                             const_xmlChar** namespaces,
                                             int nb_attributes,
                                             int nb_defaulted,
-                                            const_xmlChar** attributes)
+                                            const_xmlChar** attributes) noexcept
 
     ctypedef void (*endElementNsSAX2Func)(void* ctx,
                                           const_xmlChar* localname,
                                           const_xmlChar* prefix,
-                                          const_xmlChar* URI)
+                                          const_xmlChar* URI) noexcept
 
-    ctypedef void (*startElementSAXFunc)(void* ctx, const_xmlChar* name, const_xmlChar** atts)
+    ctypedef void (*startElementSAXFunc)(void* ctx, const_xmlChar* name, const_xmlChar** atts) noexcept
 
-    ctypedef void (*endElementSAXFunc)(void* ctx, const_xmlChar* name)
+    ctypedef void (*endElementSAXFunc)(void* ctx, const_xmlChar* name) noexcept
 
-    ctypedef void (*charactersSAXFunc)(void* ctx, const_xmlChar* ch, int len)
+    ctypedef void (*charactersSAXFunc)(void* ctx, const_xmlChar* ch, int len) noexcept
 
-    ctypedef void (*cdataBlockSAXFunc)(void* ctx, const_xmlChar* value, int len)
+    ctypedef void (*cdataBlockSAXFunc)(void* ctx, const_xmlChar* value, int len) noexcept
 
-    ctypedef void (*commentSAXFunc)(void* ctx, const_xmlChar* value)
+    ctypedef void (*commentSAXFunc)(void* ctx, const_xmlChar* value) noexcept
 
     ctypedef void (*processingInstructionSAXFunc)(void* ctx, 
                                                   const_xmlChar* target,
-                                                  const_xmlChar* data)
+                                                  const_xmlChar* data) noexcept
 
     ctypedef void (*internalSubsetSAXFunc)(void* ctx, 
                                             const_xmlChar* name,
                                             const_xmlChar* externalID,
-                                            const_xmlChar* systemID)
+                                            const_xmlChar* systemID) noexcept
 
-    ctypedef void (*endDocumentSAXFunc)(void* ctx)
+    ctypedef void (*endDocumentSAXFunc)(void* ctx) noexcept
 
-    ctypedef void (*startDocumentSAXFunc)(void* ctx)
+    ctypedef void (*startDocumentSAXFunc)(void* ctx) noexcept
 
-    ctypedef void (*referenceSAXFunc)(void * ctx, const_xmlChar* name)
+    ctypedef void (*referenceSAXFunc)(void * ctx, const_xmlChar* name) noexcept
 
     cdef int XML_SAX2_MAGIC
 
