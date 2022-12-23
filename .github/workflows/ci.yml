@@ -106,8 +106,8 @@ jobs:
 
           # MacOS sub-jobs
           # ==============
-          - os: macos-latest
-            allowed_failure: true   # Unicode parsing fails in Py3
+          #- os: macos-latest
+          #  allowed_failure: true   # Unicode parsing fails in Py3
 
         exclude:
           - os: ubuntu-latest
