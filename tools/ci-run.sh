@@ -5,6 +5,8 @@ set -x
 GCC_VERSION=${GCC_VERSION:=9}
 TEST_CFLAGS=
 EXTRA_CFLAGS=
+SAVED_GITHUB_API_TOKEN="${GITHUB_API_TOKEN}"
+unset GITHUB_API_TOKEN  # remove from env
 
 # Set up compilers
 if [ -z "${OS_NAME##ubuntu*}" ]; then
@@ -62,7 +64,9 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 # Build
-CFLAGS="$CFLAGS $EXTRA_CFLAGS" python -u setup.py build_ext --inplace \
+CFLAGS="$CFLAGS $EXTRA_CFLAGS" \
+      GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
+      python -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
