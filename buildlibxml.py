@@ -32,7 +32,7 @@ sys_platform = sys.platform
 # use pre-built libraries on Windows
 
 def download_and_extract_windows_binaries(destdir):
-    url = "https://api.github.com/repos/lxml/libxml2-win-binaries/releases"
+    url = "https://api.github.com/repos/lxml/libxml2-win-binaries/releases?per_page=5"
     releases, _ = read_url(url, accept="application/vnd.github+json", as_json=True)
 
     max_release = {'tag_name': ''}
