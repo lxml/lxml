@@ -177,7 +177,7 @@ jobs:
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
         env: ${{ matrix.env }}
-        run: GITHUB_API_TOKEN="${{ secrets.GITHUB_TOKEN }}"  bash ./tools/ci-run.sh
+        run: bash -c 'GITHUB_API_TOKEN="${{ secrets.GITHUB_TOKEN }}"  bash ./tools/ci-run.sh'
 
       - name: Build docs
         if: contains( matrix.env.EXTRA_DEPS, 'sphinx')
