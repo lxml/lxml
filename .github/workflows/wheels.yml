@@ -172,7 +172,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install MacOS dependencies
-      if: startsWith(matrix.os, 'mac')
+      if: startsWith(runner.os, 'macos-')
       run: |
         brew install automake libtool
         ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
