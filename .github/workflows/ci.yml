@@ -134,7 +134,7 @@ jobs:
     env:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
-      MACOSX_DEPLOYMENT_TARGET: 10.15
+      MACOSX_DEPLOYMENT_TARGET: 11.0
       LIBXML2_VERSION: 2.10.3
       LIBXSLT_VERSION: 1.1.37
       COVERAGE: false

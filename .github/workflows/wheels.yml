@@ -156,7 +156,7 @@ jobs:
             python-version: 2.7  # needs older image
 
     runs-on: ${{ matrix.os }}
-    env: { LIBXML2_VERSION: 2.10.3, LIBXSLT_VERSION: 1.1.37, MACOSX_DEPLOYMENT_TARGET: 10.15 }
+    env: { LIBXML2_VERSION: 2.10.3, LIBXSLT_VERSION: 1.1.37, MACOSX_DEPLOYMENT_TARGET: 11.0 }
 
     steps:
     - uses: actions/checkout@v3
