@@ -79,12 +79,6 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       make test || exit 1
 
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-      python setup.py build || exit 1
-GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-      python setup.py install || exit 1
-python -c "from lxml import etree" || exit 1
-
-GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       CFLAGS="-O3 -g1 -mtune=generic -fPIC -flto" \
       LDFLAGS="-flto" \
       make clean wheel || exit 1
