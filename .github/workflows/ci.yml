@@ -167,9 +167,15 @@ jobs:
             ls -l /usr/bin/pip* /usr/local/bin/pip*
             which pip
 
+      - name: Install MacOS dependencies
+        if: startsWith(runner.os, 'macos-')
+        run: |
+          brew install automake libtool ccache
+          ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
+
       - name: Cache [ccache]
         uses: pat-s/always-upload-cache@v3.0.11
-        if: startsWith(runner.os, 'Linux')
+        if: startsWith(runner.os, 'Linux') || startsWith(runner.os, 'macos')
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
