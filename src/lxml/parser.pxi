@@ -1478,7 +1478,7 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     )
 
 cdef class XMLParser(_FeedParser):
-    u"""XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, schema: XMLSchema =None, huge_tree=False, remove_blank_text=False, resolve_entities=True, remove_comments=False, remove_pis=False, strip_cdata=True, collect_ids=True, target=None, compact=True)
+    u"""XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, schema: XMLSchema =None, huge_tree=False, remove_blank_text=False, resolve_entities=False, remove_comments=False, remove_pis=False, strip_cdata=True, collect_ids=True, target=None, compact=True)
 
     The XML parser.
 
@@ -1508,7 +1508,7 @@ cdef class XMLParser(_FeedParser):
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - save memory for short text content (default: True)
     - collect_ids        - use a hash table of XML IDs for fast access (default: True, always True with DTD validation)
-    - resolve_entities   - replace entities by their text value (default: True)
+    - resolve_entities   - inject and expand system entities (default: False)
     - huge_tree          - disable security restrictions and support very deep trees
                            and very long text content (only affects libxml2 2.7+)
 

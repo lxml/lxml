@@ -1082,6 +1082,9 @@ question.
 How do I use lxml safely as a web-service endpoint?
 ---------------------------------------------------
 
+Good on you for finding this FAQ, but lxml make using XML in
+web-services safe by default.
+
 XML based web-service endpoints are generally subject to several
 types of attacks if they allow some kind of untrusted input.
 From the point of view of the underlying XML tool, the most
