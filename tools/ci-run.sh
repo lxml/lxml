@@ -5,6 +5,8 @@ set -x
 GCC_VERSION=${GCC_VERSION:=9}
 TEST_CFLAGS=
 EXTRA_CFLAGS=
+SAVED_GITHUB_API_TOKEN="${GITHUB_API_TOKEN}"
+unset GITHUB_API_TOKEN  # remove from env
 
 # Set up compilers
 if [ -z "${OS_NAME##ubuntu*}" ]; then
@@ -62,7 +64,9 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 # Build
-CFLAGS="$CFLAGS $EXTRA_CFLAGS" python -u setup.py build_ext --inplace \
+GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
+      CFLAGS="$CFLAGS $EXTRA_CFLAGS" \
+      python -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
@@ -70,14 +74,19 @@ CFLAGS="$CFLAGS $EXTRA_CFLAGS" python -u setup.py build_ext --inplace \
 ccache -s || true
 
 # Run tests
-CFLAGS="$TEST_CFLAGS" PYTHONUNBUFFERED=x make test || exit 1
+GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
+      CFLAGS="$TEST_CFLAGS" PYTHONUNBUFFERED=x \
+      make test || exit 1
 
-python setup.py build || exit 1
-python setup.py install || exit 1
+GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
+      python setup.py build || exit 1
+GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
+      python setup.py install || exit 1
 python -c "from lxml import etree" || exit 1
 
-CFLAGS="-O3 -g1 -mtune=generic -fPIC -flto" \
-  LDFLAGS="-flto" \
-  make clean wheel || exit 1
+GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
+      CFLAGS="-O3 -g1 -mtune=generic -fPIC -flto" \
+      LDFLAGS="-flto" \
+      make clean wheel || exit 1
 
 ccache -s || true

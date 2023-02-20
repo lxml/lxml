@@ -110,6 +110,15 @@ jobs:
     - name: Install dependencies
       run: python -m pip install -r requirements.txt
 
+    - name: Cache [libs]
+      uses: actions/cache@v3
+      with:
+        path: |
+          libs/*.xz
+          libs/*.gz
+          libs/*.zip
+        key: linux-libs
+
     - name: Build Linux wheels
       run: make sdist wheel_${{ matrix.image }}
       env: { STATIC_DEPS: true, PYTHON_BUILD_VERSION: "${{ matrix.pyversion }}" }
@@ -147,7 +156,7 @@ jobs:
             python-version: 2.7  # needs older image
 
     runs-on: ${{ matrix.os }}
-    env: { LIBXML2_VERSION: 2.9.14, LIBXSLT_VERSION: 1.1.35, MACOSX_DEPLOYMENT_TARGET: 10.15 }
+    env: { LIBXML2_VERSION: 2.10.3, LIBXSLT_VERSION: 1.1.37, MACOSX_DEPLOYMENT_TARGET: 11.0 }
 
     steps:
     - uses: actions/checkout@v3
@@ -158,13 +167,23 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install MacOS dependencies
-      if: startsWith(matrix.os, 'mac')
+      if: startsWith(runner.os, 'macos-')
       run: |
         brew install automake libtool
         ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
 
     - name: Install dependencies
       run: python -m pip install setuptools wheel -r requirements.txt
+
+    - name: Cache [libs]
+      uses: actions/cache@v3
+      if: startsWith(runner.os, 'macos-')
+      with:
+        path: |
+          libs/*.xz
+          libs/*.gz
+          libs/*.zip
+        key: non-linux-libs
 
     - name: Build wheels
       run: make sdist wheel

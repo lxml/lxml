@@ -32,8 +32,13 @@ sys_platform = sys.platform
 # use pre-built libraries on Windows
 
 def download_and_extract_windows_binaries(destdir):
-    url = "https://api.github.com/repos/lxml/libxml2-win-binaries/releases"
-    releases, _ = read_url(url, accept="application/vnd.github+json", as_json=True)
+    url = "https://api.github.com/repos/lxml/libxml2-win-binaries/releases?per_page=5"
+    releases, _ = read_url(
+        url,
+        accept="application/vnd.github+json",
+        as_json=True,
+        github_api_token=os.environ.get("GITHUB_API_TOKEN"),
+    )
 
     max_release = {'tag_name': ''}
     for release in releases:
@@ -169,10 +174,12 @@ def _list_dir_ftplib(url):
     return parse_text_ftplist("\n".join(data))
 
 
-def read_url(url, decode=True, accept=None, as_json=False):
+def read_url(url, decode=True, accept=None, as_json=False, github_api_token=None):
     headers = {'User-Agent': 'https://github.com/lxml/lxml'}
     if accept:
         headers['Accept'] = accept
+    if github_api_token:
+        headers['authorization'] = "Bearer " + github_api_token
     request = Request(url, headers=headers)
 
     with closing(urlopen(request)) as res:

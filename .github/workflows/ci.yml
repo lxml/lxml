@@ -49,13 +49,16 @@ jobs:
           - "3.9"
           - "3.10"  # quotes to avoid being interpreted as the number 3.1
           - "3.11"
-          # - "3.12-dev"
+          - "3.12-dev"
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          - os: windows-2016
-            python-version: 2.7
-            env: { STATIC_DEPS: true }  # always static
+          #- os: windows-2016
+          #  python-version: 2.7
+          #  env: { STATIC_DEPS: true }  # always static
+
+          - python-version: "3.12-dev"
+            allowed_failure: true
 
           - os: ubuntu-latest
             python-version: "3.9"
@@ -106,8 +109,8 @@ jobs:
 
           # MacOS sub-jobs
           # ==============
-          - os: macos-latest
-            allowed_failure: true   # Unicode parsing fails in Py3
+          #- os: macos-latest
+          #  allowed_failure: true   # Unicode parsing fails in Py3
 
         exclude:
           - os: ubuntu-latest
@@ -131,9 +134,9 @@ jobs:
     env:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
-      MACOSX_DEPLOYMENT_TARGET: 10.15
-      LIBXML2_VERSION: 2.9.14
-      LIBXSLT_VERSION: 1.1.35
+      MACOSX_DEPLOYMENT_TARGET: 11.0
+      LIBXML2_VERSION: 2.10.3
+      LIBXSLT_VERSION: 1.1.37
       COVERAGE: false
       GCC_VERSION: 9
       USE_CCACHE: 1
@@ -159,10 +162,20 @@ jobs:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
+      - name: Cache [libs]
+        uses: actions/cache@v3
+        if: ${{ matrix.env.STATIC_DEPS == 'true' }}
+        with:
+          path: |
+            libs/*.xz
+            libs/*.gz
+            libs/*.zip
+          key: libs-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}${{ matrix.extra_hash }}
+
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
         env: ${{ matrix.env }}
-        run: bash ./tools/ci-run.sh
+        run: bash -c 'GITHUB_API_TOKEN="${{ secrets.GITHUB_TOKEN }}"  bash ./tools/ci-run.sh'
 
       - name: Build docs
         if: contains( matrix.env.EXTRA_DEPS, 'sphinx')
