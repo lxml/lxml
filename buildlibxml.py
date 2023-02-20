@@ -416,7 +416,7 @@ def configure_darwin_env(env_setup):
     env_default = {
         'CFLAGS': "-arch arm64  -arch x86_64  -O2",
         'LDFLAGS': "-arch x86_64  -arch arm64",
-        'MACOSX_DEPLOYMENT_TARGET': "10.6"
+        'MACOSX_DEPLOYMENT_TARGET': "11.0"
     }
     env_default.update(os.environ)
     env_setup['env'] = env_default
