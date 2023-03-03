@@ -976,7 +976,7 @@ cdef _checkNumber(bytes_unicode s, bint allow_float):
     cdef NumberParserState state = NPS_SPACE_PRE
 
     for c in s:
-        if c.isdigit() if (bytes_unicode is unicode) else c in b'0123456789':
+        if c in u'0123456789':
             if state in (NPS_DIGITS, NPS_FRACTION, NPS_DIGITS_EXP):
                 pass
             elif state in (NPS_SPACE_PRE, NPS_SIGN):
