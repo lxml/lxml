@@ -2663,6 +2663,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s>t</s>
           <s>f</s>
           <s></s>
+          <s>²²²²</s>
           <s>12_34</s>
           <s>1.2_34</s>
           <s>34E</s>
