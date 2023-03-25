@@ -74,7 +74,7 @@ Another supporter of the lxml project is
 Project income report
 ---------------------
 
-lxml has `more than 50 million downloads <https://pypistats.org/packages/lxml>`_
+lxml has `about 60 million downloads <https://pypistats.org/packages/lxml>`_
 per month on PyPI.
 
 * Total project income in 2022: EUR 2566.38  (213.87 € / month)
