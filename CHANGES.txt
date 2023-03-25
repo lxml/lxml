@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+5.0.0 (2023-??-??)
+==================
+
+Bugs fixed
+----------
+
+* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
+
+* The internal exception handling in C callbacks was improved for Cython 3.0.
+
+Other changes
+-------------
+
+* Linux/macOS wheels use the latest library versions libxml2 2.10.3 and libxslt 1.1.37.
+
+
 4.9.2 (2022-12-13)
 ==================
 
