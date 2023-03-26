@@ -144,13 +144,12 @@ jobs:
       matrix:
         os: [macos-latest, windows-2019]
         #os: [macos-10.15, windows-latest]
-        #os: [macos-10.15, macOS-M1]
         #os: [macos-10.15]
         python-version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.8-v7.3.7", "pypy-3.9-v7.3.9"]
 
-        include:
-          - os: windows-2016
-            python-version: 2.7
+        #include:
+        #  - os: windows-2016
+        #    python-version: 2.7
         exclude:
           - os: windows-2019
             python-version: 2.7  # needs older image
