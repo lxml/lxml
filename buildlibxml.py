@@ -315,7 +315,7 @@ def find_max_version(libname, filenames, version_re=None):
         match = version_re.search(fn)
         if match:
             version_string = match.group(1)
-            versions.append((tuple(map(tryint, version_string.split('.'))),
+            versions.append((tuple(map(tryint, version_string.replace("-", ".-").split('.'))),
                              version_string))
     if not versions:
         raise Exception(
