@@ -15,7 +15,9 @@ Bugs fixed
 Other changes
 -------------
 
-* Linux/macOS wheels use the latest library versions libxml2 2.10.3 and libxslt 1.1.37.
+* Binary wheels use the latest library versions libxml2 2.10.3 and libxslt 1.1.37.
+
+* Built with Cython 0.29.33 to adapt to changes in Python 3.11 and 3.12.
 
 
 4.9.2 (2022-12-13)
