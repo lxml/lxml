@@ -351,6 +351,7 @@ def define_macros():
     if OPTION_BUILD_LIBXML2XSLT:
         macros.append(('LIBXML_STATIC', None))
         macros.append(('LIBXSLT_STATIC', None))
+        macros.append(('LIBEXSLT_STATIC', None))
     # Disable showing C lines in tracebacks, unless explicitly requested.
     macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1' if OPTION_WITH_CLINES else '0'))
     return macros
