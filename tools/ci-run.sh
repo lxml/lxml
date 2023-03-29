@@ -5,6 +5,7 @@ set -x
 GCC_VERSION=${GCC_VERSION:=9}
 TEST_CFLAGS=
 EXTRA_CFLAGS=
+EXTRA_LDFLAGS=
 SAVED_GITHUB_API_TOKEN="${GITHUB_API_TOKEN}"
 unset GITHUB_API_TOKEN  # remove from env
 
@@ -22,12 +23,13 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   export CC="gcc"
   export PATH="/usr/lib/ccache:$PATH"
   TEST_CFLAGS="-Og -g -fPIC"
-  EXTRA_CFLAGS="$TEST_CFLAGS -Wall -Wextra"
+  EXTRA_CFLAGS="-Wall -Wextra"
 
 elif [ -z "${OS_NAME##macos*}" ]; then
   export CC="clang -Wno-deprecated-declarations"
-  TEST_CFLAGS="-Og -g -fPIC"
-  EXTRA_CFLAGS="$TEST_CFLAGS -Wall -Wextra"
+  TEST_CFLAGS="-Og -g -fPIC -arch arm64 -arch x86_64"
+  EXTRA_LDFLAGS="-arch arm64 -arch x86_64"
+  EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64"
 fi
 
 # Log versions in use
@@ -60,12 +62,13 @@ else
 fi
 if [[ "$COVERAGE" == "true" ]]; then
   python -m pip install "coverage<5" || exit 1
-  python -m pip install --pre 'Cython>=3.0a0' || exit 1
+  python -m pip install --pre 'Cython>=3.0b2' || exit 1
 fi
 
 # Build
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-      CFLAGS="$CFLAGS $EXTRA_CFLAGS" \
+      CFLAGS="$CFLAGS $TEST_CFLAGS $EXTRA_CFLAGS" \
+      LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
       python -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
@@ -75,12 +78,14 @@ ccache -s || true
 
 # Run tests
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-      CFLAGS="$TEST_CFLAGS" PYTHONUNBUFFERED=x \
+      CFLAGS="$TEST_CFLAGS $EXTRA_CFLAGS" \
+      LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
+      PYTHONUNBUFFERED=x \
       make test || exit 1
 
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-      CFLAGS="-O3 -g1 -mtune=generic -fPIC -flto" \
-      LDFLAGS="-flto" \
+      CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
+      LDFLAGS="-flto $EXTRA_LDFLAGS" \
       make clean wheel || exit 1
 
 ccache -s || true
