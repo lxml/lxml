@@ -450,7 +450,7 @@
       @*|*
       *
   instead for schema for which they are equivalent.
-  If the params are set explictly the above may be used, and also either if
+  If the params are set explicitly the above may be used, and also either if
       @*
       @*|node()
    in all cases the result may not be equivalent, for example if you specify no attributes and the schema 
@@ -471,8 +471,8 @@
 
 <!-- DPC if this is set to 
     '' use recursive templates to iterate over document tree,
-    'key' select  all contexts with a key rather than walking the tree explictly in each mode
-    '//' select all contexts with // a key rather than walking the tree explictly in each mode (XSLT2 only)
+    'key' select  all contexts with a key rather than walking the tree explicitly in each mode
+    '//' select all contexts with // a key rather than walking the tree explicitly in each mode (XSLT2 only)
 -->
 <xsl:param name="select-contexts" select="''"/>
 
