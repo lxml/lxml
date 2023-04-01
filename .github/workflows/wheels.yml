@@ -176,13 +176,12 @@ jobs:
 
     - name: Cache [libs]
       uses: actions/cache@v3
-      if: startsWith(runner.os, 'mac')
       with:
         path: |
           libs/*.xz
           libs/*.gz
           libs/*.zip
-        key: non-linux-libs
+        key: libs-${{ runner.os }}
 
     - name: Build wheels
       run: make sdist wheel
