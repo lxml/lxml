@@ -77,15 +77,19 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
 ccache -s || true
 
 # Run tests
+echo "Running the tests ..."
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       CFLAGS="$TEST_CFLAGS $EXTRA_CFLAGS" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
       PYTHONUNBUFFERED=x \
       make test || exit 1
 
-GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-      CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
-      LDFLAGS="-flto $EXTRA_LDFLAGS" \
-      make clean wheel || exit 1
+if [[ "$COVERAGE" != "true" ]]; then
+  echo "Building a clean wheel ..."
+  GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
+        CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
+        LDFLAGS="-flto $EXTRA_LDFLAGS" \
+        make clean wheel || exit 1
+fi
 
 ccache -s || true
