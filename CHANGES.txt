@@ -12,12 +12,14 @@ Bugs fixed
 
 * The internal exception handling in C callbacks was improved for Cython 3.0.
 
+* A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34.
+
 Other changes
 -------------
 
 * Binary wheels use the latest library versions libxml2 2.10.3 and libxslt 1.1.37.
 
-* Built with Cython 0.29.33 to adapt to changes in Python 3.11 and 3.12.
+* Built with Cython 0.29.34 to adapt to changes in Python 3.11 and 3.12.
 
 
 4.9.2 (2022-12-13)
