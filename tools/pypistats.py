@@ -47,7 +47,7 @@ def print_agg_stats(stats, sort_key=None):
     total = sum(stats.values())
     max_len = max(len(category) for category in stats)
     agg_sum = 0.0
-    for category, count in sorted(stats.items(), key=sort_key):
+    for category, count in sorted(stats.items(), key=sort_key, reverse=True):
         agg_sum += count
         print(f"  {category:{max_len}}: {count:-12.1f} / day ({agg_sum / total * 100:-5.1f}%)")
 
