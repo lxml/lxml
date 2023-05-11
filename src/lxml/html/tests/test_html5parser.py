@@ -44,7 +44,8 @@ except ImportError:
             return None
 
         def load_module(self, fullname):
-            fake_module = object()
+            class Cls: pass
+            fake_module = Cls()
             fake_module.__qualname__ = fullname
             fake_module.__name__ = fullname.rsplit('.', 1)[-1]
             mod = sys.modules.setdefault(fullname, fake_module)
