@@ -1,5 +1,4 @@
 import os
-import imp
 try:
     from StringIO import StringIO
 except ImportError:                     # python 3
@@ -45,7 +44,10 @@ except ImportError:
             return None
 
         def load_module(self, fullname):
-            mod = sys.modules.setdefault(fullname, imp.new_module(fullname))
+            fake_module = object()
+            fake_module.__qualname__ = fullname
+            fake_module.__name__ = fullname.rsplit('.', 1)[-1]
+            mod = sys.modules.setdefault(fullname, fake_module)
             mod.__file__, mod.__loader__, mod.__path__ = "<dummy>", self, []
             mod.__dict__.update(self.mocks[fullname])
             return mod
