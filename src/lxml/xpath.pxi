@@ -147,21 +147,6 @@ cdef class _XPathEvaluatorBase:
         self._xpathCtxt = xpathCtxt
         self._context.set_context(xpathCtxt)
 
-    def evaluate(self, _eval_arg, **_variables):
-        u"""evaluate(self, _eval_arg, **_variables)
-
-        Evaluate an XPath expression.
-
-        Instead of calling this method, you can also call the evaluator object
-        itself.
-
-        Variables may be provided as keyword arguments.  Note that namespaces
-        are currently not supported for variables.
-
-        :deprecated: call the object, not its method.
-        """
-        return self(_eval_arg, **_variables)
-
     cdef bint _checkAbsolutePath(self, char* path):
         cdef char c
         if path is NULL:

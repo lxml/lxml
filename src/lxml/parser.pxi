@@ -975,10 +975,6 @@ cdef class _BaseParser:
         """The version of the underlying XML parser."""
         return u"libxml2 %d.%d.%d" % LIBXML_VERSION
 
-    def setElementClassLookup(self, ElementClassLookup lookup = None):
-        u":deprecated: use ``parser.set_element_class_lookup(lookup)`` instead."
-        self.set_element_class_lookup(lookup)
-
     def set_element_class_lookup(self, ElementClassLookup lookup = None):
         u"""set_element_class_lookup(self, lookup = None)
 

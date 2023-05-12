@@ -434,7 +434,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         # at least libxslt 1.1.28 produces this error, earlier ones (e.g. 1.1.18) might not ...
-        self.assertRaises(etree.XSLTApplyError, st.apply, tree)
+        self.assertRaises(etree.XSLTApplyError, st, tree)
 
     def test_xslt_multiple_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')

@@ -469,12 +469,6 @@ cdef class XSLT:
             raise ValueError("cannot set a maximum stylesheet traversal depth < 0")
         xslt.xsltMaxDepth = max_depth
 
-    def apply(self, _input, *, profile_run=False, **kw):
-        u"""apply(self, _input,  profile_run=False, **kw)
-        
-        :deprecated: call the object, not this method."""
-        return self(_input, profile_run=profile_run, **kw)
-
     def tostring(self, _ElementTree result_tree):
         u"""tostring(self, result_tree)
 
