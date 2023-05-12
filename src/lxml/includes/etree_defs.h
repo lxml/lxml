@@ -120,6 +120,16 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  define _lx_PySlice_GetIndicesEx(o, l, b, e, s, sl) PySlice_GetIndicesEx(((PySliceObject*)o), l, b, e, s, sl)
 #endif
 
+#if PY_VERSION_HEX >= 0x030B00A1
+/* Python 3.12 doesn't have wstr Unicode strings any more. */
+#undef PyUnicode_GET_DATA_SIZE
+#define PyUnicode_GET_DATA_SIZE(ustr)  (0)
+#undef PyUnicode_AS_DATA
+#define PyUnicode_AS_DATA(ustr)  (NULL)
+#undef PyUnicode_IS_READY
+#define PyUnicode_IS_READY(ustr)  (1)
+#endif
+
 #ifdef WITHOUT_THREADING
 #  undef PyEval_SaveThread
 #  define PyEval_SaveThread() (NULL)
