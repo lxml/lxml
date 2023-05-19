@@ -4,9 +4,14 @@ on:
   release:
     types: [created]
 
+permissions: {}
+
 jobs:
   sdist:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v3
@@ -46,6 +51,9 @@ jobs:
 
   Linux:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     strategy:
       # Allows for matrix sub-jobs to fail without canceling the rest
@@ -160,6 +168,10 @@ jobs:
             python-version: 2.7  # needs older image
 
     runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: write
+
     env: { LIBXML2_VERSION: 2.9.14, LIBXSLT_VERSION: 1.1.37, MACOSX_DEPLOYMENT_TARGET: 11.0 }
 
     steps:
