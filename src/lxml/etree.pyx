@@ -142,14 +142,14 @@ cdef struct qname:
     const_xmlChar* c_name
     python.PyObject* href
 
+# initialize parser (and threading)
+xmlparser.xmlInitParser()
+
 # global per-thread setup
 tree.xmlThrDefIndentTreeOutput(1)
 tree.xmlThrDefLineNumbersDefaultValue(1)
 
 _initThreadLogging()
-
-# initialize parser (and threading)
-xmlparser.xmlInitParser()
 
 # filename encoding
 cdef bytes _FILENAME_ENCODING = (sys.getfilesystemencoding() or sys.getdefaultencoding() or 'ascii').encode("UTF-8")
