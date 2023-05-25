@@ -52,7 +52,7 @@ ccache -s || true
 echo "Installing requirements [python]"
 python -m pip install -U pip setuptools wheel
 if [ -z "${PYTHON_VERSION##*-dev}" ];
-  then python -m pip install --install-option=--cython-compile-minimal https://github.com/cython/cython/archive/master.zip;
+  then CYTHON_COMPILE_MINIMAL=true  python -m pip install https://github.com/cython/cython/archive/master.zip;
   else python -m pip install -r requirements.txt;
 fi
 if [ -z "${PYTHON_VERSION##2*}" ]; then
