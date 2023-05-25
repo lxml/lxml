@@ -131,8 +131,8 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.10.3
-      LIBXSLT_VERSION: 1.1.37
+      LIBXML2_VERSION: 2.11.4
+      LIBXSLT_VERSION: 1.1.38
       COVERAGE: false
       GCC_VERSION: 9
       USE_CCACHE: 1
