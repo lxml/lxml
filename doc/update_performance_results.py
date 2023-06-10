@@ -2,7 +2,7 @@ import operator
 import re
 
 _parse_result_line = re.compile(
-    "\s*(?P<library>\w+):\s*(?P<name>\w+)\s+\((?P<config>[-\w]+\s[\w,]+)\s*\)\s+(?P<time>[0-9.]+\s+msec/pass)"
+    r"\s*(?P<library>\w+):\s*(?P<name>\w+)\s+\((?P<config>[-\w]+\s[\w,]+)\s*\)\s+(?P<time>[0-9.]+\s+msec/pass)"
 ).match
 
 _make_key = operator.itemgetter('library', 'name', 'config')
