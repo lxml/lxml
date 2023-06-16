@@ -24,7 +24,7 @@ RST2LATEX_OPTIONS = " ".join([
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
-replace_content = re.compile("\{[^\}]*\}").sub
+replace_content = re.compile(r"\{[^\}]*\}").sub
 
 replace_epydoc_macros = re.compile(r'(,\s*amssymb|dvips\s*,\s*)').sub
 replace_rst_macros = re.compile(r'(\\usepackage\{color}|\\usepackage\[[^]]*]\{hyperref})').sub
@@ -167,7 +167,7 @@ def tex_postprocess(src_path, dest_path, want_header=False, process_line=noop):
         if skipping(l):
             # To-Do minitoc instead of tableofcontents
             continue
-        elif "\hypertarget{old-versions}" in l:
+        elif r"\hypertarget{old-versions}" in l:
             break
         elif "listcnt0" in l:
             l = l.replace("listcnt0", counter_text)
