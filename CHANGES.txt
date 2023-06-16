@@ -12,6 +12,12 @@ Bugs fixed
 
 * A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34+.
 
+* GH#348: URL checking in the HTML cleaner was improved.
+  Patch by Tim McCormack.
+
+* GH#371, GH#373: Some regex strings were changed to raw strings to fix Python warnings.
+  Patches by Jakub Wilk and Anthony Sottile.
+
 Other changes
 -------------
 
