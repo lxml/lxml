@@ -114,7 +114,7 @@ extra_options['packages'] = [
 
 def setup_extra_options():
     is_interesting_package = re.compile('^(libxml|libxslt|libexslt)$').match
-    is_interesting_header = re.compile('^(zconf|zlib|.*charset)\.h$').match
+    is_interesting_header = re.compile(r'^(zconf|zlib|.*charset)\.h$').match
 
     def extract_files(directories, pattern='*'):
         def get_files(root, dir_path, files):
