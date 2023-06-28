@@ -33,7 +33,7 @@ jobs:
 
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
+      if: github.ref_type == 'tag'
       with:
         files: dist/*.tar.gz
 
@@ -133,7 +133,7 @@ jobs:
 
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
+      if: github.ref_type == 'tag'
       with:
         files: wheelhouse/*/*-m*linux*.whl  # manylinux / musllinux
 
@@ -178,7 +178,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install MacOS dependencies
-      if: startsWith(runner.os, 'mac')
+      if: runner.os == 'macOS'
       run: |
         brew install automake libtool
         ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
@@ -201,7 +201,7 @@ jobs:
 
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
+      if: github.ref_type == 'tag'
       with:
         files: dist/lxml-*.whl
 
