@@ -85,6 +85,8 @@ jobs:
             pyversion: "cp310*"
           - image: manylinux_2_24_aarch64
             pyversion: "cp311*"
+          - image: manylinux_2_24_aarch64
+            pyversion: "cp312*"
 
           - image: musllinux_1_1_aarch64
             pyversion: "cp36*"
@@ -98,6 +100,8 @@ jobs:
             pyversion: "cp310*"
           - image: musllinux_1_1_aarch64
             pyversion: "cp311*"
+          - image: musllinux_1_1_aarch64
+            pyversion: "cp312*"
 
     steps:
     - uses: actions/checkout@v3

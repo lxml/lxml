@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+4.9.3 (2023-06-30)
+==================
+
+Bugs fixed
+----------
+
+* Python 3.12-compatible release with no substantive changes
+
+
 4.9.2 (2022-12-13)
 ==================
 
