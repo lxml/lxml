@@ -2,13 +2,13 @@
 lxml changelog
 ==============
 
-4.9.3 (2023-06-30)
+4.9.3 (2023-07-03)
 ==================
 
-Bugs fixed
-----------
+Other changes
+-------------
 
-* Python 3.12-compatible release with no substantive changes
+* Built with Cython 0.29.35 to adapt to changes in Python 3.11 and 3.12.
 
 
 4.9.2 (2022-12-13)
