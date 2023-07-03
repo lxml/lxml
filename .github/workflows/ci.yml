@@ -166,7 +166,7 @@ jobs:
 
       - name: Cache [libs]
         uses: actions/cache@v3
-        if: ${{ matrix.env.STATIC_DEPS == 'true' }}
+        if: matrix.env.STATIC_DEPS
         with:
           path: |
             libs/*.xz
@@ -200,7 +200,7 @@ jobs:
 
       - name: Upload Wheel
         uses: actions/upload-artifact@v3
-        if: ${{ matrix.env.STATIC_DEPS == 'true' }}
+        if: matrix.env.STATIC_DEPS
         with:
           name: wheels-${{ runner.os }}
           path: dist/*.whl
