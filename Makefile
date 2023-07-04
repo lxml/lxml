@@ -13,8 +13,8 @@ CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; 
 CYTHON3_WITH_COVERAGE?=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
 PYTHON_BUILD_VERSION ?= *
-MANYLINUX_LIBXML2_VERSION=2.9.14
-MANYLINUX_LIBXSLT_VERSION=1.1.35
+MANYLINUX_LIBXML2_VERSION=2.10.3
+MANYLINUX_LIBXSLT_VERSION=1.1.38
 MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
 MANYLINUX_LDFLAGS=-flto
 

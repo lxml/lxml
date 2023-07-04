@@ -172,7 +172,7 @@ jobs:
     permissions:
       contents: write
 
-    env: { LIBXML2_VERSION: 2.9.14, LIBXSLT_VERSION: 1.1.37, MACOSX_DEPLOYMENT_TARGET: 11.0 }
+    env: { LIBXML2_VERSION: 2.10.3, LIBXSLT_VERSION: 1.1.38, MACOSX_DEPLOYMENT_TARGET: 11.0 }
 
     steps:
     - uses: actions/checkout@v3
