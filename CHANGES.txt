@@ -46,7 +46,7 @@ Other changes
 -------------
 
 * Wheels include zlib 1.2.13, libxml2 2.10.3 and libxslt 1.1.38
-  (zlib 1.2.12, libxml2 2.9.12+ and libxslt 1.1.34 on Windows).
+  (zlib 1.2.12, libxml2 2.10.3 and libxslt 1.1.37 on Windows).
 
 * Built with Cython 0.29.36 to adapt to changes in Python 3.12.
 
