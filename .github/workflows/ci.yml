@@ -188,7 +188,7 @@ jobs:
 
       - name: Upload docs
         uses: actions/upload-artifact@v3
-        if: ${{ matrix.extra_hash == '-docs' }}
+        if: matrix.extra_hash == '-docs'
         with:
           name: website_html
           path: doc/html
@@ -203,7 +203,7 @@ jobs:
 
       - name: Upload Wheel
         uses: actions/upload-artifact@v3
-        if: ${{ matrix.env.STATIC_DEPS == true  ||  matrix.env.STATIC_DEPS == 'true' }}
+        if: matrix.env.STATIC_DEPS == true  ||  matrix.env.STATIC_DEPS == 'true'
         with:
           name: wheels-${{ runner.os }}
           path: dist/*.whl
