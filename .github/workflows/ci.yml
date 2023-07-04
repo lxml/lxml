@@ -148,8 +148,20 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v4
+        if: startsWith(matrix.python-version, '3.')
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Setup Python2 (Linux)
+        if: matrix.python-version == '2.7' && startsWith(matrix.os, 'ubuntu')
+        run: |
+            sudo ln -fs python2 /usr/bin/python
+            sudo apt-get update
+            sudo apt-get install python-setuptools python2-dev
+            curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+            sudo python2 get-pip.py
+            ls -l /usr/bin/pip* /usr/local/bin/pip*
+            which pip
 
       - name: Install MacOS dependencies
         if: startsWith(runner.os, 'mac')
@@ -185,7 +197,7 @@ jobs:
 
       - name: Upload docs
         uses: actions/upload-artifact@v3
-        if: ${{ matrix.extra_hash == '-docs' }}
+        if: matrix.extra_hash == '-docs'
         with:
           name: website_html
           path: doc/html
