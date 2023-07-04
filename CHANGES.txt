@@ -5,10 +5,15 @@ lxml changelog
 4.9.3 (2023-07-04)
 ==================
 
-Other changes
--------------
+Bugs fixed
+----------
 
 * ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
+
+* A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34+.
+
+Other changes
+-------------
 
 * Built with Cython 0.29.36 to adapt to changes in Python 3.12.
 
