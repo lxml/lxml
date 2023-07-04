@@ -8,20 +8,10 @@ lxml changelog
 Bugs fixed
 ----------
 
-* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
-
 * The internal exception handling in C callbacks was improved for Cython 3.0.
-
-* A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34+.
-
-* GH#348: URL checking in the HTML cleaner was improved.
-  Patch by Tim McCormack.
 
 * GH#370: A crash with recent libxml2 2.11.x versions was resolved.
   Patch by Michael Schlenker.
-
-* GH#371, GH#373: Some regex strings were changed to raw strings to fix Python warnings.
-  Patches by Jakub Wilk and Anthony Sottile.
 
 Other changes
 -------------
@@ -34,6 +24,31 @@ Other changes
 * Binary wheels use the latest library versions libxml2 2.10.4 and libxslt 1.1.38.
 
 * Built with Cython 0.29.35 to adapt to changes in Python 3.11 and 3.12.
+
+
+4.9.3 (2023-07-04)
+==================
+
+Bugs fixed
+----------
+
+* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
+
+* A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34+.
+
+* GH#348: URL checking in the HTML cleaner was improved.
+  Patch by Tim McCormack.
+
+* GH#371, GH#373: Some regex strings were changed to raw strings to fix Python warnings.
+  Patches by Jakub Wilk and Anthony Sottile.
+
+Other changes
+-------------
+
+* Wheels include zlib 1.2.13, libxml2 2.10.3 and libxslt 1.1.38
+  (zlib 1.2.12, libxml2 2.9.12+ and libxslt 1.1.34 on Windows).
+
+* Built with Cython 0.29.36 to adapt to changes in Python 3.12.
 
 
 4.9.2 (2022-12-13)
