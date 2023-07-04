@@ -101,7 +101,8 @@ def ext_modules(static_include_dirs, static_library_dirs,
             if not exists:
                 raise RuntimeError(
                     "ERROR: Trying to build without Cython, but pre-generated '%s.c' "
-                    "is not available (pass --without-cython to ignore this error)." % module)
+                    "is not available (to ignore this error, pass --without-cython or "
+                    "set environment variable WITHOUT_CYTHON=true)." % module)
     else:
         if not all(c_files_exist):
             for exists, module in zip(c_files_exist, module_files):
