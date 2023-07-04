@@ -2,13 +2,15 @@
 lxml changelog
 ==============
 
-4.9.3 (2023-07-03)
+4.9.3 (2023-07-04)
 ==================
 
 Other changes
 -------------
 
-* Built with Cython 0.29.36 to adapt to changes in Python 3.11 and 3.12.
+* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
+
+* Built with Cython 0.29.36 to adapt to changes in Python 3.12.
 
 
 4.9.2 (2022-12-13)
