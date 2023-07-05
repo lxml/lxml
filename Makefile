@@ -72,6 +72,7 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		-e RANLIB=gcc-ranlib \
 		-e CFLAGS="$(MANYLINUX_CFLAGS) $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
 		-e LDFLAGS="$(MANYLINUX_LDFLAGS)" \
+		-e STATIC_DEPS="${STATIC_DEPS}" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		-e PYTHON_BUILD_VERSION="$(PYTHON_BUILD_VERSION)" \
