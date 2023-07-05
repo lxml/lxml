@@ -8,10 +8,14 @@ lxml changelog
 Bugs fixed
 ----------
 
-* The internal exception handling in C callbacks was improved for Cython 3.0.
+* LP#1976304: The ``Element.addnext()`` method previously inserted the new element
+  before existing tail text.  The tail text of both sibling elements now stays on
+  the respective elements.
 
 * GH#370: A crash with recent libxml2 2.11.x versions was resolved.
   Patch by Michael Schlenker.
+
+* The internal exception handling in C callbacks was improved for Cython 3.0.
 
 Other changes
 -------------

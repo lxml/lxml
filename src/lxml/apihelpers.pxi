@@ -1398,7 +1398,15 @@ cdef int _addSibling(_Element element, _Element sibling, bint as_next) except -1
     c_next = c_node.next
     # move node itself
     if as_next:
-        tree.xmlAddNextSibling(element._c_node, c_node)
+        # must insert after any tail text
+        c_next_node = _nextElement(element._c_node)
+        if c_next_node is NULL:
+            c_next_node = element._c_node
+            while c_next_node.next:
+                c_next_node = c_next_node.next
+            tree.xmlAddNextSibling(c_next_node, c_node)
+        else:
+            tree.xmlAddPrevSibling(c_next_node, c_node)
     else:
         tree.xmlAddPrevSibling(element._c_node, c_node)
     _moveTail(c_next, c_node)

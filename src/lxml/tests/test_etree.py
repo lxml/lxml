@@ -1880,6 +1880,42 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
 
+    def test_addnext_tails(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a').tail = "A"
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd').tail = "D"
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'B', 'C', 'D'], [c.tail for c in root])
+
+        root[2].addnext(root[1])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'C', 'B', 'D'], [c.tail for c in root])
+
+    def test_addnext_with_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c')
+        SubElement(root, 'd')
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, 'B', None, None], [c.tail for c in root])
+
+        root[2].addnext(root[1])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, None, 'B', None], [c.tail for c in root])
+
     def test_addprevious(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -1892,6 +1928,42 @@ class ETreeOnlyTestCase(HelperTestCase):
         root[0].addprevious(root[1])
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
+
+    def test_addprevious_tails(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a').tail = "A"
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd').tail = "D"
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'B', 'C', 'D'], [c.tail for c in root])
+
+        root[1].addprevious(root[2])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'C', 'B', 'D'], [c.tail for c in root])
+
+    def test_addprevious_with_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b')
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd')
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, None, 'C', None], [c.tail for c in root])
+
+        root[1].addprevious(root[2])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, 'C', None, None], [c.tail for c in root])
 
     def test_addnext_cycle(self):
         Element = self.etree.Element
