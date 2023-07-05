@@ -3,6 +3,24 @@ name: Wheel build
 on:
   release:
     types: [created]
+  schedule:
+  #        ┌───────────── minute (0 - 59)
+  #        │  ┌───────────── hour (0 - 23)
+  #        │  │ ┌───────────── day of the month (1 - 31)
+  #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+  #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+  #        │  │ │ │ │
+  - cron: "42 3 * * 4"
+  pull_request:
+      types: [opened, synchronize, reopened]
+      paths:
+        - .github/workflows/wheels.yml
+        - requirements.txt
+        - MANIFEST.in
+        - Makefile
+        - setup*
+        - build*
+  workflow_dispatch:
 
 permissions: {}
 
