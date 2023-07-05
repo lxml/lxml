@@ -26,6 +26,9 @@ MANYLINUX_IMAGES= \
 	manylinux2014_aarch64 \
 	manylinux_2_24_aarch64 \
 	manylinux_2_24_ppc64le \
+	manylinux_2_28_x86_64 \
+	manylinux_2_28_aarch64 \
+	manylinux_2_28_ppc64le \
 	manylinux_2_24_s390x \
 	musllinux_1_1_x86_64 \
     musllinux_1_1_aarch64
@@ -72,6 +75,7 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		-e RANLIB=gcc-ranlib \
 		-e CFLAGS="$(MANYLINUX_CFLAGS) $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
 		-e LDFLAGS="$(MANYLINUX_LDFLAGS)" \
+		-e STATIC_DEPS="${STATIC_DEPS}" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		-e PYTHON_BUILD_VERSION="$(PYTHON_BUILD_VERSION)" \
