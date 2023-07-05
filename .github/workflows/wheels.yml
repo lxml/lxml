@@ -65,9 +65,7 @@ jobs:
           - manylinux1_i686
           - manylinux_2_24_i686
           - manylinux_2_28_x86_64
-          - manylinux_2_28_aarch64
           - musllinux_1_1_x86_64
-          - musllinux_1_1_aarch64
           #- manylinux_2_24_ppc64le
           #- manylinux_2_24_ppc64le
           #- manylinux_2_24_s390x
@@ -85,13 +83,13 @@ jobs:
             pyversion: "cp37*"
           - image: manylinux_2_24_aarch64
             pyversion: "cp38*"
-          - image: manylinux_2_24_aarch64
+          - image: manylinux_2_28_aarch64
             pyversion: "cp39*"
-          - image: manylinux_2_24_aarch64
+          - image: manylinux_2_28_aarch64
             pyversion: "cp310*"
-          - image: manylinux_2_24_aarch64
+          - image: manylinux_2_28_aarch64
             pyversion: "cp311*"
-          - image: manylinux_2_24_aarch64
+          - image: manylinux_2_28_aarch64
             pyversion: "cp312*"
 
           - image: musllinux_1_1_aarch64
