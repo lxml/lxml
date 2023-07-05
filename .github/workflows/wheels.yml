@@ -186,6 +186,7 @@ jobs:
 
     - name: Set up Python
       uses: actions/setup-python@v4
+      if: startsWith(matrix.python-version, '3.')
       with:
         python-version: ${{ matrix.python-version }}
 
