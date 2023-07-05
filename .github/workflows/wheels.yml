@@ -123,7 +123,7 @@ jobs:
       run: python -m pip install -r requirements.txt
 
     - name: Build Linux wheels
-      run: make sdist wheel_${{ matrix.image }}
+      run: make wheel_${{ matrix.image }}
       env: { STATIC_DEPS: true, PYTHON_BUILD_VERSION: "${{ matrix.pyversion }}" }
 
     - name: Release
@@ -192,7 +192,7 @@ jobs:
       run: python -m pip install setuptools wheel -r requirements.txt
 
     - name: Build wheels
-      run: make sdist wheel
+      run: make wheel
       env: { STATIC_DEPS: true, RUN_TESTS: true }
 
     - name: Release
