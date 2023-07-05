@@ -65,9 +65,9 @@ jobs:
           - manylinux1_i686
           #- manylinux2010_x86_64
           #- manylinux2010_i686
-          - manylinux_2_24_x86_64
-          - manylinux_2_24_i686
-          - manylinux_2_24_aarch64
+          - manylinux_2_28_x86_64
+          - manylinux_2_28_i686
+          - manylinux_2_28_aarch64
           - musllinux_1_1_x86_64
           - musllinux_1_1_aarch64
           #- manylinux_2_24_ppc64le
