@@ -15,6 +15,13 @@ cdef void displayNode(xmlNode* c_node, indent):
     finally:
         return  # swallow any exceptions
 
+cdef inline bint _isHtmlDocument(_Element element) except -1:
+    cdef xmlNode* c_node = element._c_node
+    return (
+        c_node is not NULL and c_node.doc is not NULL and
+        c_node.doc.properties & tree.XML_DOC_HTML != 0
+    )
+
 cdef inline int _assertValidNode(_Element element) except -1:
     assert element._c_node is not NULL, u"invalid Element proxy at %s" % id(element)
 

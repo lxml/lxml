@@ -1546,7 +1546,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.find(self, path, namespaces)
+        return _elementpath.find(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findtext(self, path, default=None, namespaces=None):
         u"""findtext(self, path, default=None, namespaces=None)
@@ -1559,7 +1559,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findtext(self, path, default, namespaces)
+        return _elementpath.findtext(self, path, default, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findall(self, path, namespaces=None):
         u"""findall(self, path, namespaces=None)
@@ -1572,7 +1572,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findall(self, path, namespaces)
+        return _elementpath.findall(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def iterfind(self, path, namespaces=None):
         u"""iterfind(self, path, namespaces=None)
@@ -1585,7 +1585,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.iterfind(self, path, namespaces)
+        return _elementpath.iterfind(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
               smart_strings=True, **_variables):

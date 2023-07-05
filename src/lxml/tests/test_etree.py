@@ -3141,11 +3141,29 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_html_prefix_nsmap(self):
         etree = self.etree
-        el = etree.HTML('<hha:page-description>aa</hha:page-description>').find('.//page-description')
-        if etree.LIBXML_VERSION < (2, 9, 11):
-            self.assertEqual({'hha': None}, el.nsmap)
+        el = etree.HTML('<hha:page-description>aa</hha:page-description>')
+        pd = el[-1]
+        while len(pd):
+            pd = pd[-1]
+
+        if etree.LIBXML_VERSION >= (2, 10, 4):
+            # "Prefix" is kept as part of the tag name.
+            self.assertEqual("hha:page-description", pd.tag)
+            self.assertIsNone(el.find('.//page-description'))
+            self.assertIsNotNone(el.find('.//hha:page-description'))  # no namespaces!
+            for e in el.iter():
+                self.assertEqual({}, e.nsmap)
+        elif etree.LIBXML_VERSION >= (2, 9, 11):
+            # "Prefix" is stripped.
+            self.assertEqual("page-description", pd.tag)
+            self.assertIsNotNone(el.find('.//page-description'))
+            for e in el.iter():
+                self.assertEqual({}, e.nsmap)
         else:
-            self.assertEqual({}, el.nsmap)
+            # "Prefix" is parsed as XML prefix.
+            self.assertEqual("page-description", pd.tag)
+            pd = el.find('.//page-description')
+            self.assertEqual({'hha': None}, pd.nsmap)
 
     def test_getchildren(self):
         Element = self.etree.Element

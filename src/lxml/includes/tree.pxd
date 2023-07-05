@@ -154,6 +154,17 @@ cdef extern from "libxml/tree.h" nogil:
         XML_EXTERNAL_PARAMETER_ENTITY=        5
         XML_INTERNAL_PREDEFINED_ENTITY=       6
 
+    ctypedef enum xmlDocProperties:
+        XML_DOC_WELLFORMED          = 1    # /* document is XML well formed */
+        XML_DOC_NSVALID             = 2    # /* document is Namespace valid */
+        XML_DOC_OLD10               = 4    # /* parsed with old XML-1.0 parser */
+        XML_DOC_DTDVALID            = 8    # /* DTD validation was successful */
+        XML_DOC_XINCLUDE            = 16   # /* XInclude substitution was done */
+        XML_DOC_USERBUILT           = 32   # /* Document was built using the API
+                                           #    and not by parsing an instance */
+        XML_DOC_INTERNAL            = 64   # /* built for internal processing */
+        XML_DOC_HTML                = 128  # /* parsed or built HTML document */
+
     ctypedef struct xmlNs:
         const_xmlChar* href
         const_xmlChar* prefix
@@ -274,6 +285,7 @@ cdef extern from "libxml/tree.h" nogil:
         void* _private
         xmlDtd* intSubset
         xmlDtd* extSubset
+        int properties
         
     ctypedef struct xmlAttr:
         void* _private

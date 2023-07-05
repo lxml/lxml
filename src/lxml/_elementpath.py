@@ -71,14 +71,14 @@ xpath_tokenizer_re = re.compile(
     r"\s+"
     )
 
-def xpath_tokenizer(pattern, namespaces=None):
+def xpath_tokenizer(pattern, namespaces=None, with_prefixes=True):
     # ElementTree uses '', lxml used None originally.
     default_namespace = (namespaces.get(None) or namespaces.get('')) if namespaces else None
     parsing_attribute = False
     for token in xpath_tokenizer_re.findall(pattern):
         ttype, tag = token
         if tag and tag[0] != "{":
-            if ":" in tag:
+            if ":" in tag and with_prefixes:
                 prefix, uri = tag.split(":", 1)
                 try:
                     if not namespaces:
@@ -251,7 +251,7 @@ ops = {
 _cache = {}
 
 
-def _build_path_iterator(path, namespaces):
+def _build_path_iterator(path, namespaces, with_prefixes=True):
     """compile selector pattern"""
     if path[-1:] == "/":
         path += "*"  # implicit all (FIXME: keep this?)
@@ -279,7 +279,7 @@ def _build_path_iterator(path, namespaces):
 
     if path[:1] == "/":
         raise SyntaxError("cannot use absolute path on element")
-    stream = iter(xpath_tokenizer(path, namespaces))
+    stream = iter(xpath_tokenizer(path, namespaces, with_prefixes=with_prefixes))
     try:
         _next = stream.next
     except AttributeError:
@@ -308,8 +308,8 @@ def _build_path_iterator(path, namespaces):
 ##
 # Iterate over the matching nodes
 
-def iterfind(elem, path, namespaces=None):
-    selector = _build_path_iterator(path, namespaces)
+def iterfind(elem, path, namespaces=None, with_prefixes=True):
+    selector = _build_path_iterator(path, namespaces, with_prefixes=with_prefixes)
     result = iter((elem,))
     for select in selector:
         result = select(result)
@@ -319,8 +319,8 @@ def iterfind(elem, path, namespaces=None):
 ##
 # Find first matching object.
 
-def find(elem, path, namespaces=None):
-    it = iterfind(elem, path, namespaces)
+def find(elem, path, namespaces=None, with_prefixes=True):
+    it = iterfind(elem, path, namespaces, with_prefixes=with_prefixes)
     try:
         return next(it)
     except StopIteration:
@@ -330,15 +330,15 @@ def find(elem, path, namespaces=None):
 ##
 # Find all matching objects.
 
-def findall(elem, path, namespaces=None):
+def findall(elem, path, namespaces=None, with_prefixes=True):
     return list(iterfind(elem, path, namespaces))
 
 
 ##
 # Find text for first matching object.
 
-def findtext(elem, path, default=None, namespaces=None):
-    el = find(elem, path, namespaces)
+def findtext(elem, path, default=None, namespaces=None, with_prefixes=True):
+    el = find(elem, path, namespaces, with_prefixes=with_prefixes)
     if el is None:
         return default
     else:

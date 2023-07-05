@@ -20,6 +20,16 @@ Bugs fixed
 Other changes
 -------------
 
+* With libxml2 2.10.4 and later (as provided by the lxml 5.0 binary wheels),
+  parsing HTML tags with "prefixes" no longer builds a namespace dictionary
+  in ``nsmap`` but considers the ``prefix:name`` string the actual tag name.
+  With older libxml2 versions, since 2.9.11, the prefix was removed.  Before
+  that, the prefix was parsed as XML prefix.
+
+  lxml 5.0 does not try to hide this difference but now changes the ElementPath
+  implementation to let ``element.find("part1:part2")`` search for the tag
+  ``part1:part2`` in documents parsed as HTML, instead of looking only for ``part2``.
+
 * Some redundant and long deprecated methods were removed:
   ``parser.setElementClassLookup()``,
   ``xslt_transform.apply()``,
