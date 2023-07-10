@@ -60,6 +60,9 @@ def download_and_extract_windows_binaries(destdir):
     if sys.version_info < (3, 5):
         arch = 'vs2008.' + arch
 
+    arch_part = '.' + arch + '.'
+    filenames = [filename for filename in filenames if arch_part in filename]
+
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
         libs[libname] = "%s-%s.%s.zip" % (
