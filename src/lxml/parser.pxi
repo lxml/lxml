@@ -9,7 +9,7 @@ class ParseError(LxmlSyntaxError):
 
     For compatibility with ElementTree 1.3 and later.
     """
-    def __init__(self, message, code, line, column, filename=None):
+    def __init__(self, message, code=None, line=0, column=0, filename=None):
         super(_ParseError, self).__init__(message)
         self.lineno, self.offset = (line, column - 1)
         self.code = code
