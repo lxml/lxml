@@ -50,9 +50,9 @@ install:
 build: off
 build_script:
   - python -u setup.py bdist_wheel --static-deps
+  - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
   - python -u setup.py build_ext --inplace --static-deps
-  - python -u test.py -vv -p
 
 test: off
 test_script:
-  - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+  - python -u test.py -vv -p
