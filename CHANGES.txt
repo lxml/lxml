@@ -30,6 +30,14 @@ Other changes
   implementation to let ``element.find("part1:part2")`` search for the tag
   ``part1:part2`` in documents parsed as HTML, instead of looking only for ``part2``.
 
+* LP#2024343: The validation of the schema file itself is now optional in the
+  ISO-Schematron implementation.  This was done because some lxml distributions
+  discard the RNG validation schema file due to licensing issues.  The validation
+  can now always be disabled with ``Schematron(..., validate_schema=False)``.
+  It is enabled by default if available and disabled otherwise.  The module
+  constant ``lxml.isoschematron.schematron_schema_valid_supported`` can be used
+  to detect whether schema file validation is available.
+
 * Some redundant and long deprecated methods were removed:
   ``parser.setElementClassLookup()``,
   ``xslt_transform.apply()``,
