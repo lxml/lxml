@@ -55,6 +55,8 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         schema = isoschematron.Schematron(schema)
         self.assertTrue(schema)
 
+    @unittest.skipIf(not isoschematron.schematron_schema_valid_supported,
+                     'SchematronParseError is risen only when validate_schema is true')
     def test_schematron_invalid_schema_empty(self):
         schema = self.parse('''\
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" />
