@@ -62,7 +62,6 @@ else
 fi
 if [[ "$COVERAGE" == "true" ]]; then
   python -m pip install "coverage<5" || exit 1
-  python -m pip install --pre 'Cython>=3.0b2' || exit 1
 fi
 
 # Build
