@@ -88,8 +88,12 @@ jobs:
             pyversion: "cp39*"
           - image: manylinux_2_24_aarch64
             pyversion: "cp310*"
+          - image: manylinux_2_24_aarch64
+            pyversion: "cp311*"
           - image: manylinux_2_28_aarch64
             pyversion: "cp311*"
+          - image: manylinux_2_24_aarch64
+            pyversion: "cp312*"
           - image: manylinux_2_28_aarch64
             pyversion: "cp312*"
 
