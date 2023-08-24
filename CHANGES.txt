@@ -43,7 +43,7 @@ Other changes
   ``xslt_transform.apply()``,
   ``xpath.evaluate()``.
 
-* Binary wheels use the latest library versions libxml2 2.10.4 and libxslt 1.1.38.
+* Binary wheels use the library versions libxml2 2.10.4 and libxslt 1.1.38.
 
 * Built with Cython 3.0.1.
 
