@@ -722,6 +722,23 @@ class ETreeOnlyTestCase(HelperTestCase):
         parse = self.etree.parse
         self.assertRaises(TypeError, parse, 'notthere.xml', object())
 
+    def test_parse_premature_end(self):
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = _bytes('<a><b></b>')
+        parser = XMLParser()
+        self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
+    def test_parse_premature_end_with_target(self):
+        # tests issue https://bugs.launchpad.net/lxml/+bug/1980767 is fixed
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = _bytes('<a><b></b>')
+        parser = XMLParser(target=etree.TreeBuilder())
+        self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
     def test_iterparse_getiterator(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<a><b><d/></b><c/></a>')

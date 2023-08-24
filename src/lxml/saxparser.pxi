@@ -7,6 +7,8 @@ class XMLSyntaxAssertionError(XMLSyntaxError, AssertionError):
 
     This class may get replaced by a plain XMLSyntaxError in a future version.
     """
+    def __init__(self, message):
+        XMLSyntaxError.__init__(self, message, None, 0, 1)
 
 
 ctypedef enum _SaxParserEvents:
