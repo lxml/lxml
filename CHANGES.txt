@@ -45,7 +45,7 @@ Other changes
 
 * Binary wheels use the latest library versions libxml2 2.10.4 and libxslt 1.1.38.
 
-* Built with Cython 3.0.0.
+* Built with Cython 3.0.1.
 
 
 4.9.3 (2023-07-05)
