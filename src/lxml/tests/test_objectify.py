@@ -375,7 +375,7 @@ class ObjectifyTestCase(HelperTestCase):
         root = self.XML(xml_str)
         self.assertEqual(objectify.ObjectifiedElement, root.c1.__class__)
         self.assertTrue(callable(root.c1.__str__))
-        self.assertTrue(callable(root.c1.__eq__))
+        self.assertTrue(callable(root.c1.__len__))
         self.assertTrue(callable(root.c1.__getattr__))
 
     def test_child_getattr_empty_ns(self):
