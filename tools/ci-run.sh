@@ -21,7 +21,10 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 60
 
   export CC="gcc"
-  export LDSHARED="gcc"
+  if [ -z "${PYTHON_VERSION##2*}" ]; then
+    # Make sure we use the same linker and C compiler.
+    export LDSHARED="$CC -shared"
+  fi
   export PATH="/usr/lib/ccache:$PATH"
   TEST_CFLAGS="-Og -g -fPIC"
   EXTRA_CFLAGS="-Wall -Wextra"
