@@ -229,6 +229,8 @@ cdef class ObjectifiedElement(ElementBase):
         u"""Return the (first) child with the given tag name.  If no namespace
         is provided, the child will be looked up in the same one as self.
         """
+        if IS_PYTHON2 and is_special_method(tag):
+            return object.__getattribute__(self, tag)
         return _lookupChildOrRaise(self, tag)
 
     def __setattr__(self, tag, value):
@@ -1485,6 +1487,8 @@ cdef class ElementMaker:
     def __getattr__(self, tag):
         element_maker = self._cache.get(tag)
         if element_maker is None:
+            if IS_PYTHON2 and is_special_method(tag):
+                return object.__getattribute__(self, tag)
             return self._build_element_maker(tag, caching=True)
         return element_maker
 
