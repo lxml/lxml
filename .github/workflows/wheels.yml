@@ -35,7 +35,7 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -132,7 +132,7 @@ jobs:
             pyversion: "cp312*"
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -211,7 +211,7 @@ jobs:
     env: { LIBXML2_VERSION: 2.10.4, LIBXSLT_VERSION: 1.1.38, MACOSX_DEPLOYMENT_TARGET: 11.0 }
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
