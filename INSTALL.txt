@@ -106,14 +106,15 @@ the ``CFLAGS`` environment variable::
 MS Windows
 ..........
 
-For MS Windows, recent lxml releases feature community donated
-binary distributions, although you might still want to take a look
-at the related `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
-If you fail to build lxml on your MS Windows system from the signed
-and tested sources that we release, consider using the binary builds
-from PyPI or the `unofficial Windows binaries
-<http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
-that Christoph Gohlke generously provides.
+For MS Windows, we try to provide binary wheels with reasonably up-to-date
+libraries, although you might still want to take a look at the related
+`FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
+Since it is generally difficult to build software on Windows, the library
+versions (libxml2, libxslt, libiconv, zlib) might not always be at the
+same version level as the builds on Linux or macOS.  This usually means
+that the `WinLibs project<https://github.com/orgs/winlibs>`_
+has not updated their repositories yet.  If you need a more recent version,
+please file a ticket on their side to update it.
 
 Linux
 .....
