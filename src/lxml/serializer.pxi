@@ -201,7 +201,7 @@ cdef _raiseSerialisationError(int error_result):
 # low-level serialisation functions
 
 cdef void _writeDoctype(tree.xmlOutputBuffer* c_buffer,
-                        const_xmlChar* c_doctype) nogil:
+                        const_xmlChar* c_doctype) noexcept nogil:
     tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
                               <const_char*>c_doctype)
     tree.xmlOutputBufferWriteString(c_buffer, "\n")
@@ -211,7 +211,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              int c_method, bint write_xml_declaration,
                              bint write_complete_document,
                              bint pretty_print, bint with_tail,
-                             int standalone) nogil:
+                             int standalone) noexcept nogil:
     cdef xmlNode* c_nsdecl_node
     cdef xmlDoc* c_doc = c_node.doc
     if write_xml_declaration and c_method == OUTPUT_METHOD_XML:
@@ -269,7 +269,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     const_xmlChar* version, const_char* encoding,
-                                    int standalone) nogil:
+                                    int standalone) noexcept nogil:
     if version is NULL:
         version = <unsigned char*>"1.0"
     tree.xmlOutputBufferWrite(c_buffer, 15, "<?xml version='")
@@ -285,7 +285,7 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             xmlDoc* c_doc, const_xmlChar* c_root_name,
-                            int c_method, const_char* encoding) nogil:
+                            int c_method, const_char* encoding) noexcept nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     cdef char* quotechar
@@ -355,7 +355,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                     const_char* encoding, int c_method, bint pretty_print) nogil:
+                     const_char* encoding, int c_method, bint pretty_print) noexcept nogil:
     u"Write the element tail."
     c_node = c_node.next
     while c_node and not c_buffer.error and c_node.type in (
@@ -369,7 +369,7 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_node = c_node.next
 
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             const_char* encoding, bint pretty_print) nogil:
+                             const_char* encoding, bint pretty_print) noexcept nogil:
     cdef xmlNode* c_sibling
     if c_node.parent and _isElement(c_node.parent):
         return
@@ -387,7 +387,7 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_sibling = c_sibling.next
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             const_char* encoding, bint pretty_print) nogil:
+                             const_char* encoding, bint pretty_print) noexcept nogil:
     cdef xmlNode* c_sibling
     if c_node.parent and _isElement(c_node.parent):
         return
@@ -404,7 +404,7 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 
 
 # copied and adapted from libxml2
-cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val):
+cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val) noexcept:
     cdef xmlChar *ptr
     cdef xmlChar c
 

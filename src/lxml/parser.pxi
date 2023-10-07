@@ -413,7 +413,7 @@ cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) except -1 nogil
 ############################################################
 
 cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_pubid,
-                                               xmlparser.xmlParserCtxt* c_context) with gil:
+                                               xmlparser.xmlParserCtxt* c_context) noexcept with gil:
     cdef _ResolverContext context
     cdef xmlparser.xmlParserInput* c_input
     cdef _InputDocument doc_ref
@@ -503,12 +503,12 @@ cdef xmlparser.xmlExternalEntityLoader __DEFAULT_ENTITY_LOADER
 __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
 
 
-cdef xmlparser.xmlExternalEntityLoader _register_document_loader() nogil:
+cdef xmlparser.xmlExternalEntityLoader _register_document_loader() noexcept nogil:
     cdef xmlparser.xmlExternalEntityLoader old = xmlparser.xmlGetExternalEntityLoader()
     xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_resolver)
     return old
 
-cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) nogil:
+cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) noexcept nogil:
     xmlparser.xmlSetExternalEntityLoader(old)
 
 

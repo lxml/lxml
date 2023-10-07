@@ -229,7 +229,7 @@ cdef extern from "libxml/parser.h" nogil:
 # entity loaders:
 
     ctypedef xmlParserInput* (*xmlExternalEntityLoader)(
-        const_char * URL, const_char * ID, xmlParserCtxt* context)
+        const_char * URL, const_char * ID, xmlParserCtxt* context) noexcept
     cdef xmlExternalEntityLoader xmlGetExternalEntityLoader()
     cdef void xmlSetExternalEntityLoader(xmlExternalEntityLoader f)
 
