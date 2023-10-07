@@ -62,7 +62,6 @@ cdef extern from "Python.h":
     cdef Py_ssize_t PyBytes_GET_SIZE(object s)
 
     cdef object PyNumber_Int(object value)
-    cdef Py_ssize_t PyInt_AsSsize_t(object value)
 
     cdef Py_ssize_t PyTuple_GET_SIZE(object t)
     cdef object PyTuple_GET_ITEM(object o, Py_ssize_t pos)
@@ -73,13 +72,10 @@ cdef extern from "Python.h":
     cdef void PyList_SET_ITEM(object l, Py_ssize_t index, object value)
     cdef int PyList_Insert(object l, Py_ssize_t index, object o) except -1
     cdef object PyList_AsTuple(object l)
-    cdef void PyList_Clear(object l)
 
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
-    cdef void PyDict_Clear(object d)
     cdef object PyDictProxy_New(object d)
-    cdef Py_ssize_t PyDict_Size(object d)
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)
 
@@ -95,7 +91,6 @@ cdef extern from "Python.h":
             Py_ssize_t *slicelength) except -1
 
     cdef object PyObject_RichCompare(object o1, object o2, int op)
-    cdef int PyObject_RichCompareBool(object o1, object o2, int op)
 
     PyObject* PyWeakref_NewRef(object ob, PyObject* callback) except NULL  # used for PyPy only
     object PyWeakref_LockObject(PyObject* ob) # PyPy only
