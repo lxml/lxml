@@ -78,7 +78,7 @@ cdef class _XPathContext(_BaseContext):
         xpath.xmlXPathRegisteredVariablesCleanup(self._xpathCtxt)
         self._cleanup_context()
 
-    cdef void registerExsltFunctions(self):
+    cdef void registerExsltFunctions(self) noexcept:
         if xslt.LIBXSLT_VERSION < 10125:
             # we'd only execute dummy functions anyway
             return
@@ -147,7 +147,7 @@ cdef class _XPathEvaluatorBase:
         self._xpathCtxt = xpathCtxt
         self._context.set_context(xpathCtxt)
 
-    cdef bint _checkAbsolutePath(self, char* path):
+    cdef bint _checkAbsolutePath(self, char* path) noexcept:
         cdef char c
         if path is NULL:
             return 0
@@ -169,7 +169,7 @@ cdef class _XPathEvaluatorBase:
         return 0
 
     @cython.final
-    cdef void _unlock(self):
+    cdef void _unlock(self) noexcept:
         if config.ENABLE_THREADING and self._eval_lock != NULL:
             python.PyThread_release_lock(self._eval_lock)
 

@@ -436,7 +436,7 @@ cdef tree.xmlDtd* _copyDtd(tree.xmlDtd* c_orig_dtd) except NULL:
     return c_dtd
 
 
-cdef void _linkDtdAttribute(tree.xmlDtd* c_dtd, tree.xmlAttribute* c_attr):
+cdef void _linkDtdAttribute(tree.xmlDtd* c_dtd, tree.xmlAttribute* c_attr) noexcept:
     """
     Create the link to the DTD attribute declaration from the corresponding
     element declaration.
@@ -469,7 +469,7 @@ cdef void _linkDtdAttribute(tree.xmlDtd* c_dtd, tree.xmlAttribute* c_attr):
     c_pos.nexth = c_attr
 
 
-cdef bint _isDtdNsDecl(tree.xmlAttribute* c_attr):
+cdef bint _isDtdNsDecl(tree.xmlAttribute* c_attr) noexcept:
     if cstring_h.strcmp(<const_char*>c_attr.name, "xmlns") == 0:
         return True
     if (c_attr.prefix is not NULL and

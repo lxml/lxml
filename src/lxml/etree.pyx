@@ -308,7 +308,7 @@ cdef class _ExceptionContext:
         self._exc_info = None
         return 0
 
-    cdef void _store_raised(self):
+    cdef void _store_raised(self) noexcept:
         try:
             self._exc_info = sys.exc_info()
         except BaseException as e:
@@ -378,7 +378,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return _elementFactory(self, c_node)
 
     @cython.final
-    cdef bint hasdoctype(self):
+    cdef bint hasdoctype(self) noexcept:
         # DOCTYPE gets parsed into internal subset (xmlDTD*)
         return self._c_doc is not NULL and self._c_doc.intSubset is not NULL
 
@@ -2700,23 +2700,23 @@ cdef class _MultiTagMatcher:
     def __dealloc__(self):
         self._clear()
 
-    cdef bint rejectsAll(self):
+    cdef bint rejectsAll(self) noexcept:
         return not self._tag_count and not self._node_types
 
-    cdef bint rejectsAllAttributes(self):
+    cdef bint rejectsAllAttributes(self) noexcept:
         return not self._tag_count
 
-    cdef bint matchesType(self, int node_type):
+    cdef bint matchesType(self, int node_type) noexcept:
         if node_type == tree.XML_ELEMENT_NODE and self._tag_count:
             return True
         return self._node_types & (1 << node_type)
 
-    cdef void _clear(self):
+    cdef void _clear(self) noexcept:
         cdef size_t i, count
         count = self._tag_count
         self._tag_count = 0
         if self._cached_tags:
-            for i in xrange(count):
+            for i in range(count):
                 cpython.ref.Py_XDECREF(self._cached_tags[i].href)
             python.lxml_free(self._cached_tags)
             self._cached_tags = NULL
@@ -2791,7 +2791,7 @@ cdef class _MultiTagMatcher:
         self._cached_size = dict_size
         return 0
 
-    cdef inline bint matches(self, xmlNode* c_node):
+    cdef inline bint matches(self, xmlNode* c_node) noexcept:
         cdef qname* c_qname
         if self._node_types & (1 << c_node.type):
             return True
@@ -2802,7 +2802,7 @@ cdef class _MultiTagMatcher:
         return False
 
     cdef inline bint matchesNsTag(self, const_xmlChar* c_href,
-                                  const_xmlChar* c_name):
+                                  const_xmlChar* c_name) noexcept:
         cdef qname* c_qname
         if self._node_types & (1 << tree.XML_ELEMENT_NODE):
             return True
@@ -2811,7 +2811,7 @@ cdef class _MultiTagMatcher:
                 return True
         return False
 
-    cdef inline bint matchesAttribute(self, xmlAttr* c_attr):
+    cdef inline bint matchesAttribute(self, xmlAttr* c_attr) noexcept:
         """Attribute matches differ from Element matches in that they do
         not care about node types.
         """
@@ -2953,7 +2953,7 @@ cdef class ElementDepthFirstIterator:
         return current_node
 
     @cython.final
-    cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node):
+    cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node) noexcept:
         cdef int node_types = self._matcher._node_types
         if not node_types:
             return NULL
@@ -2964,7 +2964,7 @@ cdef class ElementDepthFirstIterator:
         return NULL
 
     @cython.final
-    cdef xmlNode* _nextNodeMatchTag(self, xmlNode* c_node):
+    cdef xmlNode* _nextNodeMatchTag(self, xmlNode* c_node) noexcept:
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
         if self._matcher.matches(c_node):
             return c_node
@@ -3011,17 +3011,17 @@ cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     c_node = tree.xmlNewDocNode(c_doc, NULL, _xcstr(name_utf), NULL)
     return c_node
 
-cdef xmlNode* _createComment(xmlDoc* c_doc, const_xmlChar* text):
+cdef xmlNode* _createComment(xmlDoc* c_doc, const_xmlChar* text) noexcept:
     cdef xmlNode* c_node
     c_node = tree.xmlNewDocComment(c_doc, text)
     return c_node
 
-cdef xmlNode* _createPI(xmlDoc* c_doc, const_xmlChar* target, const_xmlChar* text):
+cdef xmlNode* _createPI(xmlDoc* c_doc, const_xmlChar* target, const_xmlChar* text) noexcept:
     cdef xmlNode* c_node
     c_node = tree.xmlNewDocPI(c_doc, target, text)
     return c_node
 
-cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name):
+cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name) noexcept:
     cdef xmlNode* c_node
     c_node = tree.xmlNewReference(c_doc, name)
     return c_node

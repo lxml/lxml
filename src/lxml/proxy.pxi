@@ -91,7 +91,7 @@ cdef xmlDoc* _plainFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node,
     c_doc.children = c_new_root
     return c_doc
 
-cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
+cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc) noexcept:
     # delete a temporary document
     cdef xmlNode* c_child
     cdef xmlNode* c_parent
@@ -278,7 +278,7 @@ cdef int _stripRedundantNamespaceDeclarations(xmlNode* c_element, _nscache* c_ns
 
 
 cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
-                                          _nscache* c_ns_cache, xmlNs* c_del_ns_list):
+                                          _nscache* c_ns_cache, xmlNs* c_del_ns_list) noexcept:
     # Try to recover from exceptions with really bad timing.  We were in the middle
     # of ripping out xmlNS-es and likely ran out of memory.  Try to fix up the tree
     # by re-adding the original xmlNs declarations (which might still be used in some
@@ -451,8 +451,8 @@ cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
     return 0
 
 
-cdef void fixElementDocument(xmlNode* c_element, _Document doc,
-                             size_t proxy_count):
+cdef int fixElementDocument(xmlNode* c_element, _Document doc,
+                             size_t proxy_count) except -1:
     cdef xmlNode* c_node = c_element
     cdef _Element proxy = None # init-to-None required due to fake-loop below
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
@@ -463,7 +463,7 @@ cdef void fixElementDocument(xmlNode* c_element, _Document doc,
                 proxy._doc = doc
             proxy_count -= 1
             if proxy_count == 0:
-                return
+                return 0
     tree.END_FOR_EACH_FROM(c_node)
 
 

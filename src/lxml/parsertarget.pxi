@@ -138,7 +138,7 @@ cdef class _TargetParserContext(_SaxParserContext):
         context._setTarget(self._python_target)
         return context
 
-    cdef void _cleanupTargetParserContext(self, xmlDoc* result):
+    cdef void _cleanupTargetParserContext(self, xmlDoc* result) noexcept:
         if self._c_ctxt.myDoc is not NULL:
             if self._c_ctxt.myDoc is not result and \
                     self._c_ctxt.myDoc._private is NULL:

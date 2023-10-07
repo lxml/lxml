@@ -223,7 +223,7 @@ cdef class XSLTAccessControl:
         xslt.xsltSetSecurityPrefs(self._prefs, option, function)
 
     @cython.final
-    cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt):
+    cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt) noexcept:
         xslt.xsltSetCtxtSecurityPrefs(self._prefs, ctxt)
 
     @property

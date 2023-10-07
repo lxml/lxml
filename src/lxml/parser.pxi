@@ -60,7 +60,7 @@ cdef class _ParserDictionaryContext:
         if self._c_dict is not NULL:
             xmlparser.xmlDictFree(self._c_dict)
 
-    cdef void initMainParserContext(self):
+    cdef int initMainParserContext(self) except -1:
         u"""Put the global context into the thread dictionary of the main
         thread.  To be called once and only in the main thread."""
         thread_dict = python.PyThreadState_GetDict()
@@ -81,7 +81,7 @@ cdef class _ParserDictionaryContext:
         d[u"_ParserDictionaryContext"] = context
         return context
 
-    cdef void setDefaultParser(self, _BaseParser parser):
+    cdef int setDefaultParser(self, _BaseParser parser) except -1:
         u"Set the default parser for the current thread"
         cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
@@ -114,26 +114,26 @@ cdef class _ParserDictionaryContext:
                 context._c_dict = xmlparser.xmlDictCreateSub(self._c_dict)
         return context._c_dict
 
-    cdef void initThreadDictRef(self, tree.xmlDict** c_dict_ref):
+    cdef int initThreadDictRef(self, tree.xmlDict** c_dict_ref) except -1:
         c_dict = c_dict_ref[0]
         c_thread_dict = self._getThreadDict(c_dict)
         if c_dict is c_thread_dict:
-            return
+            return 0
         if c_dict is not NULL:
             xmlparser.xmlDictFree(c_dict)
         c_dict_ref[0] = c_thread_dict
         xmlparser.xmlDictReference(c_thread_dict)
 
-    cdef void initParserDict(self, xmlparser.xmlParserCtxt* pctxt):
+    cdef int initParserDict(self, xmlparser.xmlParserCtxt* pctxt) except -1:
         u"Assure we always use the same string dictionary."
         self.initThreadDictRef(&pctxt.dict)
         pctxt.dictNames = 1
 
-    cdef void initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
+    cdef int initXPathParserDict(self, xpath.xmlXPathContext* pctxt) except -1:
         u"Assure we always use the same string dictionary."
         self.initThreadDictRef(&pctxt.dict)
 
-    cdef void initDocDict(self, xmlDoc* result):
+    cdef int initDocDict(self, xmlDoc* result) except -1:
         u"Store dict of last object parsed if no shared dict yet"
         # XXX We also free the result dict here if there already was one.
         # This case should only occur for new documents with empty dicts,
@@ -156,20 +156,20 @@ cdef class _ParserDictionaryContext:
             return implied_context
         return None
 
-    cdef void pushImpliedContextFromParser(self, _BaseParser parser):
+    cdef int pushImpliedContextFromParser(self, _BaseParser parser) except -1:
         u"Push a new implied context object taken from the parser."
         if parser is not None:
             self.pushImpliedContext(parser._getParserContext())
         else:
             self.pushImpliedContext(None)
 
-    cdef void pushImpliedContext(self, _ParserContext parser_context):
+    cdef int pushImpliedContext(self, _ParserContext parser_context) except -1:
         u"Push a new implied context object."
         cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
         context._implied_parser_contexts.append(parser_context)
 
-    cdef void popImpliedContext(self):
+    cdef int popImpliedContext(self) except -1:
         u"Pop the current implied context object."
         cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
@@ -558,11 +558,11 @@ cdef class _ParserContext(_ResolverContext):
         _initParserContext(context, self._resolvers._copy(), NULL)
         return context
 
-    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
+    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         self._c_ctxt = c_ctxt
         c_ctxt._private = <void*>self
 
-    cdef void _resetParserContext(self):
+    cdef void _resetParserContext(self) noexcept:
         if self._c_ctxt is not NULL:
             if self._c_ctxt.html:
                 htmlparser.htmlCtxtReset(self._c_ctxt)

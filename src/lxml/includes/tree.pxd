@@ -68,7 +68,7 @@ cdef extern from "libxml/hash.h":
     ctypedef void (*xmlHashScanner)(void* payload, void* data, const_xmlChar* name) noexcept  # may require GIL!
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data) nogil
     void* xmlHashLookup(xmlHashTable* table, const_xmlChar* name) nogil
-    ctypedef void (*xmlHashDeallocator)(void *payload, xmlChar *name)
+    ctypedef void (*xmlHashDeallocator)(void *payload, xmlChar *name) noexcept
     cdef xmlHashTable* xmlHashCreate(int size) nogil
     cdef xmlHashTable* xmlHashCreateDict(int size, xmlDict *dict) nogil
     cdef int xmlHashSize(xmlHashTable* table) nogil
