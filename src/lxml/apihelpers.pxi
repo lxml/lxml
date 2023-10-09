@@ -674,10 +674,10 @@ cdef inline bint _hasText(xmlNode* c_node) noexcept:
 cdef inline bint _hasTail(xmlNode* c_node) noexcept:
     return c_node is not NULL and _textNodeOrSkip(c_node.next) is not NULL
 
-cdef inline bint _hasNonWhitespaceTail(xmlNode* c_node) noexcept:
+cdef inline bint _hasNonWhitespaceTail(xmlNode* c_node) except -1:
     return _hasNonWhitespaceText(c_node, tail=True)
 
-cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False) noexcept:
+cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False) except -1:
     c_text_node = c_node and _textNodeOrSkip(c_node.next if tail else c_node.children)
     if c_text_node is NULL:
         return False
@@ -1467,7 +1467,7 @@ cdef bint isutf8l(const_xmlChar* s, size_t length) noexcept:
 
     return False
 
-cdef int _is_valid_xml_ascii(bytes pystring):
+cdef int _is_valid_xml_ascii(bytes pystring) except -1:
     """Check if a string is XML ascii content."""
     cdef signed char ch
     # When ch is a *signed* char, non-ascii characters are negative integers

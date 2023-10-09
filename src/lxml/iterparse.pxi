@@ -414,7 +414,7 @@ cdef class iterwalk:
         return node
 
 
-cdef int _countNsDefs(xmlNode* c_node):
+cdef int _countNsDefs(xmlNode* c_node) noexcept:
     cdef xmlNs* c_ns
     cdef int count
     count = 0

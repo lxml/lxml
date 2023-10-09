@@ -423,12 +423,12 @@ cdef extern from "libxml/xmlIO.h":
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out) nogil
 
     ctypedef int (*xmlInputReadCallback)(void* context,
-                                         char* buffer, int len) except -1 nogil
-    ctypedef int (*xmlInputCloseCallback)(void* context) except -1 nogil
+                                         char* buffer, int len) noexcept nogil
+    ctypedef int (*xmlInputCloseCallback)(void* context) noexcept nogil
 
     ctypedef int (*xmlOutputWriteCallback)(void* context,
-                                           char* buffer, int len) except -1
-    ctypedef int (*xmlOutputCloseCallback)(void* context) except -1
+                                           char* buffer, int len) noexcept
+    ctypedef int (*xmlOutputCloseCallback)(void* context) noexcept
 
     cdef xmlOutputBuffer* xmlAllocOutputBuffer(
         xmlCharEncodingHandler* encoder) nogil

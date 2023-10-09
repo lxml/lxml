@@ -283,7 +283,7 @@ cdef class _FileReaderContext:
         if close is not None:
             close()
 
-    cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self):
+    cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self) noexcept:
         cdef stdio.FILE* c_stream
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
@@ -297,18 +297,18 @@ cdef class _FileReaderContext:
         return c_buffer
 
     cdef xmlparser.xmlParserInput* _createParserInput(
-            self, xmlparser.xmlParserCtxt* ctxt):
+            self, xmlparser.xmlParserCtxt* ctxt) noexcept:
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = self._createParserInputBuffer()
         return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
 
-    cdef tree.xmlDtd* _readDtd(self):
+    cdef tree.xmlDtd* _readDtd(self) noexcept:
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = self._createParserInputBuffer()
         with nogil:
             return xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
 
-    cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options):
+    cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options) noexcept:
         cdef xmlDoc* result
         cdef char* c_encoding
         cdef stdio.FILE* c_stream
@@ -351,7 +351,7 @@ cdef class _FileReaderContext:
         finally:
             return result  # swallow any exceptions
 
-    cdef int copyToBuffer(self, char* c_buffer, int c_requested):
+    cdef int copyToBuffer(self, char* c_buffer, int c_requested) noexcept:
         cdef int c_byte_count = 0
         cdef char* c_start
         cdef Py_ssize_t byte_count, remaining
@@ -402,10 +402,10 @@ cdef class _FileReaderContext:
         finally:
             return c_byte_count  # swallow any exceptions
 
-cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) except -1 with gil:
+cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) noexcept with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
-cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) except -1 nogil:
+cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) noexcept nogil:
     return stdio.fread(c_buffer, 1,  c_size, <stdio.FILE*>ctxt)
 
 ############################################################
@@ -743,7 +743,7 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
 
     return result
 
-cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
+cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) noexcept nogil:
     cdef xmlNode* c_node
     if c_doc is NULL:
         return 0
@@ -756,7 +756,7 @@ cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
     return 0
 
 cdef int _fixHtmlDictSubtreeNames(tree.xmlDict* c_dict, xmlDoc* c_doc,
-                                  xmlNode* c_start_node) nogil:
+                                  xmlNode* c_start_node) noexcept nogil:
     """
     Move names to the dict, iterating in document order, starting at
     c_start_node. This is used in incremental parsing after each chunk.
@@ -775,7 +775,7 @@ cdef int _fixHtmlDictSubtreeNames(tree.xmlDict* c_dict, xmlDoc* c_doc,
     return 0
 
 cdef inline int _fixHtmlDictNodeNames(tree.xmlDict* c_dict,
-                                      xmlNode* c_node) nogil:
+                                      xmlNode* c_node) noexcept nogil:
     cdef xmlNode* c_attr
     c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
     if c_name is NULL:

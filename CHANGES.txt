@@ -17,6 +17,11 @@ Bugs fixed
 
 * The internal exception handling in C callbacks was improved for Cython 3.0.
 
+* The exception declarations of ``xmlInputReadCallback``, ``xmlInputCloseCallback``,
+  ``xmlOutputWriteCallback`` and ``xmlOutputCloseCallback`` in ``tree.pxd`` were
+  corrected to prevent running Python code or calling into the C-API with a live
+  exception set.
+
 Other changes
 -------------
 

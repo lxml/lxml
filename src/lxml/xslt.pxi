@@ -257,7 +257,7 @@ cdef class XSLTAccessControl:
 ################################################################################
 # XSLT
 
-cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
+cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return 0
     # libxml2 internalises the strings if ctxt has a dict

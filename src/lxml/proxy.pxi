@@ -130,7 +130,7 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
 
-cdef int attemptDeallocation(xmlNode* c_node):
+cdef int attemptDeallocation(xmlNode* c_node) noexcept:
     u"""Attempt deallocation of c_node (or higher up in tree).
     """
     cdef xmlNode* c_top

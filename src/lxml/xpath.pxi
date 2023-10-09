@@ -26,7 +26,7 @@ cdef object _XPATH_EVAL_ERRORS = (
     xmlerror.XML_XPATH_INVALID_CTXT_POSITION
 )
 
-cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
+cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf),
@@ -36,7 +36,7 @@ cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), _xcstr(ns_utf),
             _xpath_function_call)
 
-cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
+cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), NULL)

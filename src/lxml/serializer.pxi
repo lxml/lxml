@@ -674,7 +674,7 @@ cdef class _FilelikeWriter:
             raise IOError, u"Could not create I/O writer context."
         return c_buffer
 
-    cdef int write(self, char* c_buffer, int size):
+    cdef int write(self, char* c_buffer, int size) noexcept:
         try:
             if self._filelike is None:
                 raise IOError, u"File is already closed"
@@ -686,7 +686,7 @@ cdef class _FilelikeWriter:
         finally:
             return size  # and swallow any further exceptions
 
-    cdef int close(self):
+    cdef int close(self) noexcept:
         retval = 0
         try:
             if self._close_filelike is not None:
@@ -699,10 +699,10 @@ cdef class _FilelikeWriter:
         finally:
             return retval  # and swallow any further exceptions
 
-cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length) except -1:
+cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length) noexcept:
     return (<_FilelikeWriter>ctxt).write(c_buffer, length)
 
-cdef int _closeFilelikeWriter(void* ctxt) except -1:
+cdef int _closeFilelikeWriter(void* ctxt) noexcept:
     return (<_FilelikeWriter>ctxt).close()
 
 cdef _tofilelike(f, _Element element, encoding, doctype, method,
@@ -764,7 +764,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 cdef int _serialise_node(tree.xmlOutputBuffer* c_buffer, const_xmlChar* c_doctype,
                          const_char* c_enc, xmlNode* c_node, int c_method,
                          bint write_xml_declaration, bint write_doctype, bint pretty_print,
-                         bint with_tail, int standalone) nogil:
+                         bint with_tail, int standalone) noexcept nogil:
     _writeNodeToBuffer(
         c_buffer, c_node, c_enc, c_doctype, c_method,
         write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
