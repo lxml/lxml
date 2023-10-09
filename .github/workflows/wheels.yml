@@ -195,6 +195,7 @@ jobs:
           - "3.12"
           - "pypy-3.8-v7.3.7"
           - "pypy-3.9-v7.3.12"
+          - "pypy-3.10-v7.3.13"
 
         #include:
         #  - os: windows-2016
