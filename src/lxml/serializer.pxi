@@ -1095,7 +1095,7 @@ cdef class C14NWriterTarget:
             self._data.append(data)
 
     cdef _flush(self):
-        data = u''.join(self._data)
+        cdef unicode data = u''.join(self._data)
         del self._data[:]
         if self._strip_text and not self._preserve_space[-1]:
             data = data.strip()
@@ -1249,44 +1249,79 @@ cdef _raise_serialization_error(text):
 cdef unicode _escape_cdata_c14n(stext):
     # escape character data
     cdef unicode text
+    cdef Py_UCS4 ch
+    cdef Py_ssize_t start = 0, pos = 0
+    cdef list substrings = None
     try:
-        # it's worth avoiding do-nothing calls for strings that are
-        # shorter than 500 character, or so.  assume that's, by far,
-        # the most common case in most applications.
         text = unicode(stext)
-        if u'&' in text:
-            text = text.replace(u'&', u'&amp;')
-        if u'<' in text:
-            text = text.replace(u'<', u'&lt;')
-        if u'>' in text:
-            text = text.replace(u'>', u'&gt;')
-        if u'\r' in text:
-            text = text.replace(u'\r', u'&#xD;')
-        return text
     except (TypeError, AttributeError):
-        _raise_serialization_error(stext)
+        return _raise_serialization_error(stext)
+
+    for pos, ch in enumerate(text):
+        if ch == u'&':
+            escape = u'&amp;'
+        elif ch == u'<':
+            escape = u'&lt;'
+        elif ch == u'>':
+            escape = u'&gt;'
+        elif ch == u'\r':
+            escape = u'&#xD;'
+        else:
+            continue
+
+        if substrings is None:
+            substrings = []
+        if pos > start:
+            substrings.append(text[start:pos])
+        substrings.append(escape)
+        start = pos + 1
+
+    if substrings is None:
+        return text
+    if pos >= start:
+        substrings.append(text[start:pos+1])
+    return u''.join(substrings)
 
 
 cdef unicode _escape_attrib_c14n(stext):
     # escape attribute value
     cdef unicode text
+    cdef Py_UCS4 ch
+    cdef Py_ssize_t start = 0, pos = 0
+    cdef list substrings = None
     try:
         text = unicode(stext)
-        if u'&' in text:
-            text = text.replace(u'&', u'&amp;')
-        if u'<' in text:
-            text = text.replace(u'<', u'&lt;')
-        if u'"' in text:
-            text = text.replace(u'"', u'&quot;')
-        if u'\t' in text:
-            text = text.replace(u'\t', u'&#x9;')
-        if u'\n' in text:
-            text = text.replace(u'\n', u'&#xA;')
-        if u'\r' in text:
-            text = text.replace(u'\r', u'&#xD;')
-        return text
     except (TypeError, AttributeError):
-        _raise_serialization_error(stext)
+        return _raise_serialization_error(stext)
+
+    for pos, ch in enumerate(text):
+        if ch == u'&':
+            escape = u'&amp;'
+        elif ch == u'<':
+            escape = u'&lt;'
+        elif ch == u'"':
+            escape = u'&quot;'
+        elif ch == u'\t':
+            escape = u'&#x9;'
+        elif ch == u'\n':
+            escape = u'&#xA;'
+        elif ch == u'\r':
+            escape = u'&#xD;'
+        else:
+            continue
+
+        if substrings is None:
+            substrings = []
+        if pos > start:
+            substrings.append(text[start:pos])
+        substrings.append(escape)
+        start = pos + 1
+
+    if substrings is None:
+        return text
+    if pos >= start:
+        substrings.append(text[start:pos+1])
+    return u''.join(substrings)
 
 
 # incremental serialisation
