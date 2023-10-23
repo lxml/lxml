@@ -491,7 +491,8 @@ CSS style annotations and much more.
 
 Note: the HTML Cleaner in ``lxml.html.clean`` is **not** considered
 appropriate **for security sensitive environments**.
-See e.g. `bleach <https://pypi.org/project/bleach/>`_ for an alternative.
+See e.g. `bleach <https://pypi.org/project/bleach/>`_ or
+`nh3 <https://pypi.org/project/nh3/>`_ for alternatives.
 
 Say, you have an overburdened web page from a hideous source which contains
 lots of content that upsets browsers and tries to run unnecessary code on the
