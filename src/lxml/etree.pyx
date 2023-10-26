@@ -1982,7 +1982,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         Defaults to ASCII encoding and writing a declaration as needed.
 
         The keyword argument 'method' selects the output method:
-        'xml', 'html', 'text' or 'c14n'.  Default is 'xml'.
+        'xml', 'html', 'text', 'c14n' or 'c14n2'.  Default is 'xml'.
 
         With ``method="c14n"`` (C14N version 1), the options ``exclusive``,
         ``with_comments`` and ``inclusive_ns_prefixes`` request exclusive
