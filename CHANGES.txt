@@ -50,7 +50,7 @@ Other changes
 
 * Binary wheels use the library versions libxml2 2.11.5 and libxslt 1.1.38.
 
-* Built with Cython 3.0.3.
+* Built with Cython 3.0.5.
 
 
 4.9.3 (2023-07-05)
