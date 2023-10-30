@@ -203,7 +203,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeNamespaceClassesTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeNamespaceClassesTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/element_classes.txt')])
     return suite

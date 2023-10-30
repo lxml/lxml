@@ -296,5 +296,5 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([make_doctest('test_clean.txt')])
     suite.addTests([make_doctest('test_clean_embed.txt')])
-    suite.addTests(unittest.makeSuite(CleanerTest))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(CleanerTest))
     return suite

@@ -582,8 +582,8 @@ class ThreadPipelineTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ThreadingTestCase)])
-    suite.addTests([unittest.makeSuite(ThreadPipelineTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ThreadingTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ThreadPipelineTestCase)])
     return suite
 
 if __name__ == '__main__':

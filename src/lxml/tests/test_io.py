@@ -363,9 +363,9 @@ if ElementTree:
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeIOTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeIOTestCase)])
     if ElementTree:
-        suite.addTests([unittest.makeSuite(ElementTreeIOTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeIOTestCase)])
     return suite
 
 

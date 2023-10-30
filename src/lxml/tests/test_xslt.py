@@ -2090,12 +2090,12 @@ class Py3XSLTTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeEXSLTTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXSLTExtFuncTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXSLTExtElementTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXSLTTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeEXSLTTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXSLTExtFuncTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXSLTExtElementTestCase)])
     if is_python3:
-        suite.addTests([unittest.makeSuite(Py3XSLTTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(Py3XSLTTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/extensions.txt')])
     suite.addTests(

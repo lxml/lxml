@@ -207,6 +207,6 @@ class EncodingsTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(UnicodeTestCase)])
-    suite.addTests([unittest.makeSuite(EncodingsTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(UnicodeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EncodingsTestCase)])
     return suite

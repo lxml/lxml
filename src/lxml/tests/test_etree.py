@@ -5580,13 +5580,13 @@ class XMLPullParserTest(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
-    suite.addTests([unittest.makeSuite(XMLPullParserTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeOnlyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeC14NTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeWriteTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeErrorLogTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(XMLPullParserTest)])
 
     # add original doctests from ElementTree selftest modules
     from . import selftest, selftest2

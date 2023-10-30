@@ -394,8 +394,8 @@ class ClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ProxyTestCase)])
-    suite.addTests([unittest.makeSuite(ClassLookupTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ProxyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ClassLookupTestCase)])
     return suite
 
 if __name__ == '__main__':

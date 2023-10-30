@@ -660,12 +660,12 @@ class AsyncXmlFileTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([
-        unittest.makeSuite(BytesIOXmlFileTestCase),
-        unittest.makeSuite(TempXmlFileTestCase),
-        unittest.makeSuite(TempPathXmlFileTestCase),
-        unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
-        unittest.makeSuite(HtmlFileTestCase),
-        unittest.makeSuite(AsyncXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(BytesIOXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(TempXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(TempPathXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(SimpleFileLikeXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(HtmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(AsyncXmlFileTestCase),
     ])
     return suite
 

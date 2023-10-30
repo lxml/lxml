@@ -125,7 +125,7 @@ class DoctestCompareTest(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(DoctestCompareTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(DoctestCompareTest)])
     return suite
 
 

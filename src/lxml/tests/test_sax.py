@@ -405,8 +405,8 @@ class NSPrefixSaxTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeSaxTestCase)])
-    suite.addTests([unittest.makeSuite(NSPrefixSaxTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeSaxTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(NSPrefixSaxTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/sax.txt')])
     return suite
