@@ -179,7 +179,7 @@ bench: bench_inplace
 ftest: ftest_inplace
 
 clean:
-	find . \( -name '*.o' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
+	find src \( -name '*.o' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
 	rm -rf build
 
 docclean:
