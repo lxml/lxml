@@ -4992,22 +4992,22 @@ if cElementTree:
 def test_suite():
     suite = unittest.TestSuite()
     if etree:
-        suite.addTests([unittest.makeSuite(ETreeTestCase)])
-        suite.addTests([unittest.makeSuite(ETreePullTestCase)])
-        suite.addTests([unittest.makeSuite(ETreeElementSlicingTest)])
-        suite.addTests([unittest.makeSuite(ETreeC14NTest)])
-        suite.addTests([unittest.makeSuite(ETreeC14N2WriteTest)])
-        suite.addTests([unittest.makeSuite(ETreeC14N2TostringTest)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreePullTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeElementSlicingTest)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeC14NTest)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeC14N2WriteTest)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeC14N2TostringTest)])
     if ElementTree:
-        suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeTestCase)])
         if ElementTreePullTestCase:
-            suite.addTests([unittest.makeSuite(ElementTreePullTestCase)])
+            suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreePullTestCase)])
         if ElementTreeC14NTest:
-            suite.addTests([unittest.makeSuite(ElementTreeC14NTest)])
-        suite.addTests([unittest.makeSuite(ElementTreeElementSlicingTest)])
+            suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeC14NTest)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementSlicingTest)])
     if cElementTree:
-        suite.addTests([unittest.makeSuite(CElementTreeTestCase)])
-        suite.addTests([unittest.makeSuite(CElementTreeElementSlicingTest)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(CElementTreeTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(CElementTreeElementSlicingTest)])
     return suite
 
 if __name__ == '__main__':

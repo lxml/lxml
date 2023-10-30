@@ -2744,7 +2744,7 @@ class ObjectifyTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ObjectifyTestCase)])
     suite.addTests(doctest.DocTestSuite(objectify))
     suite.addTests([make_doctest('../../../doc/objectify.txt')])
     return suite

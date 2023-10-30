@@ -98,7 +98,7 @@ class ExternalDocumentTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     if sys.platform != 'win32':
-        suite.addTests([unittest.makeSuite(ExternalDocumentTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ExternalDocumentTestCase)])
     return suite
 
 

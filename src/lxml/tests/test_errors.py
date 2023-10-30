@@ -70,7 +70,7 @@ class ErrorTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ErrorTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ErrorTestCase)])
     return suite
 
 if __name__ == '__main__':

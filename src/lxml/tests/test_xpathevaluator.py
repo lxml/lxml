@@ -734,11 +734,11 @@ if sys.version_info[0] >= 3:
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXPathClassTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXPathClassTestCase)])
     if etree.LIBXSLT_COMPILED_VERSION >= (1,1,25):
-        suite.addTests([unittest.makeSuite(ETreeXPathExsltTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeETXPathClassTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXPathExsltTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeETXPathClassTestCase)])
     suite.addTests([doctest.DocTestSuite()])
     suite.addTests(
         [make_doctest('../../../doc/xpathxslt.txt')])

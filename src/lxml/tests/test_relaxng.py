@@ -249,11 +249,11 @@ class RelaxNGCompactTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeRelaxNGTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     if rnc2rng is not None:
-        suite.addTests([unittest.makeSuite(RelaxNGCompactTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(RelaxNGCompactTestCase)])
     return suite
 
 if __name__ == '__main__':
