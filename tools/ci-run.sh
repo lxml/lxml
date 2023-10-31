@@ -21,7 +21,7 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 60
 
   export CC="gcc"
-  if [ -z "${PYTHON_VERSION##2*}" ]; then
+  if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ]; then
     # Make sure we use the same linker and C compiler.
     export LDSHARED="$CC -shared"
   fi
@@ -54,12 +54,15 @@ ccache -s || true
 
 # Install python requirements
 echo "Installing requirements [python]"
-python -m pip install -U pip setuptools wheel
+if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ];
+  then python -m pip install -U pip "setuptools<60" wheel;
+  else python -m pip install -U pip setuptools wheel;
+fi
 if [ -z "${PYTHON_VERSION##*-dev}" ];
   then CYTHON_COMPILE_MINIMAL=true  python -m pip install https://github.com/cython/cython/archive/master.zip;
   else python -m pip install -r requirements.txt;
 fi
-if [ -z "${PYTHON_VERSION##2*}" ]; then
+if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ]; then
   python -m pip install -U beautifulsoup4==4.9.3 cssselect==1.1.0 html5lib==1.1 rnc2rng==2.6.5 ${EXTRA_DEPS} || exit 1
 else
   python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
@@ -73,7 +76,7 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       CFLAGS="$CFLAGS $TEST_CFLAGS $EXTRA_CFLAGS" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
       python -u setup.py build_ext --inplace \
-      $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
+      $(if [ -n "${PYTHON_VERSION##2.*}" ] && [ -n "${PYTHON_VERSION##pypy-2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
 
