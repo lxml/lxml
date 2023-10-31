@@ -162,7 +162,7 @@ cdef _registerXSLTExtensions(xslt.xsltTransformContext* c_ctxt,
 cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
                                 xmlNode* c_context_node,
                                 xmlNode* c_inst_node,
-                                void* dummy) with gil:
+                                void* dummy) noexcept with gil:
     cdef _XSLTContext context
     cdef XSLTExtension extension
     cdef python.PyObject* dict_result

@@ -371,6 +371,13 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertRaises(AttributeError, getattr, root.c1, "NOT_THERE")
         self.assertRaises(AttributeError, getattr, root.c1, "{unknownNS}c2")
 
+    def test_child_special(self):
+        root = self.XML(xml_str)
+        self.assertEqual(objectify.ObjectifiedElement, root.c1.__class__)
+        self.assertTrue(callable(root.c1.__str__))
+        self.assertTrue(callable(root.c1.__len__))
+        self.assertTrue(callable(root.c1.__getattr__))
+
     def test_child_getattr_empty_ns(self):
         root = self.XML(xml_str)
         self.assertEqual("4", getattr(root.c1, "{}c2").text)
@@ -2737,7 +2744,7 @@ class ObjectifyTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ObjectifyTestCase)])
     suite.addTests(doctest.DocTestSuite(objectify))
     suite.addTests([make_doctest('../../../doc/objectify.txt')])
     return suite

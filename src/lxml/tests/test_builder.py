@@ -62,7 +62,7 @@ class BuilderTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(BuilderTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(BuilderTestCase)])
     return suite
 
 if __name__ == '__main__':

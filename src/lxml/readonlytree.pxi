@@ -21,7 +21,7 @@ cdef class _ReadOnlyProxy:
     cdef int _raise_unsupported_type(self) except -1:
         raise TypeError(f"Unsupported node type: {self._c_node.type}")
 
-    cdef void free_after_use(self):
+    cdef void free_after_use(self) noexcept:
         u"""Should the xmlNode* be freed when releasing the proxy?
         """
         self._free_after_use = 1

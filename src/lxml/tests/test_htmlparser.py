@@ -679,7 +679,7 @@ class HtmlParserTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(HtmlParserTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(HtmlParserTestCase)])
     return suite
 
 

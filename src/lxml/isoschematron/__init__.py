@@ -61,10 +61,16 @@ iso_svrl_for_xslt1 = _etree.XSLT(_etree.parse(
 svrl_validation_errors = _etree.XPath(
     '//svrl:failed-assert', namespaces={'svrl': SVRL_NS})
 
-
 # RelaxNG validator for schematron schemas
-schematron_schema_valid = _etree.RelaxNG(
-    file=os.path.join(_resources_dir, 'rng', 'iso-schematron.rng'))
+schematron_schema_valid_supported = False
+try:
+    schematron_schema_valid = _etree.RelaxNG(
+        file=os.path.join(_resources_dir, 'rng', 'iso-schematron.rng'))
+    schematron_schema_valid_supported = True
+except _etree.RelaxNGParseError:
+    # Some distributions delete the file due to licensing issues.
+    def schematron_schema_valid(arg):
+        raise NotImplementedError("Validating the ISO schematron requires iso-schematron.rng")
 
 
 def stylesheet_params(**kwargs):
@@ -153,6 +159,13 @@ class Schematron(_etree._Validator):
     report document gets stored and can be accessed as the ``validation_report``
     property.
 
+    If ``validate_schema`` is set to False, the validation of the schema file
+    itself is disabled.  Validation happens by default after building the full
+    schema, unless the schema validation file cannot be found at import time,
+    in which case the validation gets disabled.  Some lxml distributions exclude
+    this file due to licensing issues.  ISO-Schematron validation can then still
+    be used normally, but the schemas themselves cannot be validated.
+
     Here is a usage example::
 
       >>> from lxml import etree
@@ -234,7 +247,8 @@ class Schematron(_etree._Validator):
     def __init__(self, etree=None, file=None, include=True, expand=True,
                  include_params={}, expand_params={}, compile_params={},
                  store_schematron=False, store_xslt=False, store_report=False,
-                 phase=None, error_finder=ASSERTS_ONLY):
+                 phase=None, error_finder=ASSERTS_ONLY,
+                 validate_schema=schematron_schema_valid_supported):
         super(Schematron, self).__init__()
 
         self._store_report = store_report
@@ -273,7 +287,7 @@ class Schematron(_etree._Validator):
             schematron = self._include(schematron, **include_params)
         if expand:
             schematron = self._expand(schematron, **expand_params)
-        if not schematron_schema_valid(schematron):
+        if validate_schema and not schematron_schema_valid(schematron):
             raise _etree.SchematronParseError(
                 "invalid schematron schema: %s" %
                 schematron_schema_valid.error_log)

@@ -129,7 +129,7 @@ cdef class _BaseContext:
             python.Py_INCREF(utf)
         return utf
 
-    cdef void _set_xpath_context(self, xpath.xmlXPathContext* xpathCtxt):
+    cdef void _set_xpath_context(self, xpath.xmlXPathContext* xpathCtxt) noexcept:
         self._xpathCtxt = xpathCtxt
         xpathCtxt.userData = <void*>self
         xpathCtxt.error = _receiveXPathError
@@ -213,7 +213,7 @@ cdef class _BaseContext:
                                          _xcstr(prefix_utf), NULL)
             del self._global_namespaces[:]
     
-    cdef void _unregisterNamespace(self, prefix_utf):
+    cdef void _unregisterNamespace(self, prefix_utf) noexcept:
         xpath.xmlXPathRegisterNs(self._xpathCtxt,
                                  _xcstr(prefix_utf), NULL)
     
@@ -691,7 +691,7 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
         raise NotImplementedError, \
             f"Not yet implemented result node type: {c_node.type}"
 
-cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
+cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj) noexcept:
     u"""Free the XPath object, but *never* free the *content* of node sets.
     Python dealloc will do that for us.
     """
@@ -821,7 +821,7 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
 # callbacks for XPath/XSLT extension functions
 
 cdef void _extension_function_call(_BaseContext context, function,
-                                   xpath.xmlXPathParserContext* ctxt, int nargs):
+                                   xpath.xmlXPathParserContext* ctxt, int nargs) noexcept:
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
     cdef list args

@@ -48,7 +48,8 @@ jobs:
           - "3.9"
           - "3.10"  # quotes to avoid being interpreted as the number 3.1
           - "3.11"
-          - "3.12-dev"
+          - "3.12"
+          - "3.13-dev"
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
@@ -56,7 +57,7 @@ jobs:
           #  python-version: 2.7
           #  env: { STATIC_DEPS: true }  # always static
 
-          - python-version: "3.12-dev"
+          - python-version: "3.13-dev"
             allowed_failure: true
 
           - os: ubuntu-latest
@@ -65,18 +66,18 @@ jobs:
             extra_hash: "-refnanny"
             allowed_failure: true
           - os: ubuntu-latest
-            python-version: "3.11"
+            python-version: "3.12"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
             allowed_failure: true
           # Coverage setup
           - os: ubuntu-latest
-            python-version: "3.9"
+            python-version: "3.10"
             env: { COVERAGE: true }
             extra_hash: "-coverage"
             allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
-            python-version: "3.9"
+            python-version: "3.10"
             env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
             extra_hash: "-docs"
             allowed_failure: true   # shouldn't fail but currently does...
@@ -105,6 +106,14 @@ jobs:
             python-version: pypy-3.8
             env: { STATIC_DEPS: false }
             allowed_failure: true
+          - os: ubuntu-latest
+            python-version: pypy-3.9
+            env: { STATIC_DEPS: false }
+            allowed_failure: true
+          - os: ubuntu-latest
+            python-version: pypy-3.10
+            env: { STATIC_DEPS: false }
+            allowed_failure: true
 
           # MacOS sub-jobs
           # ==============
@@ -131,7 +140,7 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.10.4
+      LIBXML2_VERSION: 2.11.5
       LIBXSLT_VERSION: 1.1.38
       COVERAGE: false
       GCC_VERSION: 9
@@ -142,14 +151,26 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Setup Python
         uses: actions/setup-python@v4
+        if: startsWith(matrix.python-version, '3.')
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Setup Python2 (Linux)
+        if: matrix.python-version == '2.7' && startsWith(matrix.os, 'ubuntu')
+        run: |
+            sudo ln -fs python2 /usr/bin/python
+            sudo apt-get update
+            sudo apt-get install python-setuptools python2-dev
+            curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+            sudo python2 get-pip.py
+            ls -l /usr/bin/pip* /usr/local/bin/pip*
+            which pip
 
       - name: Install MacOS dependencies
         if: runner.os == 'macOS'
@@ -166,7 +187,7 @@ jobs:
 
       - name: Cache [libs]
         uses: actions/cache@v3
-        if: ${{ matrix.env.STATIC_DEPS }}
+        if: matrix.env.STATIC_DEPS
         with:
           path: |
             libs/*.xz
@@ -185,7 +206,7 @@ jobs:
 
       - name: Upload docs
         uses: actions/upload-artifact@v3
-        if: ${{ matrix.extra_hash == '-docs' }}
+        if: matrix.extra_hash == '-docs'
         with:
           name: website_html
           path: doc/html
@@ -200,7 +221,7 @@ jobs:
 
       - name: Upload Wheel
         uses: actions/upload-artifact@v3
-        if: ${{ matrix.env.STATIC_DEPS }}
+        if: matrix.env.STATIC_DEPS
         with:
           name: wheels-${{ runner.os }}
           path: dist/*.whl

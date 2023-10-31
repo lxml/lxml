@@ -73,7 +73,7 @@ class ETreeSchematronTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeSchematronTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeSchematronTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite

@@ -2,8 +2,8 @@ from lxml.includes cimport tree
 from lxml.includes.tree cimport xmlDoc, xmlDtd
 
 cdef extern from "libxml/valid.h" nogil:
-    ctypedef void (*xmlValidityErrorFunc)(void * ctx, const char * msg, ...)
-    ctypedef void (*xmlValidityWarningFunc)(void * ctx, const char * msg, ...)
+    ctypedef void (*xmlValidityErrorFunc)(void * ctx, const char * msg, ...) noexcept
+    ctypedef void (*xmlValidityWarningFunc)(void * ctx, const char * msg, ...) noexcept
 
     ctypedef struct xmlValidCtxt:
         void *userData

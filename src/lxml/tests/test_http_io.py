@@ -117,7 +117,7 @@ class HttpIOTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(HttpIOTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(HttpIOTestCase)])
     return suite
 
 

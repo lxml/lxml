@@ -687,6 +687,23 @@ class ETreeOnlyTestCase(HelperTestCase):
         parse = self.etree.parse
         self.assertRaises(TypeError, parse, 'notthere.xml', object())
 
+    def test_parse_premature_end(self):
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = _bytes('<a><b></b>')
+        parser = XMLParser()
+        self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
+    def test_parse_premature_end_with_target(self):
+        # tests issue https://bugs.launchpad.net/lxml/+bug/1980767 is fixed
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = _bytes('<a><b></b>')
+        parser = XMLParser(target=etree.TreeBuilder())
+        self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
     def test_iterparse_getiterator(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<a><b><d/></b><c/></a>')
@@ -1880,6 +1897,42 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
 
+    def test_addnext_tails(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a').tail = "A"
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd').tail = "D"
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'B', 'C', 'D'], [c.tail for c in root])
+
+        root[2].addnext(root[1])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'C', 'B', 'D'], [c.tail for c in root])
+
+    def test_addnext_with_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c')
+        SubElement(root, 'd')
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, 'B', None, None], [c.tail for c in root])
+
+        root[2].addnext(root[1])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, None, 'B', None], [c.tail for c in root])
+
     def test_addprevious(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -1892,6 +1945,42 @@ class ETreeOnlyTestCase(HelperTestCase):
         root[0].addprevious(root[1])
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
+
+    def test_addprevious_tails(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a').tail = "A"
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd').tail = "D"
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'B', 'C', 'D'], [c.tail for c in root])
+
+        root[1].addprevious(root[2])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'C', 'B', 'D'], [c.tail for c in root])
+
+    def test_addprevious_with_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b')
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd')
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, None, 'C', None], [c.tail for c in root])
+
+        root[1].addprevious(root[2])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, 'C', None, None], [c.tail for c in root])
 
     def test_addnext_cycle(self):
         Element = self.etree.Element
@@ -3069,11 +3158,29 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_html_prefix_nsmap(self):
         etree = self.etree
-        el = etree.HTML('<hha:page-description>aa</hha:page-description>').find('.//page-description')
-        if etree.LIBXML_VERSION < (2, 9, 11):
-            self.assertEqual({'hha': None}, el.nsmap)
+        el = etree.HTML('<hha:page-description>aa</hha:page-description>')
+        pd = el[-1]
+        while len(pd):
+            pd = pd[-1]
+
+        if etree.LIBXML_VERSION >= (2, 10, 4):
+            # "Prefix" is kept as part of the tag name.
+            self.assertEqual("hha:page-description", pd.tag)
+            self.assertIsNone(el.find('.//page-description'))
+            self.assertIsNotNone(el.find('.//hha:page-description'))  # no namespaces!
+            for e in el.iter():
+                self.assertEqual({}, e.nsmap)
+        elif etree.LIBXML_VERSION >= (2, 9, 11):
+            # "Prefix" is stripped.
+            self.assertEqual("page-description", pd.tag)
+            self.assertIsNotNone(el.find('.//page-description'))
+            for e in el.iter():
+                self.assertEqual({}, e.nsmap)
         else:
-            self.assertEqual({}, el.nsmap)
+            # "Prefix" is parsed as XML prefix.
+            self.assertEqual("page-description", pd.tag)
+            pd = el.find('.//page-description')
+            self.assertEqual({'hha': None}, pd.nsmap)
 
     def test_getchildren(self):
         Element = self.etree.Element
@@ -5473,13 +5580,13 @@ class XMLPullParserTest(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
-    suite.addTests([unittest.makeSuite(XMLPullParserTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeOnlyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeC14NTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeWriteTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeErrorLogTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(XMLPullParserTest)])
 
     # add original doctests from ElementTree selftest modules
     from . import selftest, selftest2

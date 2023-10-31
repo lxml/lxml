@@ -68,7 +68,7 @@ cdef extern from "libxml/hash.h":
     ctypedef void (*xmlHashScanner)(void* payload, void* data, const_xmlChar* name) noexcept  # may require GIL!
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data) nogil
     void* xmlHashLookup(xmlHashTable* table, const_xmlChar* name) nogil
-    ctypedef void (*xmlHashDeallocator)(void *payload, xmlChar *name)
+    ctypedef void (*xmlHashDeallocator)(void *payload, xmlChar *name) noexcept
     cdef xmlHashTable* xmlHashCreate(int size) nogil
     cdef xmlHashTable* xmlHashCreateDict(int size, xmlDict *dict) nogil
     cdef int xmlHashSize(xmlHashTable* table) nogil
@@ -153,6 +153,17 @@ cdef extern from "libxml/tree.h" nogil:
         XML_INTERNAL_PARAMETER_ENTITY=        4
         XML_EXTERNAL_PARAMETER_ENTITY=        5
         XML_INTERNAL_PREDEFINED_ENTITY=       6
+
+    ctypedef enum xmlDocProperties:
+        XML_DOC_WELLFORMED          = 1    # /* document is XML well formed */
+        XML_DOC_NSVALID             = 2    # /* document is Namespace valid */
+        XML_DOC_OLD10               = 4    # /* parsed with old XML-1.0 parser */
+        XML_DOC_DTDVALID            = 8    # /* DTD validation was successful */
+        XML_DOC_XINCLUDE            = 16   # /* XInclude substitution was done */
+        XML_DOC_USERBUILT           = 32   # /* Document was built using the API
+                                           #    and not by parsing an instance */
+        XML_DOC_INTERNAL            = 64   # /* built for internal processing */
+        XML_DOC_HTML                = 128  # /* parsed or built HTML document */
 
     ctypedef struct xmlNs:
         const_xmlChar* href
@@ -274,6 +285,7 @@ cdef extern from "libxml/tree.h" nogil:
         void* _private
         xmlDtd* intSubset
         xmlDtd* extSubset
+        int properties
         
     ctypedef struct xmlAttr:
         void* _private
@@ -411,12 +423,12 @@ cdef extern from "libxml/xmlIO.h":
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out) nogil
 
     ctypedef int (*xmlInputReadCallback)(void* context,
-                                         char* buffer, int len) except -1 nogil
-    ctypedef int (*xmlInputCloseCallback)(void* context) except -1 nogil
+                                         char* buffer, int len) noexcept nogil
+    ctypedef int (*xmlInputCloseCallback)(void* context) noexcept nogil
 
     ctypedef int (*xmlOutputWriteCallback)(void* context,
-                                           char* buffer, int len) except -1
-    ctypedef int (*xmlOutputCloseCallback)(void* context) except -1
+                                           char* buffer, int len) noexcept
+    ctypedef int (*xmlOutputCloseCallback)(void* context) noexcept
 
     cdef xmlOutputBuffer* xmlAllocOutputBuffer(
         xmlCharEncodingHandler* encoder) nogil

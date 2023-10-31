@@ -8,17 +8,63 @@ lxml changelog
 Bugs fixed
 ----------
 
-* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
+* LP#1976304: The ``Element.addnext()`` method previously inserted the new element
+  before existing tail text.  The tail text of both sibling elements now stays on
+  the respective elements.
+
+* GH#370: A crash with recent libxml2 2.11.x versions was resolved.
+  Patch by Michael Schlenker.
 
 * The internal exception handling in C callbacks was improved for Cython 3.0.
+
+* The exception declarations of ``xmlInputReadCallback``, ``xmlInputCloseCallback``,
+  ``xmlOutputWriteCallback`` and ``xmlOutputCloseCallback`` in ``tree.pxd`` were
+  corrected to prevent running Python code or calling into the C-API with a live
+  exception set.
+
+Other changes
+-------------
+
+* With libxml2 2.10.4 and later (as provided by the lxml 5.0 binary wheels),
+  parsing HTML tags with "prefixes" no longer builds a namespace dictionary
+  in ``nsmap`` but considers the ``prefix:name`` string the actual tag name.
+  With older libxml2 versions, since 2.9.11, the prefix was removed.  Before
+  that, the prefix was parsed as XML prefix.
+
+  lxml 5.0 does not try to hide this difference but now changes the ElementPath
+  implementation to let ``element.find("part1:part2")`` search for the tag
+  ``part1:part2`` in documents parsed as HTML, instead of looking only for ``part2``.
+
+* LP#2024343: The validation of the schema file itself is now optional in the
+  ISO-Schematron implementation.  This was done because some lxml distributions
+  discard the RNG validation schema file due to licensing issues.  The validation
+  can now always be disabled with ``Schematron(..., validate_schema=False)``.
+  It is enabled by default if available and disabled otherwise.  The module
+  constant ``lxml.isoschematron.schematron_schema_valid_supported`` can be used
+  to detect whether schema file validation is available.
+
+* Some redundant and long deprecated methods were removed:
+  ``parser.setElementClassLookup()``,
+  ``xslt_transform.apply()``,
+  ``xpath.evaluate()``.
+
+* Binary wheels use the library versions libxml2 2.11.5 and libxslt 1.1.38.
+
+* Built with Cython 3.0.5.
+
+
+4.9.3 (2023-07-05)
+==================
+
+Bugs fixed
+----------
+
+* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
 
 * A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34+.
 
 * GH#348: URL checking in the HTML cleaner was improved.
   Patch by Tim McCormack.
-
-* GH#370: A crash with recent libxml2 2.11.x versions was resolved.
-  Patch by Michael Schlenker.
 
 * GH#371, GH#373: Some regex strings were changed to raw strings to fix Python warnings.
   Patches by Jakub Wilk and Anthony Sottile.
@@ -26,14 +72,10 @@ Bugs fixed
 Other changes
 -------------
 
-* Some redundant and long deprecated methods were removed:
-  ``parser.setElementClassLookup()``,
-  ``xslt_transform.apply()``,
-  ``xpath.evaluate()``.
+* Wheels include zlib 1.2.13, libxml2 2.10.3 and libxslt 1.1.38
+  (zlib 1.2.12, libxml2 2.10.3 and libxslt 1.1.37 on Windows).
 
-* Binary wheels use the latest library versions libxml2 2.10.4 and libxslt 1.1.38.
-
-* Built with Cython 0.29.35 to adapt to changes in Python 3.11 and 3.12.
+* Built with Cython 0.29.36 to adapt to changes in Python 3.12.
 
 
 4.9.2 (2022-12-13)

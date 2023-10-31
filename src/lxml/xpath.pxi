@@ -26,7 +26,7 @@ cdef object _XPATH_EVAL_ERRORS = (
     xmlerror.XML_XPATH_INVALID_CTXT_POSITION
 )
 
-cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
+cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf),
@@ -36,7 +36,7 @@ cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), _xcstr(ns_utf),
             _xpath_function_call)
 
-cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
+cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), NULL)
@@ -78,7 +78,7 @@ cdef class _XPathContext(_BaseContext):
         xpath.xmlXPathRegisteredVariablesCleanup(self._xpathCtxt)
         self._cleanup_context()
 
-    cdef void registerExsltFunctions(self):
+    cdef void registerExsltFunctions(self) noexcept:
         if xslt.LIBXSLT_VERSION < 10125:
             # we'd only execute dummy functions anyway
             return
@@ -147,7 +147,7 @@ cdef class _XPathEvaluatorBase:
         self._xpathCtxt = xpathCtxt
         self._context.set_context(xpathCtxt)
 
-    cdef bint _checkAbsolutePath(self, char* path):
+    cdef bint _checkAbsolutePath(self, char* path) noexcept:
         cdef char c
         if path is NULL:
             return 0
@@ -169,7 +169,7 @@ cdef class _XPathEvaluatorBase:
         return 0
 
     @cython.final
-    cdef void _unlock(self):
+    cdef void _unlock(self) noexcept:
         if config.ENABLE_THREADING and self._eval_lock != NULL:
             python.PyThread_release_lock(self._eval_lock)
 

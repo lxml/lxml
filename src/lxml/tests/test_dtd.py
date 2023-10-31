@@ -422,7 +422,7 @@ class ETreeDtdTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeDtdTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeDtdTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite

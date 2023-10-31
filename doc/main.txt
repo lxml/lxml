@@ -126,9 +126,9 @@ external C modules, including fast custom element class support.
 .. _`ElementTree API`:  http://effbot.org/zone/element-index.htm#documentation
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
-.. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
+.. _`tutorial for ElementTree`: https://web.archive.org/web/20200720191942/http://effbot.org:80/zone/element.htm
 .. _`lxml.etree tutorial for XML processing`: tutorial.html
-.. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
+.. _`Python XML processing with lxml`: https://web.archive.org/web/20110108100213/https://infohost.nmt.edu/tcc/help/pubs/pylxml/
 .. _`generated API documentation`:   api/index.html
 .. _`ElementTree performance`: performance.html
 .. _`compatibility`: compatibility.html
@@ -160,8 +160,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 4.9.2`_, released 2022-12-13
-(`changes for 4.9.2`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 4.9.3`_, released 2023-07-05
+(`changes for 4.9.3`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -256,7 +256,9 @@ See the websites of lxml
 ..
    and the `latest in-development version <https://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-4.9.2.pdf
+.. _`PDF documentation`: lxmldoc-4.9.3.pdf
+
+* `lxml 4.9.3`_, released 2023-07-05 (`changes for 4.9.3`_)
 
 * `lxml 4.9.2`_, released 2022-12-13 (`changes for 4.9.2`_)
 
@@ -284,6 +286,7 @@ See the websites of lxml
 
 * `older releases <https://lxml.de/4.6/#old-versions>`_
 
+.. _`lxml 4.9.3`: /files/lxml-4.9.3.tgz
 .. _`lxml 4.9.2`: /files/lxml-4.9.2.tgz
 .. _`lxml 4.9.1`: /files/lxml-4.9.1.tgz
 .. _`lxml 4.9.0`: /files/lxml-4.9.0.tgz

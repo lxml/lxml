@@ -112,7 +112,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
 
 
 cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
-                                         xslt.xsltLoadType c_type) with gil:
+                                         xslt.xsltLoadType c_type) noexcept with gil:
     try:
         message = f"Cannot resolve URI {_decodeFilename(c_uri)}"
         if c_type == xslt.XSLT_LOAD_DOCUMENT:
@@ -128,7 +128,7 @@ cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
 
 cdef xmlDoc* _xslt_doc_loader(const_xmlChar* c_uri, tree.xmlDict* c_dict,
                               int parse_options, void* c_ctxt,
-                              xslt.xsltLoadType c_type) nogil:
+                              xslt.xsltLoadType c_type) noexcept nogil:
     # nogil => no Python objects here, may be called without thread context !
     cdef xmlDoc* c_doc
     cdef xmlDoc* result
@@ -223,7 +223,7 @@ cdef class XSLTAccessControl:
         xslt.xsltSetSecurityPrefs(self._prefs, option, function)
 
     @cython.final
-    cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt):
+    cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt) noexcept:
         xslt.xsltSetCtxtSecurityPrefs(self._prefs, ctxt)
 
     @property
@@ -257,7 +257,7 @@ cdef class XSLTAccessControl:
 ################################################################################
 # XSLT
 
-cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
+cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return 0
     # libxml2 internalises the strings if ctxt has a dict

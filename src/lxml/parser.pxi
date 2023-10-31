@@ -60,7 +60,7 @@ cdef class _ParserDictionaryContext:
         if self._c_dict is not NULL:
             xmlparser.xmlDictFree(self._c_dict)
 
-    cdef void initMainParserContext(self):
+    cdef int initMainParserContext(self) except -1:
         u"""Put the global context into the thread dictionary of the main
         thread.  To be called once and only in the main thread."""
         thread_dict = python.PyThreadState_GetDict()
@@ -81,7 +81,7 @@ cdef class _ParserDictionaryContext:
         d[u"_ParserDictionaryContext"] = context
         return context
 
-    cdef void setDefaultParser(self, _BaseParser parser):
+    cdef int setDefaultParser(self, _BaseParser parser) except -1:
         u"Set the default parser for the current thread"
         cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
@@ -114,26 +114,26 @@ cdef class _ParserDictionaryContext:
                 context._c_dict = xmlparser.xmlDictCreateSub(self._c_dict)
         return context._c_dict
 
-    cdef void initThreadDictRef(self, tree.xmlDict** c_dict_ref):
+    cdef int initThreadDictRef(self, tree.xmlDict** c_dict_ref) except -1:
         c_dict = c_dict_ref[0]
         c_thread_dict = self._getThreadDict(c_dict)
         if c_dict is c_thread_dict:
-            return
+            return 0
         if c_dict is not NULL:
             xmlparser.xmlDictFree(c_dict)
         c_dict_ref[0] = c_thread_dict
         xmlparser.xmlDictReference(c_thread_dict)
 
-    cdef void initParserDict(self, xmlparser.xmlParserCtxt* pctxt):
+    cdef int initParserDict(self, xmlparser.xmlParserCtxt* pctxt) except -1:
         u"Assure we always use the same string dictionary."
         self.initThreadDictRef(&pctxt.dict)
         pctxt.dictNames = 1
 
-    cdef void initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
+    cdef int initXPathParserDict(self, xpath.xmlXPathContext* pctxt) except -1:
         u"Assure we always use the same string dictionary."
         self.initThreadDictRef(&pctxt.dict)
 
-    cdef void initDocDict(self, xmlDoc* result):
+    cdef int initDocDict(self, xmlDoc* result) except -1:
         u"Store dict of last object parsed if no shared dict yet"
         # XXX We also free the result dict here if there already was one.
         # This case should only occur for new documents with empty dicts,
@@ -156,20 +156,20 @@ cdef class _ParserDictionaryContext:
             return implied_context
         return None
 
-    cdef void pushImpliedContextFromParser(self, _BaseParser parser):
+    cdef int pushImpliedContextFromParser(self, _BaseParser parser) except -1:
         u"Push a new implied context object taken from the parser."
         if parser is not None:
             self.pushImpliedContext(parser._getParserContext())
         else:
             self.pushImpliedContext(None)
 
-    cdef void pushImpliedContext(self, _ParserContext parser_context):
+    cdef int pushImpliedContext(self, _ParserContext parser_context) except -1:
         u"Push a new implied context object."
         cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
         context._implied_parser_contexts.append(parser_context)
 
-    cdef void popImpliedContext(self):
+    cdef int popImpliedContext(self) except -1:
         u"Pop the current implied context object."
         cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
@@ -283,7 +283,7 @@ cdef class _FileReaderContext:
         if close is not None:
             close()
 
-    cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self):
+    cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self) noexcept:
         cdef stdio.FILE* c_stream
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
@@ -297,18 +297,18 @@ cdef class _FileReaderContext:
         return c_buffer
 
     cdef xmlparser.xmlParserInput* _createParserInput(
-            self, xmlparser.xmlParserCtxt* ctxt):
+            self, xmlparser.xmlParserCtxt* ctxt) noexcept:
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = self._createParserInputBuffer()
         return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
 
-    cdef tree.xmlDtd* _readDtd(self):
+    cdef tree.xmlDtd* _readDtd(self) noexcept:
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = self._createParserInputBuffer()
         with nogil:
             return xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
 
-    cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options):
+    cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options) noexcept:
         cdef xmlDoc* result
         cdef char* c_encoding
         cdef stdio.FILE* c_stream
@@ -351,7 +351,7 @@ cdef class _FileReaderContext:
         finally:
             return result  # swallow any exceptions
 
-    cdef int copyToBuffer(self, char* c_buffer, int c_requested):
+    cdef int copyToBuffer(self, char* c_buffer, int c_requested) noexcept:
         cdef int c_byte_count = 0
         cdef char* c_start
         cdef Py_ssize_t byte_count, remaining
@@ -402,10 +402,10 @@ cdef class _FileReaderContext:
         finally:
             return c_byte_count  # swallow any exceptions
 
-cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) except -1 with gil:
+cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) noexcept with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
-cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) except -1 nogil:
+cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) noexcept nogil:
     return stdio.fread(c_buffer, 1,  c_size, <stdio.FILE*>ctxt)
 
 ############################################################
@@ -413,7 +413,7 @@ cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) except -1 nogil
 ############################################################
 
 cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_pubid,
-                                               xmlparser.xmlParserCtxt* c_context) with gil:
+                                               xmlparser.xmlParserCtxt* c_context) noexcept with gil:
     cdef _ResolverContext context
     cdef xmlparser.xmlParserInput* c_input
     cdef _InputDocument doc_ref
@@ -503,12 +503,12 @@ cdef xmlparser.xmlExternalEntityLoader __DEFAULT_ENTITY_LOADER
 __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
 
 
-cdef xmlparser.xmlExternalEntityLoader _register_document_loader() nogil:
+cdef xmlparser.xmlExternalEntityLoader _register_document_loader() noexcept nogil:
     cdef xmlparser.xmlExternalEntityLoader old = xmlparser.xmlGetExternalEntityLoader()
     xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_resolver)
     return old
 
-cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) nogil:
+cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) noexcept nogil:
     xmlparser.xmlSetExternalEntityLoader(old)
 
 
@@ -558,11 +558,11 @@ cdef class _ParserContext(_ResolverContext):
         _initParserContext(context, self._resolvers._copy(), NULL)
         return context
 
-    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
+    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         self._c_ctxt = c_ctxt
         c_ctxt._private = <void*>self
 
-    cdef void _resetParserContext(self):
+    cdef void _resetParserContext(self) noexcept:
         if self._c_ctxt is not NULL:
             if self._c_ctxt.html:
                 htmlparser.htmlCtxtReset(self._c_ctxt)
@@ -693,7 +693,7 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
             # An encoding error occurred and libxml2 switched from UTF-8
             # input to (undecoded) Latin-1, at some arbitrary point in the
             # document.  Better raise an error than allowing for a broken
-            # tree with mixed encodings.
+            # tree with mixed encodings. This is fixed in libxml2 2.12.
             well_formed = 0
         elif recover or (c_ctxt.wellFormed and
                          c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
@@ -743,7 +743,7 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
 
     return result
 
-cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
+cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) noexcept nogil:
     cdef xmlNode* c_node
     if c_doc is NULL:
         return 0
@@ -756,7 +756,7 @@ cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
     return 0
 
 cdef int _fixHtmlDictSubtreeNames(tree.xmlDict* c_dict, xmlDoc* c_doc,
-                                  xmlNode* c_start_node) nogil:
+                                  xmlNode* c_start_node) noexcept nogil:
     """
     Move names to the dict, iterating in document order, starting at
     c_start_node. This is used in incremental parsing after each chunk.
@@ -775,7 +775,7 @@ cdef int _fixHtmlDictSubtreeNames(tree.xmlDict* c_dict, xmlDoc* c_doc,
     return 0
 
 cdef inline int _fixHtmlDictNodeNames(tree.xmlDict* c_dict,
-                                      xmlNode* c_node) nogil:
+                                      xmlNode* c_node) noexcept nogil:
     cdef xmlNode* c_attr
     c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
     if c_name is NULL:

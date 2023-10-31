@@ -3,7 +3,7 @@
 from lxml.includes cimport uri
 
 
-cdef void displayNode(xmlNode* c_node, indent):
+cdef void displayNode(xmlNode* c_node, indent) noexcept:
     # to help with debugging
     cdef xmlNode* c_child
     try:
@@ -14,6 +14,13 @@ cdef void displayNode(xmlNode* c_node, indent):
             c_child = c_child.next
     finally:
         return  # swallow any exceptions
+
+cdef inline bint _isHtmlDocument(_Element element) except -1:
+    cdef xmlNode* c_node = element._c_node
+    return (
+        c_node is not NULL and c_node.doc is not NULL and
+        c_node.doc.properties & tree.XML_DOC_HTML != 0
+    )
 
 cdef inline int _assertValidNode(_Element element) except -1:
     assert element._c_node is not NULL, u"invalid Element proxy at %s" % id(element)
@@ -65,7 +72,7 @@ cdef _Element _rootNodeOrRaise(object input):
     _assertValidNode(node)
     return node
 
-cdef bint _isAncestorOrSame(xmlNode* c_ancestor, xmlNode* c_node):
+cdef bint _isAncestorOrSame(xmlNode* c_ancestor, xmlNode* c_node) noexcept:
     while c_node:
         if c_node is c_ancestor:
             return True
@@ -443,7 +450,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_
         python.lxml_free(c_ns_list)
     return 0
 
-cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attribute):
+cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attribute) noexcept:
     u"""Search a namespace declaration that covers a node (element or
     attribute).
 
@@ -607,7 +614,7 @@ cdef int _delAttribute(_Element element, key) except -1:
         raise KeyError, key
     return 0
 
-cdef int _delAttributeFromNsName(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
+cdef int _delAttributeFromNsName(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name) noexcept:
     c_attr = tree.xmlHasNsProp(c_node, c_name, c_href)
     if c_attr is NULL:
         # XXX free namespace that is not in use..?
@@ -661,16 +668,16 @@ cdef bint _hasEncodingDeclaration(object xml_string) except -1:
     # check if a (unicode) string has an XML encoding declaration
     return __HAS_XML_ENCODING(xml_string) is not None
 
-cdef inline bint _hasText(xmlNode* c_node):
+cdef inline bint _hasText(xmlNode* c_node) noexcept:
     return c_node is not NULL and _textNodeOrSkip(c_node.children) is not NULL
 
-cdef inline bint _hasTail(xmlNode* c_node):
+cdef inline bint _hasTail(xmlNode* c_node) noexcept:
     return c_node is not NULL and _textNodeOrSkip(c_node.next) is not NULL
 
-cdef inline bint _hasNonWhitespaceTail(xmlNode* c_node):
+cdef inline bint _hasNonWhitespaceTail(xmlNode* c_node) except -1:
     return _hasNonWhitespaceText(c_node, tail=True)
 
-cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False):
+cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False) except -1:
     c_text_node = c_node and _textNodeOrSkip(c_node.next if tail else c_node.children)
     if c_text_node is NULL:
         return False
@@ -713,7 +720,7 @@ cdef _collectText(xmlNode* c_node):
         c_node = _textNodeOrSkip(c_node.next)
     return funicode(<const_xmlChar*><unsigned char*>result)
 
-cdef void _removeText(xmlNode* c_node):
+cdef void _removeText(xmlNode* c_node) noexcept:
     u"""Remove all text nodes.
 
     Start removing at c_node.
@@ -772,10 +779,10 @@ cdef bytes _resolveQNameText(_Element element, value):
             element._c_node, _xcstr(ns), NULL, 0)
         return python.PyBytes_FromFormat('%s:%s', c_ns.prefix, _cstr(tag))
 
-cdef inline bint _hasChild(xmlNode* c_node):
+cdef inline bint _hasChild(xmlNode* c_node) noexcept:
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
 
-cdef inline Py_ssize_t _countElements(xmlNode* c_node):
+cdef inline Py_ssize_t _countElements(xmlNode* c_node) noexcept:
     u"Counts the elements within the following siblings and the node itself."
     cdef Py_ssize_t count
     count = 0
@@ -839,13 +846,13 @@ cdef _collectChildren(_Element element):
             c_node = _nextElement(c_node)
     return result
 
-cdef inline xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
+cdef inline xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index) noexcept:
     if index < 0:
         return _findChildBackwards(c_node, -index - 1)
     else:
         return _findChildForwards(c_node, index)
     
-cdef inline xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
+cdef inline xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index) noexcept:
     u"""Return child element of c_node with index, or return NULL if not found.
     """
     cdef xmlNode* c_child
@@ -860,7 +867,7 @@ cdef inline xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
         c_child = c_child.next
     return NULL
 
-cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
+cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index) noexcept:
     u"""Return child element of c_node with index, or return NULL if not found.
     Search from the end.
     """
@@ -876,7 +883,7 @@ cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
         c_child = c_child.prev
     return NULL
     
-cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) nogil:
+cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) noexcept nogil:
     u"""Return the node if it's a text node.  Skip over ignorable nodes in a
     series of text nodes.  Return NULL if a non-ignorable node is found.
 
@@ -894,7 +901,7 @@ cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) nogil:
             return NULL
     return NULL
 
-cdef inline xmlNode* _nextElement(xmlNode* c_node):
+cdef inline xmlNode* _nextElement(xmlNode* c_node) noexcept:
     u"""Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
@@ -906,7 +913,7 @@ cdef inline xmlNode* _nextElement(xmlNode* c_node):
         c_node = c_node.next
     return NULL
 
-cdef inline xmlNode* _previousElement(xmlNode* c_node):
+cdef inline xmlNode* _previousElement(xmlNode* c_node) noexcept:
     u"""Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
@@ -918,7 +925,7 @@ cdef inline xmlNode* _previousElement(xmlNode* c_node):
         c_node = c_node.prev
     return NULL
 
-cdef inline xmlNode* _parentElement(xmlNode* c_node):
+cdef inline xmlNode* _parentElement(xmlNode* c_node) noexcept:
     u"Given a node, find the parent element."
     if c_node is NULL or not _isElement(c_node):
         return NULL
@@ -927,7 +934,7 @@ cdef inline xmlNode* _parentElement(xmlNode* c_node):
         return NULL
     return c_node
 
-cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
+cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name) noexcept:
     u"""Tests if the node matches namespace URI and tag name.
 
     A node matches if it matches both c_href and c_name.
@@ -969,7 +976,7 @@ cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlCh
     else:
         return 0
 
-cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
+cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname) noexcept:
     u"""Tests if the node matches namespace URI and tag name.
 
     This differs from _tagMatches() in that it does not consider a
@@ -991,7 +998,7 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
 
 cdef inline bint _nsTagMatchesExactly(const_xmlChar* c_node_href,
                                       const_xmlChar* c_node_name,
-                                      qname* c_qname):
+                                      qname* c_qname) noexcept:
     u"""Tests if name and namespace URI match those of c_qname.
 
     This differs from _tagMatches() in that it does not consider a
@@ -1092,7 +1099,7 @@ cdef int _removeSiblings(xmlNode* c_element, tree.xmlElementType node_type, bint
         c_node = c_next
     return 0
 
-cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
+cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target) noexcept:
     cdef xmlNode* c_next
     # tail support: look for any text nodes trailing this node and 
     # move them too
@@ -1398,7 +1405,15 @@ cdef int _addSibling(_Element element, _Element sibling, bint as_next) except -1
     c_next = c_node.next
     # move node itself
     if as_next:
-        tree.xmlAddNextSibling(element._c_node, c_node)
+        # must insert after any tail text
+        c_next_node = _nextElement(element._c_node)
+        if c_next_node is NULL:
+            c_next_node = element._c_node
+            while c_next_node.next:
+                c_next_node = c_next_node.next
+            tree.xmlAddNextSibling(c_next_node, c_node)
+        else:
+            tree.xmlAddPrevSibling(c_next_node, c_node)
     else:
         tree.xmlAddPrevSibling(element._c_node, c_node)
     _moveTail(c_next, c_node)
@@ -1407,7 +1422,7 @@ cdef int _addSibling(_Element element, _Element sibling, bint as_next) except -1
     moveNodeToDocument(element._doc, c_source_doc, c_node)
     return 0
 
-cdef inline bint isutf8(const_xmlChar* s):
+cdef inline bint isutf8(const_xmlChar* s) noexcept:
     cdef xmlChar c = s[0]
     while c != c'\0':
         if c & 0x80:
@@ -1416,7 +1431,7 @@ cdef inline bint isutf8(const_xmlChar* s):
         c = s[0]
     return False
 
-cdef bint isutf8l(const_xmlChar* s, size_t length):
+cdef bint isutf8l(const_xmlChar* s, size_t length) noexcept:
     """
     Search for non-ASCII characters in the string, knowing its length in advance.
     """
@@ -1452,7 +1467,7 @@ cdef bint isutf8l(const_xmlChar* s, size_t length):
 
     return False
 
-cdef int _is_valid_xml_ascii(bytes pystring):
+cdef int _is_valid_xml_ascii(bytes pystring) except -1:
     """Check if a string is XML ascii content."""
     cdef signed char ch
     # When ch is a *signed* char, non-ascii characters are negative integers
@@ -1462,7 +1477,7 @@ cdef int _is_valid_xml_ascii(bytes pystring):
             return 0
     return 1
 
-cdef bint _is_valid_xml_utf8(bytes pystring):
+cdef bint _is_valid_xml_utf8(bytes pystring) except -1:
     u"""Check if a string is like valid UTF-8 XML content."""
     cdef const_xmlChar* s = _xcstr(pystring)
     cdef const_xmlChar* c_end = s + len(pystring)
@@ -1561,7 +1576,7 @@ cdef enum:
     REL_FILE_PATH = 3
 
 
-cdef bint _isFilePath(const_xmlChar* c_path):
+cdef bint _isFilePath(const_xmlChar* c_path) noexcept:
     u"simple heuristic to see if a path is a filename"
     cdef xmlChar c
     # test if it looks like an absolute Unix path or a Windows network path
@@ -1718,10 +1733,10 @@ cdef inline int _pyXmlNameIsValid(name_utf8):
 cdef inline int _pyHtmlNameIsValid(name_utf8):
     return _htmlNameIsValid(_xcstr(name_utf8))
 
-cdef inline int _xmlNameIsValid(const_xmlChar* c_name):
+cdef inline int _xmlNameIsValid(const_xmlChar* c_name) noexcept:
     return tree.xmlValidateNameValue(c_name)
 
-cdef int _htmlNameIsValid(const_xmlChar* c_name):
+cdef int _htmlNameIsValid(const_xmlChar* c_name) noexcept:
     if c_name is NULL or c_name[0] == c'\0':
         return 0
     while c_name[0] != c'\0':
@@ -1730,7 +1745,7 @@ cdef int _htmlNameIsValid(const_xmlChar* c_name):
         c_name += 1
     return 1
 
-cdef bint _characterReferenceIsValid(const_xmlChar* c_name):
+cdef bint _characterReferenceIsValid(const_xmlChar* c_name) noexcept:
     cdef bint is_hex
     if c_name[0] == c'x':
         c_name += 1

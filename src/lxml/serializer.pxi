@@ -201,7 +201,7 @@ cdef _raiseSerialisationError(int error_result):
 # low-level serialisation functions
 
 cdef void _writeDoctype(tree.xmlOutputBuffer* c_buffer,
-                        const_xmlChar* c_doctype) nogil:
+                        const_xmlChar* c_doctype) noexcept nogil:
     tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
                               <const_char*>c_doctype)
     tree.xmlOutputBufferWriteString(c_buffer, "\n")
@@ -211,7 +211,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              int c_method, bint write_xml_declaration,
                              bint write_complete_document,
                              bint pretty_print, bint with_tail,
-                             int standalone) nogil:
+                             int standalone) noexcept nogil:
     cdef xmlNode* c_nsdecl_node
     cdef xmlDoc* c_doc = c_node.doc
     if write_xml_declaration and c_method == OUTPUT_METHOD_XML:
@@ -269,7 +269,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     const_xmlChar* version, const_char* encoding,
-                                    int standalone) nogil:
+                                    int standalone) noexcept nogil:
     if version is NULL:
         version = <unsigned char*>"1.0"
     tree.xmlOutputBufferWrite(c_buffer, 15, "<?xml version='")
@@ -285,7 +285,7 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             xmlDoc* c_doc, const_xmlChar* c_root_name,
-                            int c_method, const_char* encoding) nogil:
+                            int c_method, const_char* encoding) noexcept nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     cdef char* quotechar
@@ -355,7 +355,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                     const_char* encoding, int c_method, bint pretty_print) nogil:
+                     const_char* encoding, int c_method, bint pretty_print) noexcept nogil:
     u"Write the element tail."
     c_node = c_node.next
     while c_node and not c_buffer.error and c_node.type in (
@@ -369,7 +369,7 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_node = c_node.next
 
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             const_char* encoding, bint pretty_print) nogil:
+                             const_char* encoding, bint pretty_print) noexcept nogil:
     cdef xmlNode* c_sibling
     if c_node.parent and _isElement(c_node.parent):
         return
@@ -387,7 +387,7 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_sibling = c_sibling.next
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             const_char* encoding, bint pretty_print) nogil:
+                             const_char* encoding, bint pretty_print) noexcept nogil:
     cdef xmlNode* c_sibling
     if c_node.parent and _isElement(c_node.parent):
         return
@@ -404,7 +404,7 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 
 
 # copied and adapted from libxml2
-cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val):
+cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val) noexcept:
     cdef xmlChar *ptr
     cdef xmlChar c
 
@@ -674,7 +674,7 @@ cdef class _FilelikeWriter:
             raise IOError, u"Could not create I/O writer context."
         return c_buffer
 
-    cdef int write(self, char* c_buffer, int size):
+    cdef int write(self, char* c_buffer, int size) noexcept:
         try:
             if self._filelike is None:
                 raise IOError, u"File is already closed"
@@ -686,7 +686,7 @@ cdef class _FilelikeWriter:
         finally:
             return size  # and swallow any further exceptions
 
-    cdef int close(self):
+    cdef int close(self) noexcept:
         retval = 0
         try:
             if self._close_filelike is not None:
@@ -699,10 +699,10 @@ cdef class _FilelikeWriter:
         finally:
             return retval  # and swallow any further exceptions
 
-cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length) except -1:
+cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length) noexcept:
     return (<_FilelikeWriter>ctxt).write(c_buffer, length)
 
-cdef int _closeFilelikeWriter(void* ctxt) except -1:
+cdef int _closeFilelikeWriter(void* ctxt) noexcept:
     return (<_FilelikeWriter>ctxt).close()
 
 cdef _tofilelike(f, _Element element, encoding, doctype, method,
@@ -764,7 +764,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 cdef int _serialise_node(tree.xmlOutputBuffer* c_buffer, const_xmlChar* c_doctype,
                          const_char* c_enc, xmlNode* c_node, int c_method,
                          bint write_xml_declaration, bint write_doctype, bint pretty_print,
-                         bint with_tail, int standalone) nogil:
+                         bint with_tail, int standalone) noexcept nogil:
     _writeNodeToBuffer(
         c_buffer, c_node, c_enc, c_doctype, c_method,
         write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
@@ -1095,7 +1095,7 @@ cdef class C14NWriterTarget:
             self._data.append(data)
 
     cdef _flush(self):
-        data = u''.join(self._data)
+        cdef unicode data = u''.join(self._data)
         del self._data[:]
         if self._strip_text and not self._preserve_space[-1]:
             data = data.strip()
@@ -1249,44 +1249,79 @@ cdef _raise_serialization_error(text):
 cdef unicode _escape_cdata_c14n(stext):
     # escape character data
     cdef unicode text
+    cdef Py_UCS4 ch
+    cdef Py_ssize_t start = 0, pos = 0
+    cdef list substrings = None
     try:
-        # it's worth avoiding do-nothing calls for strings that are
-        # shorter than 500 character, or so.  assume that's, by far,
-        # the most common case in most applications.
         text = unicode(stext)
-        if u'&' in text:
-            text = text.replace(u'&', u'&amp;')
-        if u'<' in text:
-            text = text.replace(u'<', u'&lt;')
-        if u'>' in text:
-            text = text.replace(u'>', u'&gt;')
-        if u'\r' in text:
-            text = text.replace(u'\r', u'&#xD;')
-        return text
     except (TypeError, AttributeError):
-        _raise_serialization_error(stext)
+        return _raise_serialization_error(stext)
+
+    for pos, ch in enumerate(text):
+        if ch == u'&':
+            escape = u'&amp;'
+        elif ch == u'<':
+            escape = u'&lt;'
+        elif ch == u'>':
+            escape = u'&gt;'
+        elif ch == u'\r':
+            escape = u'&#xD;'
+        else:
+            continue
+
+        if substrings is None:
+            substrings = []
+        if pos > start:
+            substrings.append(text[start:pos])
+        substrings.append(escape)
+        start = pos + 1
+
+    if substrings is None:
+        return text
+    if pos >= start:
+        substrings.append(text[start:pos+1])
+    return u''.join(substrings)
 
 
 cdef unicode _escape_attrib_c14n(stext):
     # escape attribute value
     cdef unicode text
+    cdef Py_UCS4 ch
+    cdef Py_ssize_t start = 0, pos = 0
+    cdef list substrings = None
     try:
         text = unicode(stext)
-        if u'&' in text:
-            text = text.replace(u'&', u'&amp;')
-        if u'<' in text:
-            text = text.replace(u'<', u'&lt;')
-        if u'"' in text:
-            text = text.replace(u'"', u'&quot;')
-        if u'\t' in text:
-            text = text.replace(u'\t', u'&#x9;')
-        if u'\n' in text:
-            text = text.replace(u'\n', u'&#xA;')
-        if u'\r' in text:
-            text = text.replace(u'\r', u'&#xD;')
-        return text
     except (TypeError, AttributeError):
-        _raise_serialization_error(stext)
+        return _raise_serialization_error(stext)
+
+    for pos, ch in enumerate(text):
+        if ch == u'&':
+            escape = u'&amp;'
+        elif ch == u'<':
+            escape = u'&lt;'
+        elif ch == u'"':
+            escape = u'&quot;'
+        elif ch == u'\t':
+            escape = u'&#x9;'
+        elif ch == u'\n':
+            escape = u'&#xA;'
+        elif ch == u'\r':
+            escape = u'&#xD;'
+        else:
+            continue
+
+        if substrings is None:
+            substrings = []
+        if pos > start:
+            substrings.append(text[start:pos])
+        substrings.append(escape)
+        start = pos + 1
+
+    if substrings is None:
+        return text
+    if pos >= start:
+        substrings.append(text[start:pos+1])
+    return u''.join(substrings)
 
 
 # incremental serialisation

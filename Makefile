@@ -13,7 +13,7 @@ CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; 
 CYTHON3_WITH_COVERAGE?=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
 PYTHON_BUILD_VERSION ?= *
-MANYLINUX_LIBXML2_VERSION=2.10.4
+MANYLINUX_LIBXML2_VERSION=2.11.5
 MANYLINUX_LIBXSLT_VERSION=1.1.38
 MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
 MANYLINUX_LDFLAGS=-flto
@@ -26,6 +26,9 @@ MANYLINUX_IMAGES= \
 	manylinux2014_aarch64 \
 	manylinux_2_24_aarch64 \
 	manylinux_2_24_ppc64le \
+	manylinux_2_28_x86_64 \
+	manylinux_2_28_aarch64 \
+	manylinux_2_28_ppc64le \
 	manylinux_2_24_s390x \
 	musllinux_1_1_x86_64 \
     musllinux_1_1_aarch64
@@ -72,6 +75,7 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		-e RANLIB=gcc-ranlib \
 		-e CFLAGS="$(MANYLINUX_CFLAGS) $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
 		-e LDFLAGS="$(MANYLINUX_LDFLAGS)" \
+		-e STATIC_DEPS="${STATIC_DEPS}" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
 		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		-e PYTHON_BUILD_VERSION="$(PYTHON_BUILD_VERSION)" \
@@ -175,7 +179,7 @@ bench: bench_inplace
 ftest: ftest_inplace
 
 clean:
-	find . \( -name '*.o' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
+	find src \( -name '*.o' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
 	rm -rf build
 
 docclean:

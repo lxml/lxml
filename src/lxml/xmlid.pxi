@@ -162,7 +162,7 @@ cdef class _IDDict:
                          <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
         return items
 
-cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name):
+cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name) noexcept:
     # collect elements from ID attribute hash table
     cdef list lst
     c_id = <tree.xmlID*>payload
@@ -172,7 +172,7 @@ cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name):
     element = _elementFactory(doc, c_id.attr.parent)
     lst.append( (funicode(name), element) )
 
-cdef void _collectIdHashKeys(void* payload, void* collect_list, xmlChar* name):
+cdef void _collectIdHashKeys(void* payload, void* collect_list, xmlChar* name) noexcept:
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:
         return

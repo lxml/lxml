@@ -7,6 +7,8 @@ class XMLSyntaxAssertionError(XMLSyntaxError, AssertionError):
 
     This class may get replaced by a plain XMLSyntaxError in a future version.
     """
+    def __init__(self, message):
+        XMLSyntaxError.__init__(self, message, None, 0, 1)
 
 
 ctypedef enum _SaxParserEvents:
@@ -107,17 +109,17 @@ cdef class _SaxParserContext(_ParserContext):
         self._parser = parser
         self.events_iterator = _ParseEventsIterator()
 
-    cdef void _setSaxParserTarget(self, _SaxParserTarget target):
+    cdef void _setSaxParserTarget(self, _SaxParserTarget target) noexcept:
         self._target = target
 
-    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
+    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         _ParserContext._initParserContext(self, c_ctxt)
         if self._target is not None:
             self._connectTarget(c_ctxt)
         elif self._event_filter:
             self._connectEvents(c_ctxt)
 
-    cdef void _connectTarget(self, xmlparser.xmlParserCtxt* c_ctxt):
+    cdef void _connectTarget(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         """Wrap original SAX2 callbacks to call into parser target.
         """
         sax = c_ctxt.sax
@@ -163,7 +165,7 @@ cdef class _SaxParserContext(_ParserContext):
         sax.reference = NULL
         c_ctxt.replaceEntities = 1
 
-    cdef void _connectEvents(self, xmlparser.xmlParserCtxt* c_ctxt):
+    cdef void _connectEvents(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         """Wrap original SAX2 callbacks to collect parse events without parser target.
         """
         sax = c_ctxt.sax
@@ -239,7 +241,7 @@ cdef class _SaxParserContext(_ParserContext):
         while self._ns_stack:
             _pushSaxNsEndEvents(self)
 
-    cdef void _handleSaxException(self, xmlparser.xmlParserCtxt* c_ctxt):
+    cdef void _handleSaxException(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         if c_ctxt.errNo == xmlerror.XML_ERR_OK:
             c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
         # stop parsing immediately

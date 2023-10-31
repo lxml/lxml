@@ -8,16 +8,16 @@ cdef extern from "lxml-version.h":
 
 cdef extern from "etree_defs.h":
     # test if c_node is considered an Element (i.e. Element, Comment, etc.)
-    cdef bint _isElement(tree.xmlNode* c_node) nogil
+    cdef bint _isElement(tree.xmlNode* c_node) noexcept nogil
 
     # return the namespace URI of the node or NULL
-    cdef const_xmlChar* _getNs(tree.xmlNode* node) nogil
+    cdef const_xmlChar* _getNs(tree.xmlNode* node) noexcept nogil
 
     # pair of macros for tree traversal
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(tree.xmlNode* tree_top,
                                           tree.xmlNode* start_node,
-                                          int start_node_inclusive) nogil
-    cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node) nogil
+                                          int start_node_inclusive) noexcept nogil
+    cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node) noexcept nogil
 
 cdef extern from "etree_api.h":
 
@@ -129,17 +129,17 @@ cdef extern from "etree_api.h":
     # delete an attribute based on name and namespace URI
     # returns -1 if the attribute was not found (no exception)
     cdef int delAttributeFromNsName(tree.xmlNode* c_element,
-                                    const_xmlChar* c_href, const_xmlChar* c_name)
+                                    const_xmlChar* c_href, const_xmlChar* c_name) noexcept
 
     ##########################################################################
     # XML node helper functions
 
     # check if the element has at least one child
-    cdef bint hasChild(tree.xmlNode* c_node) nogil
+    cdef bint hasChild(tree.xmlNode* c_node) noexcept nogil
 
     # find child element number 'index' (supports negative indexes)
     cdef tree.xmlNode* findChild(tree.xmlNode* c_node,
-                                 Py_ssize_t index) nogil
+                                 Py_ssize_t index) noexcept nogil
 
     # find child element number 'index' starting at first one
     cdef tree.xmlNode* findChildForwards(tree.xmlNode* c_node,

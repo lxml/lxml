@@ -53,7 +53,7 @@ cdef extern from "libxslt/extensions.h" nogil:
     ctypedef void (*xsltTransformFunction)(xsltTransformContext* ctxt,
                                            xmlNode* context_node,
                                            xmlNode* inst,
-                                           void* precomp_unused)
+                                           void* precomp_unused) noexcept
 
     cdef int xsltRegisterExtFunction(xsltTransformContext* ctxt,
                                      const_xmlChar* name,
@@ -79,7 +79,7 @@ cdef extern from "libxslt/documents.h" nogil:
     ctypedef xmlDoc* (*xsltDocLoaderFunc)(const_xmlChar* URI, xmlDict* dict,
                                           int options,
                                           void* ctxt,
-                                          xsltLoadType type)
+                                          xsltLoadType type) noexcept
     cdef xsltDocLoaderFunc xsltDocDefaultLoader
     cdef void xsltSetLoaderFunc(xsltDocLoaderFunc f)
 
@@ -139,7 +139,7 @@ cdef extern from "libxslt/security.h" nogil:
 
     ctypedef int (*xsltSecurityCheck)(xsltSecurityPrefs* sec,
                                       xsltTransformContext* ctxt,
-                                      char* value)
+                                      char* value) noexcept
 
     cdef xsltSecurityPrefs* xsltNewSecurityPrefs()
     cdef void xsltFreeSecurityPrefs(xsltSecurityPrefs* sec)
