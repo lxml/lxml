@@ -693,7 +693,7 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
             # An encoding error occurred and libxml2 switched from UTF-8
             # input to (undecoded) Latin-1, at some arbitrary point in the
             # document.  Better raise an error than allowing for a broken
-            # tree with mixed encodings.
+            # tree with mixed encodings. This is fixed in libxml2 2.12.
             well_formed = 0
         elif recover or (c_ctxt.wellFormed and
                          c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
