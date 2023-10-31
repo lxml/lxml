@@ -137,7 +137,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.x"
+        python-version: "3.11"
 
     - name: Install lib dependencies
       run: sudo apt-get update -y -q && sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev
