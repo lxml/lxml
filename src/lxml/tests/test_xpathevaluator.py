@@ -687,15 +687,15 @@ extension = {(None, 'stringTest'): stringTest,
              (None, 'resultTypesTest2'): resultTypesTest2,}
 
 def xpath():
-    """
+    u"""
     Test xpath extension functions.
     
     >>> root = SAMPLE_XML
     >>> e = etree.XPathEvaluator(root, extensions=[extension])
     >>> e("stringTest('you')")
     'Hello you'
-    >>> e(_bytes("stringTest('\\\\xe9lan')").decode("unicode_escape"))
-    u'Hello \\xe9lan'
+    >>> print(e(_bytes("stringTest('\\\\xe9lan')").decode("unicode_escape")))
+    Hello \xe9lan
     >>> e("stringTest('you','there')")   #doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
@@ -714,10 +714,10 @@ def xpath():
     "a, 1.5, True, ['tag', 'tag', 'tag']"
     >>> list(map(tag, e("argsTest2(/body/tag, /body/section)")))
     ['tag', 'section', 'tag', 'tag']
-    >>> e("resultTypesTest()")
-    Traceback (most recent call last):
-    ...
-    XPathResultError: This is not a supported node-set result: None
+    >>> try: e("resultTypesTest()")
+    ... except etree.XPathResultError as exc: print(exc)
+    ... else: print("SHOULD HAVE FAILED!")
+    This is not a supported node-set result: None
     >>> try:
     ...     e("resultTypesTest2()")
     ... except etree.XPathResultError:
