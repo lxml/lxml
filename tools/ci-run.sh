@@ -55,7 +55,7 @@ ccache -s || true
 # Install python requirements
 echo "Installing requirements [python]"
 if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ];
-  then python -m pip install -U pip "setuptools<60" wheel;
+  then python -m pip install -U "pip<21" "setuptools<45" "wheel<38";
   else python -m pip install -U pip setuptools wheel;
 fi
 if [ -z "${PYTHON_VERSION##*-dev}" ];
