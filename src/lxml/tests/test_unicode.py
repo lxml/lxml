@@ -167,7 +167,11 @@ class EncodingsTestCase(HelperTestCase):
     def test_illegal_utf8_recover(self):
         data = _bytes('<test>\x80\x80\x80</test>', encoding='iso8859-1')
         parser = etree.XMLParser(recover=True)
-        self.assertRaises(etree.XMLSyntaxError, etree.fromstring, data, parser)
+        if etree.LIBXML_VERSION >= (2, 12, 0):
+            tree = etree.fromstring(data, parser)
+            self.assertEqual('\ufffd\ufffd\ufffd', tree.text)
+        else:
+            self.assertRaises(etree.XMLSyntaxError, etree.fromstring, data, parser)
 
     def _test_encoding(self, encoding, xml_encoding_name=None):
         foo = """<?xml version='1.0' encoding='%s'?>\n<tag attrib='123'></tag>""" % (
