@@ -126,9 +126,9 @@ external C modules, including fast custom element class support.
 .. _`ElementTree API`:  http://effbot.org/zone/element-index.htm#documentation
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
-.. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
+.. _`tutorial for ElementTree`: https://web.archive.org/web/20200720191942/http://effbot.org:80/zone/element.htm
 .. _`lxml.etree tutorial for XML processing`: tutorial.html
-.. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
+.. _`Python XML processing with lxml`: https://web.archive.org/web/20110108100213/https://infohost.nmt.edu/tcc/help/pubs/pylxml/
 .. _`generated API documentation`:   api/index.html
 .. _`ElementTree performance`: performance.html
 .. _`compatibility`: compatibility.html
