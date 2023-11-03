@@ -1514,7 +1514,7 @@ cdef class XMLParser(_FeedParser):
 
     Other keyword arguments:
 
-    - encoding - override the document encoding
+    - encoding - override the document encoding (note: libiconv encoding name)
     - target   - a parser target object that will receive the parse events
     - schema   - an XMLSchema to validate against
 
@@ -1698,7 +1698,7 @@ cdef class HTMLParser(_FeedParser):
 
     Other keyword arguments:
 
-    - encoding - override the document encoding
+    - encoding - override the document encoding (note: libiconv encoding name)
     - target   - a parser target object that will receive the parse events
     - schema   - an XMLSchema to validate against
 
