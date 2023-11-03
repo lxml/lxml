@@ -5,12 +5,23 @@ lxml changelog
 5.0.0 (2023-??-??)
 ==================
 
+Features added
+--------------
+
+* Character escaping in ``C14N`` serialisation now uses a single pass over the text
+  instead of searching for each unescaped character separately.
+
+* Early support for Python 3.13a1 was added.
+
 Bugs fixed
 ----------
 
 * LP#1976304: The ``Element.addnext()`` method previously inserted the new element
   before existing tail text.  The tail text of both sibling elements now stays on
   the respective elements.
+
+* LP#1980767, GH#379: ``TreeBuilder.close()`` could fail with a ``TypeError`` after
+  parsing incorrect input.  Original patch by Enrico Minack.
 
 * GH#370: A crash with recent libxml2 2.11.x versions was resolved.
   Patch by Michael Schlenker.
@@ -21,6 +32,12 @@ Bugs fixed
   ``xmlOutputWriteCallback`` and ``xmlOutputCloseCallback`` in ``tree.pxd`` were
   corrected to prevent running Python code or calling into the C-API with a live
   exception set.
+
+* GH#385: The long deprecated ``unittest.m̀akeSuite()`` function is no longer used.
+  Patch by Miro Hrončok.
+
+* LP#1522052: A file-system specific test is now optional and should no longer fail
+  on systems that don't support it.
 
 Other changes
 -------------
@@ -48,6 +65,10 @@ Other changes
   ``xslt_transform.apply()``,
   ``xpath.evaluate()``.
 
+* Some incorrect declarations were removed from ``python.pxd``. In general, this file
+  should not be used by external Cython code. Use the C-API declarations provided by
+  Cython itself instead.
+
 * Binary wheels use the library versions libxml2 2.11.5 and libxslt 1.1.38.
 
 * Built with Cython 3.0.5.
@@ -59,7 +80,7 @@ Other changes
 Bugs fixed
 ----------
 
-* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
+* LP#2008911: ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
 
 * A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34+.
 
