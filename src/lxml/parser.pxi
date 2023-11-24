@@ -1029,8 +1029,7 @@ cdef class _BaseParser:
         cdef int buffer_len, c_kind
         cdef const_char* c_text
         cdef const_char* c_encoding = _PY_UNICODE_ENCODING
-        cdef bint is_pep393_string = (
-            python.PEP393_ENABLED and python.PyUnicode_IS_READY(utext))
+        cdef bint is_pep393_string = (python.PyUnicode_IS_READY(utext))
         if is_pep393_string:
             c_text = <const_char*>python.PyUnicode_DATA(utext)
             py_buffer_len = python.PyUnicode_GET_LENGTH(utext)
@@ -1776,8 +1775,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
     if isinstance(text, unicode):
-        is_pep393_string = (
-            python.PEP393_ENABLED and python.PyUnicode_IS_READY(text))
+        is_pep393_string = (python.PyUnicode_IS_READY(text))
         if is_pep393_string:
             c_len = python.PyUnicode_GET_LENGTH(text) * python.PyUnicode_KIND(text)
         else:

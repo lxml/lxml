@@ -2,9 +2,6 @@ from libc cimport stdio
 from libc.string cimport const_char
 cimport cython
 
-cdef extern from *:
-    cdef bint PEP393_ENABLED "CYTHON_PEP393_ENABLED"
-
 cdef extern from "Python.h":
     """
     #if defined(CYTHON_PEP393_ENABLED) && CYTHON_PEP393_ENABLED
