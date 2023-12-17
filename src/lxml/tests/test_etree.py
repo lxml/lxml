@@ -559,6 +559,41 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(_bytes('<div><p>boo</p></div>'),
                           self.etree.tostring(root))
 
+    def test_append_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        self.assertRaises(ValueError, a.append, root)
+        self.assertRaises(ValueError, a[0].append, root)
+        self.assertRaises(ValueError, a[0].append, a)
+        self.assertRaises(ValueError, a[0][0].append, root)
+        self.assertRaises(ValueError, a[0][0].append, a)
+        self.assertRaises(ValueError, a[0][0].append, a[0])
+
+    def test_insert_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        self.assertRaises(ValueError, a.insert, 0, root)
+        self.assertRaises(ValueError, a[0].insert, 0, root)
+        self.assertRaises(ValueError, a[0].insert, 0, a)
+        self.assertRaises(ValueError, a[0][0].insert, 0, root)
+        self.assertRaises(ValueError, a[0][0].insert, 0, a)
+        self.assertRaises(ValueError, a[0][0].insert, 0, a[0])
+
+    def test_replace_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        root.replace(a, a)
+        self.assertRaises(ValueError, root.replace, a, root)
+        a.replace(a[0], a[0])
+        self.assertRaises(ValueError, a.replace, a[0], root)
+        a[0].replace(a[0][0], a[0][0])
+        self.assertRaises(ValueError, a[0].replace, a[0][0], root)
+        self.assertRaises(ValueError, a[0].replace, a[0][0], a)
+        self.assertRaises(ValueError, a[0].replace, a[0][0], a[0])
+
     def test_pi(self):
         # lxml.etree separates target and text
         Element = self.etree.Element
