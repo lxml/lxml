@@ -1029,9 +1029,8 @@ cdef class _BaseParser:
         cdef int buffer_len, c_kind
         cdef const_char* c_text
         cdef const_char* c_encoding = _PY_UNICODE_ENCODING
-        cdef bint is_pep393_string = (
-            python.PEP393_ENABLED and python.PyUnicode_IS_READY(utext))
-        if is_pep393_string:
+        if python.PyUnicode_IS_READY(utext):
+            # PEP-393 string
             c_text = <const_char*>python.PyUnicode_DATA(utext)
             py_buffer_len = python.PyUnicode_GET_LENGTH(utext)
             c_kind = python.PyUnicode_KIND(utext)
@@ -1052,6 +1051,7 @@ cdef class _BaseParser:
             else:
                 assert False, f"Illegal Unicode kind {c_kind}"
         else:
+            # old Py_UNICODE string
             py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
             c_text = python.PyUnicode_AS_DATA(utext)
         assert 0 <= py_buffer_len <= limits.INT_MAX
@@ -1776,11 +1776,11 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
     if isinstance(text, unicode):
-        is_pep393_string = (
-            python.PEP393_ENABLED and python.PyUnicode_IS_READY(text))
-        if is_pep393_string:
+        if python.PyUnicode_IS_READY(text):
+            # PEP-393 Unicode string
             c_len = python.PyUnicode_GET_LENGTH(text) * python.PyUnicode_KIND(text)
         else:
+            # old Py_UNICODE string
             c_len = python.PyUnicode_GET_DATA_SIZE(text)
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
