@@ -8,6 +8,7 @@ EXTRA_CFLAGS=
 EXTRA_LDFLAGS=
 SAVED_GITHUB_API_TOKEN="${GITHUB_API_TOKEN}"
 unset GITHUB_API_TOKEN  # remove from env
+PYTHON=python
 
 # Set up compilers
 if [ -z "${OS_NAME##ubuntu*}" ]; then
@@ -34,6 +35,9 @@ elif [ -z "${OS_NAME##macos*}" ]; then
   TEST_CFLAGS="-Og -g -fPIC -arch arm64 -arch x86_64"
   EXTRA_LDFLAGS="-arch arm64 -arch x86_64"
   EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64"
+  if [ -z "${PYTHON_VERSION##2*}" ]; then
+    PYTHON=python2
+  fi
 fi
 
 # Log versions in use
@@ -55,32 +59,32 @@ ccache -s || true
 # Install python requirements
 echo "Installing requirements [python]"
 if [ -z "${PYTHON_VERSION##2*}" ]; then
-  python -m pip install -U "pip<21" "setuptools<45" "wheel<0.38"
+  ${PYTHON} -m pip install -U "pip<21" "setuptools<45" "wheel<0.38"
 else
-  python -m pip install -U pip setuptools wheel
+  ${PYTHON} -m pip install -U pip setuptools wheel
 fi
 
-python -m pip install -r requirements.txt
+${PYTHON} -m pip install -r requirements.txt
 #if [ -z "${PYTHON_VERSION##*-dev}" ];
 #  then CYTHON_COMPILE_MINIMAL=true  python -m pip install https://github.com/cython/cython/archive/master.zip;
 #  else python -m pip install -r requirements.txt;
 #fi
 
 if [ -z "${PYTHON_VERSION##2*}" ]; then
-  python -m pip install -U beautifulsoup4==4.9.3 cssselect==1.1.0 html5lib==1.1 rnc2rng==2.6.5 ${EXTRA_DEPS} || exit 1
+  ${PYTHON} -m pip install -U beautifulsoup4==4.9.3 cssselect==1.1.0 html5lib==1.1 rnc2rng==2.6.5 ${EXTRA_DEPS} || exit 1
 else
-  python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
+  ${PYTHON} -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
 fi
 if [[ "$COVERAGE" == "true" ]]; then
-  python -m pip install "coverage<5" || exit 1
-  python -m pip install --pre 'Cython>=3.0b2' || exit 1
+  ${PYTHON} -m pip install "coverage<5" || exit 1
+  ${PYTHON} -m pip install --pre 'Cython>=3.0b2' || exit 1
 fi
 
 # Build
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       CFLAGS="$CFLAGS $TEST_CFLAGS $EXTRA_CFLAGS" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
-      python -u setup.py build_ext --inplace \
+      ${PYTHON} -u setup.py build_ext --inplace \
       $(if [ -n "${PYTHON_VERSION##2.*}" ]; then echo -n " -j7 "; fi ) \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
@@ -93,14 +97,14 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       CFLAGS="$TEST_CFLAGS $EXTRA_CFLAGS" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
       PYTHONUNBUFFERED=x \
-      make test || exit 1
+      make PYTHON=${PYTHON} test || exit 1
 
 if [[ "$COVERAGE" != "true" ]]; then
   echo "Building a clean wheel ..."
   GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
         CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
         LDFLAGS="-flto $EXTRA_LDFLAGS" \
-        make clean wheel || exit 1
+        make PYTHON=${PYTHON} clean wheel || exit 1
 fi
 
 ccache -s || true
