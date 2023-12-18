@@ -37,6 +37,11 @@ elif [ -z "${OS_NAME##macos*}" ]; then
   TEST_CFLAGS="-Og -g -fPIC -arch arm64 -arch x86_64"
   EXTRA_LDFLAGS="-arch arm64 -arch x86_64"
   EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64"
+
+  if [[ $PYTHON_VERSION == "2.7"* ]]; then
+    # make sure we find Python 2.7 before Python 3.x
+    export PATH=/Library/Frameworks/Python.framework/Versions/2.7/bin:$PATH
+  fi
 fi
 
 # Log versions in use
