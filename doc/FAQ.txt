@@ -469,7 +469,7 @@ usually fail to build lxml themselves.  Two of the major design issues
 of this operating system make this non-trivial for its users: the lack
 of a pre-installed standard C-compiler and the missing package management.
 
-We currently rely on the `WinLibs project<https://github.com/orgs/winlibs>`_
+We currently rely on the `WinLibs project <https://github.com/orgs/winlibs>`_
 to provide library versions that are buildable on MS Windows.  If the library
 that we use in lxml's Windows binary wheels is outdated, it is probably because
 they have not updated their repositories yet. Consider filing a ticket on their
