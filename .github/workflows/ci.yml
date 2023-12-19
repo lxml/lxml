@@ -155,12 +155,12 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 1
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         if: startsWith(matrix.python-version, '3.')
         with:
           python-version: ${{ matrix.python-version }}
@@ -183,14 +183,14 @@ jobs:
           ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
 
       - name: Cache [ccache]
-        uses: pat-s/always-upload-cache@v3.0.11
+        uses: pat-s/always-upload-cache@9a0d1c3e1a8260b05500f9b67a5be8f2a1299819 # v3.0.11
         if: startsWith(runner.os, 'Linux') || startsWith(runner.os, 'mac')
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
       - name: Cache [libs]
-        uses: actions/cache@v3
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         if: matrix.env.STATIC_DEPS
         with:
           path: |
@@ -209,7 +209,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         if: matrix.extra_hash == '-docs'
         with:
           name: website_html
@@ -217,14 +217,14 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: pycoverage_html
           path: coverage*
           if-no-files-found: ignore
 
       - name: Upload Wheel
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         if: matrix.env.STATIC_DEPS
         with:
           name: wheels-${{ runner.os }}
