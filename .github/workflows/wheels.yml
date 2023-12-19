@@ -201,14 +201,6 @@ jobs:
         #  - os: windows-2016
         #    python-version: 2.7
 
-        include:
-          - os: macos-latest
-            python-version: "3.7"
-            env: { LIBXML2_VERSION: 2.11.5, LIBXSLT_VERSION: 1.1.39, MACOSX_DEPLOYMENT_TARGET: 11.7 }
-          - os: macos-latest
-            python-version: "3.8"
-            env: { LIBXML2_VERSION: 2.11.5, LIBXSLT_VERSION: 1.1.39, MACOSX_DEPLOYMENT_TARGET: 11.7 }
-
         exclude:
           - os: windows-2019
             python-version: 2.7  # needs older image
