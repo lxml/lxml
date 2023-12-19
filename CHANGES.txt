@@ -74,7 +74,7 @@ Other changes
 * Built with Cython 3.0.5.
 
 
-4.9.4 (2023-12-17)
+4.9.4 (2023-12-19)
 ==================
 
 Bugs fixed
@@ -87,6 +87,14 @@ Bugs fixed
 
 * LP#1522052: A file-system specific test is now optional and should no longer fail
   on systems that don't support it.
+
+Other changes
+-------------
+
+* Wheels include zlib 1.3, libxml2 2.10.3 and libxslt 1.1.39
+  (zlib 1.2.12, libxml2 2.10.3 and libxslt 1.1.37 on Windows).
+
+* Built with Cython 0.29.37.
 
 
 4.9.3 (2023-07-05)

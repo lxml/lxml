@@ -120,6 +120,10 @@ jobs:
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
 
+          - os: ubuntu-20.04
+            python-version: "3.6"
+            env: { STATIC_DEPS: true }  # only static
+
         exclude:
           - os: ubuntu-latest
             python-version: "3.6"
@@ -141,7 +145,7 @@ jobs:
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
       LIBXML2_VERSION: 2.11.5
-      LIBXSLT_VERSION: 1.1.38
+      LIBXSLT_VERSION: 1.1.39
       COVERAGE: false
       GCC_VERSION: 9
       USE_CCACHE: 1

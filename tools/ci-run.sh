@@ -14,7 +14,10 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   echo "Installing requirements [apt]"
   sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
   sudo apt-get update -y -q
-  sudo apt-get install -y -q ccache gcc-$GCC_VERSION "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev || exit 1
+  sudo apt-get install -y -q ccache gcc-$GCC_VERSION || exit 1
+  if [ -n "${STATIC_DEPS##true}" ]; then
+    sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev
+  fi
   sudo /usr/sbin/update-ccache-symlinks
   echo "/usr/lib/ccache" >> $GITHUB_PATH # export ccache to path
 
@@ -34,6 +37,11 @@ elif [ -z "${OS_NAME##macos*}" ]; then
   TEST_CFLAGS="-Og -g -fPIC -arch arm64 -arch x86_64"
   EXTRA_LDFLAGS="-arch arm64 -arch x86_64"
   EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64"
+
+  if [[ $PYTHON_VERSION == "2.7"* ]]; then
+    # make sure we find Python 2.7 before Python 3.x
+    export PATH=/Library/Frameworks/Python.framework/Versions/2.7/bin:$PATH
+  fi
 fi
 
 # Log versions in use
