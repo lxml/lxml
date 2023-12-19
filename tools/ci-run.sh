@@ -40,7 +40,7 @@ elif [ -z "${OS_NAME##macos*}" ]; then
 
   if [[ $PYTHON_VERSION == "3.[78]"* ]]; then
     # Py3.7/8 require the same target version as originally used for CPython itself.
-    unset MACOSX_DEPLOYMENT_TARGET
+    export MACOSX_DEPLOYMENT_TARGET="11.7"
   fi
 
   if [[ $PYTHON_VERSION == "2.7"* ]]; then
