@@ -38,7 +38,7 @@ elif [ -z "${OS_NAME##macos*}" ]; then
   EXTRA_LDFLAGS="-arch arm64 -arch x86_64"
   EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64"
 
-  if [[ $PYTHON_VERSION == "3.[78]"* ]]; then
+  if [[ $PYTHON_VERSION == "3."[78]* ]]; then
     # Py3.7/8 require the same target version as originally used for CPython itself.
     export MACOSX_DEPLOYMENT_TARGET="11.7"
   fi
