@@ -8,10 +8,10 @@ lxml changelog
 Features added
 --------------
 
-* Character escaping in ``C14N`` serialisation now uses a single pass over the text
+* Character escaping in ``C14N2` serialisation now uses a single pass over the text
   instead of searching for each unescaped character separately.
 
-* Early support for Python 3.13a1 was added.
+* Early support for Python 3.13a2 was added.
 
 Bugs fixed
 ----------
@@ -26,6 +26,8 @@ Bugs fixed
 * GH#370: A crash with recent libxml2 2.11.x versions was resolved.
   Patch by Michael Schlenker.
 
+* A compile problem with recent libxml2 2.12.x versions was resolved.
+
 * The internal exception handling in C callbacks was improved for Cython 3.0.
 
 * The exception declarations of ``xmlInputReadCallback``, ``xmlInputCloseCallback``,
@@ -38,6 +40,8 @@ Bugs fixed
 
 * LP#1522052: A file-system specific test is now optional and should no longer fail
   on systems that don't support it.
+
+* Contains all fixes from lxml 4.9.4.
 
 Other changes
 -------------
@@ -71,7 +75,7 @@ Other changes
 
 * Binary wheels use the library versions libxml2 2.12.3 and libxslt 1.1.39.
 
-* Built with Cython 3.0.7.
+* Built with Cython 3.0.7, updated to follow recent changes in Cython 3.1-dev.
 
 
 4.9.4 (2023-12-19)
