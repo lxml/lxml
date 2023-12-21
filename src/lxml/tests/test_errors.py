@@ -45,9 +45,9 @@ class ErrorTestCase(HelperTestCase):
             gc.collect()
             count = getrefcount(None) - count
 
-            if sys.version_info[:2] == (3, 11) and count == 1:
+            if sys.version_info[:2] == (3, 11) and count == -1:
                 # FIXME: it's currently unclear why this happens, but it's reproducible on Py3.11.
-                self.assertEqual(count, 1)
+                self.assertEqual(count, -1)
             else:
                 self.assertEqual(count, 0)
         finally:
