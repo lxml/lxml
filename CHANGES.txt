@@ -69,9 +69,9 @@ Other changes
   should not be used by external Cython code. Use the C-API declarations provided by
   Cython itself instead.
 
-* Binary wheels use the library versions libxml2 2.11.5 and libxslt 1.1.38.
+* Binary wheels use the library versions libxml2 2.12.3 and libxslt 1.1.39.
 
-* Built with Cython 3.0.5.
+* Built with Cython 3.0.7.
 
 
 4.9.4 (2023-12-19)
