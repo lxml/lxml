@@ -67,6 +67,7 @@ jobs:
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
             allowed_failure: true
+
           # Coverage setup
           - os: ubuntu-latest
             python-version: "3.10"
@@ -78,6 +79,7 @@ jobs:
             env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
             extra_hash: "-docs"
             allowed_failure: true   # shouldn't fail but currently does...
+
           # Old library setup with minimum version requirements
           - os: ubuntu-latest
             python-version: "3.10"
@@ -87,7 +89,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.27,
             }
             extra_hash: "-oldlibs29"
-            allowed_failure: true   # shouldn't fail but currently does...
+            #allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
             python-version: "3.10"
             env: {
@@ -97,6 +99,16 @@ jobs:
             }
             extra_hash: "-oldlibs210"
             #allowed_failure: true   # shouldn't fail but currently does...
+          - os: ubuntu-latest
+            python-version: "3.10"
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.11.6,
+              LIBXSLT_VERSION: 1.1.37,
+            }
+            extra_hash: "-oldlibs211"
+            #allowed_failure: true   # shouldn't fail but currently does...
+
           # Ubuntu sub-jobs:
           # ================
           # Pypy
