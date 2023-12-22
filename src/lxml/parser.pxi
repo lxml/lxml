@@ -1552,7 +1552,7 @@ cdef class XMLParser(_FeedParser):
         if not strip_cdata:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOCDATA
 
-        _BaseParser.__init__(self, parse_options, 0, schema,
+        _BaseParser.__init__(self, parse_options, False, schema,
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding)
 
@@ -1721,7 +1721,7 @@ cdef class HTMLParser(_FeedParser):
         if huge_tree:
             parse_options = parse_options | xmlparser.XML_PARSE_HUGE
 
-        _BaseParser.__init__(self, parse_options, 1, schema,
+        _BaseParser.__init__(self, parse_options, True, schema,
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding)
 

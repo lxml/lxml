@@ -1222,7 +1222,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         u"__reversed__(self)"
         return ElementChildIterator(self, reversed=True)
 
-    def index(self, _Element child not None, start: int = None, stop: int = None):
+    def index(self, child: _Element, start: int = None, stop: int = None):
         u"""index(self, child, start=None, stop=None)
 
         Find the position of the child within the parent.
