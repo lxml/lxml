@@ -23,6 +23,9 @@ Bugs fixed
 * LP#1980767, GH#379: ``TreeBuilder.close()`` could fail with a ``TypeError`` after
   parsing incorrect input.  Original patch by Enrico Minack.
 
+* ``Element.itertext(with_tail=False)`` returned the tail text of comments and
+  processing instructions, despite the explicit option.
+
 * GH#370: A crash with recent libxml2 2.11.x versions was resolved.
   Patch by Michael Schlenker.
 

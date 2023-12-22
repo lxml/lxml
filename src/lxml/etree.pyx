@@ -2978,6 +2978,7 @@ cdef class ElementDepthFirstIterator:
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         return NULL
 
+
 cdef class ElementTextIterator:
     u"""ElementTextIterator(self, element, tag=None, with_tail=True)
     Iterates over the text content of a subtree.
@@ -2995,7 +2996,7 @@ cdef class ElementTextIterator:
         if with_tail:
             events = (u"start", u"comment", u"pi", u"end")
         else:
-            events = (u"start", u"comment", u"pi")
+            events = (u"start",)
         self._start_element = element
         self._events = iterwalk(element, events=events, tag=tag)
 
@@ -3012,6 +3013,7 @@ cdef class ElementTextIterator:
             elif element is not self._start_element:
                 result = element.tail
         return result
+
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     cdef xmlNode* c_node

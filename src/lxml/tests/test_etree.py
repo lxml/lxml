@@ -1556,6 +1556,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(["RTEXT", "ATAIL", "CTAIL", " PITAIL "],
                           text)
 
+    def test_itertext_no_tails(self):
+        XML = self.etree.XML
+        root = XML(_bytes(
+            "<root>RTEXT<a>ATEXT</a>ATAIL<b/><!-- COMMENT -->CTAIL<?PI PITEXT?> PITAIL </root>"
+        ))
+
+        text = list(root.itertext(with_tail=False))
+        self.assertEqual(["RTEXT", "ATEXT"],
+                          text)
+
     def test_resolve_string_dtd(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(dtd_validation=True)
