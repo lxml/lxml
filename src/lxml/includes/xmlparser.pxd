@@ -78,7 +78,7 @@ cdef extern from "libxml/tree.h" nogil:
         charactersSAXFunc               characters
         cdataBlockSAXFunc               cdataBlock
         referenceSAXFunc                reference
-        getEntitySAXFunc	            getEntity
+        getEntitySAXFunc                getEntity
         commentSAXFunc                  comment
         processingInstructionSAXFunc	processingInstruction
         startDocumentSAXFunc            startDocument
