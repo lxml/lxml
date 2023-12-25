@@ -17,6 +17,7 @@ import sys
 import re
 import gc
 import operator
+import tempfile
 import textwrap
 import zlib
 import gzip
@@ -1751,6 +1752,58 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertEqual(_bytes('<doc>&myentity;</doc>'),
                           tostring(root))
+
+    def test_entity_parse_external(self):
+        parse = self.etree.parse
+        tostring = self.etree.tostring
+        parser = self.etree.XMLParser(resolve_entities=True)
+
+        with tempfile.NamedTemporaryFile(suffix='.xml') as tmpfile:
+            tmpfile.write(b'<evil>XML</evil>')
+            tmpfile.flush()
+
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_external_entity;</doc>
+            ''' % tmpfile.name
+            tree = parse(StringIO(xml), parser)
+
+        root = tree.getroot()
+        self.assertEqual(_bytes('<doc><evil>XML</evil></doc>'),
+                          tostring(root))
+        self.assertEqual(root.tag, 'doc')
+        self.assertEqual(root[0].tag, 'evil')
+        self.assertEqual(root[0].text, 'XML')
+        self.assertEqual(root[0].tail, None)
+
+    def test_entity_parse_external_no_resolve(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(resolve_entities=False)
+        Entity = self.etree.Entity
+        xml = '''
+        <!DOCTYPE doc [
+            <!ENTITY my_external_entity SYSTEM "%s">
+        ]>
+        <doc>&my_external_entity;</doc>
+        ''' % fileInTestDir("test.xml")
+
+        tree = parse(StringIO(xml), parser)
+        root = tree.getroot()
+        self.assertEqual(root[0].tag, Entity)
+        self.assertEqual(root[0].text, "&my_external_entity;")
+
+    def test_entity_parse_no_external_default(self):
+        parse = self.etree.parse
+        xml = '''
+        <!DOCTYPE doc [
+            <!ENTITY my_external_entity SYSTEM "%s">
+        ]>
+        <doc>&my_external_entity;</doc>
+        ''' % fileInTestDir("test.xml")
+        self.assertRaisesRegex(
+            self.etree.XMLSyntaxError, ".*my_external_entity.*", parse, StringIO(xml))
 
     def test_entity_restructure(self):
         xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
