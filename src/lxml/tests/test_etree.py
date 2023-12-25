@@ -1800,8 +1800,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         ]>
         <doc>&my_external_entity;</doc>
         ''' % fileUrlInTestDir("test.xml")
-        self.assertRaisesRegex(
-            self.etree.XMLSyntaxError, ".*my_external_entity.*", fromstring, xml)
+
+        try:
+            fromstring(xml)
+        except self.etree.XMLSyntaxError as exc:
+            self.assertIn("my_external_entity", str(exc))
+        else:
+            self.assertTrue(False, "XMLSyntaxError was not raised")
 
     def test_entity_restructure(self):
         xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
