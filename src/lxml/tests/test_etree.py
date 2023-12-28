@@ -1764,7 +1764,6 @@ class ETreeOnlyTestCase(HelperTestCase):
             entity_file = os.path.join(temp_dir, "entity.xml")
             with open(entity_file, 'wb') as tmpfile:
                 tmpfile.write(b'<evil>XML</evil>')
-                tmpfile.flush()
 
             xml = '''
             <!DOCTYPE doc [
