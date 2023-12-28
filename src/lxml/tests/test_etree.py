@@ -1759,8 +1759,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = self.etree.XMLParser(resolve_entities=True)
 
         with tempfile.NamedTemporaryFile(suffix='.xml') as tmpfile:
-            with open(tmpfile.name, "wb") as f:
-                f.write(b'<evil>XML</evil>')
+            tmpfile.write(b'<evil>XML</evil>')
+            tmpfile.flush()
 
             xml = '''
             <!DOCTYPE doc [
