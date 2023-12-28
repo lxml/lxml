@@ -3,7 +3,7 @@ from libc.string cimport const_char
 from lxml.includes.tree cimport (
     xmlDoc, xmlNode, xmlEntity, xmlDict, xmlDtd, xmlChar, const_xmlChar)
 from lxml.includes.tree cimport xmlInputReadCallback, xmlInputCloseCallback
-from lxml.includes.xmlerror cimport xmlError, xmlStructuredErrorFunc
+from lxml.includes.xmlerror cimport xmlError, xmlStructuredErrorFunc, xmlErrorLevel
 
 
 cdef extern from "libxml/parser.h" nogil:
@@ -54,6 +54,7 @@ cdef extern from "libxml/parser.h" nogil:
 cdef extern from "libxml/tree.h" nogil:
     ctypedef struct xmlParserInput:
         int line
+        int col
         int length
         const_xmlChar* base
         const_xmlChar* cur
@@ -153,6 +154,8 @@ cdef extern from "libxml/parser.h" nogil:
         int inSubset
         int charset
         xmlParserInput* input
+        int inputNr
+        xmlParserInput* inputTab[]
 
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors
@@ -214,6 +217,12 @@ cdef extern from "libxml/parser.h" nogil:
                                    char* buffer, int size,
                                    char* filename, const_char* encoding,
                                    int options)
+
+    cdef void xmlErrParser(xmlParserCtxt* ctxt, xmlNode* node,
+                           int domain, int code, xmlErrorLevel level,
+                           const xmlChar *str1, const xmlChar *str2, const xmlChar *str3,
+                           int int1, const char *msg, ...)
+
 
 # iterparse:
 

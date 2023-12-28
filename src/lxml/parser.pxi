@@ -1213,17 +1213,51 @@ cdef tree.xmlEntity* _getInternalEntityOnly(void* ctxt, const_xmlChar* name) noe
     Callback function to intercept the entity resolution when external entity loading is disabled.
     """
     cdef tree.xmlEntity* entity = xmlparser.xmlSAX2GetEntity(ctxt, name)
-    if entity and entity.etype in (
+    if not entity:
+        return NULL
+    if entity.etype not in (
             tree.xmlEntityType.XML_EXTERNAL_GENERAL_PARSED_ENTITY,
             tree.xmlEntityType.XML_EXTERNAL_GENERAL_UNPARSED_ENTITY,
             tree.xmlEntityType.XML_EXTERNAL_PARAMETER_ENTITY):
-        # Reject all external entities and fail the parsing instead. There is currently
-        # no way in libxml2 to just prevent the entity resolution in this case.
-        c_ctxt = <xmlparser.xmlParserCtxt *> ctxt
-        c_ctxt.wellFormed = 0
-        # The entity was looked up and does not need to be freed.
-        entity = NULL
-    return entity
+        return entity
+
+    # Reject all external entities and fail the parsing instead. There is currently
+    # no way in libxml2 to just prevent the entity resolution in this case.
+    cdef xmlerror.xmlError c_error
+    cdef xmlerror.xmlStructuredErrorFunc err_func
+    cdef xmlparser.xmlParserInput* parser_input
+    cdef void* err_context
+
+    c_ctxt = <xmlparser.xmlParserCtxt *> ctxt
+    err_func = xmlerror.xmlStructuredError
+    if err_func:
+        parser_input = c_ctxt.input
+        # Copied from xmlVErrParser() in libxml2: get current input from stack.
+        if parser_input and parser_input.filename is NULL and c_ctxt.inputNr > 1:
+            parser_input = c_ctxt.inputTab[c_ctxt.inputNr - 2]
+
+        c_error = xmlerror.xmlError(
+            domain=xmlerror.xmlErrorDomain.XML_FROM_PARSER,
+            code=xmlerror.xmlParserErrors.XML_ERR_EXT_ENTITY_STANDALONE,
+            level=xmlerror.xmlErrorLevel.XML_ERR_FATAL,
+            message=b"External entity resolution is disabled for security reasons "
+                    b"when resolving '&%s;'. Use 'XMLParser(resolve_entities=True)' "
+                    b"if you consider it safe to enable it.",
+            file=parser_input.filename,
+            node=entity,
+            str1=<char*> name,
+            str2=NULL,
+            str3=NULL,
+            line=parser_input.line if parser_input else 0,
+            int1=0,
+            int2=parser_input.col if parser_input else 0,
+        )
+        err_context = xmlerror.xmlStructuredErrorContext
+        err_func(err_context, &c_error)
+
+    c_ctxt.wellFormed = 0
+    # The entity was looked up and does not need to be freed.
+    return NULL
 
 
 cdef void _initSaxDocument(void* ctxt) noexcept with gil:

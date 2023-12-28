@@ -1805,6 +1805,12 @@ class ETreeOnlyTestCase(HelperTestCase):
             fromstring(xml)
         except self.etree.XMLSyntaxError as exc:
             self.assertIn("my_external_entity", str(exc))
+            self.assertTrue(exc.error_log)
+            print(exc.error_log.last_error)
+            # Depending on the libxml2 version, we get different errors here,
+            # not necessarily the one that lxml produced. But it should fail either way.
+            self.assertIn("my_external_entity", exc.error_log.last_error.message)
+            self.assertEqual(5, exc.error_log.last_error.line)
         else:
             self.assertTrue(False, "XMLSyntaxError was not raised")
 
