@@ -1759,8 +1759,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = self.etree.XMLParser(resolve_entities=True)
 
         with tempfile.NamedTemporaryFile(suffix='.xml') as tmpfile:
-            tmpfile.write(b'<evil>XML</evil>')
-            tmpfile.flush()
+            with open(tmpfile.name, "wb") as f:
+                f.write(b'<evil>XML</evil>')
 
             xml = '''
             <!DOCTYPE doc [
@@ -1806,7 +1806,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         except self.etree.XMLSyntaxError as exc:
             self.assertIn("my_external_entity", str(exc))
             self.assertTrue(exc.error_log)
-            print(exc.error_log.last_error)
             # Depending on the libxml2 version, we get different errors here,
             # not necessarily the one that lxml produced. But it should fail either way.
             self.assertIn("my_external_entity", exc.error_log.last_error.message)
