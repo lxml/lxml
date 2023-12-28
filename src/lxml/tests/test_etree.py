@@ -1762,7 +1762,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         temp_dir = tempfile.mkdtemp()
         try:
             entity_file = os.path.join(temp_dir, "entity.xml")
-            with entity_file as tmpfile:
+            with open(entity_file, 'wb') as tmpfile:
                 tmpfile.write(b'<evil>XML</evil>')
                 tmpfile.flush()
 
