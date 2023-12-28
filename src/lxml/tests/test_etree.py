@@ -17,6 +17,7 @@ import sys
 import re
 import gc
 import operator
+import shutil
 import tempfile
 import textwrap
 import zlib
@@ -1758,17 +1759,22 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         parser = self.etree.XMLParser(resolve_entities=True)
 
-        with tempfile.NamedTemporaryFile(suffix='.xml') as tmpfile:
-            tmpfile.write(b'<evil>XML</evil>')
-            tmpfile.flush()
+        temp_dir = tempfile.mkdtemp()
+        try:
+            entity_file = os.path.join(temp_dir, "entity.xml")
+            with entity_file as tmpfile:
+                tmpfile.write(b'<evil>XML</evil>')
+                tmpfile.flush()
 
             xml = '''
             <!DOCTYPE doc [
                 <!ENTITY my_external_entity SYSTEM "%s">
             ]>
             <doc>&my_external_entity;</doc>
-            ''' % path2url(tmpfile.name)
+            ''' % path2url(entity_file)
             root = fromstring(xml, parser)
+        finally:
+            shutil.rmtree(temp_dir)
 
         self.assertEqual(_bytes('<doc><evil>XML</evil></doc>'),
                           tostring(root))
