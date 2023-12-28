@@ -1796,20 +1796,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         fromstring = self.etree.fromstring
         xml = '''
         <!DOCTYPE doc [
-            <!ENTITY my_external_entity SYSTEM "%s">
+            <!ENTITY my_failing_external_entity SYSTEM "%s">
         ]>
-        <doc>&my_external_entity;</doc>
+        <doc>&my_failing_external_entity;</doc>
         ''' % fileUrlInTestDir("test.xml")
 
         try:
             fromstring(xml)
         except self.etree.XMLSyntaxError as exc:
-            self.assertIn("my_external_entity", str(exc))
+            self.assertIn("my_failing_external_entity", str(exc))
             self.assertTrue(exc.error_log)
             # Depending on the libxml2 version, we get different errors here,
             # not necessarily the one that lxml produced. But it should fail either way.
-            self.assertIn("my_external_entity", exc.error_log.last_error.message)
-            self.assertEqual(5, exc.error_log.last_error.line)
+            for error in exc.error_log:
+                if "my_failing_external_entity" in error.message:
+                    self.assertEqual(5, error.line)
+                    break
+            else:
+                self.assertFalse("entity error not found in parser error log")
         else:
             self.assertTrue(False, "XMLSyntaxError was not raised")
 
