@@ -534,10 +534,7 @@ cdef class _ExsltRegExp:
         flags = self._make_string(flags)
         s = self._make_string(s)
         rexpc = self._compile(rexp, 'i' in flags)
-        if 'g' in flags:
-            count = 0
-        else:
-            count = 1
+        count: object = 0 if 'g' in flags else 1
         return rexpc.sub(replacement, s, count)
 
     cdef _register_in_context(self, _BaseContext context):

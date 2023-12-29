@@ -151,7 +151,7 @@ cdef class _ReadOnlyProxy:
             c_node = c_node.next
         return c
 
-    def __nonzero__(self):
+    def __bool__(self):
         cdef xmlNode* c_node
         self._assertNode()
         c_node = _findChildBackwards(self._c_node, 0)
