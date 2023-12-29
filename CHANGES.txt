@@ -8,7 +8,7 @@ lxml changelog
 Features added
 --------------
 
-* Character escaping in ``C14N2` serialisation now uses a single pass over the text
+* Character escaping in ``C14N2`` serialisation now uses a single pass over the text
   instead of searching for each unescaped character separately.
 
 * Early support for Python 3.13a2 was added.
