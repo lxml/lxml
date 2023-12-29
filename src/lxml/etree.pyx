@@ -1,6 +1,6 @@
 # cython: binding=True
 # cython: auto_pickle=False
-# cython: language_level=2
+# cython: language_level=3
 
 """
 The ``lxml.etree`` module implements the extended ElementTree API for XML.
@@ -8,7 +8,7 @@ The ``lxml.etree`` module implements the extended ElementTree API for XML.
 
 from __future__ import absolute_import
 
-__docformat__ = u"restructuredtext en"
+__docformat__ = "restructuredtext en"
 
 __all__ = [
     'AttributeBasedElementClassLookup', 'C14NError', 'C14NWriterTarget', 'CDATA',
@@ -185,10 +185,10 @@ cdef _update_default_namespace_prefixes_items():
 
 _update_default_namespace_prefixes_items()
 
-cdef object _check_internal_prefix = re.compile(b"ns\d+$").match
+cdef object _check_internal_prefix = re.compile(br"ns\d+$").match
 
 def register_namespace(prefix, uri):
-    u"""Registers a namespace prefix that newly created Elements in that
+    """Registers a namespace prefix that newly created Elements in that
     namespace will use.  The registry is global, and any existing
     mapping for either the given prefix or the namespace URI will be
     removed.
@@ -239,18 +239,18 @@ cdef class C14NError(LxmlError):
 # version information
 cdef __unpackDottedVersion(version):
     version_list = []
-    l = (version.decode("ascii").replace(u'-', u'.').split(u'.') + [0]*4)[:4]
+    l = (version.decode("ascii").replace('-', '.').split('.') + [0]*4)[:4]
     for item in l:
         try:
             item = int(item)
         except ValueError:
-            if item.startswith(u'dev'):
+            if item.startswith('dev'):
                 count = item[3:]
                 item = -300
-            elif item.startswith(u'alpha'):
+            elif item.startswith('alpha'):
                 count = item[5:]
                 item = -200
-            elif item.startswith(u'beta'):
+            elif item.startswith('beta'):
                 count = item[4:]
                 item = -100
             else:
@@ -270,9 +270,9 @@ cdef __unpackIntVersion(int c_version):
 cdef int _LIBXML_VERSION_INT
 try:
     _LIBXML_VERSION_INT = int(
-        re.match(u'[0-9]+', (<unsigned char*>tree.xmlParserVersion).decode("ascii")).group(0))
+        re.match('[0-9]+', (<unsigned char*>tree.xmlParserVersion).decode("ascii")).group(0))
 except Exception:
-    print u"Unknown libxml2 version: %s" % (<unsigned char*>tree.xmlParserVersion).decode("latin1")
+    print("Unknown libxml2 version: " + (<unsigned char*>tree.xmlParserVersion).decode("latin1"))
     _LIBXML_VERSION_INT = 0
 
 LIBXML_VERSION = __unpackIntVersion(_LIBXML_VERSION_INT)
@@ -352,7 +352,7 @@ include "xmlerror.pxi"     # Error and log handling
 @cython.final
 @cython.freelist(8)
 cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
-    u"""Internal base class to reference a libxml document.
+    """Internal base class to reference a libxml document.
 
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
@@ -455,7 +455,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
                                    const_xmlChar* c_href, const_xmlChar* c_prefix,
                                    bint is_attribute) except NULL:
-        u"""Get or create namespace structure for a node.  Reuses the prefix if
+        """Get or create namespace structure for a node.  Reuses the prefix if
         possible.
         """
         cdef xmlNs* c_ns
@@ -463,7 +463,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         cdef python.PyObject* dict_result
         if c_node.type != tree.XML_ELEMENT_NODE:
             assert c_node.type == tree.XML_ELEMENT_NODE, \
-                u"invalid node type %d, expected %d" % (
+                "invalid node type %d, expected %d" % (
                 c_node.type, tree.XML_ELEMENT_NODE)
         # look for existing ns declaration
         c_ns = _searchNsByHref(c_node, c_href, is_attribute)
@@ -498,7 +498,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
 
     @cython.final
     cdef int _setNodeNs(self, xmlNode* c_node, const_xmlChar* c_href) except -1:
-        u"Lookup namespace structure and set it for the node."
+        "Lookup namespace structure and set it for the node."
         c_ns = self._findOrBuildNodeNs(c_node, c_href, NULL, 0)
         tree.xmlSetNs(c_node, c_ns)
 
@@ -526,14 +526,14 @@ cdef object _find_invalid_public_id_characters = re.compile(
 
 
 cdef class DocInfo:
-    u"Document information provided by parser and DTD."
+    "Document information provided by parser and DTD."
     cdef _Document _doc
     def __cinit__(self, tree):
-        u"Create a DocInfo object for an ElementTree object or root Element."
+        "Create a DocInfo object for an ElementTree object or root Element."
         self._doc = _documentOrRaise(tree)
         root_name, public_id, system_url = self._doc.getdoctype()
         if not root_name and (public_id or system_url):
-            raise ValueError, u"Could not find root node"
+            raise ValueError, "Could not find root node"
 
     @property
     def root_name(self):
@@ -556,7 +556,7 @@ cdef class DocInfo:
         return  tree.xmlCreateIntSubset(c_doc, c_name, NULL, NULL)
 
     def clear(self):
-        u"""Removes DOCTYPE and internal subset from the document."""
+        """Removes DOCTYPE and internal subset from the document."""
         cdef xmlDoc* c_doc = self._doc._c_doc
         cdef tree.xmlNode* c_dtd = <xmlNode*>c_doc.intSubset
         if c_dtd is NULL:
@@ -565,7 +565,7 @@ cdef class DocInfo:
         tree.xmlFreeNode(c_dtd)
 
     property public_id:
-        u"""Public ID of the DOCTYPE.
+        """Public ID of the DOCTYPE.
 
         Mutable.  May be set to a valid string or None.  If a DTD does not
         exist, setting this variable (even to None) will create one.
@@ -594,7 +594,7 @@ cdef class DocInfo:
             c_dtd.ExternalID = c_value
 
     property system_url:
-        u"""System ID of the DOCTYPE.
+        """System ID of the DOCTYPE.
 
         Mutable.  May be set to a valid string or None.  If a DTD does not
         exist, setting this variable (even to None) will create one.
@@ -648,7 +648,7 @@ cdef class DocInfo:
         return self._doc.isstandalone()
 
     property URL:
-        u"The source URL of the document (or None if unknown)."
+        "The source URL of the document (or None if unknown)."
         def __get__(self):
             if self._doc._c_doc.URL is NULL:
                 return None
@@ -686,7 +686,7 @@ cdef class DocInfo:
         elif self._doc.hasdoctype():
             return f'<!DOCTYPE {root_name}>'
         else:
-            return u''
+            return ''
 
     @property
     def internalDTD(self):
@@ -701,7 +701,7 @@ cdef class DocInfo:
 
 @cython.no_gc_clear
 cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
-    u"""Element class.
+    """Element class.
 
     References a document object and a libxml node.
 
@@ -713,7 +713,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     cdef object _tag
 
     def _init(self):
-        u"""_init(self)
+        """_init(self)
 
         Called after object initialisation.  Custom subclasses may override
         this if they recursively call _init() in the superclasses.
@@ -722,7 +722,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     @cython.linetrace(False)
     @cython.profile(False)
     def __dealloc__(self):
-        #print "trying to free node:", <int>self._c_node
+        #print("trying to free node:", <int>self._c_node)
         #displayNode(self._c_node, 0)
         if self._c_node is not NULL:
             _unregisterProxy(self)
@@ -731,7 +731,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     # MANIPULATORS
 
     def __setitem__(self, x, value):
-        u"""__setitem__(self, x, value)
+        """__setitem__(self, x, value)
 
         Replaces the given subelement index or slice.
         """
@@ -743,7 +743,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef Py_ssize_t slicelength = 0, step = 0
         _assertValidNode(self)
         if value is None:
-            raise ValueError, u"cannot assign None"
+            raise ValueError, "cannot assign None"
         if isinstance(x, slice):
             # slice assignment
             _findChildSlice(<slice>x, self._c_node, &c_node, &step, &slicelength)
@@ -760,7 +760,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _assertValidNode(element)
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError, u"list index out of range"
+                raise IndexError, "list index out of range"
             c_source_doc = element._c_node.doc
             c_next = element._c_node.next
             _removeText(c_node.next)
@@ -771,7 +771,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 moveNodeToDocument(self._doc, c_node.doc, c_node)
 
     def __delitem__(self, x):
-        u"""__delitem__(self, x)
+        """__delitem__(self, x)
 
         Deletes the given subelement or a slice.
         """
@@ -801,11 +801,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _removeNode(self._doc, c_node)
 
     def __deepcopy__(self, memo):
-        u"__deepcopy__(self, memo)"
+        "__deepcopy__(self, memo)"
         return self.__copy__()
 
     def __copy__(self):
-        u"__copy__(self)"
+        "__copy__(self)"
         cdef xmlDoc* c_doc
         cdef xmlNode* c_node
         cdef _Document new_doc
@@ -824,7 +824,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementFactory(new_doc, c_node)
 
     def set(self, key, value):
-        u"""set(self, key, value)
+        """set(self, key, value)
 
         Sets an element attribute.
         In HTML documents (not XML or XHTML), the value None is allowed and creates
@@ -834,7 +834,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _setAttributeValue(self, key, value)
 
     def append(self, _Element element not None):
-        u"""append(self, element)
+        """append(self, element)
 
         Adds a subelement to the end of this element.
         """
@@ -843,7 +843,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _appendChild(self, element)
 
     def addnext(self, _Element element not None):
-        u"""addnext(self, element)
+        """addnext(self, element)
 
         Adds the element as a following sibling directly after this
         element.
@@ -856,12 +856,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(element)
         if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
             if element._c_node.type not in (tree.XML_PI_NODE, tree.XML_COMMENT_NODE):
-                raise TypeError, u"Only processing instructions and comments can be siblings of the root element"
+                raise TypeError, "Only processing instructions and comments can be siblings of the root element"
             element.tail = None
         _appendSibling(self, element)
 
     def addprevious(self, _Element element not None):
-        u"""addprevious(self, element)
+        """addprevious(self, element)
 
         Adds the element as a preceding sibling directly before this
         element.
@@ -875,12 +875,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
             if element._c_node.type != tree.XML_PI_NODE:
                 if element._c_node.type != tree.XML_COMMENT_NODE:
-                    raise TypeError, u"Only processing instructions and comments can be siblings of the root element"
+                    raise TypeError, "Only processing instructions and comments can be siblings of the root element"
             element.tail = None
         _prependSibling(self, element)
 
     def extend(self, elements):
-        u"""extend(self, elements)
+        """extend(self, elements)
 
         Extends the current children by the elements in the iterable.
         """
@@ -888,12 +888,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         for element in elements:
             if element is None:
-                raise TypeError, u"Node must not be None"
+                raise TypeError, "Node must not be None"
             _assertValidNode(element)
             _appendChild(self, element)
 
     def clear(self, bint keep_tail=False):
-        u"""clear(self, keep_tail=False)
+        """clear(self, keep_tail=False)
 
         Resets an element.  This function removes all subelements, clears
         all attributes and sets the text and tail properties to None.
@@ -925,7 +925,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_node = c_node_next
 
     def insert(self, index: int, _Element element not None):
-        u"""insert(self, index, element)
+        """insert(self, index, element)
 
         Inserts a subelement at the given position in this element
         """
@@ -948,7 +948,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         moveNodeToDocument(self._doc, c_source_doc, element._c_node)
 
     def remove(self, _Element element not None):
-        u"""remove(self, element)
+        """remove(self, element)
 
         Removes a matching subelement. Unlike the find methods, this
         method compares elements based on identity, not on tag value
@@ -960,7 +960,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(element)
         c_node = element._c_node
         if c_node.parent is not self._c_node:
-            raise ValueError, u"Element is not a child of this node."
+            raise ValueError, "Element is not a child of this node."
         c_next = element._c_node.next
         tree.xmlUnlinkNode(c_node)
         _moveTail(c_next, c_node)
@@ -969,7 +969,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     def replace(self, _Element old_element not None,
                 _Element new_element not None):
-        u"""replace(self, old_element, new_element)
+        """replace(self, old_element, new_element)
 
         Replaces a subelement with the element passed as second argument.
         """
@@ -983,7 +983,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(new_element)
         c_old_node = old_element._c_node
         if c_old_node.parent is not self._c_node:
-            raise ValueError, u"Element is not a child of this node."
+            raise ValueError, "Element is not a child of this node."
         c_new_node = new_element._c_node
         # prevent cycles
         if _isAncestorOrSame(c_new_node, self._c_node):
@@ -1001,7 +1001,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     # PROPERTIES
     property tag:
-        u"""Element tag
+        """Element tag
         """
         def __get__(self):
             if self._tag is not None:
@@ -1034,7 +1034,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _Attrib.__new__(_Attrib, self)
 
     property text:
-        u"""Text before the first subelement. This is either a string or
+        """Text before the first subelement. This is either a string or
         the value None, if there was no text.
         """
         def __get__(self):
@@ -1052,7 +1052,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         #    _setNodeText(self._c_node, None)
 
     property tail:
-        u"""Text after this element's end tag, but before the next sibling
+        """Text after this element's end tag, but before the next sibling
         element's start tag. This is either a string or the value None, if
         there was no text.
         """
@@ -1080,7 +1080,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     # not in ElementTree, read-only
     property sourceline:
-        u"""Original line number as found by the parser or None if unknown.
+        """Original line number as found by the parser or None if unknown.
         """
         def __get__(self):
             cdef long line
@@ -1109,7 +1109,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     # not in ElementTree, read-only
     property base:
-        u"""The base URI of the Element (xml:base or HTML base URL).
+        """The base URI of the Element (xml:base or HTML base URL).
         None if the base URI is unknown.
 
         Note that the value depends on the URL of the document that
@@ -1143,11 +1143,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     # ACCESSORS
     def __repr__(self):
-        u"__repr__(self)"
+        "__repr__(self)"
         return "<Element %s at 0x%x>" % (strrepr(self.tag), id(self))
 
     def __getitem__(self, x):
-        u"""Returns the subelement at the given position or the requested
+        """Returns the subelement at the given position or the requested
         slice.
         """
         cdef xmlNode* c_node = NULL
@@ -1182,23 +1182,23 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # indexing
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError, u"list index out of range"
+                raise IndexError, "list index out of range"
             return _elementFactory(self._doc, c_node)
 
     def __len__(self):
-        u"""__len__(self)
+        """__len__(self)
 
         Returns the number of subelements.
         """
         _assertValidNode(self)
         return _countElements(self._c_node.children)
 
-    def __nonzero__(self):
-        #u"__nonzero__(self)" # currently fails in Py3.1
+    def __bool__(self):
+        """__bool__(self)"""
         import warnings
         warnings.warn(
-            u"The behavior of this method will change in future versions. "
-            u"Use specific 'len(elem)' or 'elem is not None' test instead.",
+            "The behavior of this method will change in future versions. "
+            "Use specific 'len(elem)' or 'elem is not None' test instead.",
             FutureWarning
             )
         # emulate old behaviour
@@ -1206,7 +1206,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _hasChild(self._c_node)
 
     def __contains__(self, element):
-        u"__contains__(self, element)"
+        "__contains__(self, element)"
         cdef xmlNode* c_node
         _assertValidNode(self)
         if not isinstance(element, _Element):
@@ -1215,15 +1215,15 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return c_node is not NULL and c_node.parent is self._c_node
 
     def __iter__(self):
-        u"__iter__(self)"
+        "__iter__(self)"
         return ElementChildIterator(self)
 
     def __reversed__(self):
-        u"__reversed__(self)"
+        "__reversed__(self)"
         return ElementChildIterator(self, reversed=True)
 
     def index(self, child: _Element, start: int = None, stop: int = None):
-        u"""index(self, child, start=None, stop=None)
+        """index(self, child, start=None, stop=None)
 
         Find the position of the child within the parent.
 
@@ -1237,7 +1237,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(child)
         c_child = child._c_node
         if c_child.parent is not self._c_node:
-            raise ValueError, u"Element is not a child of this node."
+            raise ValueError, "Element is not a child of this node."
 
         # handle the unbounded search straight away (normal case)
         if stop is None and (start is None or start == 0):
@@ -1260,7 +1260,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_stop = stop
             if c_stop == 0 or \
                    c_start >= c_stop and (c_stop > 0 or c_start < 0):
-                raise ValueError, u"list.index(x): x not in slice"
+                raise ValueError, "list.index(x): x not in slice"
 
         # for negative slice indices, check slice before searching index
         if c_start < 0 or c_stop < 0:
@@ -1278,9 +1278,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if c_start_node == c_child:
                 # found! before slice end?
                 if c_stop < 0 and l <= -c_stop:
-                    raise ValueError, u"list.index(x): x not in slice"
+                    raise ValueError, "list.index(x): x not in slice"
             elif c_start < 0:
-                raise ValueError, u"list.index(x): x not in slice"
+                raise ValueError, "list.index(x): x not in slice"
 
         # now determine the index backwards from child
         c_child = c_child.prev
@@ -1305,12 +1305,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             else:
                 return k
         if c_start != 0 or c_stop != 0:
-            raise ValueError, u"list.index(x): x not in slice"
+            raise ValueError, "list.index(x): x not in slice"
         else:
-            raise ValueError, u"list.index(x): x not in list"
+            raise ValueError, "list.index(x): x not in list"
 
     def get(self, key, default=None):
-        u"""get(self, key, default=None)
+        """get(self, key, default=None)
 
         Gets an element attribute.
         """
@@ -1318,7 +1318,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _getAttributeValue(self, key, default)
 
     def keys(self):
-        u"""keys(self)
+        """keys(self)
 
         Gets a list of attribute names.  The names are returned in an
         arbitrary order (just like for an ordinary Python dictionary).
@@ -1327,7 +1327,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _collectAttributes(self._c_node, 1)
 
     def values(self):
-        u"""values(self)
+        """values(self)
 
         Gets element attribute values as a sequence of strings.  The
         attributes are returned in an arbitrary order.
@@ -1336,7 +1336,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _collectAttributes(self._c_node, 2)
 
     def items(self):
-        u"""items(self)
+        """items(self)
 
         Gets element attributes, as a sequence. The attributes are returned in
         an arbitrary order.
@@ -1345,7 +1345,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _collectAttributes(self._c_node, 3)
 
     def getchildren(self):
-        u"""getchildren(self)
+        """getchildren(self)
 
         Returns all direct children.  The elements are returned in document
         order.
@@ -1358,7 +1358,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _collectChildren(self)
 
     def getparent(self):
-        u"""getparent(self)
+        """getparent(self)
 
         Returns the parent of this element or None for the root element.
         """
@@ -1370,7 +1370,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementFactory(self._doc, c_node)
 
     def getnext(self):
-        u"""getnext(self)
+        """getnext(self)
 
         Returns the following sibling of this element or None.
         """
@@ -1382,7 +1382,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementFactory(self._doc, c_node)
 
     def getprevious(self):
-        u"""getprevious(self)
+        """getprevious(self)
 
         Returns the preceding sibling of this element or None.
         """
@@ -1394,7 +1394,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementFactory(self._doc, c_node)
 
     def itersiblings(self, tag=None, *tags, preceding=False):
-        u"""itersiblings(self, tag=None, *tags, preceding=False)
+        """itersiblings(self, tag=None, *tags, preceding=False)
 
         Iterate over the following or preceding siblings of this element.
 
@@ -1417,7 +1417,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return SiblingsIterator(self, tags, preceding=preceding)
 
     def iterancestors(self, tag=None, *tags):
-        u"""iterancestors(self, tag=None, *tags)
+        """iterancestors(self, tag=None, *tags)
 
         Iterate over the ancestors of this element (from parent to parent).
 
@@ -1431,7 +1431,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return AncestorsIterator(self, tags)
 
     def iterdescendants(self, tag=None, *tags):
-        u"""iterdescendants(self, tag=None, *tags)
+        """iterdescendants(self, tag=None, *tags)
 
         Iterate over the descendants of this element in document order.
 
@@ -1446,7 +1446,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return ElementDepthFirstIterator(self, tags, inclusive=False)
 
     def iterchildren(self, tag=None, *tags, reversed=False):
-        u"""iterchildren(self, tag=None, *tags, reversed=False)
+        """iterchildren(self, tag=None, *tags, reversed=False)
 
         Iterate over the children of this element.
 
@@ -1461,7 +1461,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return ElementChildIterator(self, tags, reversed=reversed)
 
     def getroottree(self):
-        u"""getroottree(self)
+        """getroottree(self)
 
         Return an ElementTree for the root node of the document that
         contains this element.
@@ -1473,7 +1473,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementTreeFactory(self._doc, None)
 
     def getiterator(self, tag=None, *tags):
-        u"""getiterator(self, tag=None, *tags)
+        """getiterator(self, tag=None, *tags)
 
         Returns a sequence or iterator of all elements in the subtree in
         document order (depth first pre-order), starting with this
@@ -1495,7 +1495,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return ElementDepthFirstIterator(self, tags)
 
     def iter(self, tag=None, *tags):
-        u"""iter(self, tag=None, *tags)
+        """iter(self, tag=None, *tags)
 
         Iterate over all elements in the subtree in document order (depth
         first pre-order), starting with this element.
@@ -1519,7 +1519,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return ElementDepthFirstIterator(self, tags)
 
     def itertext(self, tag=None, *tags, with_tail=True):
-        u"""itertext(self, tag=None, *tags, with_tail=True)
+        """itertext(self, tag=None, *tags, with_tail=True)
 
         Iterates over the text content of a subtree.
 
@@ -1534,7 +1534,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return ElementTextIterator(self, tags, with_tail=with_tail)
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
-        u"""makeelement(self, _tag, attrib=None, nsmap=None, **_extra)
+        """makeelement(self, _tag, attrib=None, nsmap=None, **_extra)
 
         Creates a new element associated with the same document.
         """
@@ -1543,7 +1543,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                             attrib, nsmap, _extra)
 
     def find(self, path, namespaces=None):
-        u"""find(self, path, namespaces=None)
+        """find(self, path, namespaces=None)
 
         Finds the first matching subelement, by tag name or path.
 
@@ -1556,7 +1556,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementpath.find(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findtext(self, path, default=None, namespaces=None):
-        u"""findtext(self, path, default=None, namespaces=None)
+        """findtext(self, path, default=None, namespaces=None)
 
         Finds text for the first matching subelement, by tag name or path.
 
@@ -1569,7 +1569,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementpath.findtext(self, path, default, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findall(self, path, namespaces=None):
-        u"""findall(self, path, namespaces=None)
+        """findall(self, path, namespaces=None)
 
         Finds all matching subelements, by tag name or path.
 
@@ -1582,7 +1582,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementpath.findall(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def iterfind(self, path, namespaces=None):
-        u"""iterfind(self, path, namespaces=None)
+        """iterfind(self, path, namespaces=None)
 
         Iterates over all matching subelements, by tag name or path.
 
@@ -1596,7 +1596,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
               smart_strings=True, **_variables):
-        u"""xpath(self, _path, namespaces=None, extensions=None, smart_strings=True, **_variables)
+        """xpath(self, _path, namespaces=None, extensions=None, smart_strings=True, **_variables)
 
         Evaluate an xpath expression using the element as context node.
         """
@@ -1653,22 +1653,22 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
 @cython.internal
 cdef class __ContentOnlyElement(_Element):
     cdef int _raiseImmutable(self) except -1:
-        raise TypeError, u"this element does not have children or attributes"
+        raise TypeError, "this element does not have children or attributes"
 
     def set(self, key, value):
-        u"set(self, key, value)"
+        "set(self, key, value)"
         self._raiseImmutable()
 
     def append(self, value):
-        u"append(self, value)"
+        "append(self, value)"
         self._raiseImmutable()
 
     def insert(self, index, value):
-        u"insert(self, index, value)"
+        "insert(self, index, value)"
         self._raiseImmutable()
 
     def __setitem__(self, index, value):
-        u"__setitem__(self, index, value)"
+        "__setitem__(self, index, value)"
         self._raiseImmutable()
 
     @property
@@ -1692,30 +1692,30 @@ cdef class __ContentOnlyElement(_Element):
 
     # ACCESSORS
     def __getitem__(self, x):
-        u"__getitem__(self, x)"
+        "__getitem__(self, x)"
         if isinstance(x, slice):
             return []
         else:
-            raise IndexError, u"list index out of range"
+            raise IndexError, "list index out of range"
 
     def __len__(self):
-        u"__len__(self)"
+        "__len__(self)"
         return 0
 
     def get(self, key, default=None):
-        u"get(self, key, default=None)"
+        "get(self, key, default=None)"
         return None
 
     def keys(self):
-        u"keys(self)"
+        "keys(self)"
         return []
 
     def items(self):
-        u"items(self)"
+        "items(self)"
         return []
 
     def values(self):
-        u"values(self)"
+        "values(self)"
         return []
 
 cdef class _Comment(__ContentOnlyElement):
@@ -1752,7 +1752,7 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
             return "<?%s?>" % strrepr(self.target)
 
     def get(self, key, default=None):
-        u"""get(self, key, default=None)
+        """get(self, key, default=None)
 
         Try to parse pseudo-attributes from the text content of the
         processing instruction, search for one with the given key as
@@ -1773,9 +1773,9 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
         XML node, although this is not guaranteed to stay this way.
         """
         return { attr : (value1 or value2)
-                 for attr, value1, value2 in _FIND_PI_ATTRIBUTES(u' ' + self.text) }
+                 for attr, value1, value2 in _FIND_PI_ATTRIBUTES(' ' + self.text) }
 
-cdef object _FIND_PI_ATTRIBUTES = re.compile(ur'\s+(\w+)\s*=\s*(?:\'([^\']*)\'|"([^"]*)")', re.U).findall
+cdef object _FIND_PI_ATTRIBUTES = re.compile(r'\s+(\w+)\s*=\s*(?:\'([^\']*)\'|"([^"]*)")', re.U).findall
 
 cdef class _Entity(__ContentOnlyElement):
     @property
@@ -1807,7 +1807,7 @@ cdef class _Entity(__ContentOnlyElement):
 
 
 cdef class QName:
-    u"""QName(text_or_uri_or_element, tag=None)
+    """QName(text_or_uri_or_element, tag=None)
 
     QName wrapper for qualified XML names.
 
@@ -1859,7 +1859,7 @@ cdef class QName:
             self.text = self.localname
         else:
             self.namespace = (<bytes>ns_utf).decode('utf8')
-            self.text = u"{%s}%s" % (self.namespace, self.localname)
+            self.text = "{%s}%s" % (self.namespace, self.localname)
     def __str__(self):
         return self.text
     def __hash__(self):
@@ -1886,17 +1886,17 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     @cython.final
     cdef int _assertHasRoot(self) except -1:
-        u"""We have to take care here: the document may not have a root node!
+        """We have to take care here: the document may not have a root node!
         This can happen if ElementTree() is called without any argument and
         the caller 'forgets' to call parse() afterwards, so this is a bug in
         the caller program.
         """
         assert self._context_node is not None, \
-               u"ElementTree not initialized, missing root"
+               "ElementTree not initialized, missing root"
         return 0
 
     def parse(self, source, _BaseParser parser=None, *, base_url=None):
-        u"""parse(self, source, parser=None, base_url=None)
+        """parse(self, source, parser=None, base_url=None)
 
         Updates self with the content of source and returns its root.
         """
@@ -1912,18 +1912,18 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return self._context_node
 
     def _setroot(self, _Element root not None):
-        u"""_setroot(self, root)
+        """_setroot(self, root)
 
         Relocate the ElementTree to a new root node.
         """
         _assertValidNode(root)
         if root._c_node.type != tree.XML_ELEMENT_NODE:
-            raise TypeError, u"Only elements can be the root of an ElementTree"
+            raise TypeError, "Only elements can be the root of an ElementTree"
         self._context_node = root
         self._doc = None
 
     def getroot(self):
-        u"""getroot(self)
+        """getroot(self)
 
         Gets the root element for this tree.
         """
@@ -1978,7 +1978,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
               bint exclusive=False, inclusive_ns_prefixes=None,
               bint with_comments=True, bint strip_text=False,
               docstring=None):
-        u"""write(self, file, encoding=None, method="xml",
+        """write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
                   standalone=None, doctype=None, compression=0,
                   exclusive=False, inclusive_ns_prefixes=None,
@@ -2083,7 +2083,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                     is_standalone, compression)
 
     def getpath(self, _Element element not None):
-        u"""getpath(self, element)
+        """getpath(self, element)
 
         Returns a structural, absolute XPath expression to find the element.
 
@@ -2105,11 +2105,11 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             doc = self._doc
             root = doc.getroot()
         else:
-            raise ValueError, u"Element is not in this tree."
+            raise ValueError, "Element is not in this tree."
         _assertValidDoc(doc)
         _assertValidNode(root)
         if element._doc is not doc:
-            raise ValueError, u"Element is not in this tree."
+            raise ValueError, "Element is not in this tree."
 
         c_doc = _fakeRootDoc(doc._c_doc, root._c_node)
         c_path = tree.xmlGetNodePath(element._c_node)
@@ -2121,7 +2121,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return path
 
     def getelementpath(self, _Element element not None):
-        u"""getelementpath(self, element)
+        """getelementpath(self, element)
 
         Returns a structural, absolute ElementPath expression to find the
         element.  This path can be used in the .find() method to look up
@@ -2136,16 +2136,16 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         cdef Py_ssize_t count
         _assertValidNode(element)
         if element._c_node.type != tree.XML_ELEMENT_NODE:
-            raise ValueError, u"input is not an Element"
+            raise ValueError, "input is not an Element"
         if self._context_node is not None:
             root = self._context_node
         elif self._doc is not None:
             root = self._doc.getroot()
         else:
-            raise ValueError, u"Element is not in this tree"
+            raise ValueError, "Element is not in this tree"
         _assertValidNode(root)
         if element._doc is not root._doc:
-            raise ValueError, u"Element is not in this tree"
+            raise ValueError, "Element is not in this tree"
 
         path = []
         c_element = element._c_node
@@ -2178,14 +2178,14 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             path.append(tag)
             c_element = c_element.parent
             if c_element is NULL or c_element.type != tree.XML_ELEMENT_NODE:
-                raise ValueError, u"Element is not in this tree."
+                raise ValueError, "Element is not in this tree."
         if not path:
             return '.'
         path.reverse()
         return '/'.join(path)
 
     def getiterator(self, tag=None, *tags):
-        u"""getiterator(self, *tags, tag=None)
+        """getiterator(self, *tags, tag=None)
 
         Returns a sequence or iterator of all elements in document order
         (depth first pre-order), starting with the root element.
@@ -2209,7 +2209,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.getiterator(*tags)
 
     def iter(self, tag=None, *tags):
-        u"""iter(self, tag=None, *tags)
+        """iter(self, tag=None, *tags)
 
         Creates an iterator for the root element.  The iterator loops over
         all elements in this tree, in document order.  Note that siblings
@@ -2227,7 +2227,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.iter(*tags)
 
     def find(self, path, namespaces=None):
-        u"""find(self, path, namespaces=None)
+        """find(self, path, namespaces=None)
 
         Finds the first toplevel element with given tag.  Same as
         ``tree.getroot().find(path)``.
@@ -2244,7 +2244,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.find(path, namespaces)
 
     def findtext(self, path, default=None, namespaces=None):
-        u"""findtext(self, path, default=None, namespaces=None)
+        """findtext(self, path, default=None, namespaces=None)
 
         Finds the text for the first element matching the ElementPath
         expression.  Same as getroot().findtext(path)
@@ -2261,7 +2261,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.findtext(path, default, namespaces)
 
     def findall(self, path, namespaces=None):
-        u"""findall(self, path, namespaces=None)
+        """findall(self, path, namespaces=None)
 
         Finds all elements matching the ElementPath expression.  Same as
         getroot().findall(path).
@@ -2278,7 +2278,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.findall(path, namespaces)
 
     def iterfind(self, path, namespaces=None):
-        u"""iterfind(self, path, namespaces=None)
+        """iterfind(self, path, namespaces=None)
 
         Iterates over all elements matching the ElementPath expression.
         Same as getroot().iterfind(path).
@@ -2296,7 +2296,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
               smart_strings=True, **_variables):
-        u"""xpath(self, _path, namespaces=None, extensions=None, smart_strings=True, **_variables)
+        """xpath(self, _path, namespaces=None, extensions=None, smart_strings=True, **_variables)
 
         XPath evaluate in context of document.
 
@@ -2320,7 +2320,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return evaluator(_path, **_variables)
 
     def xslt(self, _xslt, extensions=None, access_control=None, **_kw):
-        u"""xslt(self, _xslt, extensions=None, access_control=None, **_kw)
+        """xslt(self, _xslt, extensions=None, access_control=None, **_kw)
 
         Transform this document using other document.
 
@@ -2339,7 +2339,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return style(self, **_kw)
 
     def relaxng(self, relaxng):
-        u"""relaxng(self, relaxng)
+        """relaxng(self, relaxng)
 
         Validate this document using other document.
 
@@ -2357,7 +2357,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return schema.validate(self)
 
     def xmlschema(self, xmlschema):
-        u"""xmlschema(self, xmlschema)
+        """xmlschema(self, xmlschema)
 
         Validate this document using other document.
 
@@ -2375,7 +2375,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return schema.validate(self)
 
     def xinclude(self):
-        u"""xinclude(self)
+        """xinclude(self)
 
         Process the XInclude nodes in this document and include the
         referenced XML fragments.
@@ -2391,7 +2391,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def write_c14n(self, file, *, bint exclusive=False, bint with_comments=True,
                    compression=0, inclusive_ns_prefixes=None):
-        u"""write_c14n(self, file, exclusive=False, with_comments=True,
+        """write_c14n(self, file, exclusive=False, with_comments=True,
                        compression=0, inclusive_ns_prefixes=None)
 
         C14N write of document. Always writes UTF-8.
@@ -2440,7 +2440,7 @@ cdef _ElementTree _newElementTree(_Document doc, _Element context_node,
 @cython.final
 @cython.freelist(16)
 cdef class _Attrib:
-    u"""A dict-like proxy for the ``Element.attrib`` property.
+    """A dict-like proxy for the ``Element.attrib`` property.
     """
     cdef _Element _element
     def __cinit__(self, _Element element not None):
@@ -2581,7 +2581,7 @@ MutableMapping.register(_Attrib)
 @cython.final
 @cython.internal
 cdef class _AttribIterator:
-    u"""Attribute iterator - for internal use only!
+    """Attribute iterator - for internal use only!
     """
     # XML attributes must not be removed while running!
     cdef _Element _node
@@ -2858,7 +2858,7 @@ cdef class _ElementMatchIterator:
         return current_node
 
 cdef class ElementChildIterator(_ElementMatchIterator):
-    u"""ElementChildIterator(self, node, tag=None, reversed=False)
+    """ElementChildIterator(self, node, tag=None, reversed=False)
     Iterates over the children of an element.
     """
     def __cinit__(self, _Element node not None, tag=None, *, bint reversed=False):
@@ -2878,7 +2878,7 @@ cdef class ElementChildIterator(_ElementMatchIterator):
         self._node = _elementFactory(node._doc, c_node) if c_node is not NULL else None
 
 cdef class SiblingsIterator(_ElementMatchIterator):
-    u"""SiblingsIterator(self, node, tag=None, preceding=False)
+    """SiblingsIterator(self, node, tag=None, preceding=False)
     Iterates over the siblings of an element.
 
     You can pass the boolean keyword ``preceding`` to specify the direction.
@@ -2893,7 +2893,7 @@ cdef class SiblingsIterator(_ElementMatchIterator):
         self._storeNext(node)
 
 cdef class AncestorsIterator(_ElementMatchIterator):
-    u"""AncestorsIterator(self, node, tag=None)
+    """AncestorsIterator(self, node, tag=None)
     Iterates over the ancestors of an element (from parent to parent).
     """
     def __cinit__(self, _Element node not None, tag=None):
@@ -2903,7 +2903,7 @@ cdef class AncestorsIterator(_ElementMatchIterator):
         self._storeNext(node)
 
 cdef class ElementDepthFirstIterator:
-    u"""ElementDepthFirstIterator(self, node, tag=None, inclusive=True)
+    """ElementDepthFirstIterator(self, node, tag=None, inclusive=True)
     Iterates over an element and its sub-elements in document order (depth
     first pre-order).
 
@@ -2980,7 +2980,7 @@ cdef class ElementDepthFirstIterator:
 
 
 cdef class ElementTextIterator:
-    u"""ElementTextIterator(self, element, tag=None, with_tail=True)
+    """ElementTextIterator(self, element, tag=None, with_tail=True)
     Iterates over the text content of a subtree.
 
     You can pass the ``tag`` keyword argument to restrict text content to a
@@ -2994,9 +2994,9 @@ cdef class ElementTextIterator:
     def __cinit__(self, _Element element not None, tag=None, *, bint with_tail=True):
         _assertValidNode(element)
         if with_tail:
-            events = (u"start", u"comment", u"pi", u"end")
+            events = ("start", "comment", "pi", "end")
         else:
-            events = (u"start",)
+            events = ("start",)
         self._start_element = element
         self._events = iterwalk(element, events=events, tag=tag)
 
@@ -3008,7 +3008,7 @@ cdef class ElementTextIterator:
         result = None
         while result is None:
             event, element = next(self._events)  # raises StopIteration
-            if event == u"start":
+            if event == "start":
                 result = element.text
             elif element is not self._start_element:
                 result = element.tail
@@ -3038,7 +3038,7 @@ cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name) noexcept:
 # module-level API for ElementTree
 
 def Element(_tag, attrib=None, nsmap=None, **_extra):
-    u"""Element(_tag, attrib=None, nsmap=None, **_extra)
+    """Element(_tag, attrib=None, nsmap=None, **_extra)
 
     Element factory.  This function returns an object implementing the
     Element interface.
@@ -3052,7 +3052,7 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
 
 
 def Comment(text=None):
-    u"""Comment(text=None)
+    """Comment(text=None)
 
     Comment element factory. This factory function creates a special element that will
     be serialized as an XML comment.
@@ -3076,7 +3076,7 @@ def Comment(text=None):
 
 
 def ProcessingInstruction(target, text=None):
-    u"""ProcessingInstruction(target, text=None)
+    """ProcessingInstruction(target, text=None)
 
     ProcessingInstruction element factory. This factory function creates a
     special element that will be serialized as an XML processing instruction.
@@ -3107,7 +3107,7 @@ PI = ProcessingInstruction
 
 
 cdef class CDATA:
-    u"""CDATA(data)
+    """CDATA(data)
 
     CDATA factory.  This factory creates an opaque data object that
     can be used to set Element text.  The usual way to use it is::
@@ -3129,7 +3129,7 @@ cdef class CDATA:
 
 
 def Entity(name):
-    u"""Entity(name)
+    """Entity(name)
 
     Entity factory.  This factory function creates a special element
     that will be serialized as an XML entity reference or character
@@ -3156,7 +3156,7 @@ def Entity(name):
 
 def SubElement(_Element _parent not None, _tag,
                attrib=None, nsmap=None, **_extra):
-    u"""SubElement(_parent, _tag, attrib=None, nsmap=None, **_extra)
+    """SubElement(_parent, _tag, attrib=None, nsmap=None, **_extra)
 
     Subelement factory.  This function creates an element instance, and
     appends it to an existing element.
@@ -3165,7 +3165,7 @@ def SubElement(_Element _parent not None, _tag,
 
 
 def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
-    u"""ElementTree(element=None, file=None, parser=None)
+    """ElementTree(element=None, file=None, parser=None)
 
     ElementTree wrapper class.
     """
@@ -3191,7 +3191,7 @@ def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
 
 
 def HTML(text, _BaseParser parser=None, *, base_url=None):
-    u"""HTML(text, parser=None, base_url=None)
+    """HTML(text, parser=None, base_url=None)
 
     Parses an HTML document from a string constant.  Returns the root
     node (or the result returned by a parser target).  This function
@@ -3217,7 +3217,7 @@ def HTML(text, _BaseParser parser=None, *, base_url=None):
 
 
 def XML(text, _BaseParser parser=None, *, base_url=None):
-    u"""XML(text, parser=None, base_url=None)
+    """XML(text, parser=None, base_url=None)
 
     Parses an XML document or fragment from a string constant.
     Returns the root node (or the result returned by a parser target).
@@ -3248,7 +3248,7 @@ def XML(text, _BaseParser parser=None, *, base_url=None):
 
 
 def fromstring(text, _BaseParser parser=None, *, base_url=None):
-    u"""fromstring(text, parser=None, base_url=None)
+    """fromstring(text, parser=None, base_url=None)
 
     Parses an XML document or fragment from a string.  Returns the
     root node (or the result returned by a parser target).
@@ -3269,7 +3269,7 @@ def fromstring(text, _BaseParser parser=None, *, base_url=None):
 
 
 def fromstringlist(strings, _BaseParser parser=None):
-    u"""fromstringlist(strings, parser=None)
+    """fromstringlist(strings, parser=None)
 
     Parses an XML document from a sequence of strings.  Returns the
     root node (or the result returned by a parser target).
@@ -3290,7 +3290,7 @@ def fromstringlist(strings, _BaseParser parser=None):
 
 
 def iselement(element):
-    u"""iselement(element)
+    """iselement(element)
 
     Checks if an object appears to be a valid element object.
     """
@@ -3349,7 +3349,7 @@ cdef int _indent_children(xmlNode* c_node, Py_ssize_t level, bytes one_space, li
 
 
 def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
-    u"""dump(elem, pretty_print=True, with_tail=True)
+    """dump(elem, pretty_print=True, with_tail=True)
 
     Writes an element tree or element structure to sys.stdout. This function
     should be used for debugging only.
@@ -3369,7 +3369,7 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
              # method='c14n2'
              bint with_comments=True, bint strip_text=False,
              ):
-    u"""tostring(element_or_tree, encoding=None, method="xml",
+    """tostring(element_or_tree, encoding=None, method="xml",
                  xml_declaration=None, pretty_print=False, with_tail=True,
                  standalone=None, doctype=None,
                  exclusive=False, inclusive_ns_prefixes=None,
@@ -3441,17 +3441,17 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     if encoding is unicode or (encoding is not None and encoding.lower() == 'unicode'):
         if xml_declaration:
             raise ValueError, \
-                u"Serialisation to unicode must not request an XML declaration"
+                "Serialisation to unicode must not request an XML declaration"
         write_declaration = 0
         encoding = unicode
     elif xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
         write_declaration = encoding is not None and encoding.upper() not in \
-                            (u'ASCII', u'UTF-8', u'UTF8', u'US-ASCII')
+                            ('ASCII', 'UTF-8', 'UTF8', 'US-ASCII')
     else:
         write_declaration = xml_declaration
     if encoding is None:
-        encoding = u'ASCII'
+        encoding = 'ASCII'
     if standalone is None:
         is_standalone = -1
     elif standalone:
@@ -3475,7 +3475,7 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
 
 
 def tostringlist(element_or_tree, *args, **kwargs):
-    u"""tostringlist(element_or_tree, *args, **kwargs)
+    """tostringlist(element_or_tree, *args, **kwargs)
 
     Serialize an element to an encoded string representation of its XML
     tree, stored in a list of partial strings.
@@ -3486,9 +3486,9 @@ def tostringlist(element_or_tree, *args, **kwargs):
     return [tostring(element_or_tree, *args, **kwargs)]
 
 
-def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
+def tounicode(element_or_tree, *, method="xml", bint pretty_print=False,
               bint with_tail=True, doctype=None):
-    u"""tounicode(element_or_tree, method="xml", pretty_print=False,
+    """tounicode(element_or_tree, method="xml", pretty_print=False,
                   with_tail=True, doctype=None)
 
     Serialize an element to the Python unicode representation of its XML
@@ -3521,7 +3521,7 @@ def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
 
 
 def parse(source, _BaseParser parser=None, *, base_url=None):
-    u"""parse(source, parser=None, base_url=None)
+    """parse(source, parser=None, base_url=None)
 
     Return an ElementTree object loaded with source elements.  If no parser
     is provided as second argument, the default parser is used.
@@ -3628,13 +3628,13 @@ cdef class DocumentInvalid(LxmlError):
 
 
 cdef class _Validator:
-    u"Base class for XML validators."
+    "Base class for XML validators."
     cdef _ErrorLog _error_log
     def __cinit__(self):
         self._error_log = _ErrorLog()
 
     def validate(self, etree):
-        u"""validate(self, etree)
+        """validate(self, etree)
 
         Validate the document using this schema.
 
@@ -3643,23 +3643,23 @@ cdef class _Validator:
         return self(etree)
 
     def assertValid(self, etree):
-        u"""assertValid(self, etree)
+        """assertValid(self, etree)
 
         Raises `DocumentInvalid` if the document does not comply with the schema.
         """
         if not self(etree):
             raise DocumentInvalid(self._error_log._buildExceptionMessage(
-                    u"Document does not comply with schema"),
+                    "Document does not comply with schema"),
                                   self._error_log)
 
     def assert_(self, etree):
-        u"""assert_(self, etree)
+        """assert_(self, etree)
 
         Raises `AssertionError` if the document does not comply with the schema.
         """
         if not self(etree):
             raise AssertionError, self._error_log._buildExceptionMessage(
-                u"Document does not comply with schema")
+                "Document does not comply with schema")
 
     cpdef _append_log_message(self, int domain, int type, int level, int line,
                               message, filename):

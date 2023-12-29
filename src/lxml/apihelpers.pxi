@@ -7,7 +7,7 @@ cdef void displayNode(xmlNode* c_node, indent) noexcept:
     # to help with debugging
     cdef xmlNode* c_child
     try:
-        print indent * u' ', <long>c_node
+        print(indent * ' ', <long>c_node)
         c_child = c_node.children
         while c_child is not NULL:
             displayNode(c_child, indent + 1)
@@ -23,13 +23,13 @@ cdef inline bint _isHtmlDocument(_Element element) except -1:
     )
 
 cdef inline int _assertValidNode(_Element element) except -1:
-    assert element._c_node is not NULL, u"invalid Element proxy at %s" % id(element)
+    assert element._c_node is not NULL, "invalid Element proxy at %s" % id(element)
 
 cdef inline int _assertValidDoc(_Document doc) except -1:
-    assert doc._c_doc is not NULL, u"invalid Document proxy at %s" % id(doc)
+    assert doc._c_doc is not NULL, "invalid Document proxy at %s" % id(doc)
 
 cdef _Document _documentOrRaise(object input):
-    u"""Call this to get the document of a _Document, _ElementTree or _Element
+    """Call this to get the document of a _Document, _ElementTree or _Element
     object, or to raise an exception if it can't be determined.
 
     Should be used in all API functions for consistency.
@@ -52,7 +52,7 @@ cdef _Document _documentOrRaise(object input):
     return doc
 
 cdef _Element _rootNodeOrRaise(object input):
-    u"""Call this to get the root node of a _Document, _ElementTree or
+    """Call this to get the root node of a _Document, _ElementTree or
      _Element object, or to raise an exception if it can't be determined.
 
     Should be used in all API functions for consistency.
@@ -82,7 +82,7 @@ cdef bint _isAncestorOrSame(xmlNode* c_ancestor, xmlNode* c_node) noexcept:
 cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
                            _BaseParser parser, text, tail, attrib, nsmap,
                            dict extra_attrs):
-    u"""Create a new element and initialize text content, namespaces and
+    """Create a new element and initialize text content, namespaces and
     attributes.
 
     This helper function will reuse as much of the existing document as
@@ -139,7 +139,7 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
 
 cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
                          _BaseParser parser, attrib, nsmap, dict extra_attrs) except -1:
-    u"""Initialise a new Element object.
+    """Initialise a new Element object.
 
     This is used when users instantiate a Python Element subclass
     directly, without it being mapped to an existing XML node.
@@ -169,7 +169,7 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
 
 cdef _Element _makeSubElement(_Element parent, tag, text, tail,
                               attrib, nsmap, dict extra_attrs):
-    u"""Create a new child element and initialize text content, namespaces and
+    """Create a new child element and initialize text content, namespaces and
     attributes.
     """
     cdef xmlNode* c_node
@@ -208,7 +208,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
 
 cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
                             object node_ns_utf, object nsmap) except -1:
-    u"""Lookup current namespace prefixes, then set namespace structure for
+    """Lookup current namespace prefixes, then set namespace structure for
     node (if 'node_ns_utf' was provided) and register new ns-prefix mappings.
 
     'node_ns_utf' should only be passed for a newly created node.
@@ -307,11 +307,11 @@ cdef _iter_attrib(attrib):
 
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
-    u"""Initialise the attributes of an element node.
+    """Initialise the attributes of an element node.
     """
     cdef bint is_html
     cdef xmlNs* c_ns
-    if attrib is not None and not hasattr(attrib, u'items'):
+    if attrib is not None and not hasattr(attrib, 'items'):
         raise TypeError, f"Invalid attribute dictionary: {python._fqtypename(attrib).decode('utf8')}"
     if not attrib and not extra:
         return  # nothing to do
@@ -381,7 +381,7 @@ cdef int _collectNsDefs(xmlNode* c_element, _ns_node_ref **_c_ns_list,
 
 
 cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_keep) except -1:
-    u"""Remove any namespace declarations from a subtree that are not used by
+    """Remove any namespace declarations from a subtree that are not used by
     any of its elements (or attributes).
 
     If a 'prefixes_to_keep' is provided, it must be a set of prefixes.
@@ -445,7 +445,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_
     return 0
 
 cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attribute) noexcept:
-    u"""Search a namespace declaration that covers a node (element or
+    """Search a namespace declaration that covers a node (element or
     attribute).
 
     For attributes, try to find a prefixed namespace declaration
@@ -617,7 +617,7 @@ cdef int _delAttributeFromNsName(xmlNode* c_node, const_xmlChar* c_href, const_x
     return 0
 
 cdef list _collectAttributes(xmlNode* c_node, int collecttype):
-    u"""Collect all attributes of a node in a list.  Depending on collecttype,
+    """Collect all attributes of a node in a list.  Depending on collecttype,
     it collects either the name (1), the value (2) or the name-value tuples.
     """
     cdef Py_ssize_t count
@@ -649,14 +649,14 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
     return attributes
 
 cdef object __RE_XML_ENCODING = re.compile(
-    ur'^(<\?xml[^>]+)\s+encoding\s*=\s*["\'][^"\']*["\'](\s*\?>|)', re.U)
+    r'^(<\?xml[^>]+)\s+encoding\s*=\s*["\'][^"\']*["\'](\s*\?>|)', re.U)
 
 cdef object __REPLACE_XML_ENCODING = __RE_XML_ENCODING.sub
 cdef object __HAS_XML_ENCODING = __RE_XML_ENCODING.match
 
 cdef object _stripEncodingDeclaration(object xml_string):
     # this is a hack to remove the XML encoding declaration from unicode
-    return __REPLACE_XML_ENCODING(ur'\g<1>\g<2>', xml_string)
+    return __REPLACE_XML_ENCODING(r'\g<1>\g<2>', xml_string)
 
 cdef bint _hasEncodingDeclaration(object xml_string) except -1:
     # check if a (unicode) string has an XML encoding declaration
@@ -682,7 +682,7 @@ cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False) except -1:
     return False
 
 cdef _collectText(xmlNode* c_node):
-    u"""Collect all text nodes and return them as a unicode string.
+    """Collect all text nodes and return them as a unicode string.
 
     Start collecting at c_node.
     
@@ -715,7 +715,7 @@ cdef _collectText(xmlNode* c_node):
     return funicode(<const_xmlChar*><unsigned char*>result)
 
 cdef void _removeText(xmlNode* c_node) noexcept:
-    u"""Remove all text nodes.
+    """Remove all text nodes.
 
     Start removing at c_node.
     """
@@ -777,7 +777,7 @@ cdef inline bint _hasChild(xmlNode* c_node) noexcept:
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
 
 cdef inline Py_ssize_t _countElements(xmlNode* c_node) noexcept:
-    u"Counts the elements within the following siblings and the node itself."
+    "Counts the elements within the following siblings and the node itself."
     cdef Py_ssize_t count
     count = 0
     while c_node is not NULL:
@@ -789,7 +789,7 @@ cdef inline Py_ssize_t _countElements(xmlNode* c_node) noexcept:
 cdef int _findChildSlice(
     slice sliceobject, xmlNode* c_parent,
     xmlNode** c_start_node, Py_ssize_t* c_step, Py_ssize_t* c_length) except -1:
-    u"""Resolve a children slice.
+    """Resolve a children slice.
 
     Returns the start node, step size and the slice length in the
     pointer arguments.
@@ -813,7 +813,7 @@ cdef int _findChildSlice(
     return 0
 
 cdef bint _isFullSlice(slice sliceobject) except -1:
-    u"""Conservative guess if this slice is a full slice as in ``s[:]``.
+    """Conservative guess if this slice is a full slice as in ``s[:]``.
     """
     cdef Py_ssize_t step = 0
     if sliceobject is None:
@@ -847,7 +847,7 @@ cdef inline xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index) noexcept:
         return _findChildForwards(c_node, index)
     
 cdef inline xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index) noexcept:
-    u"""Return child element of c_node with index, or return NULL if not found.
+    """Return child element of c_node with index, or return NULL if not found.
     """
     cdef xmlNode* c_child
     cdef Py_ssize_t c
@@ -862,7 +862,7 @@ cdef inline xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index) noexc
     return NULL
 
 cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index) noexcept:
-    u"""Return child element of c_node with index, or return NULL if not found.
+    """Return child element of c_node with index, or return NULL if not found.
     Search from the end.
     """
     cdef xmlNode* c_child
@@ -878,7 +878,7 @@ cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index) noex
     return NULL
     
 cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) noexcept nogil:
-    u"""Return the node if it's a text node.  Skip over ignorable nodes in a
+    """Return the node if it's a text node.  Skip over ignorable nodes in a
     series of text nodes.  Return NULL if a non-ignorable node is found.
 
     This is used to skip over XInclude nodes when collecting adjacent text
@@ -896,7 +896,7 @@ cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) noexcept nogil:
     return NULL
 
 cdef inline xmlNode* _nextElement(xmlNode* c_node) noexcept:
-    u"""Given a node, find the next sibling that is an element.
+    """Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
         return NULL
@@ -908,7 +908,7 @@ cdef inline xmlNode* _nextElement(xmlNode* c_node) noexcept:
     return NULL
 
 cdef inline xmlNode* _previousElement(xmlNode* c_node) noexcept:
-    u"""Given a node, find the next sibling that is an element.
+    """Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
         return NULL
@@ -920,7 +920,7 @@ cdef inline xmlNode* _previousElement(xmlNode* c_node) noexcept:
     return NULL
 
 cdef inline xmlNode* _parentElement(xmlNode* c_node) noexcept:
-    u"Given a node, find the parent element."
+    "Given a node, find the parent element."
     if c_node is NULL or not _isElement(c_node):
         return NULL
     c_node = c_node.parent
@@ -929,7 +929,7 @@ cdef inline xmlNode* _parentElement(xmlNode* c_node) noexcept:
     return c_node
 
 cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name) noexcept:
-    u"""Tests if the node matches namespace URI and tag name.
+    """Tests if the node matches namespace URI and tag name.
 
     A node matches if it matches both c_href and c_name.
 
@@ -971,7 +971,7 @@ cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlCh
         return 0
 
 cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname) noexcept:
-    u"""Tests if the node matches namespace URI and tag name.
+    """Tests if the node matches namespace URI and tag name.
 
     This differs from _tagMatches() in that it does not consider a
     NULL value in qname.href a wildcard, and that it expects the c_name
@@ -993,7 +993,7 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname) noexcept:
 cdef inline bint _nsTagMatchesExactly(const_xmlChar* c_node_href,
                                       const_xmlChar* c_node_name,
                                       qname* c_qname) noexcept:
-    u"""Tests if name and namespace URI match those of c_qname.
+    """Tests if name and namespace URI match those of c_qname.
 
     This differs from _tagMatches() in that it does not consider a
     NULL value in qname.href a wildcard, and that it expects the c_name
@@ -1025,7 +1025,7 @@ cdef inline bint _nsTagMatchesExactly(const_xmlChar* c_node_href,
 
 cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
                                           qname* c_ns_tags, bint force_into_dict) except -1:
-    u"""Map a sequence of (name, namespace) pairs to a qname array for efficient
+    """Map a sequence of (name, namespace) pairs to a qname array for efficient
     matching with _tagMatchesExactly() above.
 
     Note that each qname struct in the array owns its href byte string object
@@ -1058,7 +1058,7 @@ cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
     return count
 
 cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
-    u"""Unlink and free a node and subnodes if possible.  Otherwise, make sure
+    """Unlink and free a node and subnodes if possible.  Otherwise, make sure
     it's self-contained.
     """
     cdef xmlNode* c_next
@@ -1151,7 +1151,7 @@ cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
 
 cdef int _deleteSlice(_Document doc, xmlNode* c_node,
                       Py_ssize_t count, Py_ssize_t step) except -1:
-    u"""Delete slice, ``count`` items starting with ``c_node`` with a step
+    """Delete slice, ``count`` items starting with ``c_node`` with a step
     width of ``step``.
     """
     cdef xmlNode* c_next
@@ -1180,7 +1180,7 @@ cdef int _deleteSlice(_Document doc, xmlNode* c_node,
 cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                        Py_ssize_t slicelength, Py_ssize_t step,
                        bint left_to_right, elements) except -1:
-    u"""Replace the slice of ``count`` elements starting at ``c_node`` with
+    """Replace the slice of ``count`` elements starting at ``c_node`` with
     positive step width ``step`` by the Elements in ``elements``.  The
     direction is given by the boolean argument ``left_to_right``.
 
@@ -1212,11 +1212,11 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
         # no children yet => add all elements straight away
         if left_to_right:
             for element in elements:
-                assert element is not None, u"Node must not be None"
+                assert element is not None, "Node must not be None"
                 _appendChild(parent, element)
         else:
             for element in elements:
-                assert element is not None, u"Node must not be None"
+                assert element is not None, "Node must not be None"
                 _prependChild(parent, element)
         return 0
 
@@ -1257,7 +1257,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
         # at the end, but reversed stepping
         # append one element and go to the next insertion point
         for element in elements:
-            assert element is not None, u"Node must not be None"
+            assert element is not None, "Node must not be None"
             _appendChild(parent, element)
             c_node = element._c_node
             if slicelength > 0:
@@ -1278,7 +1278,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     # now insert elements where we removed them
     if c_node is not NULL:
         for element in elements:
-            assert element is not None, u"Node must not be None"
+            assert element is not None, "Node must not be None"
             _assertValidNode(element)
             # move element and tail over
             c_source_doc = element._c_node.doc
@@ -1305,12 +1305,12 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     # append the remaining elements at the respective end
     if left_to_right:
         for element in elements:
-            assert element is not None, u"Node must not be None"
+            assert element is not None, "Node must not be None"
             _assertValidNode(element)
             _appendChild(parent, element)
     else:
         for element in elements:
-            assert element is not None, u"Node must not be None"
+            assert element is not None, "Node must not be None"
             _assertValidNode(element)
             _prependChild(parent, element)
 
@@ -1334,7 +1334,7 @@ cdef int _linkChild(xmlNode* c_parent, xmlNode* c_node) except -1:
 
 
 cdef int _appendChild(_Element parent, _Element child) except -1:
-    u"""Append a new child to a parent element.
+    """Append a new child to a parent element.
     """
     c_node = child._c_node
     c_source_doc = c_node.doc
@@ -1354,7 +1354,7 @@ cdef int _appendChild(_Element parent, _Element child) except -1:
     return 0
 
 cdef int _prependChild(_Element parent, _Element child) except -1:
-    u"""Prepend a new child to a parent element.
+    """Prepend a new child to a parent element.
     """
     c_node = child._c_node
     c_source_doc = c_node.doc
@@ -1378,12 +1378,12 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
     return 0
 
 cdef int _appendSibling(_Element element, _Element sibling) except -1:
-    u"""Add a new sibling behind an element.
+    """Add a new sibling behind an element.
     """
     return _addSibling(element, sibling, as_next=True)
 
 cdef int _prependSibling(_Element element, _Element sibling) except -1:
-    u"""Add a new sibling before an element.
+    """Add a new sibling before an element.
     """
     return _addSibling(element, sibling, as_next=False)
 
@@ -1472,7 +1472,7 @@ cdef int _is_valid_xml_ascii(bytes pystring) except -1:
     return 1
 
 cdef bint _is_valid_xml_utf8(bytes pystring) except -1:
-    u"""Check if a string is like valid UTF-8 XML content."""
+    """Check if a string is like valid UTF-8 XML content."""
     cdef const_xmlChar* s = _xcstr(pystring)
     cdef const_xmlChar* c_end = s + len(pystring)
     cdef unsigned long next3 = 0
@@ -1571,7 +1571,7 @@ cdef enum:
 
 
 cdef bint _isFilePath(const_xmlChar* c_path) noexcept:
-    u"simple heuristic to see if a path is a filename"
+    "simple heuristic to see if a path is a filename"
     cdef xmlChar c
     # test if it looks like an absolute Unix path or a Windows network path
     if c_path[0] == c'/':
@@ -1607,7 +1607,7 @@ cdef object _getFSPathOrObject(object obj):
 
 
 cdef object _encodeFilename(object filename):
-    u"""Make sure a filename is 8-bit encoded (or None).
+    """Make sure a filename is 8-bit encoded (or None).
     """
     if filename is None:
         return None
@@ -1626,12 +1626,12 @@ cdef object _encodeFilename(object filename):
         raise TypeError("Argument must be string or unicode.")
 
 cdef object _decodeFilename(const_xmlChar* c_path):
-    u"""Make the filename a unicode string if we are in Py3.
+    """Make the filename a unicode string if we are in Py3.
     """
     return _decodeFilenameWithLength(c_path, tree.xmlStrlen(c_path))
 
 cdef object _decodeFilenameWithLength(const_xmlChar* c_path, size_t c_len):
-    u"""Make the filename a unicode string if we are in Py3.
+    """Make the filename a unicode string if we are in Py3.
     """
     if _isFilePath(c_path):
         try:
@@ -1646,7 +1646,7 @@ cdef object _decodeFilenameWithLength(const_xmlChar* c_path, size_t c_len):
         return (<unsigned char*>c_path)[:c_len].decode('latin-1', 'replace')
 
 cdef object _encodeFilenameUTF8(object filename):
-    u"""Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
+    """Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
     UTF-8 as source encoding.
     """
     cdef char* c_filename
@@ -1675,13 +1675,13 @@ cdef object _encodeFilenameUTF8(object filename):
         raise TypeError("Argument must be string or unicode.")
 
 cdef tuple _getNsTag(tag):
-    u"""Given a tag, find namespace URI and tag name.
+    """Given a tag, find namespace URI and tag name.
     Return None for NS uri if no namespace URI provided.
     """
     return __getNsTag(tag, 0)
 
 cdef tuple _getNsTagWithEmptyNs(tag):
-    u"""Given a tag, find namespace URI and tag name.  Return None for NS uri
+    """Given a tag, find namespace URI and tag name.  Return None for NS uri
     if no namespace URI provided, or the empty string if namespace
     part is '{}'.
     """
@@ -1702,18 +1702,18 @@ cdef tuple __getNsTag(tag, bint empty_ns):
         c_tag += 1
         c_ns_end = cstring_h.strchr(c_tag, c'}')
         if c_ns_end is NULL:
-            raise ValueError, u"Invalid tag name"
+            raise ValueError, "Invalid tag name"
         nslen  = c_ns_end - c_tag
         taglen = python.PyBytes_GET_SIZE(tag) - nslen - 2
         if taglen == 0:
-            raise ValueError, u"Empty tag name"
+            raise ValueError, "Empty tag name"
         if nslen > 0:
             ns = <bytes>c_tag[:nslen]
         elif empty_ns:
             ns = b''
         tag = <bytes>c_ns_end[1:taglen+1]
     elif python.PyBytes_GET_SIZE(tag) == 0:
-        raise ValueError, u"Empty tag name"
+        raise ValueError, "Empty tag name"
     return ns, tag
 
 cdef inline int _pyXmlNameIsValid(name_utf8):
@@ -1796,7 +1796,7 @@ cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
             return s
 
 cdef _getFilenameForFile(source):
-    u"""Given a Python File or Gzip object, give filename back.
+    """Given a Python File or Gzip object, give filename back.
 
     Returns None if not a file object.
     """

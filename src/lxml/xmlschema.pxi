@@ -19,12 +19,12 @@ cdef class XMLSchemaValidateError(XMLSchemaError):
 # XMLSchema
 
 cdef XPath _check_for_default_attributes = XPath(
-    u"boolean(//xs:attribute[@default or @fixed][1])",
-    namespaces={u'xs': u'http://www.w3.org/2001/XMLSchema'})
+    "boolean(//xs:attribute[@default or @fixed][1])",
+    namespaces={'xs': 'http://www.w3.org/2001/XMLSchema'})
 
 
 cdef class XMLSchema(_Validator):
-    u"""XMLSchema(self, etree=None, file=None)
+    """XMLSchema(self, etree=None, file=None)
     Turn a document into an XML Schema validator.
 
     Either pass a schema as Element or ElementTree, or pass a file or
@@ -64,7 +64,7 @@ cdef class XMLSchema(_Validator):
                 self._doc = _parseDocument(file, None, None)
                 parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(self._doc._c_doc)
         else:
-            raise XMLSchemaParseError, u"No tree or file given"
+            raise XMLSchemaParseError, "No tree or file given"
 
         if parser_ctxt is NULL:
             raise MemoryError()
@@ -88,7 +88,7 @@ cdef class XMLSchema(_Validator):
         if self._c_schema is NULL:
             raise XMLSchemaParseError(
                 self._error_log._buildExceptionMessage(
-                    u"Document is not valid XML Schema"),
+                    "Document is not valid XML Schema"),
                 self._error_log)
 
         if self._doc is not None:
@@ -99,7 +99,7 @@ cdef class XMLSchema(_Validator):
         xmlschema.xmlSchemaFree(self._c_schema)
 
     def __call__(self, etree):
-        u"""__call__(self, etree)
+        """__call__(self, etree)
 
         Validate doc using XML Schema.
 
@@ -137,7 +137,7 @@ cdef class XMLSchema(_Validator):
 
         if ret == -1:
             raise XMLSchemaValidateError(
-                u"Internal error in XML Schema validation.",
+                "Internal error in XML Schema validation.",
                 self._error_log)
         if ret == 0:
             return True

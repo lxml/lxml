@@ -165,7 +165,7 @@ cdef class _XPathEvaluatorBase:
                 result = python.PyThread_acquire_lock(
                     self._eval_lock, python.WAIT_LOCK)
             if result == 0:
-                raise XPathError, u"XPath evaluator locking failed"
+                raise XPathError, "XPath evaluator locking failed"
         return 0
 
     @cython.final
@@ -181,7 +181,7 @@ cdef class _XPathEvaluatorBase:
             if message is not None:
                 return XPathSyntaxError(message, self._error_log)
         return XPathSyntaxError(
-            self._error_log._buildExceptionMessage(u"Error in xpath expression"),
+            self._error_log._buildExceptionMessage("Error in xpath expression"),
             self._error_log)
 
     cdef _build_eval_error(self):
@@ -194,7 +194,7 @@ cdef class _XPathEvaluatorBase:
             if message is not None:
                 return XPathEvalError(message, self._error_log)
         return XPathEvalError(
-            self._error_log._buildExceptionMessage(u"Error in xpath expression"),
+            self._error_log._buildExceptionMessage("Error in xpath expression"),
             self._error_log)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
@@ -219,7 +219,7 @@ cdef class _XPathEvaluatorBase:
 
 
 cdef class XPathElementEvaluator(_XPathEvaluatorBase):
-    u"""XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     Create an XPath evaluator for an element.
 
     Absolute XPath expressions (starting with '/') will be evaluated against
@@ -249,20 +249,20 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         self.set_context(xpathCtxt)
 
     def register_namespace(self, prefix, uri):
-        u"""Register a namespace with the XPath context.
+        """Register a namespace with the XPath context.
         """
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
         self._context.addNamespace(prefix, uri)
 
     def register_namespaces(self, namespaces):
-        u"""Register a prefix -> uri dict.
+        """Register a prefix -> uri dict.
         """
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
         for prefix, uri in namespaces.items():
             self._context.addNamespace(prefix, uri)
 
     def __call__(self, _path, **_variables):
-        u"""__call__(self, _path, **_variables)
+        """__call__(self, _path, **_variables)
 
         Evaluate an XPath expression on the document.
 
@@ -296,7 +296,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
 
 
 cdef class XPathDocumentEvaluator(XPathElementEvaluator):
-    u"""XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     Create an XPath evaluator for an ElementTree.
 
     Additional namespace declarations can be passed with the
@@ -313,7 +313,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             smart_strings=smart_strings)
 
     def __call__(self, _path, **_variables):
-        u"""__call__(self, _path, **_variables)
+        """__call__(self, _path, **_variables)
 
         Evaluate an XPath expression on the document.
 
@@ -351,7 +351,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
                    regexp=True, smart_strings=True):
-    u"""XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
 
     Creates an XPath evaluator for an ElementTree or an Element.
 
@@ -375,7 +375,7 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
 
 
 cdef class XPath(_XPathEvaluatorBase):
-    u"""XPath(self, path, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPath(self, path, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     A compiled XPath expression that can be called on Elements and ElementTrees.
 
     Besides the XPath expression, you can pass prefix-namespace
@@ -406,7 +406,7 @@ cdef class XPath(_XPathEvaluatorBase):
             raise self._build_parse_error()
 
     def __call__(self, _etree_or_element, **_variables):
-        u"__call__(self, _etree_or_element, **_variables)"
+        "__call__(self, _etree_or_element, **_variables)"
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
         cdef _Element element
@@ -435,7 +435,7 @@ cdef class XPath(_XPathEvaluatorBase):
     def path(self):
         """The literal XPath expression.
         """
-        return self._path.decode(u'UTF-8')
+        return self._path.decode('UTF-8')
 
     def __dealloc__(self):
         if self._xpath is not NULL:
@@ -449,7 +449,7 @@ cdef object _replace_strings = re.compile(b'("[^"]*")|(\'[^\']*\')').sub
 cdef object _find_namespaces = re.compile(b'({[^}]+})').findall
 
 cdef class ETXPath(XPath):
-    u"""ETXPath(self, path, extensions=None, regexp=True, smart_strings=True)
+    """ETXPath(self, path, extensions=None, regexp=True, smart_strings=True)
     Special XPath class that supports the ElementTree {uri} notation for namespaces.
 
     Note that this class does not accept the ``namespace`` keyword

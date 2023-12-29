@@ -78,7 +78,7 @@ cdef class _SaxParserTarget:
 @cython.internal
 @cython.no_gc_clear  # Required because parent class uses it - Cython bug.
 cdef class _SaxParserContext(_ParserContext):
-    u"""This class maps SAX2 events to parser target events.
+    """This class maps SAX2 events to parser target events.
     """
     cdef _SaxParserTarget _target
     cdef _BaseParser _parser
@@ -700,7 +700,7 @@ cdef inline xmlNode* _findLastEventNode(xmlparser.xmlParserCtxt* c_ctxt):
 ############################################################
 
 cdef class TreeBuilder(_SaxParserTarget):
-    u"""TreeBuilder(self, element_factory=None, parser=None,
+    """TreeBuilder(self, element_factory=None, parser=None,
                     comment_factory=None, pi_factory=None,
                     insert_comments=True, insert_pis=True)
 
@@ -748,12 +748,12 @@ cdef class TreeBuilder(_SaxParserTarget):
     cdef int _flush(self) except -1:
         if self._data:
             if self._last is not None:
-                text = u"".join(self._data)
+                text = "".join(self._data)
                 if self._in_tail:
-                    assert self._last.tail is None, u"internal error (tail)"
+                    assert self._last.tail is None, "internal error (tail)"
                     self._last.tail = text
                 else:
-                    assert self._last.text is None, u"internal error (text)"
+                    assert self._last.text is None, "internal error (text)"
                     self._last.text = text
             del self._data[:]
         return 0
@@ -813,7 +813,7 @@ cdef class TreeBuilder(_SaxParserTarget):
     # Python level event handlers
 
     def close(self):
-        u"""close(self)
+        """close(self)
 
         Flushes the builder buffers, and returns the toplevel document
         element.  Raises XMLSyntaxError on inconsistencies.
@@ -826,7 +826,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._last
 
     def data(self, data):
-        u"""data(self, data)
+        """data(self, data)
 
         Adds text to the current element.  The value should be either an
         8-bit string containing ASCII text, or a Unicode string.
@@ -834,7 +834,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         self._handleSaxData(data)
 
     def start(self, tag, attrs, nsmap=None):
-        u"""start(self, tag, attrs, nsmap=None)
+        """start(self, tag, attrs, nsmap=None)
 
         Opens a new element.
         """
@@ -843,7 +843,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._handleSaxStart(tag, attrs, nsmap)
 
     def end(self, tag):
-        u"""end(self, tag)
+        """end(self, tag)
 
         Closes the current element.
         """
@@ -853,7 +853,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return element
 
     def pi(self, target, data=None):
-        u"""pi(self, target, data=None)
+        """pi(self, target, data=None)
 
         Creates a processing instruction using the factory, appends it
         (unless disabled) and returns it.
@@ -861,7 +861,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._handleSaxPi(target, data)
 
     def comment(self, comment):
-        u"""comment(self, comment)
+        """comment(self, comment)
 
         Creates a comment using the factory, appends it (unless disabled)
         and returns it.

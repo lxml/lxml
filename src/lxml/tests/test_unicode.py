@@ -137,8 +137,6 @@ class UnicodeTestCase(HelperTestCase):
         # should not Raise
         el('\u0132')
 
-
-
     def test_unicode_parse_stringio(self):
         el = etree.parse(StringIO('<p>%s</p>' % uni)).getroot()
         self.assertEqual(uni, el.text)
@@ -153,11 +151,11 @@ class UnicodeTestCase(HelperTestCase):
 
 class EncodingsTestCase(HelperTestCase):
     def test_illegal_utf8(self):
-        data = bytes('<test>\x80\x80\x80</test>', encoding='iso8859-1')
+        data = b'<test>\x80\x80\x80</test>'
         self.assertRaises(etree.XMLSyntaxError, etree.fromstring, data)
 
     def test_illegal_utf8_recover(self):
-        data = bytes('<test>\x80\x80\x80</test>', encoding='iso8859-1')
+        data = b'<test>\x80\x80\x80</test>'
         parser = etree.XMLParser(recover=True)
         if etree.LIBXML_VERSION >= (2, 12, 0):
             tree = etree.fromstring(data, parser)
