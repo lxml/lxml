@@ -723,12 +723,6 @@ def xpath():
     Got error
     """
 
-if sys.version_info[0] >= 3:
-    xpath.__doc__ = xpath.__doc__.replace(" u'", " '")
-    xpath.__doc__ = xpath.__doc__.replace(" XPathResultError",
-                                          " lxml.etree.XPathResultError")
-    xpath.__doc__ = xpath.__doc__.replace(" exactly 2 arguments",
-                                          " exactly 2 positional arguments")
 
 def test_suite():
     suite = unittest.TestSuite()

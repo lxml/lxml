@@ -43,16 +43,7 @@ def serialize(elem, **options):
     file = BytesIO()
     tree = ElementTree.ElementTree(elem)
     tree.write(file, **options)
-    if sys.version_info[0] < 3:
-        try:
-            encoding = options["encoding"]
-        except KeyError:
-            encoding = "utf-8"
-    else:
-        encoding = 'ISO8859-1'
-    result = fix_compatibility(file.getvalue().decode(encoding))
-    if sys.version_info[0] < 3:
-        result = result.encode(encoding)
+    result = fix_compatibility(file.getvalue().decode('ISO8859-1'))
     return result
 
 def summarize(elem):
@@ -569,7 +560,7 @@ def encoding():
     >>> serialize(elem, encoding="iso-8859-1").lower()
     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;\'&gt;"/>'
 
-    >>> elem.text = u'\xe5\xf6\xf6<>'
+    >>> elem.text = '\xe5\xf6\xf6<>'
     >>> elem.attrib.clear()
     >>> serialize(elem)
     '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
@@ -580,7 +571,7 @@ def encoding():
     >>> serialize(elem, encoding="iso-8859-1").lower()
     "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>\xe5\xf6\xf6&lt;&gt;</tag>"
 
-    >>> elem.attrib["key"] = u'\xe5\xf6\xf6<>'
+    >>> elem.attrib["key"] = '\xe5\xf6\xf6<>'
     >>> elem.text = None
     >>> serialize(elem)
     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
@@ -592,8 +583,6 @@ def encoding():
     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;"/>'
     """
 
-if sys.version_info[0] >= 3:
-    encoding.__doc__ = encoding.__doc__.replace("u'", "'")
 
 def methods():
     r"""
@@ -616,6 +605,7 @@ def methods():
 
 # doesn't work with lxml.etree
 del methods
+
 
 def iterators():
     """

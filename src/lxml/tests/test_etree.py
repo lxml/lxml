@@ -310,12 +310,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             ('attr_99', 'TOAST-1'),
             ('attr_98', 'TOAST-2'),
         ]
-        ordered_dict_types = [OrderedDict, lambda x:x]
-        if sys.version_info >= (3, 6):
-            ordered_dict_types.append(dict)
-        else:
-            # Keyword arguments are not ordered in Py<3.6, and thus get sorted.
-            attr_order.sort()
+        ordered_dict_types = [dict, OrderedDict, lambda x:x]
         attr_order += items
         expected_keys = [attr[0] for attr in attr_order]
         expected_values = [attr[1] for attr in attr_order]
@@ -2918,19 +2913,8 @@ class ETreeOnlyTestCase(HelperTestCase):
                           len(expected))
         self.assertEqual(sorted(dic.items()),
                           sorted(expected.items()))
-        if sys.version_info < (3,):
-            self.assertEqual(sorted(dic.iteritems()),
-                              sorted(expected.iteritems()))
         self.assertEqual(sorted(dic.keys()),
                           sorted(expected.keys()))
-        if sys.version_info < (3,):
-            self.assertEqual(sorted(dic.iterkeys()),
-                              sorted(expected.iterkeys()))
-        if sys.version_info < (3,):
-            self.assertEqual(sorted(dic.values()),
-                              sorted(expected.values()))
-            self.assertEqual(sorted(dic.itervalues()),
-                              sorted(expected.itervalues()))
 
     def test_register_namespace_xml(self):
         self.assertRaises(ValueError, self.etree.register_namespace,
