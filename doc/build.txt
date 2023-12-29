@@ -140,8 +140,8 @@ on your Python module search path (PYTHONPATH) and then import
 ``lxml.etree`` to play with it::
 
   # cd lxml
-  # PYTHONPATH=src python
-  Python 2.7.2
+  # PYTHONPATH=src python3
+  Python 3.10.2
   Type "help", "copyright", "credits" or "license" for more information.
   >>> from lxml import etree
   >>>

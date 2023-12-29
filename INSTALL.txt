@@ -41,8 +41,8 @@ see below.
 Requirements
 ------------
 
-You need Python 2.7 or 3.6+.
-Older Python 3.x versions might still work but are not actively tested.
+You need Python 3.6+ for lxml 5.0 and later.
+lxml versions before 5.0 support Python 2.7 and 3.6+.
 
 Unless you are using a static binary distribution (e.g. from a
 Windows binary installer), lxml requires libxml2 and libxslt to
@@ -91,7 +91,7 @@ To install a specific version, either download the distribution
 manually and let pip install that, or pass the desired version
 to pip::
 
-  pip install lxml==3.4.2
+  pip install lxml==5.0.0
 
 .. _pip: http://pypi.python.org/pypi/pip
 
