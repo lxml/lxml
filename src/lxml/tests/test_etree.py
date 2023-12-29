@@ -1798,7 +1798,7 @@ class ETreeOnlyTestCase(HelperTestCase):
                 <!ENTITY my_external_entity SYSTEM "%s">
             ]>
             <doc>&my_external_entity;</doc>
-            ''' % entity_file
+            ''' % path2url(entity_file)
             root = fromstring(xml, parser)
 
         self.assertEqual(root[0].tag, Entity)
@@ -1813,7 +1813,7 @@ class ETreeOnlyTestCase(HelperTestCase):
                 <!ENTITY my_failing_external_entity SYSTEM "%s">
             ]>
             <doc>&my_failing_external_entity;</doc>
-            ''' % entity_file
+            ''' % path2url(entity_file)
 
             try:
                 fromstring(xml)
