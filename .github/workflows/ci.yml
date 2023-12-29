@@ -41,7 +41,6 @@ jobs:
         #
         os: [ubuntu-latest, macos-latest, windows-2019]
         python-version:
-          - "2.7"
           - "3.6"
           - "3.7"
           - "3.8"
@@ -53,10 +52,6 @@ jobs:
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          #- os: windows-2016
-          #  python-version: 2.7
-          #  env: { STATIC_DEPS: true }  # always static
-
           - os: ubuntu-latest
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
@@ -113,10 +108,6 @@ jobs:
           # ================
           # Pypy
           - os: ubuntu-latest
-            python-version: pypy-2.7
-            env: { STATIC_DEPS: false }
-            allowed_failure: true
-          - os: ubuntu-latest
             python-version: pypy-3.7
             env: { STATIC_DEPS: false }
             allowed_failure: true
@@ -149,8 +140,6 @@ jobs:
           # Windows sub-jobs
           # ==============
           - os: windows-2019
-            python-version: 2.7  # needs older image
-          - os: windows-2019
             env: { STATIC_DEPS: false }  # always static
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
@@ -179,20 +168,8 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
-        if: startsWith(matrix.python-version, '3.')
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Setup Python2 (Linux)
-        if: matrix.python-version == '2.7' && startsWith(matrix.os, 'ubuntu')
-        run: |
-            sudo ln -fs python2 /usr/bin/python
-            sudo apt-get update
-            sudo apt-get install python-setuptools python2-dev
-            curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-            sudo python2 get-pip.py
-            ls -l /usr/bin/pip* /usr/local/bin/pip*
-            which pip
 
       - name: Install MacOS dependencies
         if: startsWith(runner.os, 'mac')
