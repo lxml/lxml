@@ -1105,9 +1105,9 @@ useless for the data commonly sent through web services and
 can simply be disabled, which rules out several types of
 denial of service attacks at once.  This also involves an attack
 that reads local files from the server, as XML entities can be
-defined to expand into their content.   Consequently, version
-1.2 of the SOAP standard explicitly disallows entity references
-in the XML stream.
+defined to expand into the content of external resources.
+Consequently, version 1.2 of the SOAP standard explicitly
+disallows entity references in the XML stream.
 
 To disable entity expansion, use an XML parser that is configured
 with the option ``resolve_entities=False``.  Then, after (or
@@ -1115,7 +1115,11 @@ while) parsing the document, use ``root.iter(etree.Entity)`` to
 recursively search for entity references.  If it contains any,
 reject the entire input document with a suitable error response.
 In lxml 3.x, you can also use the new DTD introspection API to
-apply your own restrictions on input documents.
+apply your own restrictions on input documents.  Since version 5.x,
+lxml disables the expansion of external entities (XXE) by default.
+If you really want to allow loading external files into XML documents
+using this functionality, you have to explicitly set
+``resolve_entities=True``.
 
 Another attack to consider is compression bombs.  If you allow
 compressed input into your web service, attackers can try to send

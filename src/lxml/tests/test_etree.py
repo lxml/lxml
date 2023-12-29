@@ -12,11 +12,14 @@ from __future__ import absolute_import
 from collections import OrderedDict
 import os.path
 import unittest
+import contextlib
 import copy
 import sys
 import re
 import gc
 import operator
+import shutil
+import tempfile
 import textwrap
 import zlib
 import gzip
@@ -1751,6 +1754,84 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertEqual(_bytes('<doc>&myentity;</doc>'),
                           tostring(root))
+
+    @contextlib.contextmanager
+    def _xml_test_file(self, name, content=b'<evil>XML</evil>'):
+        temp_dir = tempfile.mkdtemp()
+        try:
+            xml_file = os.path.join(temp_dir, name)
+            with open(xml_file, 'wb') as tmpfile:
+                tmpfile.write(content)
+            yield xml_file
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_entity_parse_external(self):
+        fromstring = self.etree.fromstring
+        tostring = self.etree.tostring
+        parser = self.etree.XMLParser(resolve_entities=True)
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_external_entity;</doc>
+            ''' % path2url(entity_file)
+            root = fromstring(xml, parser)
+
+        self.assertEqual(_bytes('<doc><evil>XML</evil></doc>'),
+                          tostring(root))
+        self.assertEqual(root.tag, 'doc')
+        self.assertEqual(root[0].tag, 'evil')
+        self.assertEqual(root[0].text, 'XML')
+        self.assertEqual(root[0].tail, None)
+
+    def test_entity_parse_external_no_resolve(self):
+        fromstring = self.etree.fromstring
+        parser = self.etree.XMLParser(resolve_entities=False)
+        Entity = self.etree.Entity
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_external_entity;</doc>
+            ''' % path2url(entity_file)
+            root = fromstring(xml, parser)
+
+        self.assertEqual(root[0].tag, Entity)
+        self.assertEqual(root[0].text, "&my_external_entity;")
+
+    def test_entity_parse_no_external_default(self):
+        fromstring = self.etree.fromstring
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_failing_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_failing_external_entity;</doc>
+            ''' % path2url(entity_file)
+
+            try:
+                fromstring(xml)
+            except self.etree.XMLSyntaxError as exc:
+                exception = exc
+            else:
+                self.assertTrue(False, "XMLSyntaxError was not raised")
+
+        self.assertIn("my_failing_external_entity", str(exception))
+        self.assertTrue(exception.error_log)
+        # Depending on the libxml2 version, we get different errors here,
+        # not necessarily the one that lxml produced. But it should fail either way.
+        for error in exception.error_log:
+            if "my_failing_external_entity" in error.message:
+                self.assertEqual(5, error.line)
+                break
+        else:
+            self.assertFalse("entity error not found in parser error log")
 
     def test_entity_restructure(self):
         xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>

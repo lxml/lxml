@@ -49,6 +49,11 @@ Bugs fixed
 Other changes
 -------------
 
+* LP#1742885: lxml no longer expands external entities (XXE) by default to prevent
+  the security risk of loading arbitrary files and URLs.  If this feature is needed,
+  it can be enabled in a backwards compatible way by using a parser with the option
+  ``resolve_entities=True``.  The new default is ``resolve_entities='internal'``.
+
 * With libxml2 2.10.4 and later (as provided by the lxml 5.0 binary wheels),
   parsing HTML tags with "prefixes" no longer builds a namespace dictionary
   in ``nsmap`` but considers the ``prefix:name`` string the actual tag name.
