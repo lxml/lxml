@@ -44,6 +44,9 @@ Bugs fixed
 * LP#1522052: A file-system specific test is now optional and should no longer fail
   on systems that don't support it.
 
+* GH#392: Some tests were adapted for libxml2 2.13.
+  Patch by Nick Wellnhofer.
+
 * Contains all fixes from lxml 4.9.4.
 
 Other changes
