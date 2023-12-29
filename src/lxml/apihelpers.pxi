@@ -270,10 +270,9 @@ cdef _iter_nsmap(nsmap):
     The difference to _iter_attrib() is that None doesn't sort with strings
     in Py3.x.
     """
-    if python.PY_VERSION_HEX >= 0x03060000:
+    if isinstance(nsmap, dict):
         # dicts are insertion-ordered in Py3.6+ => keep the user provided order.
-        if isinstance(nsmap, dict):
-            return nsmap.items()
+        return nsmap.items()
     if len(nsmap) <= 1:
         return nsmap.items()
     # nsmap will usually be a plain unordered dict => avoid type checking overhead
@@ -301,8 +300,7 @@ cdef _iter_attrib(attrib):
     Tries to preserve an existing order and sorts if it assumes no order.
     """
     # dicts are insertion-ordered in Py3.6+ => keep the user provided order.
-    if python.PY_VERSION_HEX >= 0x03060000 and isinstance(attrib, dict) or (
-            isinstance(attrib, (_Attrib, OrderedDict))):
+    if isinstance(attrib, (dict, _Attrib, OrderedDict)):
         return attrib.items()
     # assume it's an unordered mapping of some kind
     return sorted(attrib.items())
@@ -320,12 +318,8 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     is_html = doc._parser._for_html
     seen = set()
     if extra:
-        if python.PY_VERSION_HEX >= 0x03060000:
-            for name, value in extra.items():
-                _addAttributeToNode(c_node, doc, is_html, name, value, seen)
-        else:
-            for name, value in sorted(extra.items()):
-                _addAttributeToNode(c_node, doc, is_html, name, value, seen)
+        for name, value in extra.items():
+            _addAttributeToNode(c_node, doc, is_html, name, value, seen)
     if attrib:
         for name, value in _iter_attrib(attrib):
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)
@@ -1598,7 +1592,6 @@ cdef bint _isFilePath(const_xmlChar* c_path) noexcept:
     # assume it's a relative path
     return REL_FILE_PATH
 
-cdef object _NO_FSPATH = object()
 
 cdef object _getFSPathOrObject(object obj):
     """
@@ -1607,15 +1600,11 @@ cdef object _getFSPathOrObject(object obj):
     """
     if _isString(obj):
         return obj
-    if python.PY_VERSION_HEX >= 0x03060000:
-        try:
-            return python.PY_FSPath(obj)
-        except TypeError:
-            return obj
-    fspath = getattr(obj, '__fspath__', _NO_FSPATH)
-    if fspath is not _NO_FSPATH and callable(fspath):
-        return fspath()
-    return obj
+    try:
+        return python.PyOS_FSPath(obj)
+    except TypeError:
+        return obj
+
 
 cdef object _encodeFilename(object filename):
     u"""Make sure a filename is 8-bit encoded (or None).
