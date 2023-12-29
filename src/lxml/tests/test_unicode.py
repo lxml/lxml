@@ -169,7 +169,7 @@ class EncodingsTestCase(HelperTestCase):
         parser = etree.XMLParser(recover=True)
         if etree.LIBXML_VERSION >= (2, 12, 0):
             tree = etree.fromstring(data, parser)
-            self.assertEqual('\ufffd\ufffd\ufffd', tree.text)
+            self.assertEqual(u'\ufffd\ufffd\ufffd', tree.text)
         else:
             self.assertRaises(etree.XMLSyntaxError, etree.fromstring, data, parser)
 

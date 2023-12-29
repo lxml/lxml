@@ -18,7 +18,8 @@ from .dummy_http_server import webserver, HTTPRequestCollector
 class HttpIOTestCase(HelperTestCase):
     etree = etree
 
-    def _parse_from_http(self, data, code=200, headers=None, parser=None):
+    def _parse_from_http(self, data, code=200, headers=None):
+        parser = self.etree.XMLParser(no_network=False)
         handler = HTTPRequestCollector(data, code, headers)
         with webserver(handler) as host_url:
             tree = self.etree.parse(host_url + 'TEST', parser=parser)
@@ -54,16 +55,17 @@ class HttpIOTestCase(HelperTestCase):
     def test_parser_input_mix(self):
         data = _bytes('<root><a/></root>')
         handler = HTTPRequestCollector(data)
+        parser = self.etree.XMLParser(no_network=False)
 
         with webserver(handler) as host_url:
-            tree = self.etree.parse(host_url)
+            tree = self.etree.parse(host_url, parser=parser)
             root = tree.getroot()
             self.assertEqual('a', root[0].tag)
 
             root = self.etree.fromstring(data)
             self.assertEqual('a', root[0].tag)
 
-            tree = self.etree.parse(host_url)
+            tree = self.etree.parse(host_url, parser=parser)
             root = tree.getroot()
             self.assertEqual('a', root[0].tag)
 
@@ -110,9 +112,12 @@ class HttpIOTestCase(HelperTestCase):
                         load_dtd=True, no_network=True))
             except self.etree.XMLSyntaxError:
                 self.assertTrue("myentity" in str(sys.exc_info()[1]))
+                self.assertEqual(1, len(responses))  # DTD not read
+            except IOError:
+                self.assertTrue("failed to load" in str(sys.exc_info()[1]))
+                self.assertEqual(2, len(responses))  # nothing read
             else:
                 self.assertTrue(False)
-            self.assertEqual(1, len(responses))  # DTD not read
 
 
 def test_suite():

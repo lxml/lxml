@@ -12,11 +12,14 @@ from __future__ import absolute_import
 from collections import OrderedDict
 import os.path
 import unittest
+import contextlib
 import copy
 import sys
 import re
 import gc
 import operator
+import shutil
+import tempfile
 import textwrap
 import zlib
 import gzip
@@ -558,6 +561,41 @@ class ETreeOnlyTestCase(HelperTestCase):
         root.remove(root[0])
         self.assertEqual(_bytes('<div><p>boo</p></div>'),
                           self.etree.tostring(root))
+
+    def test_append_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        self.assertRaises(ValueError, a.append, root)
+        self.assertRaises(ValueError, a[0].append, root)
+        self.assertRaises(ValueError, a[0].append, a)
+        self.assertRaises(ValueError, a[0][0].append, root)
+        self.assertRaises(ValueError, a[0][0].append, a)
+        self.assertRaises(ValueError, a[0][0].append, a[0])
+
+    def test_insert_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        self.assertRaises(ValueError, a.insert, 0, root)
+        self.assertRaises(ValueError, a[0].insert, 0, root)
+        self.assertRaises(ValueError, a[0].insert, 0, a)
+        self.assertRaises(ValueError, a[0][0].insert, 0, root)
+        self.assertRaises(ValueError, a[0][0].insert, 0, a)
+        self.assertRaises(ValueError, a[0][0].insert, 0, a[0])
+
+    def test_replace_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        root.replace(a, a)
+        self.assertRaises(ValueError, root.replace, a, root)
+        a.replace(a[0], a[0])
+        self.assertRaises(ValueError, a.replace, a[0], root)
+        a[0].replace(a[0][0], a[0][0])
+        self.assertRaises(ValueError, a[0].replace, a[0][0], root)
+        self.assertRaises(ValueError, a[0].replace, a[0][0], a)
+        self.assertRaises(ValueError, a[0].replace, a[0][0], a[0])
 
     def test_pi(self):
         # lxml.etree separates target and text
@@ -1521,6 +1559,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(["RTEXT", "ATAIL", "CTAIL", " PITAIL "],
                           text)
 
+    def test_itertext_no_tails(self):
+        XML = self.etree.XML
+        root = XML(_bytes(
+            "<root>RTEXT<a>ATEXT</a>ATAIL<b/><!-- COMMENT -->CTAIL<?PI PITEXT?> PITAIL </root>"
+        ))
+
+        text = list(root.itertext(with_tail=False))
+        self.assertEqual(["RTEXT", "ATEXT"],
+                          text)
+
     def test_resolve_string_dtd(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(dtd_validation=True)
@@ -1706,6 +1754,84 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertEqual(_bytes('<doc>&myentity;</doc>'),
                           tostring(root))
+
+    @contextlib.contextmanager
+    def _xml_test_file(self, name, content=b'<evil>XML</evil>'):
+        temp_dir = tempfile.mkdtemp()
+        try:
+            xml_file = os.path.join(temp_dir, name)
+            with open(xml_file, 'wb') as tmpfile:
+                tmpfile.write(content)
+            yield xml_file
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_entity_parse_external(self):
+        fromstring = self.etree.fromstring
+        tostring = self.etree.tostring
+        parser = self.etree.XMLParser(resolve_entities=True)
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_external_entity;</doc>
+            ''' % path2url(entity_file)
+            root = fromstring(xml, parser)
+
+        self.assertEqual(_bytes('<doc><evil>XML</evil></doc>'),
+                          tostring(root))
+        self.assertEqual(root.tag, 'doc')
+        self.assertEqual(root[0].tag, 'evil')
+        self.assertEqual(root[0].text, 'XML')
+        self.assertEqual(root[0].tail, None)
+
+    def test_entity_parse_external_no_resolve(self):
+        fromstring = self.etree.fromstring
+        parser = self.etree.XMLParser(resolve_entities=False)
+        Entity = self.etree.Entity
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_external_entity;</doc>
+            ''' % path2url(entity_file)
+            root = fromstring(xml, parser)
+
+        self.assertEqual(root[0].tag, Entity)
+        self.assertEqual(root[0].text, "&my_external_entity;")
+
+    def test_entity_parse_no_external_default(self):
+        fromstring = self.etree.fromstring
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_failing_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_failing_external_entity;</doc>
+            ''' % path2url(entity_file)
+
+            try:
+                fromstring(xml)
+            except self.etree.XMLSyntaxError as exc:
+                exception = exc
+            else:
+                self.assertTrue(False, "XMLSyntaxError was not raised")
+
+        self.assertIn("my_failing_external_entity", str(exception))
+        self.assertTrue(exception.error_log)
+        # Depending on the libxml2 version, we get different errors here,
+        # not necessarily the one that lxml produced. But it should fail either way.
+        for error in exception.error_log:
+            if "my_failing_external_entity" in error.message:
+                self.assertEqual(5, error.line)
+                break
+        else:
+            self.assertFalse("entity error not found in parser error log")
 
     def test_entity_restructure(self):
         xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>

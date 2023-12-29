@@ -57,9 +57,6 @@ jobs:
           #  python-version: 2.7
           #  env: { STATIC_DEPS: true }  # always static
 
-          - python-version: "3.13-dev"
-            allowed_failure: true
-
           - os: ubuntu-latest
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
@@ -70,10 +67,11 @@ jobs:
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
             allowed_failure: true
+
           # Coverage setup
           - os: ubuntu-latest
             python-version: "3.10"
-            env: { COVERAGE: true }
+            env: { COVERAGE: true, STATIC_DEPS: true }
             extra_hash: "-coverage"
             allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
@@ -81,16 +79,36 @@ jobs:
             env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
             extra_hash: "-docs"
             allowed_failure: true   # shouldn't fail but currently does...
+
           # Old library setup with minimum version requirements
           - os: ubuntu-latest
-            python-version: "3.9"
+            python-version: "3.10"
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.9.2,
               LIBXSLT_VERSION: 1.1.27,
             }
-            extra_hash: "-oldlibs"
-            allowed_failure: true   # shouldn't fail but currently does...
+            extra_hash: "-oldlibs29"
+            #allowed_failure: true   # shouldn't fail but currently does...
+          - os: ubuntu-latest
+            python-version: "3.10"
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.10.3,
+              LIBXSLT_VERSION: 1.1.37,
+            }
+            extra_hash: "-oldlibs210"
+            #allowed_failure: true   # shouldn't fail but currently does...
+          - os: ubuntu-latest
+            python-version: "3.10"
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.11.6,
+              LIBXSLT_VERSION: 1.1.37,
+            }
+            extra_hash: "-oldlibs211"
+            #allowed_failure: true   # shouldn't fail but currently does...
+
           # Ubuntu sub-jobs:
           # ================
           # Pypy
@@ -120,6 +138,10 @@ jobs:
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
 
+          - os: ubuntu-20.04
+            python-version: "3.6"
+            env: { STATIC_DEPS: true }  # only static
+
         exclude:
           - os: ubuntu-latest
             python-version: "3.6"
@@ -140,8 +162,8 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.11.5
-      LIBXSLT_VERSION: 1.1.38
+      LIBXML2_VERSION: 2.12.3
+      LIBXSLT_VERSION: 1.1.39
       COVERAGE: false
       GCC_VERSION: 9
       USE_CCACHE: 1

@@ -938,6 +938,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if c_node is NULL:
             _appendChild(self, element)
             return
+        # prevent cycles
+        if _isAncestorOrSame(element._c_node, self._c_node):
+            raise ValueError("cannot append parent to itself")
         c_source_doc = element._c_node.doc
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
@@ -981,8 +984,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         c_old_node = old_element._c_node
         if c_old_node.parent is not self._c_node:
             raise ValueError, u"Element is not a child of this node."
-        c_old_next = c_old_node.next
         c_new_node = new_element._c_node
+        # prevent cycles
+        if _isAncestorOrSame(c_new_node, self._c_node):
+            raise ValueError("cannot append parent to itself")
+        # replace node
+        c_old_next = c_old_node.next
         c_new_next = c_new_node.next
         c_source_doc = c_new_node.doc
         tree.xmlReplaceNode(c_old_node, c_new_node)
@@ -1215,7 +1222,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         u"__reversed__(self)"
         return ElementChildIterator(self, reversed=True)
 
-    def index(self, _Element child not None, start: int = None, stop: int = None):
+    def index(self, child: _Element, start: int = None, stop: int = None):
         u"""index(self, child, start=None, stop=None)
 
         Find the position of the child within the parent.
@@ -2971,6 +2978,7 @@ cdef class ElementDepthFirstIterator:
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         return NULL
 
+
 cdef class ElementTextIterator:
     u"""ElementTextIterator(self, element, tag=None, with_tail=True)
     Iterates over the text content of a subtree.
@@ -2988,7 +2996,7 @@ cdef class ElementTextIterator:
         if with_tail:
             events = (u"start", u"comment", u"pi", u"end")
         else:
-            events = (u"start", u"comment", u"pi")
+            events = (u"start",)
         self._start_element = element
         self._events = iterwalk(element, events=events, tag=tag)
 
@@ -3005,6 +3013,7 @@ cdef class ElementTextIterator:
             elif element is not self._start_element:
                 result = element.tail
         return result
+
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     cdef xmlNode* c_node

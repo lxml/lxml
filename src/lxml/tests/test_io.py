@@ -260,7 +260,11 @@ class _IOTestCaseBase(HelperTestCase):
             self.assertRaises(IOError, self.etree.parse, os.path.join(dn, filename))
         finally:
             os.rmdir(dn)
-        dn = tempfile.mkdtemp(prefix=dirnameRU)
+        try:
+            dn = tempfile.mkdtemp(prefix=dirnameRU)
+        except (IOError, UnicodeEncodeError, UnicodeDecodeError):
+            # Creating the directory might fail on some platforms depending on encodings.
+            raise unittest.SkipTest("file system cannot create slavic file names")
         try:
             self.assertRaises(IOError, self.etree.parse, os.path.join(dn, filename))
         finally:
