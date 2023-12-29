@@ -112,7 +112,7 @@ libraries, although you might still want to take a look at the related
 Since it is generally difficult to build software on Windows, the library
 versions (libxml2, libxslt, libiconv, zlib) might not always be at the
 same version level as the builds on Linux or macOS.  This usually means
-that the `WinLibs project<https://github.com/orgs/winlibs>`_
+that the `WinLibs project <https://github.com/orgs/winlibs>`_
 has not updated their repositories yet.  If you need a more recent version,
 please file a ticket on their side to update it.
 

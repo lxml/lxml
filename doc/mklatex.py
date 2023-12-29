@@ -253,7 +253,7 @@ def publish(dirname, lxml_path, release):
     # integrate generated API docs
 
     print("Integrating API docs")
-    apidocsname = 'api.tex'
+    apidocsname = 'lxmlapi.tex'
     apipath = os.path.join(dirname, apidocsname)
     tex_postprocess(apipath, os.path.join(dirname, "_part_%s" % apidocsname),
                     process_line=fix_relative_hyperrefs)

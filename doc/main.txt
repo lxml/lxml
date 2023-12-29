@@ -35,7 +35,7 @@ libxml2_ and libxslt_.  It is unique in that it combines the speed and
 XML feature completeness of these libraries with the simplicity of a
 native Python API, mostly compatible but superior to the well-known
 ElementTree_ API.  The latest release works with all CPython versions
-from 2.7 to 3.9.  See the introduction_ for more information about
+from 2.7 to 3.12.  See the introduction_ for more information about
 background and goals of the lxml project.  Some common questions are
 answered in the FAQ_.
 
@@ -160,8 +160,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 4.9.3`_, released 2023-07-05
-(`changes for 4.9.3`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 4.9.4`_, released 2023-12-19
+(`changes for 4.9.4`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -256,7 +256,9 @@ See the websites of lxml
 ..
    and the `latest in-development version <https://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-4.9.3.pdf
+.. _`PDF documentation`: lxmldoc-4.9.4.pdf
+
+* `lxml 4.9.4`_, released 2023-12-19 (`changes for 4.9.4`_)
 
 * `lxml 4.9.3`_, released 2023-07-05 (`changes for 4.9.3`_)
 
@@ -286,6 +288,7 @@ See the websites of lxml
 
 * `older releases <https://lxml.de/4.6/#old-versions>`_
 
+.. _`lxml 4.9.4`: /files/lxml-4.9.4.tgz
 .. _`lxml 4.9.3`: /files/lxml-4.9.3.tgz
 .. _`lxml 4.9.2`: /files/lxml-4.9.2.tgz
 .. _`lxml 4.9.1`: /files/lxml-4.9.1.tgz
@@ -300,6 +303,8 @@ See the websites of lxml
 .. _`lxml 4.6.1`: /files/lxml-4.6.1.tgz
 .. _`lxml 4.6.0`: /files/lxml-4.6.0.tgz
 
+.. _`changes for 4.9.4`: /changes-4.9.4.html
+.. _`changes for 4.9.3`: /changes-4.9.3.html
 .. _`changes for 4.9.2`: /changes-4.9.2.html
 .. _`changes for 4.9.1`: /changes-4.9.1.html
 .. _`changes for 4.9.0`: /changes-4.9.0.html

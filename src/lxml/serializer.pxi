@@ -406,14 +406,12 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 # copied and adapted from libxml2
 cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val) noexcept:
     cdef xmlChar *ptr
-    cdef xmlChar c
+    cdef const xmlChar* hexdigits = b"0123456789ABCDEF"
 
     out[0] = '&'
     out += 1
-
     out[0] = '#'
     out += 1
-
     out[0] = 'x'
     out += 1
 
@@ -432,45 +430,8 @@ cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val) noexcept
 
     out = ptr + 1
     while val > 0:
-        c = (val & 0xF)
-
-        if c == 0:
-            ptr[0] = '0'
-        elif c == 1:
-            ptr[0] = '1'
-        elif c == 2:
-            ptr[0] = '2'
-        elif c == 3:
-            ptr[0] = '3'
-        elif c == 4:
-            ptr[0] = '4'
-        elif c == 5:
-            ptr[0] = '5'
-        elif c == 6:
-            ptr[0] = '6'
-        elif c == 7:
-            ptr[0] = '7'
-        elif c == 8:
-            ptr[0] = '8'
-        elif c == 9:
-            ptr[0] = '9'
-        elif c == 0xA:
-            ptr[0] = 'A'
-        elif c == 0xB:
-            ptr[0] = 'B'
-        elif c == 0xC:
-            ptr[0] = 'C'
-        elif c == 0xD:
-            ptr[0] = 'D'
-        elif c == 0xE:
-            ptr[0] = 'E'
-        elif c == 0xF:
-            ptr[0] = 'F'
-        else:
-            ptr[0] = '0'
-
+        ptr[0] = hexdigits[val & 0xF]
         ptr -= 1
-
         val >>= 4
 
     out[0] = ';'

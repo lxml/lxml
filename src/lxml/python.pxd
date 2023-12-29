@@ -2,12 +2,9 @@ from libc cimport stdio
 from libc.string cimport const_char
 cimport cython
 
-cdef extern from *:
-    cdef bint PEP393_ENABLED "CYTHON_PEP393_ENABLED"
 
 cdef extern from "Python.h":
     """
-    #if defined(CYTHON_PEP393_ENABLED) && CYTHON_PEP393_ENABLED
     #if PY_VERSION_HEX >= 0x030C0000
       #undef PyUnicode_IS_READY
       #define PyUnicode_IS_READY(s)  (1)
@@ -19,7 +16,6 @@ cdef extern from "Python.h":
       #define PyUnicode_GET_DATA_SIZE(s)  (0)
       #undef PyUnicode_GET_SIZE
       #define PyUnicode_GET_SIZE(s)  (0)
-    #endif
     #elif PY_VERSION_HEX <= 0x03030000
       #define PyUnicode_IS_READY(op)    (0)
       #define PyUnicode_GET_LENGTH(u)   PyUnicode_GET_SIZE(u)

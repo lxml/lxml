@@ -626,10 +626,10 @@ cdef _initParserContext(_ParserContext context,
     if c_ctxt is not NULL:
         context._initParserContext(c_ctxt)
 
-cdef void _forwardParserError(xmlparser.xmlParserCtxt* _parser_context, xmlerror.xmlError* error) noexcept with gil:
+cdef void _forwardParserError(xmlparser.xmlParserCtxt* _parser_context, const xmlerror.xmlError* error) noexcept with gil:
     (<_ParserContext>_parser_context._private)._error_log._receive(error)
 
-cdef void _receiveParserError(void* c_context, xmlerror.xmlError* error) noexcept nogil:
+cdef void _receiveParserError(void* c_context, const xmlerror.xmlError* error) noexcept nogil:
     if __DEBUG:
         if c_context is NULL or (<xmlparser.xmlParserCtxt*>c_context)._private is NULL:
             _forwardError(NULL, error)
@@ -1029,9 +1029,8 @@ cdef class _BaseParser:
         cdef int buffer_len, c_kind
         cdef const_char* c_text
         cdef const_char* c_encoding = _PY_UNICODE_ENCODING
-        cdef bint is_pep393_string = (
-            python.PEP393_ENABLED and python.PyUnicode_IS_READY(utext))
-        if is_pep393_string:
+        if python.PyUnicode_IS_READY(utext):
+            # PEP-393 string
             c_text = <const_char*>python.PyUnicode_DATA(utext)
             py_buffer_len = python.PyUnicode_GET_LENGTH(utext)
             c_kind = python.PyUnicode_KIND(utext)
@@ -1052,6 +1051,7 @@ cdef class _BaseParser:
             else:
                 assert False, f"Illegal Unicode kind {c_kind}"
         else:
+            # old Py_UNICODE string
             py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
             c_text = python.PyUnicode_AS_DATA(utext)
         assert 0 <= py_buffer_len <= limits.INT_MAX
@@ -1510,7 +1510,7 @@ cdef class XMLParser(_FeedParser):
 
     Other keyword arguments:
 
-    - encoding - override the document encoding
+    - encoding - override the document encoding (note: libiconv encoding name)
     - target   - a parser target object that will receive the parse events
     - schema   - an XMLSchema to validate against
 
@@ -1552,7 +1552,7 @@ cdef class XMLParser(_FeedParser):
         if not strip_cdata:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOCDATA
 
-        _BaseParser.__init__(self, parse_options, 0, schema,
+        _BaseParser.__init__(self, parse_options, False, schema,
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding)
 
@@ -1694,7 +1694,7 @@ cdef class HTMLParser(_FeedParser):
 
     Other keyword arguments:
 
-    - encoding - override the document encoding
+    - encoding - override the document encoding (note: libiconv encoding name)
     - target   - a parser target object that will receive the parse events
     - schema   - an XMLSchema to validate against
 
@@ -1721,7 +1721,7 @@ cdef class HTMLParser(_FeedParser):
         if huge_tree:
             parse_options = parse_options | xmlparser.XML_PARSE_HUGE
 
-        _BaseParser.__init__(self, parse_options, 1, schema,
+        _BaseParser.__init__(self, parse_options, True, schema,
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding)
 
@@ -1776,11 +1776,11 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
     if isinstance(text, unicode):
-        is_pep393_string = (
-            python.PEP393_ENABLED and python.PyUnicode_IS_READY(text))
-        if is_pep393_string:
+        if python.PyUnicode_IS_READY(text):
+            # PEP-393 Unicode string
             c_len = python.PyUnicode_GET_LENGTH(text) * python.PyUnicode_KIND(text)
         else:
+            # old Py_UNICODE string
             c_len = python.PyUnicode_GET_DATA_SIZE(text)
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(

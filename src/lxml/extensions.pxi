@@ -393,7 +393,7 @@ cdef tuple LIBXML2_XPATH_ERROR_MESSAGES = (
     b"?? Unknown error ??\n",
 )
 
-cdef void _forwardXPathError(void* c_ctxt, xmlerror.xmlError* c_error) noexcept with gil:
+cdef void _forwardXPathError(void* c_ctxt, const xmlerror.xmlError* c_error) noexcept with gil:
     cdef xmlerror.xmlError error
     cdef int xpath_code
     if c_error.message is not NULL:
@@ -414,7 +414,7 @@ cdef void _forwardXPathError(void* c_ctxt, xmlerror.xmlError* c_error) noexcept 
 
     (<_BaseContext>c_ctxt)._error_log._receive(&error)
 
-cdef void _receiveXPathError(void* c_context, xmlerror.xmlError* error) noexcept nogil:
+cdef void _receiveXPathError(void* c_context, const xmlerror.xmlError* error) noexcept nogil:
     if not __DEBUG:
         return
     if c_context is NULL:

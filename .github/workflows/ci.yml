@@ -57,9 +57,6 @@ jobs:
           #  python-version: 2.7
           #  env: { STATIC_DEPS: true }  # always static
 
-          - python-version: "3.13-dev"
-            allowed_failure: true
-
           - os: ubuntu-latest
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
@@ -70,10 +67,11 @@ jobs:
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
             allowed_failure: true
+
           # Coverage setup
           - os: ubuntu-latest
             python-version: "3.10"
-            env: { COVERAGE: true }
+            env: { COVERAGE: true, STATIC_DEPS: true }
             extra_hash: "-coverage"
             allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
@@ -81,16 +79,36 @@ jobs:
             env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
             extra_hash: "-docs"
             allowed_failure: true   # shouldn't fail but currently does...
+
           # Old library setup with minimum version requirements
           - os: ubuntu-latest
-            python-version: "3.9"
+            python-version: "3.10"
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.9.2,
               LIBXSLT_VERSION: 1.1.27,
             }
-            extra_hash: "-oldlibs"
-            allowed_failure: true   # shouldn't fail but currently does...
+            extra_hash: "-oldlibs29"
+            #allowed_failure: true   # shouldn't fail but currently does...
+          - os: ubuntu-latest
+            python-version: "3.10"
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.10.3,
+              LIBXSLT_VERSION: 1.1.37,
+            }
+            extra_hash: "-oldlibs210"
+            #allowed_failure: true   # shouldn't fail but currently does...
+          - os: ubuntu-latest
+            python-version: "3.10"
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.11.6,
+              LIBXSLT_VERSION: 1.1.37,
+            }
+            extra_hash: "-oldlibs211"
+            #allowed_failure: true   # shouldn't fail but currently does...
+
           # Ubuntu sub-jobs:
           # ================
           # Pypy
@@ -120,6 +138,10 @@ jobs:
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
 
+          - os: ubuntu-20.04
+            python-version: "3.6"
+            env: { STATIC_DEPS: true }  # only static
+
         exclude:
           - os: ubuntu-latest
             python-version: "3.6"
@@ -140,8 +162,8 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.11.5
-      LIBXSLT_VERSION: 1.1.38
+      LIBXML2_VERSION: 2.12.3
+      LIBXSLT_VERSION: 1.1.39
       COVERAGE: false
       GCC_VERSION: 9
       USE_CCACHE: 1
@@ -151,12 +173,12 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 1
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         if: startsWith(matrix.python-version, '3.')
         with:
           python-version: ${{ matrix.python-version }}
@@ -179,14 +201,14 @@ jobs:
           ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
 
       - name: Cache [ccache]
-        uses: pat-s/always-upload-cache@v3.0.11
+        uses: pat-s/always-upload-cache@9a0d1c3e1a8260b05500f9b67a5be8f2a1299819 # v3.0.11
         if: runner.os == 'Linux' || runner.os == 'macOS'
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
       - name: Cache [libs]
-        uses: actions/cache@v3
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         if: matrix.env.STATIC_DEPS
         with:
           path: |
@@ -205,7 +227,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         if: matrix.extra_hash == '-docs'
         with:
           name: website_html
@@ -213,14 +235,14 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: pycoverage_html
           path: coverage*
           if-no-files-found: ignore
 
       - name: Upload Wheel
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         if: matrix.env.STATIC_DEPS
         with:
           name: wheels-${{ runner.os }}

@@ -5,6 +5,14 @@ lxml changelog
 5.0.0 (2023-??-??)
 ==================
 
+Features added
+--------------
+
+* Character escaping in ``C14N2` serialisation now uses a single pass over the text
+  instead of searching for each unescaped character separately.
+
+* Early support for Python 3.13a2 was added.
+
 Bugs fixed
 ----------
 
@@ -12,8 +20,16 @@ Bugs fixed
   before existing tail text.  The tail text of both sibling elements now stays on
   the respective elements.
 
+* LP#1980767, GH#379: ``TreeBuilder.close()`` could fail with a ``TypeError`` after
+  parsing incorrect input.  Original patch by Enrico Minack.
+
+* ``Element.itertext(with_tail=False)`` returned the tail text of comments and
+  processing instructions, despite the explicit option.
+
 * GH#370: A crash with recent libxml2 2.11.x versions was resolved.
   Patch by Michael Schlenker.
+
+* A compile problem with recent libxml2 2.12.x versions was resolved.
 
 * The internal exception handling in C callbacks was improved for Cython 3.0.
 
@@ -21,6 +37,14 @@ Bugs fixed
   ``xmlOutputWriteCallback`` and ``xmlOutputCloseCallback`` in ``tree.pxd`` were
   corrected to prevent running Python code or calling into the C-API with a live
   exception set.
+
+* GH#385: The long deprecated ``unittest.m̀akeSuite()`` function is no longer used.
+  Patch by Miro Hrončok.
+
+* LP#1522052: A file-system specific test is now optional and should no longer fail
+  on systems that don't support it.
+
+* Contains all fixes from lxml 4.9.4.
 
 Other changes
 -------------
@@ -48,9 +72,36 @@ Other changes
   ``xslt_transform.apply()``,
   ``xpath.evaluate()``.
 
-* Binary wheels use the library versions libxml2 2.11.5 and libxslt 1.1.38.
+* Some incorrect declarations were removed from ``python.pxd``. In general, this file
+  should not be used by external Cython code. Use the C-API declarations provided by
+  Cython itself instead.
 
-* Built with Cython 3.0.5.
+* Binary wheels use the library versions libxml2 2.12.3 and libxslt 1.1.39.
+
+* Built with Cython 3.0.7, updated to follow recent changes in Cython 3.1-dev.
+
+
+4.9.4 (2023-12-19)
+==================
+
+Bugs fixed
+----------
+
+* LP#2046398: Inserting/replacing an ancestor into a node's children could loop indefinitely.
+
+* LP#1980767, GH#379: ``TreeBuilder.close()`` could fail with a ``TypeError`` after
+  parsing incorrect input.  Original patch by Enrico Minack.
+
+* LP#1522052: A file-system specific test is now optional and should no longer fail
+  on systems that don't support it.
+
+Other changes
+-------------
+
+* Wheels include zlib 1.3, libxml2 2.10.3 and libxslt 1.1.39
+  (zlib 1.2.12, libxml2 2.10.3 and libxslt 1.1.37 on Windows).
+
+* Built with Cython 0.29.37.
 
 
 4.9.3 (2023-07-05)
@@ -59,7 +110,7 @@ Other changes
 Bugs fixed
 ----------
 
-* ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
+* LP#2008911: ``lxml.objectify`` accepted non-decimal numbers like ``²²²`` as integers.
 
 * A memory leak in ``lxml.html.clean`` was resolved by switching to Cython 0.29.34+.
 

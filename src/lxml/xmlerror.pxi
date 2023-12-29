@@ -66,7 +66,7 @@ cdef class _LogEntry:
         tree.xmlFree(self._c_path)
 
     @cython.final
-    cdef int _setError(self, xmlerror.xmlError* error) except -1:
+    cdef int _setError(self, const xmlerror.xmlError* error) except -1:
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
@@ -198,7 +198,7 @@ cdef class _BaseErrorLog:
         pass
 
     @cython.final
-    cdef int _receive(self, xmlerror.xmlError* error) except -1:
+    cdef int _receive(self, const xmlerror.xmlError* error) except -1:
         cdef bint is_error
         cdef _LogEntry entry
         cdef _BaseErrorLog global_log
@@ -634,7 +634,7 @@ def use_global_python_log(PyErrorLog log not None):
 
 
 # local log functions: forward error to logger object
-cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) noexcept with gil:
+cdef void _forwardError(void* c_log_handler, const xmlerror.xmlError* error) noexcept with gil:
     cdef _BaseErrorLog log_handler
     if c_log_handler is not NULL:
         log_handler = <_BaseErrorLog>c_log_handler
@@ -645,7 +645,7 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) noexcept 
     log_handler._receive(error)
 
 
-cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) noexcept nogil:
+cdef void _receiveError(void* c_log_handler, const xmlerror.xmlError* error) noexcept nogil:
     # no Python objects here, may be called without thread context !
     if __DEBUG:
         _forwardError(c_log_handler, error)
