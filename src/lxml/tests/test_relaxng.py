@@ -4,7 +4,6 @@
 Test cases related to RelaxNG parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -44,7 +43,7 @@ class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng_stringio(self):
         tree_valid = self.parse('<a><b></b></a>')
         tree_invalid = self.parse('<a><c></c></a>')
-        schema_file = BytesIO('''\
+        schema_file = BytesIO(b'''\
 <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
   <zeroOrMore>
      <element name="b">
@@ -208,12 +207,12 @@ class ETreeRelaxNGTestCase(HelperTestCase):
 </element>
 ''') )
         c_tree = etree.ElementTree(tree.getroot()[1])
-        self.assertEqual(self._rootstring(c_tree), _bytes('<c>C</c>'))
+        self.assertEqual(self._rootstring(c_tree), b'<c>C</c>')
         self.assertFalse(schema.validate(c_tree))
         self.assertTrue(schema.error_log.filter_from_errors())
 
         b_tree = etree.ElementTree(tree.getroot()[0])
-        self.assertEqual(self._rootstring(b_tree), _bytes('<b>B</b>'))
+        self.assertEqual(self._rootstring(b_tree), b'<b>B</b>')
         self.assertTrue(schema.validate(b_tree))
         self.assertFalse(schema.error_log.filter_from_errors())
 

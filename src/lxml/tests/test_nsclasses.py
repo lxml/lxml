@@ -5,7 +5,6 @@ Test cases related to namespace implementation classes and the
 namespace registry mechanism
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -52,7 +51,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         self.Namespace('ns10').update(bluff_dict)
 
-        tree = self.parse(_bytes('<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>'))
+        tree = self.parse(b'<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>')
 
         el = tree.getroot()
         self.assertTrue(isinstance(el, etree.ElementBase))
@@ -72,7 +71,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         self.Namespace('ns10').clear()
 
-        tree = self.parse(_bytes('<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>'))
+        tree = self.parse(b'<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>')
         el = tree.getroot()
         self.assertFalse(hasattr(el, 'bluff'))
         self.assertFalse(hasattr(el, 'maeh'))
@@ -90,11 +89,11 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         ns = self.Namespace("uri:nsDefClass")
         ns.update(bluff_dict)
 
-        tree = self.parse(_bytes('''
+        tree = self.parse(b'''
             <test xmlns="bla" xmlns:ns1="uri:nsDefClass" xmlns:ns2="uri:nsDefClass">
               <ns2:el1/><ns1:el2/><ns1:maeh/><ns2:maeh/><maeh/>
             </test>
-            '''))
+            ''')
 
         el = tree.getroot()
         self.assertFalse(isinstance(el, etree.ElementBase))

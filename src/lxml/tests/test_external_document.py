@@ -3,7 +3,6 @@
 Test cases related to direct loading of external libxml2 documents
 """
 
-from __future__ import absolute_import
 
 import sys
 import unittest

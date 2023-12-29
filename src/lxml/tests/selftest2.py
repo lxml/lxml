@@ -5,12 +5,7 @@
 # *test script* works as expected.
 
 import sys
-
-try:
-    from StringIO import StringIO
-    BytesIO = StringIO
-except ImportError:
-    from io import BytesIO, StringIO
+from io import BytesIO, StringIO
 
 from lxml import etree as ElementTree
 

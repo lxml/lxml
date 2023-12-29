@@ -12,8 +12,6 @@
 import re, sys
 
 def stdout():
-    if sys.version_info[0] < 3:
-        return sys.stdout
     class bytes_stdout(object):
         def write(self, data):
             if isinstance(data, bytes):
@@ -21,10 +19,7 @@ def stdout():
             sys.stdout.write(data)
     return bytes_stdout()
 
-try:
-    from StringIO import StringIO as BytesIO
-except ImportError:
-    from io import BytesIO
+from io import BytesIO
 
 from lxml import etree as ElementTree
 from lxml import _elementpath as ElementPath

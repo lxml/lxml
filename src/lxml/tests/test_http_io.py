@@ -4,7 +4,6 @@
 Web IO test cases (wsgiref)
 """
 
-from __future__ import absolute_import
 
 import unittest
 import textwrap
@@ -27,13 +26,13 @@ class HttpIOTestCase(HelperTestCase):
         return tree
 
     def test_http_client(self):
-        tree = self._parse_from_http(_bytes('<root><a/></root>'))
+        tree = self._parse_from_http(b'<root><a/></root>')
         self.assertEqual('root', tree.getroot().tag)
         self.assertEqual('a', tree.getroot()[0].tag)
 
     def test_http_client_404(self):
         try:
-            self._parse_from_http(_bytes('<root/>'), code=404)
+            self._parse_from_http(b'<root/>', code=404)
         except IOError:
             self.assertTrue(True)
         else:
@@ -42,7 +41,7 @@ class HttpIOTestCase(HelperTestCase):
     def test_http_client_gzip(self):
         f = BytesIO()
         gz = gzip.GzipFile(fileobj=f, mode='w', filename='test.xml')
-        gz.write(_bytes('<root><a/></root>'))
+        gz.write(b'<root><a/></root>')
         gz.close()
         data = f.getvalue()
         del f, gz
@@ -53,7 +52,7 @@ class HttpIOTestCase(HelperTestCase):
         self.assertEqual('a', tree.getroot()[0].tag)
 
     def test_parser_input_mix(self):
-        data = _bytes('<root><a/></root>')
+        data = b'<root><a/></root>'
         handler = HTTPRequestCollector(data)
         parser = self.etree.XMLParser(no_network=False)
 

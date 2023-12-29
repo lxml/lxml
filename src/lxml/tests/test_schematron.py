@@ -4,7 +4,6 @@
 Test cases related to Schematron parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 

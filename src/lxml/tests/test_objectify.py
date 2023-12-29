@@ -4,7 +4,6 @@
 Tests specific to the lxml.objectify API
 """
 
-from __future__ import absolute_import
 
 import operator
 import random
@@ -398,7 +397,7 @@ class ObjectifyTestCase(HelperTestCase):
     def test_setattr_nonunicode(self):
         root = self.Element('root')
         attrname = 'val'
-        val = _bytes("W\xf6n't get f\xf6\xf6led \xe4g\xe4in", 'ISO-8859-1')
+        val = bytes("W\xf6n't get f\xf6\xf6led \xe4g\xe4in", 'ISO-8859-1')
         self.assertRaises(ValueError, setattr, root, attrname, val)
         self.assertRaises(AttributeError, getattr, root, attrname) 
  
@@ -1344,14 +1343,14 @@ class ObjectifyTestCase(HelperTestCase):
         
     def test_type_str_sequence(self):
         XML = self.XML
-        root = XML(_bytes('<root><b>why</b><b>try</b></root>'))
+        root = XML(b'<root><b>why</b><b>try</b></root>')
         strs = [ str(s) for s in root.b ]
         self.assertEqual(["why", "try"],
                           strs)
 
     def test_type_str_cmp(self):
         XML = self.XML
-        root = XML(_bytes('<root><b>test</b><b>taste</b><b></b><b/></root>'))
+        root = XML(b'<root><b>test</b><b>taste</b><b></b><b/></root>')
         self.assertFalse(root.b[0] <  root.b[1])
         self.assertFalse(root.b[0] <= root.b[1])
         self.assertFalse(root.b[0] == root.b[1])
@@ -1378,7 +1377,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_type_int_cmp(self):
         XML = self.XML
-        root = XML(_bytes('<root><b>5</b><b>6</b></root>'))
+        root = XML(b'<root><b>5</b><b>6</b></root>')
         self.assertTrue(root.b[0] <  root.b[1])
         self.assertTrue(root.b[0] <= root.b[1])
         self.assertTrue(root.b[0] != root.b[1])
@@ -1400,7 +1399,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_type_bool_cmp(self):
         XML = self.XML
-        root = XML(_bytes('<root><b>false</b><b>true</b></root>'))
+        root = XML(b'<root><b>false</b><b>true</b></root>')
         self.assertTrue(root.b[0] <  root.b[1])
         self.assertTrue(root.b[0] <= root.b[1])
         self.assertTrue(root.b[0] != root.b[1])
@@ -1424,10 +1423,10 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_type_none_cmp(self):
         XML = self.XML
-        root = XML(_bytes("""
+        root = XML(b"""
         <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
           <b xsi:nil="true"></b><b xsi:nil="true"/>
-        </root>"""))
+        </root>""")
         self.assertTrue(root.b[0] == root.b[1])
         self.assertFalse(root.b[0])
         self.assertEqual(root.b[0], None)
@@ -1461,7 +1460,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_pytype_annotation(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1479,7 +1478,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.annotate(root)
 
         child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
@@ -1503,12 +1502,12 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_pytype_annotation_empty(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML(b'''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <n></n>
         </a>
-        '''))
+        ''')
         objectify.annotate(root)
 
         child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
@@ -1523,7 +1522,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_pytype_annotation_use_old(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1541,7 +1540,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.annotate(root, ignore_old=False)
 
         child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
@@ -1565,7 +1564,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_pytype_xsitype_annotation(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1583,7 +1582,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.annotate(root, ignore_old=False, ignore_xsi=False,
                            annotate_xsi=1, annotate_pytype=1)
         
@@ -1632,7 +1631,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_xsiannotate_use_old(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1650,7 +1649,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.xsiannotate(root, ignore_old=False)
 
         child_types = [ c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR)
@@ -1672,7 +1671,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_pyannotate_ignore_old(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1690,7 +1689,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.pyannotate(root, ignore_old=True)
 
         child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
@@ -1776,7 +1775,7 @@ class ObjectifyTestCase(HelperTestCase):
         
     def test_xsiannotate_ignore_old(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1794,7 +1793,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.xsiannotate(root, ignore_old=True)
 
         child_types = [ c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR)
@@ -1818,7 +1817,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_deannotate(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1836,7 +1835,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.deannotate(root)
 
         for c in root.getiterator():
@@ -1847,7 +1846,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_xsinil_deannotate(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype">
           <b>5</b>
@@ -1865,7 +1864,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.annotate(
             root, ignore_old=False, ignore_xsi=False, annotate_xsi=True,
             empty_pytype='str', empty_type='string')
@@ -1900,7 +1899,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_xsitype_deannotate(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -1919,7 +1918,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.annotate(root)
         objectify.deannotate(root, pytype=False)
 
@@ -1947,7 +1946,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_pytype_deannotate(self):
         XML = self.XML
-        root = XML(_bytes('''\
+        root = XML('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:py="http://codespeak.net/lxml/objectify/pytype"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -1966,7 +1965,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l xsi:type="xsd:long">2</l>
           <t py:pytype="TREE"></t>
         </a>
-        '''))
+        ''')
         objectify.annotate(root)
         objectify.deannotate(root, xsi=False)
 
@@ -1995,7 +1994,7 @@ class ObjectifyTestCase(HelperTestCase):
     def test_change_pytype_attribute(self):
         XML = self.XML
 
-        xml = _bytes('''\
+        xml = '''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
           <b>5</b>
           <b>test</b>
@@ -2006,7 +2005,7 @@ class ObjectifyTestCase(HelperTestCase):
           <n></n>
           <b xsi:type="double">5</b>
         </a>
-        ''')
+        '''
 
         pytype_ns, pytype_name = objectify.PYTYPE_ATTRIBUTE[1:].split('}')
         objectify.set_pytype_attribute_tag("{TEST}test")
@@ -2604,19 +2603,19 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual(attr.get("range"), "0.,1.")
 
     def test_XML_base_url_docinfo(self):
-        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = objectify.XML(b"<root/>", base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
  
     def test_XML_set_base_url_docinfo(self):
-        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = objectify.XML(b"<root/>", base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
         docinfo.URL = "https://secret/url"
         self.assertEqual(docinfo.URL, "https://secret/url")
  
     def test_parse_stringio_base_url(self):
-        tree = objectify.parse(BytesIO("<root/>"), base_url="http://no/such/url")
+        tree = objectify.parse(BytesIO(b"<root/>"), base_url="http://no/such/url")
         docinfo = tree.docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
  
@@ -2627,7 +2626,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual(docinfo.URL, "http://no/such/url")
 
     def test_xml_base(self):
-        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = objectify.XML(b"<root/>", base_url="http://no/such/url")
         self.assertEqual(root.base, "http://no/such/url")
         self.assertEqual(
             root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
@@ -2638,7 +2637,7 @@ class ObjectifyTestCase(HelperTestCase):
             "https://secret/url")
  
     def test_xml_base_attribute(self):
-        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = objectify.XML(b"<root/>", base_url="http://no/such/url")
         self.assertEqual(root.base, "http://no/such/url")
         self.assertEqual(
             root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
@@ -2652,7 +2651,7 @@ class ObjectifyTestCase(HelperTestCase):
     def test_standard_lookup(self):
         XML = self.XML
 
-        xml = _bytes('''\
+        root = XML('''\
         <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
           <i>5</i>
           <i>-5</i>
@@ -2680,7 +2679,6 @@ class ObjectifyTestCase(HelperTestCase):
           <n xsi:nil="true" />
         </root>
         ''')
-        root = XML(xml)
 
         for i in root.i:
             self.assertTrue(isinstance(i, objectify.IntElement), (i.text, type(i)))
@@ -2716,11 +2714,11 @@ class ObjectifyTestCase(HelperTestCase):
             for special in ('', 'INF', 'inf', 'NaN', 'nan', 'an', 'na', 'ana', 'nf')
         ]
 
-        root = self.XML(_bytes('''\
+        root = self.XML('''\
         <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         ''' + ''.join(fuzz) + '''
         </root>
-        '''))
+        ''')
 
         test_count = 0
         for el in root.iterchildren():

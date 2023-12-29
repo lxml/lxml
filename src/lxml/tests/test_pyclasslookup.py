@@ -4,7 +4,6 @@
 Tests specific to the Python based class lookup.
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -13,7 +12,7 @@ from .common_imports import etree, HelperTestCase, _bytes
 from lxml.etree import PythonElementClassLookup
 
 
-xml_str = _bytes('''\
+xml_str = b'''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">
   <obj:c1 a1="A1" a2="A2" other:a3="A3">
     <obj:c2>0</obj:c2>
@@ -22,7 +21,7 @@ xml_str = _bytes('''\
     <other:c2>3</other:c2>
     <c2>3</c2>
   </obj:c1>
-</obj:root>''')
+</obj:root>'''
 
 
 class PyClassLookupTestCase(HelperTestCase):

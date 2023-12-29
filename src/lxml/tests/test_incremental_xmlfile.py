@@ -4,18 +4,19 @@
 Tests for the incremental XML serialisation API.
 """
 
-from __future__ import absolute_import
-
 import io
 import os
 import sys
 import unittest
 import textwrap
 import tempfile
+from io import BytesIO
+
+from unittest import skipIf
 
 from lxml.etree import LxmlSyntaxError
 
-from .common_imports import etree, BytesIO, HelperTestCase, skipIf, _str
+from .common_imports import etree, HelperTestCase
 
 
 class _XmlFileTestCaseBase(HelperTestCase):
@@ -530,7 +531,7 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
 
     def test_attribute_quoting_unicode(self):
         with etree.htmlfile(self._file) as xf:
-            with xf.element("tagname", attrib={"attr": _str('"misquöted\\u3344\\U00013344"')}):
+            with xf.element("tagname", attrib={"attr": '"misquöted\u3344\U00013344"'}):
                 xf.write("foo")
 
         self.assertXml('<tagname attr="&quot;misqu&#xF6;ted&#x3344;&#x13344;&quot;">foo</tagname>')

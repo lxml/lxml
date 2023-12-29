@@ -4,7 +4,6 @@
 IO test cases that apply to both etree and ElementTree
 """
 
-from __future__ import absolute_import
 
 import unittest
 import tempfile, gzip, os, os.path, gc, shutil
@@ -252,9 +251,9 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_etree_parse_io_error(self):
         # this is a directory name that contains characters beyond latin-1
-        dirnameEN = _str('Directory')
-        dirnameRU = _str('ÐšÐ°Ñ‚Ð°Ð»Ð¾Ð³')
-        filename = _str('nosuchfile.xml')
+        dirnameEN = 'Directory'
+        dirnameRU = 'ÐšÐ°Ñ‚Ð°Ð»Ð¾Ð³'
+        filename = 'nosuchfile.xml'
         dn = tempfile.mkdtemp(prefix=dirnameEN)
         try:
             self.assertRaises(IOError, self.etree.parse, os.path.join(dn, filename))
@@ -271,9 +270,9 @@ class _IOTestCaseBase(HelperTestCase):
             os.rmdir(dn)
 
     def test_parse_utf8_bom(self):
-        utext = _str('Søk på nettet')
+        utext = 'Søk på nettet'
         uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
-        bom = _bytes('\\xEF\\xBB\\xBF').decode(
+        bom = b'\\xEF\\xBB\\xBF'.decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
         f = tempfile.NamedTemporaryFile(delete=False)
@@ -289,9 +288,9 @@ class _IOTestCaseBase(HelperTestCase):
         self.assertEqual(utext, tree.getroot().text)
 
     def test_iterparse_utf8_bom(self):
-        utext = _str('Søk på nettet')
+        utext = 'Søk på nettet'
         uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
-        bom = _bytes('\\xEF\\xBB\\xBF').decode(
+        bom = b'\\xEF\\xBB\\xBF'.decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
         f = tempfile.NamedTemporaryFile(delete=False)
@@ -309,9 +308,9 @@ class _IOTestCaseBase(HelperTestCase):
         self.assertEqual(utext, root.text)
 
     def test_iterparse_utf16_bom(self):
-        utext = _str('Søk på nettet')
+        utext = 'Søk på nettet'
         uxml = '<?xml version="1.0" encoding="UTF-16"?><p>%s</p>' % utext
-        boms = _bytes('\\xFE\\xFF \\xFF\\xFE').decode(
+        boms = b'\\xFE\\xFF \\xFF\\xFE'.decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(5, len(boms))
         xml = uxml.encode("utf-16")
