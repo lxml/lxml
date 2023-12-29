@@ -1830,7 +1830,6 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     cdef char* c_filename
     cdef char* c_text
     cdef Py_ssize_t c_len
-    cdef bint is_pep393_string
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     if not filename:
@@ -1848,10 +1847,6 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 StringIO(text), filename, None)
-        if _PY_UNICODE_ENCODING is NULL and not is_pep393_string:
-            text = (<unicode>text).encode('utf8')
-            return (<_BaseParser>parser)._parseDocFromFilelike(
-                BytesIO(text), filename, "UTF-8")
         return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
     else:
         c_len = python.PyBytes_GET_SIZE(text)
