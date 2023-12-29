@@ -7,8 +7,8 @@ import os.path
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
 
-if (2, 7) != sys.version_info[:2] < (3, 5):
-    print("This lxml version requires Python 2.7, 3.5 or later.")
+if sys.version_info[:2] < (3, 6):
+    print("This lxml version requires Python 3.6 or later.")
     sys.exit(1)
 
 try:
