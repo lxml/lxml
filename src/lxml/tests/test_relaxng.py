@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to RelaxNG parsing and validation
 """
@@ -229,7 +227,7 @@ class RelaxNGCompactTestCase(HelperTestCase):
         self.assertFalse(schema.validate(tree_invalid))
 
     def test_relaxng_compact_file_obj(self):
-        with open(fileInTestDir('test.rnc'), 'r') as f:
+        with open(fileInTestDir('test.rnc')) as f:
             schema = etree.RelaxNG(file=f)
 
         tree_valid = self.parse('<a><b>B</b><c>C</c></a>')

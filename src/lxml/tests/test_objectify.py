@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests specific to the lxml.objectify API
 """
@@ -39,8 +37,9 @@ objectclass2xsitype = {
     # None: xsi:nil="true"
     }
 
-xsitype2objclass = dict([ (v, k) for k in objectclass2xsitype
-                          for v in objectclass2xsitype[k] ])
+xsitype2objclass = { v: k
+                     for k in objectclass2xsitype
+                     for v in objectclass2xsitype[k] }
 
 objectclass2pytype = {
     # objectify built-in
@@ -51,8 +50,8 @@ objectclass2pytype = {
     # None: xsi:nil="true"
     }
 
-pytype2objclass = dict([ (objectclass2pytype[k], k)
-                         for k in objectclass2pytype])
+pytype2objclass = { objectclass2pytype[k]: k
+                    for k in objectclass2pytype}
 
 xml_str = '''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">
@@ -74,7 +73,7 @@ class ObjectifyTestCase(HelperTestCase):
         return self.etree.XML(xml, self.parser)
 
     def setUp(self):
-        super(ObjectifyTestCase, self).setUp()
+        super().setUp()
         self.parser = self.etree.XMLParser(remove_blank_text=True)
         self.lookup = etree.ElementNamespaceClassLookup(
             objectify.ObjectifyElementClassLookup() )
@@ -99,7 +98,7 @@ class ObjectifyTestCase(HelperTestCase):
             pytype.register()
         del self._orig_types
 
-        super(ObjectifyTestCase, self).tearDown()
+        super().tearDown()
 
 
     def test_element_nsmap_default(self):
@@ -2696,7 +2695,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual(None, root.n)
 
     def test_standard_lookup_fuzz(self):
-        SPACES = ('',) * 10 + ('\t', 'x', '\n', '\r\n', u'\xA0', u'\x0A', u'\u200A', u'\u200B')
+        SPACES = ('',) * 10 + ('\t', 'x', '\n', '\r\n', '\xA0', '\x0A', '\u200A', '\u200B')
         DIGITS = ('', '0', '1', '11', '21', '345678', '9'*20)
 
         def space(_choice=random.choice):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Test cases related to direct loading of external libxml2 documents
 """

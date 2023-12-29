@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for different Element class lookup mechanisms.
 """
@@ -108,7 +106,7 @@ class ClassLookupTestCase(HelperTestCase):
 
     def tearDown(self):
         etree.set_element_class_lookup()
-        super(ClassLookupTestCase, self).tearDown()
+        super().tearDown()
 
     def test_namespace_lookup(self):
         class TestElement(etree.ElementBase):

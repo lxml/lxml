@@ -410,7 +410,7 @@ def temp_install(html=False, del_module=None):
                     check_func, checker_check_func,
                     del_module)
 
-class _RestoreChecker(object):
+class _RestoreChecker:
     def __init__(self, dt_self, old_checker, new_checker, check_func, clone_func,
                  del_module):
         self.dt_self = dt_self

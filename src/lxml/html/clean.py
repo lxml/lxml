@@ -84,7 +84,7 @@ _find_external_links = etree.XPath(
     namespaces={'x':XHTML_NAMESPACE})
 
 
-class Cleaner(object):
+class Cleaner:
     """
     Instances cleans the document of each of the possible offending
     elements.  The cleaning is controlled by attributes; you can

@@ -32,7 +32,7 @@ class HtmlParserTestCase(HelperTestCase):
     )
 
     def tearDown(self):
-        super(HtmlParserTestCase, self).tearDown()
+        super().tearDown()
         self.etree.set_default_parser()
 
     def test_module_HTML(self):
@@ -443,7 +443,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_tag(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -465,7 +465,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_empty(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -489,7 +489,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_html(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -513,7 +513,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_html_full(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -537,7 +537,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_parser_target_exceptions(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 raise ValueError("START")
@@ -564,7 +564,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_fromstring_target_exceptions(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 raise ValueError("START")

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for the incremental XML serialisation API.
 """
@@ -358,7 +356,7 @@ class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
 
 
 class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
-    class SimpleFileLike(object):
+    class SimpleFileLike:
         def __init__(self, target):
             self._target = target
             self.write = target.write
@@ -403,7 +401,7 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         class WriteError(Exception):
             pass
 
-        class Writer(object):
+        class Writer:
             def __init__(self, trigger):
                 self._trigger = trigger
                 self._failed = False

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import optparse
 import sys
 import re

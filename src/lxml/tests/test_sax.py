@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to SAX I/O
 """
@@ -294,12 +292,12 @@ class ETreeSaxTestCase(HelperTestCase):
         return f.getvalue().replace(b'\n', b'')
 
 
-class SimpleContentHandler(ContentHandler, object):
+class SimpleContentHandler(ContentHandler):
     """A SAX content handler that just stores the events"""
 
     def __init__(self):
         self.sax_events = []
-        super(SimpleContentHandler, self).__init__()
+        super().__init__()
 
     def startDocument(self):
         self.sax_events.append(('startDocument',))

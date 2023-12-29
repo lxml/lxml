@@ -67,7 +67,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         HelperTestCase.assertRegex
     except AttributeError:
         def assertRegex(self, *args, **kwargs):
-            return self.assertRegexpMatches(*args, **kwargs)
+            return self.assertRegex(*args, **kwargs)
 
     @et_needs_pyversion(3, 6)
     def test_interface(self):
@@ -114,7 +114,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         check_element(element)
         tree = self.etree.ElementTree(element)
         check_element(tree.getroot())
-        element = self.etree.Element(u"t\xe4g", key="value")
+        element = self.etree.Element("t\xe4g", key="value")
         tree = self.etree.ElementTree(element)
         # lxml and ET Py2: slightly different repr()
         #self.assertRegex(repr(element), r"^<Element 't\xe4g' at 0x.*>$")
@@ -1792,7 +1792,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         # Use unique names to make sure they are new in the tag name dict.
         import uuid
-        names = dict((k, 'tag-' + str(uuid.uuid4())) for k in 'abcde')
+        names = {k: f'tag-{uuid.uuid4()}' for k in 'abcde'}
 
         a = Element(names['a'])
         b = SubElement(a, names['b'])
@@ -3042,7 +3042,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         a = Element('a')
         a.text = 'Søk på nettet'
         self.assertXML(
-            '<a>Søk på nettet</a>'.encode('utf-8'),
+            '<a>Søk på nettet</a>'.encode(),
             a, 'utf-8')
 
     def test_encoding_exact(self):
@@ -3055,7 +3055,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         f = BytesIO()
         tree = ElementTree(element=a)
         tree.write(f, encoding='utf-8')
-        self.assertEqual('<a>Søk på nettet</a>'.encode('utf-8'),
+        self.assertEqual('<a>Søk på nettet</a>'.encode(),
                           f.getvalue().replace(b'\n',b''))
 
     def test_parse_file_encoding(self):
@@ -3063,7 +3063,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         # from file
         tree = parse(fileInTestDir('test-string.xml'))
         self.assertXML(
-            '<a>Søk på nettet</a>'.encode('utf-8'),
+            '<a>Søk på nettet</a>'.encode(),
             tree.getroot(), 'UTF-8')
 
     def test_parse_file_object_encoding(self):
@@ -3073,7 +3073,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         tree = parse(f)
         f.close()
         self.assertXML(
-            '<a>Søk på nettet</a>'.encode('utf-8'),
+            '<a>Søk på nettet</a>'.encode(),
             tree.getroot(), 'UTF-8')
 
     def test_encoding_8bit_latin1(self):
@@ -3155,7 +3155,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         a = Element('a')
         a.text = 'Søk på nettet'
-        self.assertEqual('<a>Søk på nettet</a>'.encode('utf-8'),
+        self.assertEqual('<a>Søk på nettet</a>'.encode(),
                          tostring(a, encoding='utf-8'))
 
     def test_encoding_tostring_unknown(self):
@@ -3175,7 +3175,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         a = Element('a')
         b = SubElement(a, 'b')
         b.text = 'Søk på nettet'
-        self.assertEqual('<b>Søk på nettet</b>'.encode('utf-8'),
+        self.assertEqual('<b>Søk på nettet</b>'.encode(),
                          tostring(b, encoding='utf-8'))
 
     def test_encoding_tostring_sub_tail(self):
@@ -3187,7 +3187,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         b = SubElement(a, 'b')
         b.text = 'Søk på nettet'
         b.tail = 'Søk'
-        self.assertEqual('<b>Søk på nettet</b>Søk'.encode('utf-8'),
+        self.assertEqual('<b>Søk på nettet</b>Søk'.encode(),
                          tostring(b, encoding='utf-8'))
 
     def test_encoding_tostring_default_encoding(self):
@@ -3527,43 +3527,43 @@ class _ETreeTestCaseBase(HelperTestCase):
     def test_feed_parser_unicode_astral(self):
         parser = self.XMLParser()
 
-        astral_chunk = u'-- \U00010143 --'  # astral (4 bytes/chr)
-        latin1_chunk = u'-- \xf8 --'  # Latin1 (1 byte/chr)
+        astral_chunk = '-- \U00010143 --'  # astral (4 bytes/chr)
+        latin1_chunk = '-- \xf8 --'  # Latin1 (1 byte/chr)
 
-        parser.feed(u'<ro')  # ASCII (1 byte/chr)
-        parser.feed(u'ot><')
-        parser.feed(u'a test="w\N{DIAMETER SIGN}rks">')  # BMP (2 bytes/chr)
+        parser.feed('<ro')  # ASCII (1 byte/chr)
+        parser.feed('ot><')
+        parser.feed('a test="w\N{DIAMETER SIGN}rks">')  # BMP (2 bytes/chr)
         parser.feed(astral_chunk)
         parser.feed(latin1_chunk)
-        parser.feed(u'</a></root')
-        parser.feed(u'>')
+        parser.feed('</a></root')
+        parser.feed('>')
 
         root = parser.close()
 
         self.assertEqual(root.tag, "root")
         self.assertEqual(root[0].tag, "a")
-        self.assertEqual(root[0].get("test"), u"w\N{DIAMETER SIGN}rks")
+        self.assertEqual(root[0].get("test"), "w\N{DIAMETER SIGN}rks")
         self.assertEqual(root[0].text, astral_chunk + latin1_chunk)
 
     def test_feed_parser_unicode_astral_large(self):
         parser = self.XMLParser()
 
-        astral_chunk = u'-- \U00010143 --' * (2 ** 16)  # astral (4 bytes/chr)
-        latin1_chunk = u'-- \xf8 --'  # Latin1 (1 byte/chr)
+        astral_chunk = '-- \U00010143 --' * (2 ** 16)  # astral (4 bytes/chr)
+        latin1_chunk = '-- \xf8 --'  # Latin1 (1 byte/chr)
 
-        parser.feed(u'<ro')
-        parser.feed(u'ot><')  # ASCII (1 byte/chr)
-        parser.feed(u'a test="w\N{DIAMETER SIGN}rks">')  # BMP (2 bytes/chr)
+        parser.feed('<ro')
+        parser.feed('ot><')  # ASCII (1 byte/chr)
+        parser.feed('a test="w\N{DIAMETER SIGN}rks">')  # BMP (2 bytes/chr)
         parser.feed(astral_chunk)
-        parser.feed((astral_chunk + u"</a> <a>" + astral_chunk) * 16)
+        parser.feed((astral_chunk + "</a> <a>" + astral_chunk) * 16)
         parser.feed(latin1_chunk)
-        parser.feed(u'</a></root')
-        parser.feed(u'>')
+        parser.feed('</a></root')
+        parser.feed('>')
 
         root = parser.close()
 
         self.assertEqual(root.tag, "root")
-        self.assertEqual(root[0].get("test"), u"w\N{DIAMETER SIGN}rks")
+        self.assertEqual(root[0].get("test"), "w\N{DIAMETER SIGN}rks")
         for child in root[:-1]:
             self.assertEqual(child.tag, "a")
             self.assertEqual(child.text, astral_chunk * 2)
@@ -3618,7 +3618,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
     required_versions_ET['test_parser_target_property'] = (1,3)
     def test_parser_target_property(self):
-        class Target(object):
+        class Target:
             pass
 
         target = Target()
@@ -3631,7 +3631,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         assertFalse  = self.assertFalse
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertFalse(attrib)
@@ -3654,7 +3654,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         assertEqual = self.assertEqual
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertEqual("TAG", tag)
@@ -3683,7 +3683,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         assertEqual = self.assertEqual
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertEqual("TAG", tag)
@@ -3708,7 +3708,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         assertEqual = self.assertEqual
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertEqual("TAG", tag)
@@ -3733,7 +3733,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         assertEqual = self.assertEqual
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertEqual("TAG", tag)
@@ -3773,7 +3773,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         Element = self.etree.Element
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertFalse(attrib)
@@ -3795,7 +3795,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         assertEqual = self.assertEqual
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
                 for name, value in attrib.items():
@@ -3816,7 +3816,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
     def test_parser_target_data(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -3838,7 +3838,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
     def test_parser_target_entity(self):
         events = []
-        class Target(object):
+        class Target:
             def __init__(self):
                 self._data = []
             def _flush_data(self):
@@ -3878,7 +3878,7 @@ class _ETreeTestCaseBase(HelperTestCase):
     required_versions_ET['test_parser_target_entity_unknown'] = (1,3)
     def test_parser_target_entity_unknown(self):
         events = []
-        class Target(object):
+        class Target:
             def __init__(self):
                 self._data = []
             def _flush_data(self):
@@ -4611,7 +4611,7 @@ class _XMLPullParserTest(unittest.TestCase):
         self._feed(parser, "<foo>bar</foo>")
         self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])
 
-        class DummyIter(object):
+        class DummyIter:
             def __init__(self):
                 self.events = iter(['start', 'end', 'start-ns'])
             def __iter__(self):
@@ -4642,7 +4642,7 @@ class _C14NTest(unittest.TestCase):
             except unittest.SkipTest:
                 raise
             except Exception as e:
-                print("Subtest {} failed: {}".format(name, e))
+                print(f"Subtest {name} failed: {e}")
                 raise
 
     def _canonicalize(self, input_file, **options):
@@ -4847,7 +4847,7 @@ class _C14NTest(unittest.TestCase):
                     for name, (value, children) in sorted(config.items())
                 )
 
-                with self.subTest("{}({})".format(output_file, config_descr)):
+                with self.subTest(f"{output_file}({config_descr})"):
                     if input_file == 'inNsRedecl' and not rewrite_prefixes:
                         self.skipTest(
                             "Redeclared namespace handling is not supported in {}".format(
@@ -4876,7 +4876,7 @@ class _C14NTest(unittest.TestCase):
                         rewrite_prefixes=rewrite_prefixes,
                         qname_aware_tags=qtags, qname_aware_attrs=qattrs)
 
-                    with io.open(full_path(output_file + ".xml"), 'r', encoding='utf8') as f:
+                    with open(full_path(output_file + ".xml"), encoding='utf8') as f:
                         expected = f.read()
                     if input_file == 'inC14N3' and self.etree is not etree:
                         # FIXME: cET resolves default attributes but ET does not!

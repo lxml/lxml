@@ -249,7 +249,7 @@ class Schematron(_etree._Validator):
                  store_schematron=False, store_xslt=False, store_report=False,
                  phase=None, error_finder=ASSERTS_ONLY,
                  validate_schema=schematron_schema_valid_supported):
-        super(Schematron, self).__init__()
+        super().__init__()
 
         self._store_report = store_report
         self._schematron = None

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to ISO-Schematron parsing and validation
 """

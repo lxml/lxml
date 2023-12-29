@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to XPath evaluation and the XPath class
 """
@@ -685,7 +683,7 @@ extension = {(None, 'stringTest'): stringTest,
              (None, 'resultTypesTest2'): resultTypesTest2,}
 
 def xpath():
-    u"""
+    """
     Test xpath extension functions.
     
     >>> root = SAMPLE_XML

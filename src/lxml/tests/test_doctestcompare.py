@@ -1,5 +1,3 @@
-
-
 import unittest
 
 from lxml import etree

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import unittest
 
 # These tests check that error handling in the Pyrex code is
@@ -66,7 +64,7 @@ class ErrorTestCase(HelperTestCase):
             self.assertEqual(e.lineno, 1)
             self.assertEqual(e.offset, 10)
         except Exception as e:
-            self.fail('{0}, not {1}'.format(fail_msg, type(e)))
+            self.fail(f'{fail_msg}, not {type(e)}')
         else:
             self.fail('test_broken.xml should raise an etree.XMLSyntaxError')
 

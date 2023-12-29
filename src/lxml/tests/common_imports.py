@@ -61,7 +61,7 @@ import doctest
 try:
     import pytest
 except ImportError:
-    class skipif(object):
+    class skipif:
         "Using a class because a function would bind into a method when used in classes"
         def __init__(self, *args): pass
         def __call__(self, func, *args): return func
@@ -148,8 +148,7 @@ class LargeFileLike:
         depth -= 1
         if depth > 0:
             for child in self.children:
-                for element in self.iterelements(depth):
-                    yield element
+                yield from self.iterelements(depth)
                 yield self.chars
         else:
             yield self.chars
@@ -187,15 +186,14 @@ class LargeFileLikeUnicode(LargeFileLike):
         depth -= 1
         if depth > 0:
             for child in self.children:
-                for element in self.iterelements(depth):
-                    yield element
+                yield from self.iterelements(depth)
                 yield self.chars
         else:
             yield self.chars
         yield '</root>'
 
 
-class SimpleFSPath(object):
+class SimpleFSPath:
     def __init__(self, path):
         self.path = path
     def __fspath__(self):

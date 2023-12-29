@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to namespace implementation classes and the
 namespace registry mechanism
@@ -22,7 +20,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
             return 'bluff'
 
     def setUp(self):
-        super(ETreeNamespaceClassesTestCase, self).setUp()
+        super().setUp()
         lookup = etree.ElementNamespaceClassLookup()
         self.Namespace = lookup.get_namespace
         parser = etree.XMLParser()
@@ -32,7 +30,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
     def tearDown(self):
         etree.set_default_parser()
         del self.Namespace
-        super(ETreeNamespaceClassesTestCase, self).tearDown()
+        super().tearDown()
 
     def test_registry(self):
         ns = self.Namespace('ns01')

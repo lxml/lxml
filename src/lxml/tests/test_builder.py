@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests that ElementMaker works properly.
 """
@@ -23,7 +21,7 @@ class BuilderTestCase(HelperTestCase):
         self.assertEqual(b'<b>Hello</b>', etree.tostring(wrapped))
 
     def test_unknown_type_raises(self):
-        class UnknownType(object):
+        class UnknownType:
             pass
         self.assertRaises(TypeError, E.b, UnknownType())
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 IO test cases that apply to both etree and ElementTree
 """
@@ -109,7 +107,7 @@ class _IOTestCaseBase(HelperTestCase):
                 after_write = os.listdir(tempfile.gettempdir())
                 self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
                                  self.root_str)
-            except (AssertionError, IOError, OSError):
+            except (AssertionError, OSError):
                 print("Before write: %s, after write: %s" % (
                     difference(before_write), difference(after_write))
                 )
@@ -128,7 +126,7 @@ class _IOTestCaseBase(HelperTestCase):
             'invalid_file.xml')
         try:
             self.tree.write(filename)
-        except IOError:
+        except OSError:
             pass
         else:
             self.assertTrue(
@@ -261,7 +259,7 @@ class _IOTestCaseBase(HelperTestCase):
             os.rmdir(dn)
         try:
             dn = tempfile.mkdtemp(prefix=dirnameRU)
-        except (IOError, UnicodeEncodeError, UnicodeDecodeError):
+        except (OSError, UnicodeEncodeError, UnicodeDecodeError):
             # Creating the directory might fail on some platforms depending on encodings.
             raise unittest.SkipTest("file system cannot create slavic file names")
         try:

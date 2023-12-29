@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to XSLT processing
 """
@@ -142,7 +140,7 @@ class ETreeXSLTTestCase(HelperTestCase):
             res[0] = f.getvalue().decode('UTF-16')
 
     def test_xslt_write_output_failure(self):
-        class Writer(object):
+        class Writer:
             def write(self, data):
                 raise ValueError("FAILED!")
 
@@ -162,7 +160,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0].write_output(f)
                 finally:
                     f.close()
-                with io.open(f.name, encoding='UTF-16') as f:
+                with open(f.name, encoding='UTF-16') as f:
                     res[0] = f.read()
             finally:
                 os.unlink(f.name)
@@ -225,7 +223,7 @@ class ETreeXSLTTestCase(HelperTestCase):
             tempdir = mkdtemp()
             try:
                 res[0].write_output(os.path.join(tempdir, 'missing_subdir', 'out.xml'))
-            except IOError:
+            except OSError:
                 res[0] = ''
             else:
                 self.fail("IOError not raised")

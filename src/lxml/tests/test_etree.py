@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests specific to the extended etree API
 
@@ -239,11 +237,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(b'<a aa="A"><b/>B2<c ca="C">C1</c>C2</a>', tostring(a))
 
     def test_attrib_is_Mapping(self):
-        try:
-            from collections.abc import Mapping, MutableMapping
-        except ImportError:
-            from collections import Mapping, MutableMapping  # Py2
-
+        from collections.abc import Mapping, MutableMapping
         Element = self.etree.Element
         root = Element("root")
 
@@ -1026,7 +1020,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         assertFalse  = self.assertFalse
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertFalse(attrib)
@@ -1047,7 +1041,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_feed_exception(self):
         # ET doesn't call .close() on errors
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1076,7 +1070,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_fromstring_exception(self):
         # ET doesn't call .close() on errors
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1105,7 +1099,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_feed_no_id_dict(self):
         # test that target parsing works nicely with the no-id-hash setup
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1130,7 +1124,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_comment(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1155,7 +1149,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_pi(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1179,7 +1173,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_cdata(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1202,7 +1196,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_recover(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1696,7 +1690,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         assertEqual = self.assertEqual
         test_url = _str("__nosuch.dtd")
 
-        class check(object):
+        class check:
             resolved = False
 
         class MyResolver(self.etree.Resolver):
@@ -3131,11 +3125,11 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_namespace_cleanup(self):
         xml = (
-            '<foo xmlns="F" xmlns:x="x">'
-            '<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
-            '<ns:baz/>'
-            '</bar></foo>'
-        ).encode('utf-8')
+            b'<foo xmlns="F" xmlns:x="x">'
+            b'<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
+            b'<ns:baz/>'
+            b'</bar></foo>'
+        )
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root)
@@ -3145,11 +3139,11 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_namespace_cleanup_attributes(self):
         xml = (
-            '<foo xmlns="F" xmlns:x="X" xmlns:a="A">'
-            '<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
-            '<ns:baz a:test="attr"/>'
-            '</bar></foo>'
-        ).encode('utf-8')
+            b'<foo xmlns="F" xmlns:x="X" xmlns:a="A">'
+            b'<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
+            b'<ns:baz a:test="attr"/>'
+            b'</bar></foo>'
+        )
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root)
@@ -3198,10 +3192,10 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(root))
 
     def test_namespace_cleanup_keep_prefixes(self):
-        xml = ('<root xmlns:n64="NS64" xmlns:foo="FOO" xmlns:unused1="UNUSED" xmlns:no="NO">'
-               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
-               '<foo>foo:bar</foo>'
-               '</root>').encode('utf8')
+        xml = (b'<root xmlns:n64="NS64" xmlns:foo="FOO" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               b'<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               b'<foo>foo:bar</foo>'
+               b'</root>')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root, keep_ns_prefixes=['foo'])
@@ -3213,12 +3207,12 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(root))
 
     def test_namespace_cleanup_keep_prefixes_top(self):
-        xml = ('<root xmlns:n64="NS64" xmlns:unused1="UNUSED" xmlns:no="NO">'
-               '<sub xmlns:foo="FOO">'
-               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
-               '<foo>foo:bar</foo>'
-               '</sub>'
-               '</root>').encode('utf8')
+        xml = (b'<root xmlns:n64="NS64" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               b'<sub xmlns:foo="FOO">'
+               b'<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               b'<foo>foo:bar</foo>'
+               b'</sub>'
+               b'</root>')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(
@@ -4650,7 +4644,7 @@ class ETreeOnlyTestCase(HelperTestCase):
                           tostring, a, method="text")
         
         self.assertEqual(
-            'Søk på nettetABSøk på nettetBCtail'.encode('utf-8'),
+            'Søk på nettetABSøk på nettetBCtail'.encode(),
             tostring(a, encoding="UTF-8", method="text"))
 
     def test_tounicode(self):
@@ -5575,7 +5569,7 @@ class XMLPullParserTest(unittest.TestCase):
                          expected)
 
     def test_pull_from_simple_target(self):
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 return 'start(%s)' % tag
             def end(self, tag):
@@ -5599,7 +5593,7 @@ class XMLPullParserTest(unittest.TestCase):
         self.assertEqual('close()', parser.close())
 
     def test_pull_from_simple_target_start_end(self):
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 return 'start(%s)' % tag
             def end(self, tag):
@@ -5656,7 +5650,7 @@ class XMLPullParserTest(unittest.TestCase):
     def test_pull_from_tree_builder_subclass(self):
         class Target(etree.TreeBuilder):
             def end(self, tag):
-                el = super(Target, self).end(tag)
+                el = super().end(tag)
                 el.tag += '-huhu'
                 return el
 

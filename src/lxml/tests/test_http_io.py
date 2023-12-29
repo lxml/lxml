@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Web IO test cases (wsgiref)
 """
@@ -33,7 +31,7 @@ class HttpIOTestCase(HelperTestCase):
     def test_http_client_404(self):
         try:
             self._parse_from_http(b'<root/>', code=404)
-        except IOError:
+        except OSError:
             self.assertTrue(True)
         else:
             self.assertTrue(False, "expected IOError")
@@ -112,7 +110,7 @@ class HttpIOTestCase(HelperTestCase):
             except self.etree.XMLSyntaxError:
                 self.assertTrue("myentity" in str(sys.exc_info()[1]))
                 self.assertEqual(1, len(responses))  # DTD not read
-            except IOError:
+            except OSError:
                 self.assertTrue("failed to load" in str(sys.exc_info()[1]))
                 self.assertEqual(2, len(responses))  # nothing read
             else:
