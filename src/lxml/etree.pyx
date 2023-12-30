@@ -1,6 +1,6 @@
 # cython: binding=True
 # cython: auto_pickle=False
-# cython: language_level=3str
+# cython: language_level=3
 
 """
 The ``lxml.etree`` module implements the extended ElementTree API for XML.

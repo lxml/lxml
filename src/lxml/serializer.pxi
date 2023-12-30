@@ -456,7 +456,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
 
     base = cur = <const char*>string
     while cur[0] != 0:
-        if cur[0] == '\n':
+        if cur[0] == b'\n':
             if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
@@ -464,7 +464,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             cur += 1
             base = cur
 
-        elif cur[0] == '\r':
+        elif cur[0] == b'\r':
             if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
@@ -472,7 +472,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             cur += 1
             base = cur
 
-        elif cur[0] == '\t':
+        elif cur[0] == b'\t':
             if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
@@ -480,7 +480,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             cur += 1
             base = cur
 
-        elif cur[0] == '"':
+        elif cur[0] == b'"':
             if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
@@ -496,14 +496,14 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             cur += 1
             base = cur
 
-        elif cur[0] == '>':
+        elif cur[0] == b'>':
             if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             tree.xmlOutputBufferWrite(buf, 4, "&gt;")
             cur += 1
             base = cur
-        elif cur[0] == '&':
+        elif cur[0] == b'&':
             if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
