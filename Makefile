@@ -28,7 +28,7 @@ MANYLINUX_IMAGES= \
 	musllinux_1_1_x86_64 \
     musllinux_1_1_aarch64
 
-.PHONY: all inplace inplace3 rebuild-sdist sdist build require-cython wheel_manylinux wheel
+.PHONY: all inplace rebuild-sdist sdist build require-cython wheel_manylinux wheel
 
 all: inplace
 
@@ -97,7 +97,7 @@ fuzz: clean
 		CFLAGS="$$CFLAGS -fsanitize=fuzzer-no-link -g2" \
 		CXX="/usr/bin/clang++" \
 		CXXFLAGS="-fsanitize=fuzzer-no-link" \
-		inplace3
+		inplace
 	$(PYTHON) src/lxml/tests/fuzz_xml_parse.py
 
 gdb_test_inplace: inplace
@@ -116,7 +116,7 @@ ftest_build: build
 ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
-apidoc: apidocclean inplace3
+apidoc: apidocclean inplace
 	@[ -x "`which sphinx-apidoc`" ] \
 		&& (echo "Generating API docs ..." && \
 			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
@@ -124,13 +124,13 @@ apidoc: apidocclean inplace3
 				"*.so" "*.pyd") \
 		|| (echo "not generating Sphinx autodoc API rst files")
 
-apihtml: apidoc inplace3
+apihtml: apidoc inplace
 	@[ -x "`which sphinx-build`" ] \
 		&& (echo "Generating API docs ..." && \
 			make -C doc/api html) \
 		|| (echo "not generating Sphinx autodoc API documentation")
 
-website: inplace3 docclean
+website: inplace docclean
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
 
 html: apihtml website s5
@@ -138,7 +138,7 @@ html: apihtml website s5
 s5:
 	$(MAKE) -C doc/s5 slides
 
-apipdf: apidoc inplace3
+apipdf: apidoc inplace
 	rm -fr doc/api/_build
 	@[ -x "`which sphinx-build`" ] \
 		&& (echo "Generating API PDF docs ..." && \
@@ -156,8 +156,6 @@ pdf: apipdf pdfclean
 # Two pdflatex runs are needed to build the correct Table of contents.
 
 test: test_inplace
-
-test3: test_inplace3
 
 valtest: valgrind_test_inplace
 
