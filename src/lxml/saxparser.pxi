@@ -321,6 +321,12 @@ cdef void _handleSaxStart(
                               c_nb_defaulted, c_attributes)
         if c_ctxt.html:
             _fixHtmlDictNodeNames(c_ctxt.dict, c_ctxt.node)
+            # The HTML parser in libxml2 reports the missing opening tags when it finds
+            # misplaced ones, but with tag names from C string constants that ignore the
+            # parser dict.  Thus, we need to intern the name ourselves.
+            c_localname = tree.xmlDictLookup(c_ctxt.dict, c_localname, -1)
+            if c_localname is NULL:
+                raise MemoryError()
 
         if event_filter & PARSE_EVENT_FILTER_END_NS:
             context._ns_stack.append(declared_namespaces)
@@ -418,6 +424,12 @@ cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
         context._origSaxStartNoNs(c_ctxt, c_name, c_attributes)
         if c_ctxt.html:
             _fixHtmlDictNodeNames(c_ctxt.dict, c_ctxt.node)
+            # The HTML parser in libxml2 reports the missing opening tags when it finds
+            # misplaced ones, but with tag names from C string constants that ignore the
+            # parser dict.  Thus, we need to intern the name ourselves.
+            c_name = tree.xmlDictLookup(c_ctxt.dict, c_name, -1)
+            if c_name is NULL:
+                raise MemoryError()
         if context._event_filter & (PARSE_EVENT_FILTER_END |
                                     PARSE_EVENT_FILTER_START):
             _pushSaxStartEvent(context, c_ctxt, NULL, c_name, None)

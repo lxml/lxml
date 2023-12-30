@@ -2,6 +2,18 @@
 lxml changelog
 ==============
 
+5.0.1 (2024-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#2044225: When incrementally parsing broken HTML, reporting start events on
+  missing structural tags failed and could lead to subsequent exceptions.
+
+
+.. _latest_release:
+
 5.0.0 (2023-12-29)
 ==================
 
