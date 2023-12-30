@@ -221,8 +221,8 @@ cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
     cdef tree.xmlCharEncoding enc
     enc = tree.xmlDetectCharEncoding(buffer, size)
     if enc == tree.XML_CHAR_ENCODING_UTF16LE:
-        if size >= 4 and (buffer[0] == <const_xmlChar>'\xFF' and
-                          buffer[1] == <const_xmlChar>'\xFE' and
+        if size >= 4 and (buffer[0] == <const_xmlChar> b'\xFF' and
+                          buffer[1] == <const_xmlChar> b'\xFE' and
                           buffer[2] == 0 and buffer[3] == 0):
             return "UTF-32LE"  # according to BOM
         else:
@@ -1106,13 +1106,13 @@ cdef class _BaseParser:
                 c_encoding = NULL
                 # libxml2 (at least 2.9.3) does not recognise UTF-32 BOMs
                 # NOTE: limit to problematic cases because it changes character offsets
-                if c_len >= 4 and (c_text[0] == '\xFF' and c_text[1] == '\xFE' and
+                if c_len >= 4 and (c_text[0] == b'\xFF' and c_text[1] == b'\xFE' and
                                    c_text[2] == 0 and c_text[3] == 0):
                     c_encoding = "UTF-32LE"
                     c_text += 4
                     c_len -= 4
                 elif c_len >= 4 and (c_text[0] == 0 and c_text[1] == 0 and
-                                     c_text[2] == '\xFE' and c_text[3] == '\xFF'):
+                                     c_text[2] == b'\xFE' and c_text[3] == b'\xFF'):
                     c_encoding = "UTF-32BE"
                     c_text += 4
                     c_len -= 4

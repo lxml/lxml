@@ -144,7 +144,7 @@ cdef class _LogEntry:
         if self._c_message is NULL:
             return None
         size = cstring_h.strlen(self._c_message)
-        if size > 0 and self._c_message[size-1] == '\n':
+        if size > 0 and self._c_message[size-1] == b'\n':
             size -= 1  # strip EOL
         # cannot use funicode() here because the message may contain
         # byte encoded file paths etc.

@@ -408,11 +408,11 @@ cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val) noexcept
     cdef xmlChar *ptr
     cdef const xmlChar* hexdigits = b"0123456789ABCDEF"
 
-    out[0] = '&'
+    out[0] = b'&'
     out += 1
-    out[0] = '#'
+    out[0] = b'#'
     out += 1
-    out[0] = 'x'
+    out[0] = b'x'
     out += 1
 
     if val < 0x10:
@@ -434,7 +434,7 @@ cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val) noexcept
         ptr -= 1
         val >>= 4
 
-    out[0] = ';'
+    out[0] = b';'
     out += 1
     out[0] = 0
 
@@ -488,7 +488,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             cur += 1
             base = cur
 
-        elif cur[0] == '<':
+        elif cur[0] == b'<':
             if base != cur:
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 

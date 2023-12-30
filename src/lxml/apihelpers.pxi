@@ -1016,8 +1016,8 @@ cdef inline bint _nsTagMatchesExactly(const_xmlChar* c_node_href,
     if c_qname.href is NULL:
         return 1
     c_href = python.__cstr(c_qname.href)
-    if c_href[0] == '\0':
-        return c_node_href is NULL or c_node_href[0] == '\0'
+    if c_href[0] == b'\0':
+        return c_node_href is NULL or c_node_href[0] == b'\0'
     elif c_node_href is NULL:
         return 0
     else:
