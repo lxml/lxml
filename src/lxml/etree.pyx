@@ -262,9 +262,9 @@ cdef __unpackDottedVersion(version):
 
 cdef __unpackIntVersion(int c_version):
     return (
-        ((c_version / (100*100)) % 100),
-        ((c_version / 100)       % 100),
-        (c_version               % 100)
+        ((c_version // (100*100)) % 100),
+        ((c_version // 100)       % 100),
+        (c_version                % 100)
         )
 
 cdef int _LIBXML_VERSION_INT

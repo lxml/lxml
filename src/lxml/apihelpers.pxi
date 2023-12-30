@@ -806,7 +806,7 @@ cdef int _findChildSlice(
         return 0
     python.PySlice_GetIndicesEx(
         sliceobject, childcount, &start, &stop, c_step, c_length)
-    if start > childcount / 2:
+    if start > childcount // 2:
         c_start_node[0] = _findChildBackwards(c_parent, childcount - start - 1)
     else:
         c_start_node[0] = _findChild(c_parent, start)
