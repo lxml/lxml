@@ -2,6 +2,18 @@
 lxml changelog
 ==============
 
+Under development
+==================
+
+Other changes
+-------------
+
+* Support for Python 2.7 and Python versions < 3.6 was removed.
+
+* The wheel build was migrated to use ``cibuildwheel``.
+  Patch by Primož Godec.
+
+
 5.0.1 (2024-??-??)
 ==================
 
