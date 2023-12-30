@@ -371,6 +371,22 @@ class HtmlParserTestCase(HelperTestCase):
              ('end', root[1][0]), ('end', root[1]), ('end', root)],
             events)
 
+    def test_html_iterparse_broken_meta(self):
+        # Broken HTML with a misplaced tag before the real html tag.
+        body = '''
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <html>
+            <head></head>
+            <body>
+            </body>
+        </html>
+        '''
+        PARSE_TAGS = {'meta', 'html', 'body'}
+
+        iterator = etree.iterparse(
+            BytesIO(body.encode()), events=('start', 'end'), html=True, recover=True, tag=PARSE_TAGS)
+        parse_events = list(iterator)
+
     def test_html_iterparse_broken_no_recover(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<p>P<br></div>')
