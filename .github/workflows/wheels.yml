@@ -12,17 +12,22 @@ on:
   #        │  │ │ │ │
   - cron: "42 3 * * 4"
   push:
-#      paths:
-#        - .github/workflows/wheels.yml
+    paths:
+      - .github/workflows/wheels.yml
+      - requirements.txt
+      - MANIFEST.in
+      - Makefile
+      - setup*
+      - build*
   pull_request:
-      types: [opened, synchronize, reopened]
-      paths:
-        - .github/workflows/wheels.yml
-        - requirements.txt
-        - MANIFEST.in
-        - Makefile
-        - setup*
-        - build*
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/wheels.yml
+      - requirements.txt
+      - MANIFEST.in
+      - Makefile
+      - setup*
+      - build*
   workflow_dispatch:
 
 permissions: {}
