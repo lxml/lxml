@@ -95,11 +95,8 @@ def BytesIO(*args):
 doctest_parser = doctest.DocTestParser()
 
 def make_doctest(filename):
-    filename = _get_caller_relative_path(filename)
-    doctests = read_file(filename)
-    return doctest.DocTestCase(
-        doctest_parser.get_doctest(
-            doctests, {}, os.path.basename(filename), filename, 0))
+    file_path = _get_caller_relative_path(filename)
+    return doctest.DocFileSuite(file_path, module_relative=False, encoding='utf-8')
 
 
 class HelperTestCase(unittest.TestCase):
