@@ -115,7 +115,7 @@ finds by their character equivalent.
     >>> tag_soup = '<body>&copy;&euro;&#45;&#245;&#445;<p>'
     >>> body = fromstring(tag_soup).find('.//body')
     >>> body.text
-    u'\xa9\u20ac-\xf5\u01bd'
+    '\xa9\u20ac-\xf5\u01bd'
 
 If you want them back on the way out, you can just serialise with the
 default encoding, which is 'US-ASCII'.
@@ -139,10 +139,10 @@ Any other encoding will output the respective byte sequences.
     '<body>\xc2\xa9\xe2\x82\xac-\xc3\xb5\xc6\xbd<p></p></body>'
 
     >>> tostring(body, encoding='unicode')
-    u'<body>\xa9\u20ac-\xf5\u01bd<p/></body>'
+    '<body>\xa9\u20ac-\xf5\u01bd<p/></body>'
 
     >>> tostring(body, method="html", encoding='unicode')
-    u'<body>\xa9\u20ac-\xf5\u01bd<p></p></body>'
+    '<body>\xa9\u20ac-\xf5\u01bd<p></p></body>'
 
 
 Using soupparser as a fallback

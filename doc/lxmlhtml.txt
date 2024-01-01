@@ -661,7 +661,7 @@ It also avoids elements with the CSS class ``nobreak``.  You can
 control this with ``avoid_classes=['code', ...]``.
 
 Lastly you can control the character that is inserted with
-``break_character=u'\u200b'``.  However, you cannot insert markup,
+``break_character='\u200b'``.  However, you cannot insert markup,
 only text.
 
 ``word_break_html(html)`` parses the HTML document and returns a

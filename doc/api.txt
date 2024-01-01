@@ -302,7 +302,7 @@ copy attached to the exception:
   ... '''
   >>> try:
   ...   etree.parse(StringIO(broken_xml))
-  ... except etree.XMLSyntaxError, e:
+  ... except etree.XMLSyntaxError as e:
   ...   pass # just put the exception into e
 
 ..
@@ -407,8 +407,8 @@ is required by the standard:
 
 .. sourcecode:: pycon
 
-  >>> unicode_root = etree.Element( u"t\u3120st" )
-  >>> unicode_root.text = u"t\u0A0Ast"
+  >>> unicode_root = etree.Element( "t\u3120st" )
+  >>> unicode_root.text = "t\u0A0Ast"
   >>> etree.tostring(unicode_root, encoding="utf-8")
   b'<t\xe3\x84\xa0st>t\xe0\xa8\x8ast</t\xe3\x84\xa0st>'
 

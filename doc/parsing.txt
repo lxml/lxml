@@ -360,9 +360,9 @@ a target object to the parser:
   >>> result = etree.XML("<element>some<!--comment-->text</element>",
   ...                    parser)
   start element {}
-  data u'some'
+  data 'some'
   comment comment
-  data u'text'
+  data 'text'
   end element
   close
 
@@ -378,9 +378,9 @@ like:
   >>> result = etree.XML("<element>some<!--comment-->text</element>",
   ...                    parser)
   start element {}
-  data u'some'
+  data 'some'
   comment comment
-  data u'text'
+  data 'text'
   end element
   close
 
@@ -420,7 +420,7 @@ that the parser can reuse them afterwards.
   >>> for event in parser.target.events:
   ...     print(event)
   start element {}
-  data u'some'
+  data 'some'
   close
 
 Note that the parser does *not* build a tree when using a parser
@@ -504,7 +504,7 @@ You can also combine the feed parser interface with the target parser:
   >>> parser.feed("<eleme")
   >>> parser.feed("nt>some text</elem")
   start element {}
-  data u'some text'
+  data 'some text'
   >>> parser.feed("ent>")
   end element
 
@@ -987,15 +987,15 @@ function:
 
 .. sourcecode:: pycon
 
-  >>> root = etree.XML( u'<test> \uf8d1 + \uf8d2 </test>' )
+  >>> root = etree.XML( '<test> \uf8d1 + \uf8d2 </test>' )
 
 This requires, however, that unicode strings do not specify a conflicting
 encoding themselves and thus lie about their real encoding:
 
 .. sourcecode:: pycon
 
-  >>> etree.XML( u'<?xml version="1.0" encoding="ASCII"?>\n' +
-  ...            u'<test> \uf8d1 + \uf8d2 </test>' )
+  >>> etree.XML( '<?xml version="1.0" encoding="ASCII"?>\n' +
+  ...            '<test> \uf8d1 + \uf8d2 </test>' )
   Traceback (most recent call last):
     ...
   ValueError: Unicode strings with encoding declaration are not supported. Please use bytes input or XML fragments without declaration.
@@ -1027,19 +1027,19 @@ to the encoding parameter to build a Python unicode representation of a tree:
 .. sourcecode:: pycon
 
   >>> etree.tostring(root, encoding='unicode')
-  u'<test> \uf8d1 + \uf8d2 </test>'
+  '<test> \uf8d1 + \uf8d2 </test>'
 
   >>> el = etree.Element("test")
   >>> etree.tostring(el, encoding='unicode')
-  u'<test/>'
+  '<test/>'
 
   >>> subel = etree.SubElement(el, "subtest")
   >>> etree.tostring(el, encoding='unicode')
-  u'<test><subtest/></test>'
+  '<test><subtest/></test>'
 
   >>> tree = etree.ElementTree(el)
   >>> etree.tostring(tree, encoding='unicode')
-  u'<test><subtest/></test>'
+  '<test><subtest/></test>'
 
 The result of ``tostring(encoding='unicode')`` can be treated like any
 other Python unicode string and then passed back into the parsers.

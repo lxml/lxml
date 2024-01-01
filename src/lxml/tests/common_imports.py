@@ -93,14 +93,10 @@ def BytesIO(*args):
     return _BytesIO(*args)
 
 doctest_parser = doctest.DocTestParser()
-_fix_unicode = re.compile(r'(\s+)u(["\'])').sub
-_fix_exceptions = re.compile(r'(.*except [^(]*),\s*(.*:)').sub
 
 def make_doctest(filename):
     filename = _get_caller_relative_path(filename)
     doctests = read_file(filename)
-    doctests = _fix_unicode(r'\1\2', doctests)
-    doctests = _fix_exceptions(r'\1 as \2', doctests)
     return doctest.DocTestCase(
         doctest_parser.get_doctest(
             doctests, {}, os.path.basename(filename), filename, 0))
