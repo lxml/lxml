@@ -132,7 +132,8 @@ cdef class _BaseContext:
     cdef void _set_xpath_context(self, xpath.xmlXPathContext* xpathCtxt) noexcept:
         self._xpathCtxt = xpathCtxt
         xpathCtxt.userData = <void*>self
-        xpathCtxt.error = _receiveXPathError
+        # Need a cast here because older libxml2 releases do not use 'const' in the functype.
+        xpathCtxt.error = <xmlerror.xmlStructuredErrorFunc> _receiveXPathError
 
     @cython.final
     cdef _register_context(self, _Document doc):

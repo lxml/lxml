@@ -583,7 +583,8 @@ cdef class _ParserContext(_ResolverContext):
                 raise ParserError, "parser locking failed"
         self._error_log.clear()
         self._doc = None
-        self._c_ctxt.sax.serror = _receiveParserError
+        # Need a cast here because older libxml2 releases do not use 'const' in the functype.
+        self._c_ctxt.sax.serror = <xmlerror.xmlStructuredErrorFunc> _receiveParserError
         self._orig_loader = _register_document_loader() if set_document_loader else NULL
         if self._validator is not None:
             self._validator.connect(self._c_ctxt, self._error_log)
@@ -924,7 +925,8 @@ cdef class _BaseParser:
                                  sizeof(htmlparser.htmlDefaultSAXHandler))
                 c_ctxt.sax = sax
             sax.initialized = xmlparser.XML_SAX2_MAGIC
-            sax.serror = _receiveParserError
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
+            sax.serror = <xmlerror.xmlStructuredErrorFunc> _receiveParserError
             sax.startElementNs = NULL
             sax.endElementNs = NULL
             sax._private = NULL
