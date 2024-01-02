@@ -13,6 +13,8 @@ Bugs fixed
 
 * LP#2045435: Some (not all) issues with stricter C compilers were resolved.
 
+* The binary wheels in the 5.0.0 release did not validate cleanly (but installed ok).
+
 
 .. _latest_release:
 
