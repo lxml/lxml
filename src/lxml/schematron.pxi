@@ -148,8 +148,9 @@ cdef class Schematron(_Validator):
 
         try:
             self._error_log.clear()
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             schematron.xmlSchematronSetValidStructuredErrors(
-                valid_ctxt, _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
                 ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)

@@ -87,8 +87,9 @@ cdef class RelaxNG(_Validator):
                     u"Document is not parsable as Relax NG"),
                 self._error_log)
 
+        # Need a cast here because older libxml2 releases do not use 'const' in the functype.
         relaxng.xmlRelaxNGSetParserStructuredErrors(
-            parser_ctxt, _receiveError, <void*>self._error_log)
+            parser_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
         _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGP)
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
         _connectGenericErrorLog(None)
@@ -129,8 +130,9 @@ cdef class RelaxNG(_Validator):
 
         try:
             self._error_log.clear()
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             relaxng.xmlRelaxNGSetValidStructuredErrors(
-                valid_ctxt, _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
             _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGV)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:

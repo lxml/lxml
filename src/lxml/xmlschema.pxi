@@ -69,8 +69,9 @@ cdef class XMLSchema(_Validator):
         if parser_ctxt is NULL:
             raise MemoryError()
 
+        # Need a cast here because older libxml2 releases do not use 'const' in the functype.
         xmlschema.xmlSchemaSetParserStructuredErrors(
-            parser_ctxt, _receiveError, <void*>self._error_log)
+            parser_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
         if self._doc is not None:
             # calling xmlSchemaParse on a schema with imports or
             # includes will cause libxml2 to create an internal
@@ -125,8 +126,9 @@ cdef class XMLSchema(_Validator):
                     valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
 
             self._error_log.clear()
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             xmlschema.xmlSchemaSetValidStructuredErrors(
-                valid_ctxt, _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
 
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
@@ -193,8 +195,9 @@ cdef class _ParserSchemaValidationContext:
                 xmlschema.xmlSchemaSetValidOptions(
                     self._valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
         if error_log is not None:
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             xmlschema.xmlSchemaSetValidStructuredErrors(
-                self._valid_ctxt, _receiveError, <void*>error_log)
+                self._valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>error_log)
         self._sax_plug = xmlschema.xmlSchemaSAXPlug(
             self._valid_ctxt, &c_ctxt.sax, &c_ctxt.userData)
 
