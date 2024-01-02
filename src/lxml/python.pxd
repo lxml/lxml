@@ -48,6 +48,7 @@ cdef extern from "Python.h":
     cdef char* PyUnicode_AS_DATA(object ustring)
     cdef Py_ssize_t PyUnicode_GET_DATA_SIZE(object ustring)
     cdef Py_ssize_t PyUnicode_GET_SIZE(object ustring)
+    cdef Py_UCS4 PyUnicode_MAX_CHAR_VALUE(object ustring)
     cdef bytes PyBytes_FromStringAndSize(char* s, Py_ssize_t size)
     cdef bytes PyBytes_FromFormat(char* format, ...)
     cdef Py_ssize_t PyBytes_GET_SIZE(object s)

@@ -1044,7 +1044,10 @@ cdef class _BaseParser:
             py_buffer_len = python.PyUnicode_GET_LENGTH(utext)
             c_kind = python.PyUnicode_KIND(utext)
             if c_kind == 1:
-                c_encoding = 'ISO-8859-1'
+                if python.PyUnicode_MAX_CHAR_VALUE(utext) <= 127:
+                    c_encoding = 'ASCII'
+                else:
+                    c_encoding = 'ISO-8859-1'
             elif c_kind == 2:
                 py_buffer_len *= 2
                 if python.PY_BIG_ENDIAN:
