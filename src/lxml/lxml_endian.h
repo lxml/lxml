@@ -1,5 +1,8 @@
 #ifndef PY_BIG_ENDIAN
 
+/* STOP INCLUDING THIS FILE !  DO NOT USE IT IN NEW CODE ! */
+/* Left only for legacy purposes - this file is no longer used. */
+
 #ifdef _MSC_VER
 typedef unsigned __int32 uint32_t;
 #else
