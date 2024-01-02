@@ -86,11 +86,8 @@ def xpath_tokenizer(pattern, namespaces=None):
                     yield ttype, "{%s}%s" % (namespaces[prefix], uri)
                 except KeyError:
                     raise SyntaxError("prefix %r not found in prefix map" % prefix)
-            elif default_namespace and not parsing_attribute:
-                if tag.isnumeric():
-                    yield ttype, tag
-                else:
-                    yield ttype, "{%s}%s" % (default_namespace, tag)
+            elif default_namespace and not parsing_attribute and not tag.isdecimal():
+                yield ttype, "{%s}%s" % (default_namespace, tag)
             else:
                 yield token
             parsing_attribute = False
