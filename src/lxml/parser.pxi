@@ -239,7 +239,9 @@ cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
         # returns a constant char*, no need to free it
         return tree.xmlGetCharEncodingName(enc)
 
-_setupPythonUnicode()
+# Python 3.12 removed support for "Py_UNICODE".
+if python.PY_VERSION_HEX < 0x030C0000:
+    _setupPythonUnicode()
 
 ############################################################
 ## support for file-like objects
