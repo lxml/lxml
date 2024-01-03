@@ -41,6 +41,7 @@ TESTED VERSION: %s""" % etree.__version__ + """
     FS encoding:      %s""" % (sys.getfilesystemencoding(),) + """
     Default encoding: %s""" % (sys.getdefaultencoding(),) + """
     Max Unicode:      %s""" % (sys.maxunicode,) + """
+    PyUCS4 encoding:  %s""" % (getattr(etree, '_pyucs4_encoding_name', ''),) + """
 """)
 
 try:

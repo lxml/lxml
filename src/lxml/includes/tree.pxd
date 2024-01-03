@@ -48,7 +48,9 @@ cdef extern from "libxml/encoding.h" nogil:
         XML_CHAR_ENCODING_EUC_JP = 21 # EUC-JP
         XML_CHAR_ENCODING_ASCII = 22 # pure ASCII
 
-    ctypedef struct xmlCharEncodingHandler
+    ctypedef struct xmlCharEncodingHandler:
+        char* name
+
     cdef xmlCharEncodingHandler* xmlFindCharEncodingHandler(char* name)
     cdef xmlCharEncodingHandler* xmlGetCharEncodingHandler(
         xmlCharEncoding enc)
