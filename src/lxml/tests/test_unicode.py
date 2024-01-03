@@ -35,6 +35,18 @@ class UnicodeTestCase(HelperTestCase):
         self.assertEqual('\U00026007',
                          tree.text)
 
+    def test_emoji_xml(self):
+        p = etree.XML('<p>😄</p>')
+        self.assertEqual('😄', p.text)
+        self.assertEqual(1, len(p.text))
+
+    def test_emoji_html(self):
+        html = etree.HTML('<html><body><p>😄</p></body></html>')
+        p = html[0][0]
+        self.assertEqual('p', p.tag)
+        self.assertEqual('😄', p.text)
+        self.assertEqual(1, len(p.text))
+
     def test_unicode_xml_broken(self):
         uxml = ('<?xml version="1.0" encoding="UTF-8"?>' +
                 '<p>%s</p>' % uni)
