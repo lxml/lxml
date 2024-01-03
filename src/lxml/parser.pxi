@@ -1045,7 +1045,7 @@ cdef class _BaseParser:
             c_kind = python.PyUnicode_KIND(utext)
             if c_kind == 1:
                 if python.PyUnicode_MAX_CHAR_VALUE(utext) <= 127:
-                    c_encoding = 'ASCII'
+                    c_encoding = 'UTF-8'
                 else:
                     c_encoding = 'ISO-8859-1'
             elif c_kind == 2:
