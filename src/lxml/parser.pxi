@@ -246,7 +246,7 @@ cdef unicode _find_PyUCS4EncodingName():
     """
     Find a suitable encoding for Py_UCS4 PyUnicode strings in libxml2.
     """
-    ustring = "<xml>\U0001F92A</xml>"
+    ustring = u"<xml>\U0001F92A</xml>"
     cdef const xmlChar* buffer = <const xmlChar*> python.PyUnicode_DATA(ustring)
     cdef Py_ssize_t py_buffer_len = python.PyUnicode_GET_LENGTH(ustring)
 
