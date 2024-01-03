@@ -20,6 +20,8 @@ Other changes
 Bugs fixed
 ----------
 
+* LP#2046208: Parsing non-BMP Python Unicode strings could fail on macOS.
+
 * LP#2044225: When incrementally parsing broken HTML, reporting start events on
   missing structural tags failed and could lead to subsequent exceptions.
 
