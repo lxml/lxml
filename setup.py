@@ -61,7 +61,7 @@ if 'setuptools' in sys.modules:
     extra_options['zip_safe'] = False
     extra_options['python_requires'] = (
         # NOTE: keep in sync with Trove classifier list below.
-        '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, != 3.4.*')
+        '>=3.6')
 
     try:
         import pkg_resources
@@ -254,8 +254,6 @@ an appropriate version of Cython installed.
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Cython',
         # NOTE: keep in sync with 'python_requires' list above.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
