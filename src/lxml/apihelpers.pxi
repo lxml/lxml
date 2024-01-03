@@ -542,7 +542,7 @@ cdef int _replaceNodeByChildren(_Document doc, xmlNode* c_node) except -1:
     c_node.parent = c_node.next = c_node.prev = NULL
     return 0
 
-cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
+cdef unicode _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     c_href = _getNs(<xmlNode*>c_attrib_node)
     value = tree.xmlGetNsProp(c_element, c_attrib_node.name, c_href)
     try:
@@ -551,8 +551,8 @@ cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
         tree.xmlFree(value)
     return result
 
-cdef object _attributeValueFromNsName(xmlNode* c_element,
-                                      const_xmlChar* c_href, const_xmlChar* c_name):
+cdef unicode _attributeValueFromNsName(xmlNode* c_element,
+                                       const_xmlChar* c_href, const_xmlChar* c_name):
     c_result = tree.xmlGetNsProp(c_element, c_name, c_href)
     if c_result is NULL:
         return None
@@ -681,7 +681,7 @@ cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False) except -1:
         c_text_node = _textNodeOrSkip(c_text_node.next)
     return False
 
-cdef _collectText(xmlNode* c_node):
+cdef unicode _collectText(xmlNode* c_node):
     """Collect all text nodes and return them as a unicode string.
 
     Start collecting at c_node.
