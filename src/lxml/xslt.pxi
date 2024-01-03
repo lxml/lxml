@@ -764,21 +764,6 @@ cdef class _XSLTResultTree(_ElementTree):
             raise MemoryError()
 
     def __str__(self):
-        cdef xmlChar* s = NULL
-        cdef int l = 0
-        if not python.IS_PYTHON2:
-            return self.__unicode__()
-        self._saveToStringAndSize(&s, &l)
-        if s is NULL:
-            return ''
-        # we must not use 'funicode()' here as this is not always UTF-8
-        try:
-            result = <bytes>s[:l]
-        finally:
-            tree.xmlFree(s)
-        return result
-
-    def __unicode__(self):
         cdef xmlChar* encoding
         cdef xmlChar* s = NULL
         cdef int l = 0

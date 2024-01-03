@@ -132,9 +132,6 @@ cdef extern from "includes/etree_defs.h": # redefines some functions as macros
     cdef bint _isString(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)
-    cdef bint LXML_UNICODE_STRINGS
-    cdef bint IS_PYTHON2
-    cdef bint IS_PYTHON3  # legacy, avoid
     cdef bint IS_PYPY
     cdef object PyOS_FSPath(object obj)
 

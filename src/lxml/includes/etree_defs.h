@@ -34,6 +34,7 @@
 #    define IS_PYPY 0
 #endif
 
+/* unused */
 #if PY_MAJOR_VERSION >= 3
 #  define IS_PYTHON2 0  /* prefer for special casing Python 2.x */
 #  define IS_PYTHON3 1  /* avoid */
@@ -42,6 +43,7 @@
 #  define IS_PYTHON3 0
 #endif
 
+/* unused */
 #if IS_PYTHON2
 #ifndef LXML_UNICODE_STRINGS
 #define LXML_UNICODE_STRINGS 0
@@ -76,7 +78,7 @@
 #  ifndef PyUnicode_FromFormat
 #    define PyUnicode_FromFormat  PyString_FromFormat
 #  endif
-#  if !IS_PYTHON2 && !defined(PyBytes_FromFormat)
+#  if !defined(PyBytes_FromFormat)
 #    ifdef PyString_FromFormat
 #      define PyBytes_FromFormat  PyString_FromFormat
 #    else
@@ -227,15 +229,7 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 
 #define lxml_free(mem)  PyMem_Free(mem)
 
-#if PY_MAJOR_VERSION < 3
-#define _isString(obj)   (PyString_CheckExact(obj)  || \
-                          PyUnicode_CheckExact(obj) || \
-                          PyType_IsSubtype(Py_TYPE(obj), &PyBaseString_Type))
-#else
-/* builtin subtype type checks are almost as fast as exact checks in Py2.7+
- * and Unicode is more common in Py3 */
 #define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
-#endif
 
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \

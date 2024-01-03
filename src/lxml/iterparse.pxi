@@ -74,12 +74,11 @@ cdef class iterparse:
         if not hasattr(source, 'read'):
             source = _getFSPathOrObject(source)
             self._filename = source
-            if python.IS_PYTHON2:
-                source = _encodeFilename(source)
-            source = open(source, 'rb')
+            self._source = open(source, 'rb')
             self._close_source_after_read = True
         else:
             self._filename = _getFilenameForFile(source)
+            self._source = source
             self._close_source_after_read = False
 
         if recover is None:
@@ -127,7 +126,6 @@ cdef class iterparse:
 
         self._events = parser.read_events()
         self._parser = parser
-        self._source = source
 
     @property
     def error_log(self):

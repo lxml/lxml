@@ -48,15 +48,6 @@ cdef tuple IGNORABLE_ERRORS = (ValueError, TypeError)
 cdef object is_special_method = re.compile('__.*__$').match
 
 
-# Duplicated from apihelpers.pxi, since dependencies obstruct
-# including apihelpers.pxi.
-cdef strrepr(s):
-    """Build a representation of strings which we can use in __repr__
-    methods, e.g. _Element.__repr__().
-    """
-    return s.encode('unicode-escape') if python.IS_PYTHON2 else s
-
-
 cdef object _typename(object t):
     cdef const_char* c_name
     c_name = python._fqtypename(t)
@@ -602,7 +593,7 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
         return textOf(self._c_node) or ''
 
     def __repr__(self):
-        return strrepr(textOf(self._c_node) or '')
+        return textOf(self._c_node) or ''
 
     def _setText(self, s):
         """For use in subclasses only. Don't use unless you know what you are
@@ -1032,17 +1023,11 @@ cdef _checkNumber(bytes_unicode s, bint allow_float):
 
 
 cdef _checkInt(s):
-    if python.IS_PYTHON2 and type(s) is bytes:
-        return _checkNumber(<bytes>s, allow_float=False)
-    else:
-        return _checkNumber(<unicode>s, allow_float=False)
+    return _checkNumber(<unicode>s, allow_float=False)
 
 
 cdef _checkFloat(s):
-    if python.IS_PYTHON2 and type(s) is bytes:
-        return _checkNumber(<bytes>s, allow_float=True)
-    else:
-        return _checkNumber(<unicode>s, allow_float=True)
+    return _checkNumber(<unicode>s, allow_float=True)
 
 
 cdef object _strValueOf(obj):
@@ -1542,10 +1527,7 @@ def __unpickleElementTree(data):
     return etree.ElementTree(fromstring(data))
 
 cdef _setupPickle(elementTreeReduceFunction):
-    if python.IS_PYTHON2:
-        import copy_reg as copyreg
-    else:
-        import copyreg
+    import copyreg
     copyreg.pickle(etree._ElementTree,
                    elementTreeReduceFunction, __unpickleElementTree)
 

@@ -1502,31 +1502,14 @@ cdef bint _is_valid_xml_utf8(bytes pystring) except -1:
 
     return 1
 
-cdef inline object funicodeOrNone(const_xmlChar* s):
+cdef inline unicode funicodeOrNone(const_xmlChar* s):
     return funicode(s) if s is not NULL else None
 
-cdef inline object funicodeOrEmpty(const_xmlChar* s):
+cdef inline unicode funicodeOrEmpty(const_xmlChar* s):
     return funicode(s) if s is not NULL else ''
 
-cdef object funicode(const_xmlChar* s):
-    cdef Py_ssize_t slen
-    cdef const_xmlChar* spos
-    cdef bint is_non_ascii
-    if python.LXML_UNICODE_STRINGS:
-        return s.decode('UTF-8')
-    spos = s
-    is_non_ascii = 0
-    while spos[0] != c'\0':
-        if spos[0] & 0x80:
-            is_non_ascii = 1
-            break
-        spos += 1
-    slen = spos - s
-    if spos[0] != c'\0':
-        slen += cstring_h.strlen(<const char*> spos)
-    if is_non_ascii:
-        return s[:slen].decode('UTF-8')
-    return <bytes>s[:slen]
+cdef unicode funicode(const_xmlChar* s):
+    return s.decode('UTF-8')
 
 cdef bytes _utf8(object s):
     """Test if a string is valid user input and encode it to UTF-8.
@@ -1535,14 +1518,11 @@ cdef bytes _utf8(object s):
     """
     cdef int valid
     cdef bytes utf8_string
-    if python.IS_PYTHON2 and type(s) is bytes:
-        utf8_string = <bytes>s
-        valid = _is_valid_xml_ascii(utf8_string)
-    elif isinstance(s, unicode):
+    if isinstance(s, unicode):
         utf8_string = (<unicode>s).encode('utf8')
         valid = _is_valid_xml_utf8(utf8_string)
     elif isinstance(s, (bytes, bytearray)):
-        utf8_string = bytes(s)
+        utf8_string = s if type(s) is bytes else bytes(s)
         valid = _is_valid_xml_ascii(utf8_string)
     else:
         raise TypeError("Argument must be bytes or unicode, got '%.200s'" % type(s).__name__)
@@ -1554,13 +1534,6 @@ cdef bytes _utf8(object s):
 
 cdef bytes _utf8orNone(object s):
     return _utf8(s) if s is not None else None
-
-
-cdef strrepr(s):
-    """Build a representation of strings which we can use in __repr__
-    methods, e.g. _Element.__repr__().
-    """
-    return s.encode('unicode-escape') if python.IS_PYTHON2 else s
 
 
 cdef enum:
@@ -1780,20 +1753,17 @@ cdef int _uriValidOrRaise(uri_utf) except -1:
     uri.xmlFreeURI(c_uri)
     return 0
 
-cdef inline object _namespacedName(xmlNode* c_node):
+cdef inline unicode _namespacedName(xmlNode* c_node):
     return _namespacedNameFromNsName(_getNs(c_node), c_node.name)
 
-cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
-    if href is NULL:
-        return funicode(name)
-    elif not python.IS_PYPY and (python.LXML_UNICODE_STRINGS or isutf8(name) or isutf8(href)):
-        return python.PyUnicode_FromFormat("{%s}%s", href, name)
-    else:
-        s = python.PyBytes_FromFormat("{%s}%s", href, name)
-        if python.IS_PYPY and (python.LXML_UNICODE_STRINGS or isutf8l(s, len(s))):
-            return (<bytes>s).decode('utf8')
-        else:
-            return s
+
+cdef unicode _namespacedNameFromNsName(const_xmlChar* c_href, const_xmlChar* c_name):
+    name = funicode(c_name)
+    if c_href is NULL:
+        return name
+    href = funicode(c_href)
+    return f"{{{href}}}{name}"
+
 
 cdef _getFilenameForFile(source):
     """Given a Python File or Gzip object, give filename back.

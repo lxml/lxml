@@ -1144,7 +1144,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     # ACCESSORS
     def __repr__(self):
         "__repr__(self)"
-        return "<Element %s at 0x%x>" % (strrepr(self.tag), id(self))
+        return "<Element %s at 0x%x>" % (self.tag, id(self))
 
     def __getitem__(self, x):
         """Returns the subelement at the given position or the requested
@@ -1724,7 +1724,7 @@ cdef class _Comment(__ContentOnlyElement):
         return Comment
 
     def __repr__(self):
-        return "<!--%s-->" % strrepr(self.text)
+        return "<!--%s-->" % self.text
 
 cdef class _ProcessingInstruction(__ContentOnlyElement):
     @property
@@ -1746,10 +1746,9 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
     def __repr__(self):
         text = self.text
         if text:
-            return "<?%s %s?>" % (strrepr(self.target),
-                                  strrepr(text))
+            return "<?%s %s?>" % (self.target, text)
         else:
-            return "<?%s?>" % strrepr(self.target)
+            return "<?%s?>" % self.target
 
     def get(self, key, default=None):
         """get(self, key, default=None)
@@ -1803,7 +1802,7 @@ cdef class _Entity(__ContentOnlyElement):
         return f'&{funicode(self._c_node.name)};'
 
     def __repr__(self):
-        return "&%s;" % strrepr(self.name)
+        return "&%s;" % self.name
 
 
 cdef class QName:
@@ -3348,14 +3347,13 @@ cdef int _indent_children(xmlNode* c_node, Py_ssize_t level, bytes one_space, li
     return 0
 
 
-def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
+def dump(_Element elem not None, *, bint pretty_print=True, bint with_tail=True):
     """dump(elem, pretty_print=True, with_tail=True)
 
     Writes an element tree or element structure to sys.stdout. This function
     should be used for debugging only.
     """
-    xml = tostring(elem, pretty_print=pretty_print, with_tail=with_tail,
-                   encoding=None if python.IS_PYTHON2 else 'unicode')
+    xml = tostring(elem, pretty_print=pretty_print, with_tail=with_tail, encoding='unicode')
     if not pretty_print:
         xml += '\n'
     sys.stdout.write(xml)
