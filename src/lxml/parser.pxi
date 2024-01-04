@@ -274,37 +274,6 @@ cdef unicode _find_PyUCS4EncodingName():
 _pyucs4_encoding_name = _find_PyUCS4EncodingName()
 
 
-
-cdef unicode _find_PyUCS4EncodingName():
-    """
-    Find a suitable encoding for Py_UCS4 PyUnicode strings in libxml2.
-    """
-    ustring = "<xml>\U0001F92A</xml>"
-    cdef const xmlChar* buffer = <const xmlChar*> python.PyUnicode_DATA(ustring)
-    cdef Py_ssize_t py_buffer_len = python.PyUnicode_GET_LENGTH(ustring)
-
-    encoding_name = ''
-    cdef tree.xmlCharEncoding enc = tree.xmlDetectCharEncoding(buffer, py_buffer_len)
-    enchandler = tree.xmlGetCharEncodingHandler(enc)
-    if enchandler is not NULL:
-        try:
-            if enchandler.name:
-                encoding_name = enchandler.name.decode('UTF-8')
-        finally:
-            tree.xmlCharEncCloseFunc(enchandler)
-    else:
-        c_name = tree.xmlGetCharEncodingName(enc)
-        if c_name:
-            encoding_name = c_name.decode('UTF-8')
-
-
-    if encoding_name and not encoding_name.endswith('LE') and not encoding_name.endswith('BE'):
-        encoding_name += 'BE' if python.PY_BIG_ENDIAN else 'LE'
-    return encoding_name or None
-
-_pyucs4_encoding_name = _find_PyUCS4EncodingName()
-
-
 ############################################################
 ## support for file-like objects
 ############################################################
