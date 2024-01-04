@@ -282,7 +282,7 @@ class CleanerTest(unittest.TestCase):
             # output would be '<div></div>'
             Cleaner(frames=False, host_whitelist=("example.com")).clean_html(html)
 
-        self.assertEqual(("host_whitelist must be a collection type",), exc.exception.args)
+        self.assertEqual(("Expected a collection, got str: host_whitelist='example.com'",), exc.exception.args)
 
     def test_host_whitelist_valid(self):
         # Frame with valid hostname in src is allowed.
