@@ -210,7 +210,7 @@ class Cleaner:
                 pass
             elif isinstance(default, (frozenset, set, tuple, list)):
                 # Catch common error of passing ('host') instead of a tuple.
-                if isinstance(default, str):
+                if isinstance(value, str):
                     raise TypeError(
                         f"Expected a collection, got str: {name}={value!r}")
             else:
