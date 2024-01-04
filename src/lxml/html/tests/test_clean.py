@@ -271,6 +271,19 @@ class CleanerTest(unittest.TestCase):
             expected,
             cleaner.clean_html(html))
 
+    def test_host_whitelist_slash_type_confusion(self):
+        # Regression test: Accidentally passing a string when a 1-tuple was intended
+        # creates a host_whitelist of the empty string; a malformed triple-slash
+        # URL has an "empty host" according to urlsplit, and `"" in ""` passes.
+        # So, don't allow user to accidentally pass a string for host_whitelist.
+        html = '<div><iframe src="https:///evil.com/page"></div>'
+        with self.assertRaises(TypeError) as exc:
+            # If this were the intended `("example.com",)` the expected
+            # output would be '<div></div>'
+            Cleaner(frames=False, host_whitelist=("example.com")).clean_html(html)
+
+        self.assertEqual(("Expected a collection, got str: host_whitelist='example.com'",), exc.exception.args)
+
     def test_host_whitelist_valid(self):
         # Frame with valid hostname in src is allowed.
         html = '<div><iframe src="https://example.com/page"></div>'

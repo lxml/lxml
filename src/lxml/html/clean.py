@@ -192,9 +192,9 @@ class Cleaner:
     frames = True
     forms = True
     annoying_tags = True
-    remove_tags = None
-    allow_tags = None
-    kill_tags = None
+    remove_tags = ()
+    allow_tags = ()
+    kill_tags = ()
     remove_unknown_tags = True
     safe_attrs_only = True
     safe_attrs = defs.safe_attrs
@@ -206,11 +206,18 @@ class Cleaner:
         not_an_attribute = object()
         for name, value in kw.items():
             default = getattr(self, name, not_an_attribute)
-            if (default is not None and default is not True and default is not False
-                    and not isinstance(default, (frozenset, set, tuple, list))):
+            if default is None or default is True or default is False:
+                pass
+            elif isinstance(default, (frozenset, set, tuple, list)):
+                # Catch common error of passing ('host') instead of a tuple.
+                if isinstance(value, str):
+                    raise TypeError(
+                        f"Expected a collection, got str: {name}={value!r}")
+            else:
                 raise TypeError(
-                    "Unknown parameter: %s=%r" % (name, value))
+                    f"Unknown parameter: {name}={value!r}")
             setattr(self, name, value)
+
         if self.inline_style is None and 'inline_style' not in kw:
             self.inline_style = self.style
 
@@ -219,6 +226,8 @@ class Cleaner:
                 raise ValueError("It does not make sense to pass in both "
                                  "allow_tags and remove_unknown_tags")
             self.remove_unknown_tags = False
+
+        self.host_whitelist = frozenset(self.host_whitelist) if self.host_whitelist else ()
 
     # Used to lookup the primary URL for a given tag that is up for
     # removal:
