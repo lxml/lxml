@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to RelaxNG parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -44,7 +41,7 @@ class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng_stringio(self):
         tree_valid = self.parse('<a><b></b></a>')
         tree_invalid = self.parse('<a><c></c></a>')
-        schema_file = BytesIO('''\
+        schema_file = BytesIO(b'''\
 <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
   <zeroOrMore>
      <element name="b">
@@ -208,12 +205,12 @@ class ETreeRelaxNGTestCase(HelperTestCase):
 </element>
 ''') )
         c_tree = etree.ElementTree(tree.getroot()[1])
-        self.assertEqual(self._rootstring(c_tree), _bytes('<c>C</c>'))
+        self.assertEqual(self._rootstring(c_tree), b'<c>C</c>')
         self.assertFalse(schema.validate(c_tree))
         self.assertTrue(schema.error_log.filter_from_errors())
 
         b_tree = etree.ElementTree(tree.getroot()[0])
-        self.assertEqual(self._rootstring(b_tree), _bytes('<b>B</b>'))
+        self.assertEqual(self._rootstring(b_tree), b'<b>B</b>')
         self.assertTrue(schema.validate(b_tree))
         self.assertFalse(schema.error_log.filter_from_errors())
 
@@ -230,7 +227,7 @@ class RelaxNGCompactTestCase(HelperTestCase):
         self.assertFalse(schema.validate(tree_invalid))
 
     def test_relaxng_compact_file_obj(self):
-        with open(fileInTestDir('test.rnc'), 'r') as f:
+        with open(fileInTestDir('test.rnc')) as f:
             schema = etree.RelaxNG(file=f)
 
         tree_valid = self.parse('<a><b>B</b><c>C</c></a>')
@@ -249,11 +246,11 @@ class RelaxNGCompactTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeRelaxNGTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     if rnc2rng is not None:
-        suite.addTests([unittest.makeSuite(RelaxNGCompactTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(RelaxNGCompactTestCase)])
     return suite
 
 if __name__ == '__main__':

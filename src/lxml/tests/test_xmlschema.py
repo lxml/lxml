@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to XML Schema parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -220,7 +217,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertEqual('hey', root[2].get('hardy'))
 
     def test_xmlschema_stringio(self):
-        schema_file = BytesIO('''
+        schema_file = BytesIO(b'''
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:element name="a" type="AType"/>
   <xsd:complexType name="AType">
@@ -251,7 +248,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 </xsd:schema>
 ''')
         schema = etree.XMLSchema(schema)
-        xml = BytesIO('<a><b></b></a>')
+        xml = BytesIO(b'<a><b></b></a>')
         events = [ (event, el.tag)
                    for (event, el) in etree.iterparse(xml, schema=schema) ]
 
@@ -270,7 +267,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 </xsd:schema>
 ''')
         schema = etree.XMLSchema(schema)
-        xml = BytesIO('<a><b></b></a>')
+        xml = BytesIO(b'<a><b></b></a>')
         event, element = next(iter(etree.iterparse(xml, schema=schema)))
         self.assertEqual('end', event)
         self.assertEqual('b', element.tag)
@@ -289,7 +286,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         schema = etree.XMLSchema(schema)
         self.assertRaises(
             etree.XMLSyntaxError,
-            list, etree.iterparse(BytesIO('<a><c></c></a>'), schema=schema))
+            list, etree.iterparse(BytesIO(b'<a><c></c></a>'), schema=schema))
 
     def test_xmlschema_elementtree_error(self):
         self.assertRaises(ValueError, etree.XMLSchema, etree.ElementTree())
@@ -394,7 +391,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 
 
 class ETreeXMLSchemaResolversTestCase(HelperTestCase):
-    resolver_schema_int = BytesIO("""\
+    resolver_schema_int = BytesIO(b"""\
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:etype="http://codespeak.net/lxml/test/external"
     targetNamespace="http://codespeak.net/lxml/test/internal">
@@ -402,7 +399,7 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
         <xsd:element name="a" type="etype:AType"/>
 </xsd:schema>""")
 
-    resolver_schema_int2 = BytesIO("""\
+    resolver_schema_int2 = BytesIO(b"""\
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:etype="http://codespeak.net/lxml/test/external"
     targetNamespace="http://codespeak.net/lxml/test/internal">
@@ -499,8 +496,8 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeXMLSchemaTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXMLSchemaResolversTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXMLSchemaTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXMLSchemaResolversTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite

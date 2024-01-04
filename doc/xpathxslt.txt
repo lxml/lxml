@@ -518,7 +518,7 @@ the result (``unicode()`` in Python 2):
 .. sourcecode:: pycon
 
   >>> str(result)
-  u'<?xml version="1.0"?>\n<foo>Text</foo>\n'
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 You can use other encodings at the cost of multiple recoding.  Encodings that
 are not supported by Python will result in an error:

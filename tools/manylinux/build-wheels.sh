@@ -30,16 +30,22 @@ build_wheel() {
 run_tests() {
     # Install packages and test
     for PYBIN in /opt/python/${PYTHON_BUILD_VERSION}/bin/; do
-        ${PYBIN}/python -m pip install $PACKAGE --no-index -f /io/$WHEELHOUSE || exit 1
+        ${PYBIN}/python -m pip install $PACKAGE --no-index -f /io/$WHEELHOUSE | tee install.txt || exit 1
 
         # check import as a quick test
-        (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
+        (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify') || {
+          # Allow PyPy to fail the import due to C-API differences for 'str' (PyVarObject or not).
+          echo "${PYBIN}" | fgrep -q pypy || exit 1
+          echo "Import failed - deleting wheel"
+          sed -ne '/Processing .*\.whl/s|Processing ||p' install.txt | (cd /io/$WHEELHOUSE && xargs rm)
+        }
     done
 }
 
 prepare_system() {
     #yum install -y zlib-devel
-    yum -y install xz  || true
+    yum --version 2>/dev/null && yum -y install xz  || true
+    apt-get --version 2>/dev/null && apt-get install xz-utils  || true
     #rm -fr /opt/python/cp34-*
     echo "Python versions found: $(cd /opt/python && echo cp* | sed -e 's|[^ ]*-||g')"
     ${CC:-gcc} --version

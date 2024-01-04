@@ -1,7 +1,7 @@
 # functions for tree cleanup and removing elements from subtrees
 
 def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None):
-    u"""cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None)
+    """cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None)
 
     Remove all namespace declarations from a subtree that are not used
     by any of the elements or attributes in that tree.
@@ -31,7 +31,7 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None):
 
 
 def strip_attributes(tree_or_element, *attribute_names):
-    u"""strip_attributes(tree_or_element, *attribute_names)
+    """strip_attributes(tree_or_element, *attribute_names)
 
     Delete all attributes with the provided attribute names from an
     Element (or ElementTree) and its descendants.
@@ -72,7 +72,7 @@ cdef _strip_attributes(xmlNode* c_node, _MultiTagMatcher matcher):
 
 
 def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
-    u"""strip_elements(tree_or_element, *tag_names, with_tail=True)
+    """strip_elements(tree_or_element, *tag_names, with_tail=True)
 
     Delete all elements with the provided tag names from a tree or
     subtree.  This will remove the elements and their entire subtree,
@@ -143,7 +143,7 @@ cdef _strip_elements(_Document doc, xmlNode* c_node, _MultiTagMatcher matcher,
 
 
 def strip_tags(tree_or_element, *tag_names):
-    u"""strip_tags(tree_or_element, *tag_names)
+    """strip_tags(tree_or_element, *tag_names)
 
     Delete all elements with the provided tag names from a tree or
     subtree.  This will remove the elements and their attributes, but

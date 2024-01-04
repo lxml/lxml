@@ -13,17 +13,11 @@ import re
 import sys
 import tempfile
 import unittest
+
 from contextlib import contextmanager
-
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse 
-
-try:
-    from urllib import pathname2url
-except:
-    from urllib.request import pathname2url
+from io import StringIO, BytesIO
+import urllib.parse as urlparse
+from urllib.request import pathname2url
 
 from lxml import etree, html
 
@@ -36,26 +30,12 @@ def make_version_tuple(version_string):
 IS_PYPY = (getattr(sys, 'implementation', None) == 'pypy' or
            getattr(sys, 'pypy_version_info', None) is not None)
 
-IS_PYTHON3 = sys.version_info[0] >= 3
-IS_PYTHON2 = sys.version_info[0] < 3
-
 from xml.etree import ElementTree
 
 if hasattr(ElementTree, 'VERSION'):
     ET_VERSION = make_version_tuple(ElementTree.VERSION)
 else:
     ET_VERSION = (0,0,0)
-
-if IS_PYTHON2:
-    from xml.etree import cElementTree
-
-    if hasattr(cElementTree, 'VERSION'):
-        CET_VERSION = make_version_tuple(cElementTree.VERSION)
-    else:
-        CET_VERSION = (0,0,0)
-else:
-    CET_VERSION = (0, 0, 0)
-    cElementTree = None
 
 
 def filter_by_version(test_class, version_dict, current_version):
@@ -81,88 +61,42 @@ import doctest
 try:
     import pytest
 except ImportError:
-    class skipif(object):
+    class skipif:
         "Using a class because a function would bind into a method when used in classes"
         def __init__(self, *args): pass
         def __call__(self, func, *args): return func
 else:
     skipif = pytest.mark.skipif
 
+
 def _get_caller_relative_path(filename, frame_depth=2):
     module = sys.modules[sys._getframe(frame_depth).f_globals['__name__']]
     return os.path.normpath(os.path.join(
             os.path.dirname(getattr(module, '__file__', '')), filename))
 
-from io import StringIO
 
 unichr_escape = re.compile(r'\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}')
 
-if sys.version_info[0] >= 3:
-    # Python 3
-    from builtins import str as unicode
-    from codecs import unicode_escape_decode
-    _chr = chr
-    def _str(s, encoding="UTF-8"):
-        return unichr_escape.sub(lambda x: unicode_escape_decode(x.group(0))[0], s)
-    def _bytes(s, encoding="UTF-8"):
-        return s.encode(encoding)
-    from io import BytesIO as _BytesIO
-    def BytesIO(*args):
-        if args and isinstance(args[0], str):
-            args = (args[0].encode("UTF-8"),)
-        return _BytesIO(*args)
 
-    doctest_parser = doctest.DocTestParser()
-    _fix_unicode = re.compile(r'(\s+)u(["\'])').sub
-    _fix_exceptions = re.compile(r'(.*except [^(]*),\s*(.*:)').sub
-    def make_doctest(filename):
-        filename = _get_caller_relative_path(filename)
-        doctests = read_file(filename)
-        doctests = _fix_unicode(r'\1\2', doctests)
-        doctests = _fix_exceptions(r'\1 as \2', doctests)
-        return doctest.DocTestCase(
-            doctest_parser.get_doctest(
-                doctests, {}, os.path.basename(filename), filename, 0))
-else:
-    # Python 2
-    from __builtin__ import unicode
-    _chr = unichr
-    def _str(s, encoding="UTF-8"):
-        s = unicode(s, encoding=encoding)
-        return unichr_escape.sub(lambda x:
-                                     x.group(0).decode('unicode-escape'),
-                                 s)
-    def _bytes(s, encoding="UTF-8"):
-        return s
-    from io import BytesIO
+# Python 3
+from codecs import unicode_escape_decode
+def _str(s, encoding="UTF-8"):
+    return unichr_escape.sub(lambda x: unicode_escape_decode(x.group(0))[0], s)
+def _bytes(s, encoding="UTF-8"):
+    return s.encode(encoding)
 
-    doctest_parser = doctest.DocTestParser()
-    _fix_traceback = re.compile(r'^(\s*)(?:\w+\.)+(\w*(?:Error|Exception|Invalid):)', re.M).sub
-    _fix_exceptions = re.compile(r'(.*except [^(]*)\s+as\s+(.*:)').sub
-    _fix_bytes = re.compile(r'(\s+)b(["\'])').sub
-    def make_doctest(filename):
-        filename = _get_caller_relative_path(filename)
-        doctests = read_file(filename)
-        doctests = _fix_traceback(r'\1\2', doctests)
-        doctests = _fix_exceptions(r'\1, \2', doctests)
-        doctests = _fix_bytes(r'\1\2', doctests)
-        return doctest.DocTestCase(
-            doctest_parser.get_doctest(
-                doctests, {}, os.path.basename(filename), filename, 0))
+from io import BytesIO as _BytesIO
 
-try:
-    skipIf = unittest.skipIf
-except AttributeError:
-    def skipIf(condition, why):
-        def _skip(thing):
-            import types
-            if isinstance(thing, (type, types.ClassType)):
-                return type(thing.__name__, (object,), {})
-            else:
-                return None
-        if condition:
-            return _skip
-        return lambda thing: thing
+def BytesIO(*args):
+    if args and isinstance(args[0], str):
+        args = (args[0].encode("UTF-8"),)
+    return _BytesIO(*args)
+
+doctest_parser = doctest.DocTestParser()
+
+def make_doctest(filename):
+    file_path = _get_caller_relative_path(filename)
+    return doctest.DocFileSuite(file_path, module_relative=False, encoding='utf-8')
 
 
 class HelperTestCase(unittest.TestCase):
@@ -176,11 +110,11 @@ class HelperTestCase(unittest.TestCase):
     
     def _rootstring(self, tree):
         return etree.tostring(tree.getroot()).replace(
-            _bytes(' '), _bytes('')).replace(_bytes('\n'), _bytes(''))
+            b' ', b'').replace(b'\n', b'')
 
 
 class SillyFileLike:
-    def __init__(self, xml_data=_bytes('<foo><bar/></foo>')):
+    def __init__(self, xml_data=b'<foo><bar/></foo>'):
         self.xml_data = xml_data
         
     def read(self, amount=None):
@@ -190,28 +124,28 @@ class SillyFileLike:
                 self.xml_data = self.xml_data[amount:]
             else:
                 data = self.xml_data
-                self.xml_data = _bytes('')
+                self.xml_data = b''
             return data
-        return _bytes('')
+        return b''
+
 
 class LargeFileLike:
     def __init__(self, charlen=100, depth=4, children=5):
         self.data = BytesIO()
-        self.chars  = _bytes('a') * charlen
+        self.chars  = b'a' * charlen
         self.children = range(children)
         self.more = self.iterelements(depth)
 
     def iterelements(self, depth):
-        yield _bytes('<root>')
+        yield b'<root>'
         depth -= 1
         if depth > 0:
             for child in self.children:
-                for element in self.iterelements(depth):
-                    yield element
+                yield from self.iterelements(depth)
                 yield self.chars
         else:
             yield self.chars
-        yield _bytes('</root>')
+        yield b'</root>'
 
     def read(self, amount=None):
         data = self.data
@@ -232,53 +166,61 @@ class LargeFileLike:
             result = result[:amount]
         return result
 
+
 class LargeFileLikeUnicode(LargeFileLike):
     def __init__(self, charlen=100, depth=4, children=5):
         LargeFileLike.__init__(self, charlen, depth, children)
         self.data = StringIO()
-        self.chars  = _str('a') * charlen
+        self.chars  = 'a' * charlen
         self.more = self.iterelements(depth)
 
     def iterelements(self, depth):
-        yield _str('<root>')
+        yield '<root>'
         depth -= 1
         if depth > 0:
             for child in self.children:
-                for element in self.iterelements(depth):
-                    yield element
+                yield from self.iterelements(depth)
                 yield self.chars
         else:
             yield self.chars
-        yield _str('</root>')
+        yield '</root>'
 
-class SimpleFSPath(object):
+
+class SimpleFSPath:
     def __init__(self, path):
         self.path = path
     def __fspath__(self):
         return self.path
 
+
 def fileInTestDir(name):
     _testdir = os.path.dirname(__file__)
     return os.path.join(_testdir, name)
+
 
 def path2url(path):
     return urlparse.urljoin(
         'file:', pathname2url(path))
 
+
 def fileUrlInTestDir(name):
     return path2url(fileInTestDir(name))
+
 
 def read_file(name, mode='r'):
     with open(name, mode) as f:
         data = f.read()
     return data
 
+
 def write_to_file(name, data, mode='w'):
     with open(name, mode) as f:
         f.write(data)
 
+
 def readFileInTestDir(name, mode='r'):
     return read_file(fileInTestDir(name), mode)
+
 
 def canonicalize(xml):
     tree = etree.parse(BytesIO(xml) if isinstance(xml, bytes) else StringIO(xml))

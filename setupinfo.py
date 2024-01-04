@@ -33,17 +33,14 @@ if hasattr(sys, 'pypy_version_info') or (
 SOURCE_PATH = "src"
 INCLUDE_PACKAGE_PATH = os.path.join(SOURCE_PATH, 'lxml', 'includes')
 
-if sys.version_info[0] >= 3:
-    _system_encoding = sys.getdefaultencoding()
-    if _system_encoding is None:
-        _system_encoding = "iso-8859-1" # :-)
-    def decode_input(data):
-        if isinstance(data, str):
-            return data
-        return data.decode(_system_encoding)
-else:
-    def decode_input(data):
+_system_encoding = sys.getdefaultencoding()
+if _system_encoding is None:
+    _system_encoding = "iso-8859-1" # :-)
+
+def decode_input(data):
+    if isinstance(data, str):
         return data
+    return data.decode(_system_encoding)
 
 def env_var(name):
     value = os.getenv(name)
@@ -101,7 +98,8 @@ def ext_modules(static_include_dirs, static_library_dirs,
             if not exists:
                 raise RuntimeError(
                     "ERROR: Trying to build without Cython, but pre-generated '%s.c' "
-                    "is not available (pass --without-cython to ignore this error)." % module)
+                    "is not available (to ignore this error, pass --without-cython or "
+                    "set environment variable WITHOUT_CYTHON=true)." % module)
     else:
         if not all(c_files_exist):
             for exists, module in zip(c_files_exist, module_files):
@@ -351,6 +349,7 @@ def define_macros():
     if OPTION_BUILD_LIBXML2XSLT:
         macros.append(('LIBXML_STATIC', None))
         macros.append(('LIBXSLT_STATIC', None))
+        macros.append(('LIBEXSLT_STATIC', None))
     # Disable showing C lines in tracebacks, unless explicitly requested.
     macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1' if OPTION_WITH_CLINES else '0'))
     return macros

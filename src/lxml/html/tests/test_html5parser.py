@@ -1,5 +1,4 @@
 import os
-import imp
 try:
     from StringIO import StringIO
 except ImportError:                     # python 3
@@ -34,7 +33,7 @@ try:
 except ImportError:
     html5lib = None
 
-    class BogusModules(object):
+    class BogusModules:
         # See PEP 302 for details on how this works
         def __init__(self, mocks):
             self.mocks = mocks
@@ -45,7 +44,11 @@ except ImportError:
             return None
 
         def load_module(self, fullname):
-            mod = sys.modules.setdefault(fullname, imp.new_module(fullname))
+            class Cls: pass
+            fake_module = Cls()
+            fake_module.__qualname__ = fullname
+            fake_module.__name__ = fullname.rsplit('.', 1)[-1]
+            mod = sys.modules.setdefault(fullname, fake_module)
             mod.__file__, mod.__loader__, mod.__path__ = "<dummy>", self, []
             mod.__dict__.update(self.mocks[fullname])
             return mod
@@ -230,7 +233,7 @@ class Test_fromstring(unittest.TestCase):
 
     def test_returns_whole_doc_if_input_is_encoded(self):
         parser = DummyParser(root='the doc')
-        input = '<!DOCTYPE html>'.encode('ascii')
+        input = b'<!DOCTYPE html>'
         self.assertEqual(self.call_it(input, parser=parser),
                          'the doc')
 
@@ -380,7 +383,7 @@ class HTMLElementMaker(ElementMaker):
         ElementMaker.__init__(self, **initargs)
 
 
-class DummyParser(object):
+class DummyParser:
     def __init__(self, doc=None, root=None,
                  fragments=None, namespaceHTMLElements=True):
         self.doc = doc or DummyElementTree(root=root)
@@ -398,12 +401,12 @@ class DummyParser(object):
         return self.fragments
 
 
-class DummyTreeBuilder(object):
+class DummyTreeBuilder:
     def __init__(self, namespaceHTMLElements=True):
         self.namespaceHTMLElements = namespaceHTMLElements
 
 
-class DummyElementTree(object):
+class DummyElementTree:
     def __init__(self, root):
         self.root = root
 
@@ -411,7 +414,7 @@ class DummyElementTree(object):
         return self.root
 
 
-class DummyElement(object):
+class DummyElement:
     def __init__(self, tag='tag', tail=None):
         self.tag = tag
         self.tail = tail

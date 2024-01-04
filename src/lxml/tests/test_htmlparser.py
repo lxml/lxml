@@ -1,21 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 HTML parser test cases for etree
 """
 
-from __future__ import absolute_import
 
 import unittest
 import tempfile, os, os.path, sys
+from io import BytesIO
 
-from .common_imports import etree, html, BytesIO, fileInTestDir, _bytes, _str
+from .common_imports import etree, html, fileInTestDir
 from .common_imports import SillyFileLike, HelperTestCase, write_to_file, needs_libxml
-
-try:
-    unicode
-except NameError:
-    unicode = str
 
 
 class HtmlParserTestCase(HelperTestCase):
@@ -23,21 +16,23 @@ class HtmlParserTestCase(HelperTestCase):
     """
     etree = etree
 
-    html_str = _bytes("<html><head><title>test</title></head><body><h1>page title</h1></body></html>")
-    html_str_pretty = _bytes("""\
+    html_str = b"<html><head><title>test</title></head><body><h1>page title</h1></body></html>"
+    html_str_pretty = b"""\
 <html>
 <head><title>test</title></head>
 <body><h1>page title</h1></body>
 </html>
-""")
-    broken_html_str = _bytes("<html><head><title>test"
-                             "<body><h1>page title</h3></p></html>")
-    uhtml_str = _bytes(
+"""
+    broken_html_str = (
+        b"<html><head><title>test"
+        b"<body><h1>page title</h3></p></html>")
+    uhtml_str = (
         "<html><head><title>test Ã¡</title></head>"
-        "<body><h1>page Ã¡ title</h1></body></html>").decode('utf8')
+        "<body><h1>page Ã¡ title</h1></body></html>"
+    )
 
     def tearDown(self):
-        super(HtmlParserTestCase, self).tearDown()
+        super().tearDown()
         self.etree.set_default_parser()
 
     def test_module_HTML(self):
@@ -51,18 +46,16 @@ class HtmlParserTestCase(HelperTestCase):
             self.etree.tostring(element, method="html", encoding='unicode'),
             self.uhtml_str)
         self.assertEqual(element.findtext('.//h1'),
-                         _bytes("page Ã¡ title").decode('utf8'))
+                         "page Ã¡ title")
 
     @needs_libxml(2, 9, 5)  # not sure, at least 2.9.4 fails
     def test_wide_unicode_html(self):
         if sys.maxunicode < 1114111:
             return  # skip test
-        element = self.etree.HTML(_bytes(
-            '<html><body><p>\\U00026007</p></body></html>'
-        ).decode('unicode_escape'))
+        element = self.etree.HTML('<html><body><p>\U00026007</p></body></html>')
         p_text = element.findtext('.//p')
         self.assertEqual(1, len(p_text))
-        self.assertEqual(_bytes('\\U00026007').decode('unicode_escape'),
+        self.assertEqual('\U00026007',
                          p_text)
 
     def test_html_ids(self):
@@ -91,7 +84,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_module_parse_html_error(self):
         parser = self.etree.HTMLParser(recover=False)
         parse = self.etree.parse
-        f = BytesIO("<html></body>")
+        f = BytesIO(b"<html></body>")
         self.assertRaises(self.etree.XMLSyntaxError,
                           parse, f, parser)
 
@@ -205,8 +198,8 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(d.getroottree().docinfo.doctype, '')
 
     def test_parse_encoding_8bit_explicit(self):
-        text = _str('Søk på nettet')
-        html_latin1 = (_str('<p>%s</p>') % text).encode('iso-8859-1')
+        text = 'Søk på nettet'
+        html_latin1 = ('<p>%s</p>' % text).encode('iso-8859-1')
 
         tree = self.etree.parse(
             BytesIO(html_latin1),
@@ -215,13 +208,13 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(p.text, text)
 
     def test_parse_encoding_8bit_override(self):
-        text = _str('Søk på nettet')
-        wrong_head = _str('''
+        text = 'Søk på nettet'
+        wrong_head = '''
         <head>
           <meta http-equiv="Content-Type"
                 content="text/html; charset=UTF-8" />
-        </head>''')
-        html_latin1 = (_str('<html>%s<body><p>%s</p></body></html>') % (wrong_head,
+        </head>'''
+        html_latin1 = ('<html>%s<body><p>%s</p></body></html>' % (wrong_head,
                                                                         text)
                       ).encode('iso-8859-1')
 
@@ -242,7 +235,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_module_HTML_cdata(self):
         # by default, libxml2 generates CDATA nodes for <script> content
-        html = _bytes('<html><head><style>foo</style></head></html>')
+        html = b'<html><head><style>foo</style></head></html>'
         element = self.etree.HTML(html)
         self.assertEqual(element[0][0].text, "foo")
 
@@ -301,8 +294,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_iterparse(self):
         iterparse = self.etree.iterparse
-        f = BytesIO(
-            '<html><head><title>TITLE</title><body><p>P</p></body></html>')
+        f = BytesIO(b'<html><head><title>TITLE</title><body><p>P</p></body></html>')
 
         iterator = iterparse(f, html=True)
         self.assertEqual(None, iterator.root)
@@ -317,8 +309,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_iterparse_tag(self):
         iterparse = self.etree.iterparse
-        f = BytesIO(
-            '<html><head><title>TITLE</title><body><p>P</p></body></html>')
+        f = BytesIO(b'<html><head><title>TITLE</title><body><p>P</p></body></html>')
 
         iterator = iterparse(f, html=True, tag=["p", "title"])
         self.assertEqual(None, iterator.root)
@@ -332,8 +323,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_iterparse_stop_short(self):
         iterparse = self.etree.iterparse
-        f = BytesIO(
-            '<html><head><title>TITLE</title><body><p>P</p></body></html>')
+        f = BytesIO(b'<html><head><title>TITLE</title><body><p>P</p></body></html>')
 
         iterator = iterparse(f, html=True)
         self.assertEqual(None, iterator.root)
@@ -353,7 +343,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_iterparse_broken(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<head><title>TEST></head><p>P<br></div>')
+        f = BytesIO(b'<head><title>TEST></head><p>P<br></div>')
 
         iterator = iterparse(f, html=True)
         self.assertEqual(None, iterator.root)
@@ -371,9 +361,25 @@ class HtmlParserTestCase(HelperTestCase):
              ('end', root[1][0]), ('end', root[1]), ('end', root)],
             events)
 
+    def test_html_iterparse_broken_meta(self):
+        # Broken HTML with a misplaced tag before the real html tag.
+        body = '''
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <html>
+            <head></head>
+            <body>
+            </body>
+        </html>
+        '''
+        PARSE_TAGS = {'meta', 'html', 'body'}
+
+        iterator = etree.iterparse(
+            BytesIO(body.encode()), events=('start', 'end'), html=True, recover=True, tag=PARSE_TAGS)
+        parse_events = list(iterator)
+
     def test_html_iterparse_broken_no_recover(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<p>P<br></div>')
+        f = BytesIO(b'<p>P<br></div>')
         iterator = iterparse(f, html=True, recover=False)
         self.assertRaises(self.etree.XMLSyntaxError, list, iterator)
 
@@ -392,8 +398,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_iterparse_start(self):
         iterparse = self.etree.iterparse
-        f = BytesIO(
-            '<html><head><title>TITLE</title><body><p>P</p></body></html>')
+        f = BytesIO(b'<html><head><title>TITLE</title><body><p>P</p></body></html>')
 
         iterator = iterparse(f, html=True, events=('start',))
         self.assertEqual(None, iterator.root)
@@ -454,7 +459,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_tag(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -476,7 +481,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_empty(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -500,7 +505,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_html(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -524,7 +529,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_html_parser_target_doctype_html_full(self):
         assertFalse  = self.assertFalse
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 assertFalse(attrib)
@@ -548,7 +553,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_parser_target_exceptions(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 raise ValueError("START")
@@ -575,7 +580,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_fromstring_target_exceptions(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append(("start", tag))
                 raise ValueError("START")
@@ -607,8 +612,8 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">')
         self.assertEqual(self.etree.tostring(doc),
-                         _bytes('''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"></html>'''))
+                         b'''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"></html>''')
 
     def test_html5_doctype(self):
         # document type declaration with neither public if nor system url
@@ -619,7 +624,7 @@ class HtmlParserTestCase(HelperTestCase):
                          '<!DOCTYPE html>')
         self.assertTrue(doc.docinfo.public_id is None)
         self.assertEqual(self.etree.tostring(doc),
-                         _bytes('<!DOCTYPE html>\n<html/>'))
+                         b'<!DOCTYPE html>\n<html/>')
 
     def test_ietf_decl(self):
         # legacy declaration with public id, no system url
@@ -629,29 +634,29 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
         self.assertEqual(self.etree.tostring(doc),
-                         _bytes('<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">\n<html/>'))
+                         b'<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">\n<html/>')
 
     def test_boolean_attribute(self):
         # ability to serialize boolean attribute by setting value to None
         form = html.Element('form')
         form.set('novalidate', None)
         self.assertEqual(html.tostring(form),
-                         _bytes('<form novalidate></form>'))
+                         b'<form novalidate></form>')
         form.set('custom')
         self.assertEqual(html.tostring(form),
-                         _bytes('<form novalidate custom></form>'))
+                         b'<form novalidate custom></form>')
 
     def test_boolean_attribute_round_trip(self):
         # ability to pass boolean attributes unmodified
         fragment = '<tag attribute></tag>'
         self.assertEqual(html.tostring(html.fragment_fromstring(fragment)),
-                         _bytes(fragment))
+                         fragment.encode('utf-8'))
 
     def test_boolean_attribute_xml_adds_empty_string(self):
         # html serialized as xml converts boolean attributes to empty strings
         fragment = '<tag attribute></tag>'
         self.assertEqual(self.etree.tostring(html.fragment_fromstring(fragment)),
-                         _bytes('<tag attribute=""/>'))
+                         b'<tag attribute=""/>')
 
     def test_xhtml_as_html_as_xml(self):
         # parse XHTML as HTML, serialise as XML
@@ -679,7 +684,7 @@ class HtmlParserTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(HtmlParserTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(HtmlParserTestCase)])
     return suite
 
 

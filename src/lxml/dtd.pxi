@@ -15,7 +15,7 @@ cdef class DTDValidateError(DTDError):
 
 
 cdef inline int _assertValidDTDNode(node, void *c_node) except -1:
-    assert c_node is not NULL, u"invalid DTD proxy at %s" % id(node)
+    assert c_node is not NULL, "invalid DTD proxy at %s" % id(node)
 
 
 @cython.final
@@ -268,7 +268,7 @@ cdef class _DTDEntityDecl:
 # DTD
 
 cdef class DTD(_Validator):
-    u"""DTD(self, file=None, external_id=None)
+    """DTD(self, file=None, external_id=None)
     A DTD validator.
 
     Can load from filesystem directly given a filename or file-like object.
@@ -291,18 +291,18 @@ cdef class DTD(_Validator):
                 self._c_dtd = _parseDtdFromFilelike(file)
                 _reset_document_loader(orig_loader)
             else:
-                raise DTDParseError, u"file must be a filename, file-like or path-like object"
+                raise DTDParseError, "file must be a filename, file-like or path-like object"
         elif external_id is not None:
             with self._error_log:
                 orig_loader = _register_document_loader()
                 self._c_dtd = xmlparser.xmlParseDTD(<const_xmlChar*>external_id, NULL)
                 _reset_document_loader(orig_loader)
         else:
-            raise DTDParseError, u"either filename or external ID required"
+            raise DTDParseError, "either filename or external ID required"
 
         if self._c_dtd is NULL:
             raise DTDParseError(
-                self._error_log._buildExceptionMessage(u"error parsing DTD"),
+                self._error_log._buildExceptionMessage("error parsing DTD"),
                 self._error_log)
 
     @property
@@ -353,7 +353,7 @@ cdef class DTD(_Validator):
         tree.xmlFreeDtd(self._c_dtd)
 
     def __call__(self, etree):
-        u"""__call__(self, etree)
+        """__call__(self, etree)
 
         Validate doc using the DTD.
 
@@ -371,7 +371,7 @@ cdef class DTD(_Validator):
 
         valid_ctxt = dtdvalid.xmlNewValidCtxt()
         if valid_ctxt is NULL:
-            raise DTDError(u"Failed to create validation context")
+            raise DTDError("Failed to create validation context")
 
         # work around error reporting bug in libxml2 <= 2.9.1 (and later?)
         # https://bugzilla.gnome.org/show_bug.cgi?id=724903
@@ -387,7 +387,7 @@ cdef class DTD(_Validator):
             dtdvalid.xmlFreeValidCtxt(valid_ctxt)
 
         if ret == -1:
-            raise DTDValidateError(u"Internal error in DTD validation",
+            raise DTDValidateError("Internal error in DTD validation",
                                    self._error_log)
         return ret == 1
 
@@ -406,7 +406,7 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
 
     exc_context._raise_if_stored()
     if c_dtd is NULL:
-        raise DTDParseError(u"error parsing DTD", error_log)
+        raise DTDParseError("error parsing DTD", error_log)
     return c_dtd
 
 cdef DTD _dtdFactory(tree.xmlDtd* c_dtd):
@@ -436,7 +436,7 @@ cdef tree.xmlDtd* _copyDtd(tree.xmlDtd* c_orig_dtd) except NULL:
     return c_dtd
 
 
-cdef void _linkDtdAttribute(tree.xmlDtd* c_dtd, tree.xmlAttribute* c_attr):
+cdef void _linkDtdAttribute(tree.xmlDtd* c_dtd, tree.xmlAttribute* c_attr) noexcept:
     """
     Create the link to the DTD attribute declaration from the corresponding
     element declaration.
@@ -469,7 +469,7 @@ cdef void _linkDtdAttribute(tree.xmlDtd* c_dtd, tree.xmlAttribute* c_attr):
     c_pos.nexth = c_attr
 
 
-cdef bint _isDtdNsDecl(tree.xmlAttribute* c_attr):
+cdef bint _isDtdNsDecl(tree.xmlAttribute* c_attr) noexcept:
     if cstring_h.strcmp(<const_char*>c_attr.name, "xmlns") == 0:
         return True
     if (c_attr.prefix is not NULL and

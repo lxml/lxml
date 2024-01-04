@@ -5,28 +5,22 @@
 #include "Python.h"
 #ifndef PY_VERSION_HEX
 #  error the development package of Python (header files etc.) is not installed correctly
-#else
-#  if PY_VERSION_HEX < 0x02070000 || PY_MAJOR_VERSION >= 3 && PY_VERSION_HEX < 0x03050000
-#  error this version of lxml requires Python 2.7, 3.5 or later
-#  endif
+#elif PY_VERSION_HEX < 0x03060000
+#  error this version of lxml requires Python 3.6 or later
 #endif
 
 #include "libxml/xmlversion.h"
 #ifndef LIBXML_VERSION
 #  error the development package of libxml2 (header files etc.) is not installed correctly
-#else
-#if LIBXML_VERSION < 20700
+#elif LIBXML_VERSION < 20700
 #  error minimum required version of libxml2 is 2.7.0
-#endif
 #endif
 
 #include "libxslt/xsltconfig.h"
 #ifndef LIBXSLT_VERSION
 #  error the development package of libxslt (header files etc.) is not installed correctly
-#else
-#if LIBXSLT_VERSION < 10123
+#elif LIBXSLT_VERSION < 10123
 #  error minimum required version of libxslt is 1.1.23
-#endif
 #endif
 
 
@@ -40,6 +34,7 @@
 #    define IS_PYPY 0
 #endif
 
+/* unused */
 #if PY_MAJOR_VERSION >= 3
 #  define IS_PYTHON2 0  /* prefer for special casing Python 2.x */
 #  define IS_PYTHON3 1  /* avoid */
@@ -48,6 +43,7 @@
 #  define IS_PYTHON3 0
 #endif
 
+/* unused */
 #if IS_PYTHON2
 #ifndef LXML_UNICODE_STRINGS
 #define LXML_UNICODE_STRINGS 0
@@ -82,7 +78,7 @@
 #  ifndef PyUnicode_FromFormat
 #    define PyUnicode_FromFormat  PyString_FromFormat
 #  endif
-#  if !IS_PYTHON2 && !defined(PyBytes_FromFormat)
+#  if !defined(PyBytes_FromFormat)
 #    ifdef PyString_FromFormat
 #      define PyBytes_FromFormat  PyString_FromFormat
 #    else
@@ -113,11 +109,14 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  endif
 #endif
 
-/* PySlice_GetIndicesEx() has wrong signature in Py<=3.1 */
-#if PY_VERSION_HEX >= 0x03020000
-#  define _lx_PySlice_GetIndicesEx(o, l, b, e, s, sl) PySlice_GetIndicesEx(o, l, b, e, s, sl)
-#else
-#  define _lx_PySlice_GetIndicesEx(o, l, b, e, s, sl) PySlice_GetIndicesEx(((PySliceObject*)o), l, b, e, s, sl)
+#if PY_VERSION_HEX >= 0x030B00A1
+/* Python 3.12 doesn't have wstr Unicode strings any more. */
+#undef PyUnicode_GET_DATA_SIZE
+#define PyUnicode_GET_DATA_SIZE(ustr)  (0)
+#undef PyUnicode_AS_DATA
+#define PyUnicode_AS_DATA(ustr)  (NULL)
+#undef PyUnicode_IS_READY
+#define PyUnicode_IS_READY(ustr)  (1)
 #endif
 
 #ifdef WITHOUT_THREADING
@@ -230,21 +229,7 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 
 #define lxml_free(mem)  PyMem_Free(mem)
 
-#if PY_MAJOR_VERSION < 3
-#define _isString(obj)   (PyString_CheckExact(obj)  || \
-                          PyUnicode_CheckExact(obj) || \
-                          PyType_IsSubtype(Py_TYPE(obj), &PyBaseString_Type))
-#else
-/* builtin subtype type checks are almost as fast as exact checks in Py2.7+
- * and Unicode is more common in Py3 */
 #define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
-#endif
-
-#if PY_VERSION_HEX >= 0x03060000
-#define lxml_PyOS_FSPath(obj) (PyOS_FSPath(obj))
-#else
-#define lxml_PyOS_FSPath(obj) (NULL)
-#endif
 
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \

@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to DTD parsing and validation
 """
 
 import unittest, sys
+from io import BytesIO
+from unittest import skipIf
 
 from .common_imports import (
-    etree, html, BytesIO, _bytes, _str,
-    HelperTestCase, make_doctest, skipIf,
+    etree, html,
+    HelperTestCase, make_doctest,
     fileInTestDir, fileUrlInTestDir, SimpleFSPath
 )
 
@@ -34,15 +34,15 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertTrue(dtd.validate(root))
 
     def test_dtd_stringio(self):
-        root = etree.XML(_bytes("<b/>"))
-        dtd = etree.DTD(BytesIO("<!ELEMENT b EMPTY>"))
+        root = etree.XML(b"<b/>")
+        dtd = etree.DTD(BytesIO(b"<!ELEMENT b EMPTY>"))
         self.assertTrue(dtd.validate(root))
 
     def test_dtd_parse_invalid(self):
         fromstring = etree.fromstring
         parser = etree.XMLParser(dtd_validation=True)
-        xml = _bytes('<!DOCTYPE b SYSTEM "%s"><b><a/></b>' %
-                     fileInTestDir("test.dtd"))
+        xml = ('<!DOCTYPE b SYSTEM "%s"><b><a/></b>' %
+                     fileInTestDir("test.dtd")).encode('utf-8')
         self.assertRaises(etree.XMLSyntaxError,
                           fromstring, xml, parser=parser)
 
@@ -50,9 +50,8 @@ class ETreeDtdTestCase(HelperTestCase):
         fromstring = etree.fromstring
         dtd_filename = fileUrlInTestDir("__nosuch.dtd")
         parser = etree.XMLParser(dtd_validation=True)
-        xml = _bytes('<!DOCTYPE b SYSTEM "%s"><b><a/></b>' % dtd_filename)
-        self.assertRaises(etree.XMLSyntaxError,
-                          fromstring, xml, parser=parser)
+        xml = '<!DOCTYPE b SYSTEM "%s"><b><a/></b>' % dtd_filename
+        self.assertRaises(etree.XMLSyntaxError, fromstring, xml, parser=parser)
         errors = None
         try:
             fromstring(xml, parser=parser)
@@ -90,57 +89,57 @@ class ETreeDtdTestCase(HelperTestCase):
 
     def test_dtd_invalid(self):
         root = etree.XML("<b><a/></b>")
-        dtd = etree.DTD(BytesIO("<!ELEMENT b EMPTY>"))
+        dtd = etree.DTD(BytesIO(b"<!ELEMENT b EMPTY>"))
         self.assertRaises(etree.DocumentInvalid, dtd.assertValid, root)
 
     def test_dtd_assertValid(self):
         root = etree.XML("<b><a/></b>")
-        dtd = etree.DTD(BytesIO("<!ELEMENT b (a)><!ELEMENT a EMPTY>"))
+        dtd = etree.DTD(BytesIO(b"<!ELEMENT b (a)><!ELEMENT a EMPTY>"))
         dtd.assertValid(root)
 
     def test_dtd_internal(self):
-        root = etree.XML(_bytes('''
+        root = etree.XML(b'''
         <!DOCTYPE b SYSTEM "none" [
         <!ELEMENT b (a)>
         <!ELEMENT a EMPTY>
         ]>
         <b><a/></b>
-        '''))
+        ''')
         dtd = etree.ElementTree(root).docinfo.internalDTD
         self.assertTrue(dtd)
         dtd.assertValid(root)
 
     def test_dtd_internal_invalid(self):
-        root = etree.XML(_bytes('''
+        root = etree.XML(b'''
         <!DOCTYPE b SYSTEM "none" [
         <!ELEMENT b (a)>
         <!ELEMENT a (c)>
         <!ELEMENT c EMPTY>
         ]>
         <b><a/></b>
-        '''))
+        ''')
         dtd = etree.ElementTree(root).docinfo.internalDTD
         self.assertTrue(dtd)
         self.assertFalse(dtd.validate(root))
 
     def test_dtd_invalid_duplicate_id(self):
-        root = etree.XML(_bytes('''
+        root = etree.XML(b'''
         <a><b id="id1"/><b id="id2"/><b id="id1"/></a>
-        '''))
-        dtd = etree.DTD(BytesIO(_bytes("""
+        ''')
+        dtd = etree.DTD(BytesIO(b"""
         <!ELEMENT a (b*)>
         <!ATTLIST b
             id ID #REQUIRED
         >
         <!ELEMENT b EMPTY>
-        """)))
+        """))
         self.assertFalse(dtd.validate(root))
         self.assertTrue(dtd.error_log)
         self.assertTrue([error for error in dtd.error_log
                          if 'id1' in error.message])
 
     def test_dtd_api_internal(self):
-        root = etree.XML(_bytes('''
+        root = etree.XML(b'''
         <!DOCTYPE b SYSTEM "none" [
         <!ATTLIST a
           attr1 (x | y | z) "z"
@@ -150,7 +149,7 @@ class ETreeDtdTestCase(HelperTestCase):
         <!ELEMENT a EMPTY>
         ]>
         <b><a/></b>
-        '''))
+        ''')
         dtd = etree.ElementTree(root).docinfo.internalDTD
         self.assertTrue(dtd)
         dtd.assertValid(root)
@@ -183,7 +182,7 @@ class ETreeDtdTestCase(HelperTestCase):
     def test_internal_dtds(self):
         for el_count in range(2, 5):
             for attr_count in range(4):
-                root = etree.XML(_bytes('''
+                root = etree.XML('''
                 <!DOCTYPE el0 SYSTEM "none" [
                 ''' + ''.join(['''
                 <!ATTLIST el%d
@@ -198,7 +197,7 @@ class ETreeDtdTestCase(HelperTestCase):
                     'el%d' % e for e in range(1, el_count)]) + '''
                 ]>
                 <el0><el1 %s /></el0>
-                ''' % ' '.join(['attr%d="x"' % a for a in range(attr_count)])))
+                ''' % ' '.join(['attr%d="x"' % a for a in range(attr_count)]))
                 dtd = etree.ElementTree(root).docinfo.internalDTD
                 self.assertTrue(dtd)
                 dtd.assertValid(root)
@@ -219,7 +218,7 @@ class ETreeDtdTestCase(HelperTestCase):
 
     def test_dtd_broken(self):
         self.assertRaises(etree.DTDParseError, etree.DTD,
-                          BytesIO("<!ELEMENT b HONKEY>"))
+                          BytesIO(b"<!ELEMENT b HONKEY>"))
 
     def test_parse_file_dtd(self):
         parser = etree.XMLParser(attribute_defaults=True)
@@ -290,12 +289,12 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(c.content, "*")
 
         # Test DTD.name attribute
-        root = etree.XML(_bytes('''
+        root = etree.XML(b'''
         <!DOCTYPE a SYSTEM "none" [
         <!ELEMENT a EMPTY>
         ]>
         <a/>
-        '''))
+        ''')
         dtd = etree.ElementTree(root).docinfo.internalDTD
         self.assertEqual(dtd.name, "a")
 
@@ -318,21 +317,21 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(doc.docinfo.doctype,
                          '''<!DOCTYPE a PUBLIC "foo" '"'>''')
         self.assertEqual(etree.tostring(doc),
-                         _bytes('''<!DOCTYPE a PUBLIC "foo" '"'>\n<a/>'''))
+                         b'''<!DOCTYPE a PUBLIC "foo" '"'>\n<a/>''')
 
     def test_declaration_quote_withoutpid(self):
         root = etree.XML('''<!DOCTYPE a SYSTEM '"'><a/>''')
         doc = root.getroottree()
         self.assertEqual(doc.docinfo.doctype, '''<!DOCTYPE a SYSTEM '"'>''')
         self.assertEqual(etree.tostring(doc),
-                         _bytes('''<!DOCTYPE a SYSTEM '"'>\n<a/>'''))
+                         b'''<!DOCTYPE a SYSTEM '"'>\n<a/>''')
 
     def test_declaration_apos(self):
         root = etree.XML('''<!DOCTYPE a SYSTEM "'"><a/>''')
         doc = root.getroottree()
         self.assertEqual(doc.docinfo.doctype, '''<!DOCTYPE a SYSTEM "'">''')
         self.assertEqual(etree.tostring(doc),
-                         _bytes('''<!DOCTYPE a SYSTEM "'">\n<a/>'''))
+                         b'''<!DOCTYPE a SYSTEM "'">\n<a/>''')
 
     def test_ietf_decl(self):
         html_data = (
@@ -342,7 +341,7 @@ class ETreeDtdTestCase(HelperTestCase):
         doc = root.getroottree()
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
-        self.assertEqual(etree.tostring(doc, method='html'), _bytes(html_data))
+        self.assertEqual(etree.tostring(doc, method='html'), html_data.encode('utf-8'))
 
     def test_set_decl_public(self):
         doc = etree.Element('test').getroottree()
@@ -351,7 +350,7 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE test PUBLIC "bar" "baz">')
         self.assertEqual(etree.tostring(doc),
-                         _bytes('<!DOCTYPE test PUBLIC "bar" "baz">\n<test/>'))
+                         b'<!DOCTYPE test PUBLIC "bar" "baz">\n<test/>')
 
     def test_html_decl(self):
         # Slightly different to one above: when we create an html element,
@@ -362,7 +361,7 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE html PUBLIC "bar" "baz">')
         self.assertEqual(etree.tostring(doc),
-                         _bytes('<!DOCTYPE html PUBLIC "bar" "baz">\n<html/>'))
+                         b'<!DOCTYPE html PUBLIC "bar" "baz">\n<html/>')
 
     def test_clean_doctype(self):
         doc = html.Element('html').getroottree()
@@ -376,7 +375,7 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE test SYSTEM "baz">')
         self.assertEqual(etree.tostring(doc),
-                         _bytes('<!DOCTYPE test SYSTEM "baz">\n<test/>'))
+                         b'<!DOCTYPE test SYSTEM "baz">\n<test/>')
 
     def test_empty_decl(self):
         doc = etree.Element('test').getroottree()
@@ -386,15 +385,15 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertTrue(doc.docinfo.public_id is None)
         self.assertTrue(doc.docinfo.system_url is None)
         self.assertEqual(etree.tostring(doc),
-                         _bytes('<!DOCTYPE test>\n<test/>'))
+                         b'<!DOCTYPE test>\n<test/>')
 
     def test_invalid_decl_1(self):
         docinfo = etree.Element('test').getroottree().docinfo
 
         def set_public_id(value):
             docinfo.public_id = value
-        self.assertRaises(ValueError, set_public_id, _str('ä'))
-        self.assertRaises(ValueError, set_public_id, _str('qwerty ä asdf'))
+        self.assertRaises(ValueError, set_public_id, 'ä')
+        self.assertRaises(ValueError, set_public_id, 'qwerty ä asdf')
 
     def test_invalid_decl_2(self):
         docinfo = etree.Element('test').getroottree().docinfo
@@ -409,20 +408,20 @@ class ETreeDtdTestCase(HelperTestCase):
         data = '<!--comment--><!DOCTYPE test>\n<!-- --><test/>'
         doc = etree.fromstring(data).getroottree()
         self.assertEqual(etree.tostring(doc),
-                         _bytes(data))
+                         data.encode('utf-8'))
 
     def test_entity_system_url(self):
-        xml = etree.parse(BytesIO('<!DOCTYPE test [ <!ENTITY TestReference SYSTEM "./foo.bar"> ]><a/>'))
+        xml = etree.parse(BytesIO(b'<!DOCTYPE test [ <!ENTITY TestReference SYSTEM "./foo.bar"> ]><a/>'))
         self.assertEqual(xml.docinfo.internalDTD.entities()[0].system_url, "./foo.bar")
 
     def test_entity_system_url_none(self):
-        xml = etree.parse(BytesIO('<!DOCTYPE test [ <!ENTITY TestReference "testvalue"> ]><a/>'))
+        xml = etree.parse(BytesIO(b'<!DOCTYPE test [ <!ENTITY TestReference "testvalue"> ]><a/>'))
         self.assertEqual(xml.docinfo.internalDTD.entities()[0].system_url, None)
 
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeDtdTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeDtdTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite

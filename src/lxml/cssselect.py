@@ -6,7 +6,6 @@ See the `CSSSelector` class for details.
 This is a thin wrapper around cssselect 0.7 or later.
 """
 
-from __future__ import absolute_import
 
 from . import etree
 try:
@@ -14,7 +13,7 @@ try:
 except ImportError:
     raise ImportError(
         'cssselect does not seem to be installed. '
-        'See http://packages.python.org/cssselect/')
+        'See https://pypi.org/project/cssselect/')
 
 
 SelectorSyntaxError = external_cssselect.SelectorSyntaxError
@@ -92,11 +91,11 @@ class CSSSelector(etree.XPath):
         elif translator == 'xhtml':
             translator = LxmlHTMLTranslator(xhtml=True)
         path = translator.css_to_xpath(css)
-        etree.XPath.__init__(self, path, namespaces=namespaces)
+        super().__init__(path, namespaces=namespaces)
         self.css = css
 
     def __repr__(self):
-        return '<%s %s for %r>' % (
+        return '<%s %x for %r>' % (
             self.__class__.__name__,
-            hex(abs(id(self)))[2:],
+            abs(id(self)),
             self.css)

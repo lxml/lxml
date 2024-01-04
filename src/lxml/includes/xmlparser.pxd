@@ -1,12 +1,12 @@
 from libc.string cimport const_char
 
 from lxml.includes.tree cimport (
-    xmlDoc, xmlNode, xmlDict, xmlDtd, xmlChar, const_xmlChar)
+    xmlDoc, xmlNode, xmlEntity, xmlDict, xmlDtd, xmlChar, const_xmlChar)
 from lxml.includes.tree cimport xmlInputReadCallback, xmlInputCloseCallback
-from lxml.includes.xmlerror cimport xmlError, xmlStructuredErrorFunc
+from lxml.includes.xmlerror cimport xmlError, xmlStructuredErrorFunc, xmlErrorLevel
 
 
-cdef extern from "libxml/parser.h":
+cdef extern from "libxml/parser.h" nogil:
     ctypedef void (*startElementNsSAX2Func)(void* ctx,
                                             const_xmlChar* localname,
                                             const_xmlChar* prefix,
@@ -15,43 +15,46 @@ cdef extern from "libxml/parser.h":
                                             const_xmlChar** namespaces,
                                             int nb_attributes,
                                             int nb_defaulted,
-                                            const_xmlChar** attributes)
+                                            const_xmlChar** attributes) noexcept
 
     ctypedef void (*endElementNsSAX2Func)(void* ctx,
                                           const_xmlChar* localname,
                                           const_xmlChar* prefix,
-                                          const_xmlChar* URI)
+                                          const_xmlChar* URI) noexcept
 
-    ctypedef void (*startElementSAXFunc)(void* ctx, const_xmlChar* name, const_xmlChar** atts)
+    ctypedef void (*startElementSAXFunc)(void* ctx, const_xmlChar* name, const_xmlChar** atts) noexcept
 
-    ctypedef void (*endElementSAXFunc)(void* ctx, const_xmlChar* name)
+    ctypedef void (*endElementSAXFunc)(void* ctx, const_xmlChar* name) noexcept
 
-    ctypedef void (*charactersSAXFunc)(void* ctx, const_xmlChar* ch, int len)
+    ctypedef void (*charactersSAXFunc)(void* ctx, const_xmlChar* ch, int len) noexcept
 
-    ctypedef void (*cdataBlockSAXFunc)(void* ctx, const_xmlChar* value, int len)
+    ctypedef void (*cdataBlockSAXFunc)(void* ctx, const_xmlChar* value, int len) noexcept
 
-    ctypedef void (*commentSAXFunc)(void* ctx, const_xmlChar* value)
+    ctypedef void (*commentSAXFunc)(void* ctx, const_xmlChar* value) noexcept
 
     ctypedef void (*processingInstructionSAXFunc)(void* ctx, 
                                                   const_xmlChar* target,
-                                                  const_xmlChar* data)
+                                                  const_xmlChar* data) noexcept
 
     ctypedef void (*internalSubsetSAXFunc)(void* ctx, 
                                             const_xmlChar* name,
                                             const_xmlChar* externalID,
-                                            const_xmlChar* systemID)
+                                            const_xmlChar* systemID) noexcept
 
-    ctypedef void (*endDocumentSAXFunc)(void* ctx)
+    ctypedef void (*endDocumentSAXFunc)(void* ctx) noexcept
 
-    ctypedef void (*startDocumentSAXFunc)(void* ctx)
+    ctypedef void (*startDocumentSAXFunc)(void* ctx) noexcept
 
-    ctypedef void (*referenceSAXFunc)(void * ctx, const_xmlChar* name)
+    ctypedef void (*referenceSAXFunc)(void * ctx, const_xmlChar* name) noexcept
+
+    ctypedef xmlEntity* (*getEntitySAXFunc)(void* ctx, const_xmlChar* name) noexcept
 
     cdef int XML_SAX2_MAGIC
 
-cdef extern from "libxml/tree.h":
+cdef extern from "libxml/tree.h" nogil:
     ctypedef struct xmlParserInput:
         int line
+        int col
         int length
         const_xmlChar* base
         const_xmlChar* cur
@@ -76,6 +79,7 @@ cdef extern from "libxml/tree.h":
         charactersSAXFunc               characters
         cdataBlockSAXFunc               cdataBlock
         referenceSAXFunc                reference
+        getEntitySAXFunc                getEntity
         commentSAXFunc                  comment
         processingInstructionSAXFunc	processingInstruction
         startDocumentSAXFunc            startDocument
@@ -93,12 +97,12 @@ cdef extern from "libxml/xmlIO.h" nogil:
     cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc)
 
 
-cdef extern from "libxml/parser.h":
+cdef extern from "libxml/parser.h" nogil:
 
-    cdef xmlDict* xmlDictCreate() nogil
-    cdef xmlDict* xmlDictCreateSub(xmlDict* subdict) nogil
-    cdef void xmlDictFree(xmlDict* sub) nogil
-    cdef int xmlDictReference(xmlDict* dict) nogil
+    cdef xmlDict* xmlDictCreate()
+    cdef xmlDict* xmlDictCreateSub(xmlDict* subdict)
+    cdef void xmlDictFree(xmlDict* sub)
+    cdef int xmlDictReference(xmlDict* dict)
     
     cdef int XML_COMPLETE_ATTRS  # SAX option for adding DTD default attributes
     cdef int XML_SKIP_IDS        # SAX option for not building an XML ID dict
@@ -150,6 +154,8 @@ cdef extern from "libxml/parser.h":
         int inSubset
         int charset
         xmlParserInput* input
+        int inputNr
+        xmlParserInput* inputTab[]
 
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors
@@ -181,36 +187,42 @@ cdef extern from "libxml/parser.h":
         # libxml2 2.9.0+ only:
         XML_PARSE_BIG_LINES = 4194304 # Store big lines numbers in text PSVI field
 
-    cdef void xmlInitParser() nogil
-    cdef void xmlCleanupParser() nogil
+    cdef void xmlInitParser()
+    cdef void xmlCleanupParser()
 
-    cdef int xmlLineNumbersDefault(int onoff) nogil
-    cdef xmlParserCtxt* xmlNewParserCtxt() nogil
+    cdef int xmlLineNumbersDefault(int onoff)
+    cdef xmlParserCtxt* xmlNewParserCtxt()
     cdef xmlParserInput* xmlNewIOInputStream(xmlParserCtxt* ctxt,
                                              xmlParserInputBuffer* input,
-                                             int enc) nogil
-    cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options) nogil
-    cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt) nogil
-    cdef void xmlCtxtReset(xmlParserCtxt* ctxt) nogil
-    cdef void xmlClearParserCtxt(xmlParserCtxt* ctxt) nogil
+                                             int enc)
+    cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
+    cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
+    cdef void xmlCtxtReset(xmlParserCtxt* ctxt)
+    cdef void xmlClearParserCtxt(xmlParserCtxt* ctxt)
     cdef int xmlParseChunk(xmlParserCtxt* ctxt,
-                           char* chunk, int size, int terminate) nogil
+                           char* chunk, int size, int terminate)
     cdef xmlDoc* xmlCtxtReadDoc(xmlParserCtxt* ctxt,
                                 char* cur, char* URL, char* encoding,
-                                int options) nogil
+                                int options)
     cdef xmlDoc* xmlCtxtReadFile(xmlParserCtxt* ctxt,
                                  char* filename, char* encoding,
-                                 int options) nogil
+                                 int options)
     cdef xmlDoc* xmlCtxtReadIO(xmlParserCtxt* ctxt, 
                                xmlInputReadCallback ioread, 
                                xmlInputCloseCallback ioclose, 
                                void* ioctx,
                                char* URL, char* encoding,
-                               int options) nogil
+                               int options)
     cdef xmlDoc* xmlCtxtReadMemory(xmlParserCtxt* ctxt,
                                    char* buffer, int size,
                                    char* filename, const_char* encoding,
-                                   int options) nogil
+                                   int options)
+
+    cdef void xmlErrParser(xmlParserCtxt* ctxt, xmlNode* node,
+                           int domain, int code, xmlErrorLevel level,
+                           const xmlChar *str1, const xmlChar *str2, const xmlChar *str3,
+                           int int1, const char *msg, ...)
+
 
 # iterparse:
 
@@ -218,33 +230,36 @@ cdef extern from "libxml/parser.h":
                                                 void* user_data,
                                                 char* chunk,
                                                 int size,
-                                                char* filename) nogil
+                                                char* filename)
 
     cdef int xmlCtxtResetPush(xmlParserCtxt* ctxt,
                               char* chunk,
                               int size,
                               char* filename,
-                              char* encoding) nogil
+                              char* encoding)
 
 # entity loaders:
 
     ctypedef xmlParserInput* (*xmlExternalEntityLoader)(
-        const_char * URL, const_char * ID, xmlParserCtxt* context) nogil
-    cdef xmlExternalEntityLoader xmlGetExternalEntityLoader() nogil
-    cdef void xmlSetExternalEntityLoader(xmlExternalEntityLoader f) nogil
+        const_char * URL, const_char * ID, xmlParserCtxt* context) noexcept
+    cdef xmlExternalEntityLoader xmlGetExternalEntityLoader()
+    cdef void xmlSetExternalEntityLoader(xmlExternalEntityLoader f)
+
+    cdef xmlEntity* xmlSAX2GetEntity(void* ctxt, const_xmlChar* name) noexcept
 
 # DTDs:
 
-    cdef xmlDtd* xmlParseDTD(const_xmlChar* ExternalID, const_xmlChar* SystemID) nogil
+    cdef xmlDtd* xmlParseDTD(const_xmlChar* ExternalID, const_xmlChar* SystemID)
     cdef xmlDtd* xmlIOParseDTD(xmlSAXHandler* sax,
                                xmlParserInputBuffer* input,
-                               int enc) nogil
+                               int enc)
 
-cdef extern from "libxml/parserInternals.h":
+
+cdef extern from "libxml/parserInternals.h" nogil:
     cdef xmlParserInput* xmlNewInputStream(xmlParserCtxt* ctxt)
     cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt, 
-                                                 char* buffer) nogil
+                                                 char* buffer)
     cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt, 
-                                             char* filename) nogil
-    cdef void xmlFreeInputStream(xmlParserInput* input) nogil
-    cdef int xmlSwitchEncoding(xmlParserCtxt* ctxt, int enc) nogil
+                                             char* filename)
+    cdef void xmlFreeInputStream(xmlParserInput* input)
+    cdef int xmlSwitchEncoding(xmlParserCtxt* ctxt, int enc)

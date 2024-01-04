@@ -51,6 +51,10 @@ autodoc_default_options = {
 
 autodoc_member_order = 'groupwise'
 
+intersphinx_mapping = {
+    "lxml": ("https://lxml.de/apidoc/", None),
+}
+
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.

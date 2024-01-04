@@ -118,9 +118,8 @@ b'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
 def test_suite():
     suite = unittest.TestSuite()
     if BS_INSTALLED:
-        suite.addTests([unittest.makeSuite(SoupParserTestCase)])
-        if sys.version_info[0] < 3:
-            suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(SoupParserTestCase)])
+        #suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])  # FIXME: Py2-only ?
     return suite
 
 

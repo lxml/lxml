@@ -47,13 +47,6 @@ except ImportError:
 __all__ = ['PARSE_HTML', 'PARSE_XML', 'NOPARSE_MARKUP', 'LXMLOutputChecker',
            'LHTMLOutputChecker', 'install', 'temp_install']
 
-try:
-    _basestring = basestring
-except NameError:
-    _basestring = (str, bytes)
-
-_IS_PYTHON_3 = sys.version_info[0] >= 3
-
 PARSE_HTML = doctest.register_optionflag('PARSE_HTML')
 PARSE_XML = doctest.register_optionflag('PARSE_XML')
 NOPARSE_MARKUP = doctest.register_optionflag('NOPARSE_MARKUP')
@@ -174,8 +167,8 @@ class LXMLOutputChecker(OutputChecker):
     def tag_compare(self, want, got):
         if want == 'any':
             return True
-        if (not isinstance(want, _basestring)
-            or not isinstance(got, _basestring)):
+        if (not isinstance(want, (str, bytes))
+                or not isinstance(got, (str, bytes))):
             return want == got
         want = want or ''
         got = got or ''
@@ -408,12 +401,8 @@ def temp_install(html=False, del_module=None):
     # __record_outcome to be run, which signals the end of the __run
     # method, at which point we restore the previous check_output
     # implementation.
-    if _IS_PYTHON_3:
-        check_func = frame.f_locals['check'].__func__
-        checker_check_func = checker.check_output.__func__
-    else:
-        check_func = frame.f_locals['check'].im_func
-        checker_check_func = checker.check_output.im_func
+    check_func = frame.f_locals['check'].__func__
+    checker_check_func = checker.check_output.__func__
     # Because we can't patch up func_globals, this is the only global
     # in check_output that we care about:
     doctest.etree = etree
@@ -421,7 +410,7 @@ def temp_install(html=False, del_module=None):
                     check_func, checker_check_func,
                     del_module)
 
-class _RestoreChecker(object):
+class _RestoreChecker:
     def __init__(self, dt_self, old_checker, new_checker, check_func, clone_func,
                  del_module):
         self.dt_self = dt_self
@@ -434,19 +423,11 @@ class _RestoreChecker(object):
         self.install_clone()
         self.install_dt_self()
     def install_clone(self):
-        if _IS_PYTHON_3:
-            self.func_code = self.check_func.__code__
-            self.func_globals = self.check_func.__globals__
-            self.check_func.__code__ = self.clone_func.__code__
-        else:
-            self.func_code = self.check_func.func_code
-            self.func_globals = self.check_func.func_globals
-            self.check_func.func_code = self.clone_func.func_code
+        self.func_code = self.check_func.__code__
+        self.func_globals = self.check_func.__globals__
+        self.check_func.__code__ = self.clone_func.__code__
     def uninstall_clone(self):
-        if _IS_PYTHON_3:
-            self.check_func.__code__ = self.func_code
-        else:
-            self.check_func.func_code = self.func_code
+        self.check_func.__code__ = self.func_code
     def install_dt_self(self):
         self.prev_func = self.dt_self._DocTestRunner__record_outcome
         self.dt_self._DocTestRunner__record_outcome = self

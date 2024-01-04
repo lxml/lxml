@@ -459,21 +459,21 @@ see when (or if) a specific bug has been fixed.
 Where are the binary builds?
 ----------------------------
 
-Thanks to the help by Joar Wandborg, we try to make "manylinux_" binary
-builds for Linux available shortly after each source release, as they
-are very frequently used by continuous integration and/or build servers.
+We provide binaries for Linux (`manylinux`_), macOS and MS Windows
+shortly after each source release.
 
 Thanks to the help by Maximilian Hils and the Appveyor build service,
-we also try to serve the frequent requests for binary builds available
+we try to serve the frequent requests for binary builds available
 for Microsoft Windows in a timely fashion, since users of that platform
 usually fail to build lxml themselves.  Two of the major design issues
 of this operating system make this non-trivial for its users: the lack
-of a pre-installed standard compiler and the missing package management.
+of a pre-installed standard C-compiler and the missing package management.
 
-Besides that, Christoph Gohlke generously provides `unofficial lxml binary
-builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
-that are usually very up to date.  Consider using them if you prefer a
-binary build over a signed official source release.
+We currently rely on the `WinLibs project <https://github.com/orgs/winlibs>`_
+to provide library versions that are buildable on MS Windows.  If the library
+that we use in lxml's Windows binary wheels is outdated, it is probably because
+they have not updated their repositories yet. Consider filing a ticket on their
+side and notifying us when a new version is available, so that we can integrate it.
 
 .. _manylinux: https://www.python.org/dev/peps/pep-0513
 
@@ -1105,9 +1105,9 @@ useless for the data commonly sent through web services and
 can simply be disabled, which rules out several types of
 denial of service attacks at once.  This also involves an attack
 that reads local files from the server, as XML entities can be
-defined to expand into their content.   Consequently, version
-1.2 of the SOAP standard explicitly disallows entity references
-in the XML stream.
+defined to expand into the content of external resources.
+Consequently, version 1.2 of the SOAP standard explicitly
+disallows entity references in the XML stream.
 
 To disable entity expansion, use an XML parser that is configured
 with the option ``resolve_entities=False``.  Then, after (or
@@ -1115,7 +1115,11 @@ while) parsing the document, use ``root.iter(etree.Entity)`` to
 recursively search for entity references.  If it contains any,
 reject the entire input document with a suitable error response.
 In lxml 3.x, you can also use the new DTD introspection API to
-apply your own restrictions on input documents.
+apply your own restrictions on input documents.  Since version 5.x,
+lxml disables the expansion of external entities (XXE) by default.
+If you really want to allow loading external files into XML documents
+using this functionality, you have to explicitly set
+``resolve_entities=True``.
 
 Another attack to consider is compression bombs.  If you allow
 compressed input into your web service, attackers can try to send

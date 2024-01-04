@@ -1,7 +1,7 @@
 cdef object _find_id_attributes
 
 def XMLID(text, parser=None, *, base_url=None):
-    u"""XMLID(text, parser=None, base_url=None)
+    """XMLID(text, parser=None, base_url=None)
 
     Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
@@ -12,17 +12,17 @@ def XMLID(text, parser=None, *, base_url=None):
     cdef dict dic
     global _find_id_attributes
     if _find_id_attributes is None:
-        _find_id_attributes = XPath(u'//*[string(@id)]')
+        _find_id_attributes = XPath('//*[string(@id)]')
 
     # ElementTree compatible implementation: parse and look for 'id' attributes
     root = XML(text, parser, base_url=base_url)
     dic = {}
     for elem in _find_id_attributes(root):
-        dic[elem.get(u'id')] = elem
+        dic[elem.get('id')] = elem
     return root, dic
 
 def XMLDTDID(text, parser=None, *, base_url=None):
-    u"""XMLDTDID(text, parser=None, base_url=None)
+    """XMLDTDID(text, parser=None, base_url=None)
 
     Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
@@ -42,7 +42,7 @@ def XMLDTDID(text, parser=None, *, base_url=None):
         return root, _IDDict(root)
 
 def parseid(source, parser=None, *, base_url=None):
-    u"""parseid(source, parser=None)
+    """parseid(source, parser=None)
 
     Parses the source into a tuple containing an ElementTree object and an
     ID dictionary.  If no parser is provided as second argument, the default
@@ -56,7 +56,7 @@ def parseid(source, parser=None, *, base_url=None):
     return _elementTreeFactory(doc, None), _IDDict(doc)
 
 cdef class _IDDict:
-    u"""IDDict(self, etree)
+    """IDDict(self, etree)
     A dictionary-like proxy class that mapps ID attributes to elements.
 
     The dictionary must be instantiated with the root element of a parsed XML
@@ -70,7 +70,7 @@ cdef class _IDDict:
         cdef _Document doc
         doc = _documentOrRaise(etree)
         if doc._c_doc.ids is NULL:
-            raise ValueError, u"No ID dictionary available."
+            raise ValueError, "No ID dictionary available."
         self._doc = doc
         self._keys  = None
         self._items = None
@@ -86,10 +86,10 @@ cdef class _IDDict:
         id_utf = _utf8(id_name)
         c_id = <tree.xmlID*>tree.xmlHashLookup(c_ids, _xcstr(id_utf))
         if c_id is NULL:
-            raise KeyError, u"key not found."
+            raise KeyError, "key not found."
         c_attr = c_id.attr
         if c_attr is NULL or c_attr.parent is NULL:
-            raise KeyError, u"ID attribute not found."
+            raise KeyError, "ID attribute not found."
         return _elementFactory(self._doc, c_attr.parent)
 
     def get(self, id_name):
@@ -162,7 +162,7 @@ cdef class _IDDict:
                          <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
         return items
 
-cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name):
+cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name) noexcept:
     # collect elements from ID attribute hash table
     cdef list lst
     c_id = <tree.xmlID*>payload
@@ -172,7 +172,7 @@ cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name):
     element = _elementFactory(doc, c_id.attr.parent)
     lst.append( (funicode(name), element) )
 
-cdef void _collectIdHashKeys(void* payload, void* collect_list, xmlChar* name):
+cdef void _collectIdHashKeys(void* payload, void* collect_list, xmlChar* name) noexcept:
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:
         return

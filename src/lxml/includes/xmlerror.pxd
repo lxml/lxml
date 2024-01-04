@@ -823,7 +823,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_RELAXNG_ERR_TEXTWRONG                          =      39
 # --- END: GENERATED CONSTANTS ---
 
-cdef extern from "libxml/xmlerror.h":
+cdef extern from "libxml/xmlerror.h" nogil:
     ctypedef struct xmlError:
         int domain
         int code
@@ -838,15 +838,15 @@ cdef extern from "libxml/xmlerror.h":
         int int2
         void* node
 
-    ctypedef void (*xmlGenericErrorFunc)(void* ctxt, char* msg, ...) nogil
+    ctypedef void (*xmlGenericErrorFunc)(void* ctxt, char* msg, ...) noexcept
     ctypedef void (*xmlStructuredErrorFunc)(void* userData,
-                                            xmlError* error) nogil
+                                            xmlError* error) noexcept
 
     cdef void xmlSetGenericErrorFunc(
-        void* ctxt, xmlGenericErrorFunc func) nogil
+        void* ctxt, xmlGenericErrorFunc func)
     cdef void xmlSetStructuredErrorFunc(
-        void* ctxt, xmlStructuredErrorFunc func) nogil
+        void* ctxt, xmlStructuredErrorFunc func)
 
-cdef extern from "libxml/globals.h":
+cdef extern from "libxml/globals.h" nogil:
     cdef xmlStructuredErrorFunc xmlStructuredError
     cdef void* xmlStructuredErrorContext

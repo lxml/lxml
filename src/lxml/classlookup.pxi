@@ -5,7 +5,7 @@
 
 cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                                           object LxmlElementBase ]:
-    u"""ElementBase(*children, attrib=None, nsmap=None, **_extra)
+    """ElementBase(*children, attrib=None, nsmap=None, **_extra)
 
     The public Element class.  All custom Element classes must inherit
     from this one.  To create an Element, use the `Element()` factory.
@@ -40,7 +40,7 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
     hierarchies that implement a common namespace.
     """
     def __init__(self, *children, attrib=None, nsmap=None, **_extra):
-        u"""ElementBase(*children, attrib=None, nsmap=None, **_extra)
+        """ElementBase(*children, attrib=None, nsmap=None, **_extra)
         """
         cdef bint is_html = 0
         cdef _BaseParser parser
@@ -95,7 +95,7 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                 raise TypeError, f"Invalid child type: {type(child)!r}"
 
 cdef class CommentBase(_Comment):
-    u"""All custom Comment classes must inherit from this one.
+    """All custom Comment classes must inherit from this one.
 
     To create an XML Comment instance, use the ``Comment()`` factory.
 
@@ -124,7 +124,7 @@ cdef class CommentBase(_Comment):
         self._init()
 
 cdef class PIBase(_ProcessingInstruction):
-    u"""All custom Processing Instruction classes must inherit from this one.
+    """All custom Processing Instruction classes must inherit from this one.
 
     To create an XML ProcessingInstruction instance, use the ``PI()``
     factory.
@@ -155,7 +155,7 @@ cdef class PIBase(_ProcessingInstruction):
         self._init()
 
 cdef class EntityBase(_Entity):
-    u"""All custom Entity classes must inherit from this one.
+    """All custom Entity classes must inherit from this one.
 
     To create an XML Entity instance, use the ``Entity()`` factory.
 
@@ -212,7 +212,7 @@ ctypedef public object (*_element_class_lookup_function)(object, _Document, xmlN
 # class to store element class lookup functions
 cdef public class ElementClassLookup [ type LxmlElementClassLookupType,
                                        object LxmlElementClassLookup ]:
-    u"""ElementClassLookup(self)
+    """ElementClassLookup(self)
     Superclass of Element class lookups.
     """
     cdef _element_class_lookup_function _lookup_function
@@ -221,7 +221,7 @@ cdef public class ElementClassLookup [ type LxmlElementClassLookupType,
 cdef public class FallbackElementClassLookup(ElementClassLookup) \
          [ type LxmlFallbackElementClassLookupType,
            object LxmlFallbackElementClassLookup ]:
-    u"""FallbackElementClassLookup(self, fallback=None)
+    """FallbackElementClassLookup(self, fallback=None)
 
     Superclass of Element class lookups with additional fallback.
     """
@@ -238,7 +238,7 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
             self._fallback_function = _lookupDefaultElementClass
 
     cdef void _setFallback(self, ElementClassLookup lookup):
-        u"""Sets the fallback scheme for this lookup method.
+        """Sets the fallback scheme for this lookup method.
         """
         self.fallback = lookup
         self._fallback_function = lookup._lookup_function
@@ -246,7 +246,7 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
             self._fallback_function = _lookupDefaultElementClass
 
     def set_fallback(self, ElementClassLookup lookup not None):
-        u"""set_fallback(self, lookup)
+        """set_fallback(self, lookup)
 
         Sets the fallback scheme for this lookup method.
         """
@@ -261,7 +261,7 @@ cdef inline object _callLookupFallback(FallbackElementClassLookup lookup,
 # default lookup scheme
 
 cdef class ElementDefaultClassLookup(ElementClassLookup):
-    u"""ElementDefaultClassLookup(self, element=None, comment=None, pi=None, entity=None)
+    """ElementDefaultClassLookup(self, element=None, comment=None, pi=None, entity=None)
     Element class lookup scheme that always returns the default Element
     class.
 
@@ -281,31 +281,31 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
         elif issubclass(element, ElementBase):
             self.element_class = element
         else:
-            raise TypeError, u"element class must be subclass of ElementBase"
+            raise TypeError, "element class must be subclass of ElementBase"
 
         if comment is None:
             self.comment_class = _Comment
         elif issubclass(comment, CommentBase):
             self.comment_class = comment
         else:
-            raise TypeError, u"comment class must be subclass of CommentBase"
+            raise TypeError, "comment class must be subclass of CommentBase"
 
         if entity is None:
             self.entity_class = _Entity
         elif issubclass(entity, EntityBase):
             self.entity_class = entity
         else:
-            raise TypeError, u"Entity class must be subclass of EntityBase"
+            raise TypeError, "Entity class must be subclass of EntityBase"
 
         if pi is None:
             self.pi_class = None # special case, see below
         elif issubclass(pi, PIBase):
             self.pi_class = pi
         else:
-            raise TypeError, u"PI class must be subclass of PIBase"
+            raise TypeError, "PI class must be subclass of PIBase"
 
 cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
-    u"Trivial class lookup function that always returns the default class."
+    "Trivial class lookup function that always returns the default class."
     if c_node.type == tree.XML_ELEMENT_NODE:
         if state is not None:
             return (<ElementDefaultClassLookup>state).element_class
@@ -340,7 +340,7 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
 # attribute based lookup scheme
 
 cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
-    u"""AttributeBasedElementClassLookup(self, attribute_name, class_mapping, fallback=None)
+    """AttributeBasedElementClassLookup(self, attribute_name, class_mapping, fallback=None)
     Checks an attribute of an Element and looks up the value in a
     class dictionary.
 
@@ -392,7 +392,7 @@ cdef object _attribute_class_lookup(state, _Document doc, xmlNode* c_node):
 #  per-parser lookup scheme
 
 cdef class ParserBasedElementClassLookup(FallbackElementClassLookup):
-    u"""ParserBasedElementClassLookup(self, fallback=None)
+    """ParserBasedElementClassLookup(self, fallback=None)
     Element class lookup based on the XML parser.
     """
     def __cinit__(self):
@@ -409,7 +409,7 @@ cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
 #  custom class lookup based on node type, namespace, name
 
 cdef class CustomElementClassLookup(FallbackElementClassLookup):
-    u"""CustomElementClassLookup(self, fallback=None)
+    """CustomElementClassLookup(self, fallback=None)
     Element class lookup based on a subclass method.
 
     You can inherit from this class and override the method::
@@ -428,7 +428,7 @@ cdef class CustomElementClassLookup(FallbackElementClassLookup):
         self._lookup_function = _custom_class_lookup
 
     def lookup(self, type, doc, namespace, name):
-        u"lookup(self, type, doc, namespace, name)"
+        "lookup(self, type, doc, namespace, name)"
         return None
 
 cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
@@ -437,15 +437,15 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
     lookup = <CustomElementClassLookup>state
 
     if c_node.type == tree.XML_ELEMENT_NODE:
-        element_type = u"element"
+        element_type = "element"
     elif c_node.type == tree.XML_COMMENT_NODE:
-        element_type = u"comment"
+        element_type = "comment"
     elif c_node.type == tree.XML_PI_NODE:
-        element_type = u"PI"
+        element_type = "PI"
     elif c_node.type == tree.XML_ENTITY_REF_NODE:
-        element_type = u"entity"
+        element_type = "entity"
     else:
-        element_type = u"element"
+        element_type = "element"
     if c_node.name is NULL:
         name = None
     else:
@@ -464,7 +464,7 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
 # read-only tree based class lookup
 
 cdef class PythonElementClassLookup(FallbackElementClassLookup):
-    u"""PythonElementClassLookup(self, fallback=None)
+    """PythonElementClassLookup(self, fallback=None)
     Element class lookup based on a subclass method.
 
     This class lookup scheme allows access to the entire XML tree in
@@ -510,7 +510,7 @@ cdef class PythonElementClassLookup(FallbackElementClassLookup):
         self._lookup_function = _python_class_lookup
 
     def lookup(self, doc, element):
-        u"""lookup(self, doc, element)
+        """lookup(self, doc, element)
 
         Override this method to implement your own lookup scheme.
         """
@@ -547,7 +547,7 @@ cdef void _setElementClassLookupFunction(
     LOOKUP_ELEMENT_CLASS = function
 
 def set_element_class_lookup(ElementClassLookup lookup = None):
-    u"""set_element_class_lookup(lookup = None)
+    """set_element_class_lookup(lookup = None)
 
     Set the global element class lookup method.
 

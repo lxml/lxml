@@ -90,7 +90,7 @@ parsing XML from an in-memory string:
   b'<a xmlns="test"><b xmlns="test"/></a>'
 
 To read from a file or file-like object, you can use the ``parse()`` function,
-which returns an ``ElementTree`` object:
+which returns an ``ElementTree`` object that wraps the document root:
 
 .. sourcecode:: pycon
 
@@ -109,9 +109,9 @@ efficient) to pass a filename:
 lxml can parse from a local file, an HTTP URL or an FTP URL.  It also
 auto-detects and reads gzip-compressed XML files (.gz).
 
-If you want to parse from memory and still provide a base URL for the document
-(e.g. to support relative paths in an XInclude), you can pass the ``base_url``
-keyword argument:
+If you want to parse from a string (bytes or text) and still provide a base URL
+for the document (e.g. to support relative paths in an XInclude), you can pass
+the ``base_url`` keyword argument:
 
 .. sourcecode:: pycon
 
@@ -127,8 +127,8 @@ example is easily extended to clean up namespaces during parsing:
 .. sourcecode:: pycon
 
   >>> parser = etree.XMLParser(ns_clean=True)
-  >>> tree   = etree.parse(StringIO(xml), parser)
-  >>> etree.tostring(tree.getroot())
+  >>> xml_root = etree.fromstring(xml, parser)
+  >>> etree.tostring(xml_root)
   b'<a xmlns="test"><b/></a>'
 
 The keyword arguments in the constructor are mainly based on the libxml2
@@ -249,9 +249,9 @@ this feature.
   >>> broken_html = "<html><head><title>test<body><h1>page title</h3>"
 
   >>> parser = etree.HTMLParser()
-  >>> tree   = etree.parse(StringIO(broken_html), parser)
+  >>> html_root   = etree.fromstring(broken_html, parser)
 
-  >>> result = etree.tostring(tree.getroot(),
+  >>> result = etree.tostring(html_root,
   ...                         pretty_print=True, method="html")
   >>> print(result)
   <html>
@@ -263,24 +263,20 @@ this feature.
     </body>
   </html>
 
-Lxml has an HTML function, similar to the XML shortcut known from
-ElementTree:
+As a nicer alias for parsing HTML literals, lxml has an ``HTML()`` function,
+similar to the ``XML()`` shortcut known from ElementTree:
 
 .. sourcecode:: pycon
 
-  >>> html = etree.HTML(broken_html)
-  >>> result = etree.tostring(html, pretty_print=True, method="html")
-  >>> print(result)
-  <html>
-    <head>
-      <title>test</title>
-    </head>
-    <body>
-      <h1>page title</h1>
-    </body>
-  </html>
+  >>> html_root = etree.HTML("""
+  ...   <html>
+  ...      <body>
+  ...         <h1>page title</h1>
+  ...     </body>
+  ...   </html>
+  ... """)
 
-The support for parsing broken HTML depends entirely on libxml2's recovery
+Note: The support for parsing broken HTML depends entirely on libxml2's recovery
 algorithm.  It is *not* the fault of lxml if you find documents that are so
 heavily broken that the parser cannot handle them.  There is also no guarantee
 that the resulting tree will contain all data from the original document.  The
@@ -364,9 +360,9 @@ a target object to the parser:
   >>> result = etree.XML("<element>some<!--comment-->text</element>",
   ...                    parser)
   start element {}
-  data u'some'
+  data 'some'
   comment comment
-  data u'text'
+  data 'text'
   end element
   close
 
@@ -382,9 +378,9 @@ like:
   >>> result = etree.XML("<element>some<!--comment-->text</element>",
   ...                    parser)
   start element {}
-  data u'some'
+  data 'some'
   comment comment
-  data u'text'
+  data 'text'
   end element
   close
 
@@ -424,7 +420,7 @@ that the parser can reuse them afterwards.
   >>> for event in parser.target.events:
   ...     print(event)
   start element {}
-  data u'some'
+  data 'some'
   close
 
 Note that the parser does *not* build a tree when using a parser
@@ -508,7 +504,7 @@ You can also combine the feed parser interface with the target parser:
   >>> parser.feed("<eleme")
   >>> parser.feed("nt>some text</elem")
   start element {}
-  data u'some text'
+  data 'some text'
   >>> parser.feed("ent>")
   end element
 
@@ -991,15 +987,15 @@ function:
 
 .. sourcecode:: pycon
 
-  >>> root = etree.XML( u'<test> \uf8d1 + \uf8d2 </test>' )
+  >>> root = etree.XML( '<test> \uf8d1 + \uf8d2 </test>' )
 
 This requires, however, that unicode strings do not specify a conflicting
 encoding themselves and thus lie about their real encoding:
 
 .. sourcecode:: pycon
 
-  >>> etree.XML( u'<?xml version="1.0" encoding="ASCII"?>\n' +
-  ...            u'<test> \uf8d1 + \uf8d2 </test>' )
+  >>> etree.XML( '<?xml version="1.0" encoding="ASCII"?>\n' +
+  ...            '<test> \uf8d1 + \uf8d2 </test>' )
   Traceback (most recent call last):
     ...
   ValueError: Unicode strings with encoding declaration are not supported. Please use bytes input or XML fragments without declaration.
@@ -1031,19 +1027,19 @@ to the encoding parameter to build a Python unicode representation of a tree:
 .. sourcecode:: pycon
 
   >>> etree.tostring(root, encoding='unicode')
-  u'<test> \uf8d1 + \uf8d2 </test>'
+  '<test> \uf8d1 + \uf8d2 </test>'
 
   >>> el = etree.Element("test")
   >>> etree.tostring(el, encoding='unicode')
-  u'<test/>'
+  '<test/>'
 
   >>> subel = etree.SubElement(el, "subtest")
   >>> etree.tostring(el, encoding='unicode')
-  u'<test><subtest/></test>'
+  '<test><subtest/></test>'
 
   >>> tree = etree.ElementTree(el)
   >>> etree.tostring(tree, encoding='unicode')
-  u'<test><subtest/></test>'
+  '<test><subtest/></test>'
 
 The result of ``tostring(encoding='unicode')`` can be treated like any
 other Python unicode string and then passed back into the parsers.

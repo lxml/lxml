@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to Schematron parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -73,7 +70,7 @@ class ETreeSchematronTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeSchematronTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeSchematronTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite

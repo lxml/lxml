@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests specific to the extended etree API
 
@@ -7,21 +5,24 @@ Tests that apply to the general ElementTree API should go into
 test_elementtree
 """
 
-from __future__ import absolute_import
 
 from collections import OrderedDict
+from io import StringIO, BytesIO
 import os.path
 import unittest
+import contextlib
 import copy
 import sys
 import re
 import gc
 import operator
+import shutil
+import tempfile
 import textwrap
 import zlib
 import gzip
 
-from .common_imports import etree, StringIO, BytesIO, HelperTestCase
+from .common_imports import etree, HelperTestCase
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url, tmpfile
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
@@ -38,13 +39,8 @@ TESTED VERSION: %s""" % etree.__version__ + """
     FS encoding:      %s""" % (sys.getfilesystemencoding(),) + """
     Default encoding: %s""" % (sys.getdefaultencoding(),) + """
     Max Unicode:      %s""" % (sys.maxunicode,) + """
+    PyUCS4 encoding:  %s""" % (getattr(etree, '_pyucs4_encoding_name', ''),) + """
 """)
-
-try:
-    _unicode = unicode
-except NameError:
-    # Python 3
-    _unicode = str
 
 
 class ETreeOnlyTestCase(HelperTestCase):
@@ -52,7 +48,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     etree = etree
 
     def test_version(self):
-        self.assertTrue(isinstance(etree.__version__, _unicode))
+        self.assertTrue(isinstance(etree.__version__, str))
         self.assertTrue(isinstance(etree.LXML_VERSION, tuple))
         self.assertEqual(len(etree.LXML_VERSION), 4)
         self.assertTrue(isinstance(etree.LXML_VERSION[0], int))
@@ -239,14 +235,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         a = XML('<a aa="A"><b ba="B">B1</b>B2<c ca="C">C1</c>C2</a>')
         a[0].clear(keep_tail=True)
-        self.assertEqual(_bytes('<a aa="A"><b/>B2<c ca="C">C1</c>C2</a>'), tostring(a))
+        self.assertEqual(b'<a aa="A"><b/>B2<c ca="C">C1</c>C2</a>', tostring(a))
 
     def test_attrib_is_Mapping(self):
-        try:
-            from collections.abc import Mapping, MutableMapping
-        except ImportError:
-            from collections import Mapping, MutableMapping  # Py2
-
+        from collections.abc import Mapping, MutableMapping
         Element = self.etree.Element
         root = Element("root")
 
@@ -257,7 +249,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         # ET in Py 3.x has no "attrib.has_key()" method
         XML = self.etree.XML
 
-        root = XML(_bytes('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />'))
+        root = XML(b'<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
         self.assertEqual(
             True, root.attrib.has_key('bar'))
         self.assertEqual(
@@ -313,12 +305,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             ('attr_99', 'TOAST-1'),
             ('attr_98', 'TOAST-2'),
         ]
-        ordered_dict_types = [OrderedDict, lambda x:x]
-        if sys.version_info >= (3, 6):
-            ordered_dict_types.append(dict)
-        else:
-            # Keyword arguments are not ordered in Py<3.6, and thus get sorted.
-            attr_order.sort()
+        ordered_dict_types = [dict, OrderedDict, lambda x:x]
         attr_order += items
         expected_keys = [attr[0] for attr in attr_order]
         expected_values = [attr[1] for attr in attr_order]
@@ -351,126 +338,126 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_strip_attributes(self):
         XML = self.etree.XML
-        xml = _bytes('<test a="5" b="10" c="20"><x a="4" b="2"/></test>')
+        xml = b'<test a="5" b="10" c="20"><x a="4" b="2"/></test>'
 
         root = XML(xml)
         self.etree.strip_attributes(root, 'a')
-        self.assertEqual(_bytes('<test b="10" c="20"><x b="2"></x></test>'),
+        self.assertEqual(b'<test b="10" c="20"><x b="2"></x></test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_attributes(root, 'b', 'c')
-        self.assertEqual(_bytes('<test a="5"><x a="4"></x></test>'),
+        self.assertEqual(b'<test a="5"><x a="4"></x></test>',
                           self._writeElement(root))
 
     def test_strip_attributes_ns(self):
         XML = self.etree.XML
-        xml = _bytes('<test xmlns:n="http://test/ns" a="6" b="10" c="20" n:a="5"><x a="4" n:b="2"/></test>')
+        xml = b'<test xmlns:n="http://test/ns" a="6" b="10" c="20" n:a="5"><x a="4" n:b="2"/></test>'
 
         root = XML(xml)
         self.etree.strip_attributes(root, 'a')
         self.assertEqual(
-            _bytes('<test xmlns:n="http://test/ns" b="10" c="20" n:a="5"><x n:b="2"></x></test>'),
+            b'<test xmlns:n="http://test/ns" b="10" c="20" n:a="5"><x n:b="2"></x></test>',
             self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_attributes(root, '{http://test/ns}a', 'c')
         self.assertEqual(
-            _bytes('<test xmlns:n="http://test/ns" a="6" b="10"><x a="4" n:b="2"></x></test>'),
+            b'<test xmlns:n="http://test/ns" a="6" b="10"><x a="4" n:b="2"></x></test>',
             self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_attributes(root, '{http://test/ns}*')
         self.assertEqual(
-            _bytes('<test xmlns:n="http://test/ns" a="6" b="10" c="20"><x a="4"></x></test>'),
+            b'<test xmlns:n="http://test/ns" a="6" b="10" c="20"><x a="4"></x></test>',
             self._writeElement(root))
 
     def test_strip_elements(self):
         XML = self.etree.XML
-        xml = _bytes('<test><a><b><c/></b></a><x><a><b/><c/></a></x></test>')
+        xml = b'<test><a><b><c/></b></a><x><a><b/><c/></a></x></test>'
 
         root = XML(xml)
         self.etree.strip_elements(root, 'a')
-        self.assertEqual(_bytes('<test><x></x></test>'),
+        self.assertEqual(b'<test><x></x></test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_elements(root, 'b', 'c', 'X', 'Y', 'Z')
-        self.assertEqual(_bytes('<test><a></a><x><a></a></x></test>'),
+        self.assertEqual(b'<test><a></a><x><a></a></x></test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_elements(root, 'c')
-        self.assertEqual(_bytes('<test><a><b></b></a><x><a><b></b></a></x></test>'),
+        self.assertEqual(b'<test><a><b></b></a><x><a><b></b></a></x></test>',
                           self._writeElement(root))
 
     def test_strip_elements_ns(self):
         XML = self.etree.XML
-        xml = _bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"/>C</b>BT</n:a>AT<x>X<a>A<b xmlns="urn:a"/>BT<c xmlns="urn:x"/>CT</a>AT</x>XT</test>')
+        xml = b'<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"/>C</b>BT</n:a>AT<x>X<a>A<b xmlns="urn:a"/>BT<c xmlns="urn:x"/>CT</a>AT</x>XT</test>'
 
         root = XML(xml)
         self.etree.strip_elements(root, 'a')
-        self.assertEqual(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>C</b>BT</n:a>AT<x>X</x>XT</test>'),
+        self.assertEqual(b'<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>C</b>BT</n:a>AT<x>X</x>XT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_elements(root, '{urn:a}b', 'c')
-        self.assertEqual(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>C</b>BT</n:a>AT<x>X<a>A<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+        self.assertEqual(b'<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>C</b>BT</n:a>AT<x>X<a>A<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_elements(root, '{urn:a}*', 'c')
-        self.assertEqual(_bytes('<test>TEST<x>X<a>A<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+        self.assertEqual(b'<test>TEST<x>X<a>A<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_elements(root, '{urn:a}*', 'c', with_tail=False)
-        self.assertEqual(_bytes('<test>TESTAT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+        self.assertEqual(b'<test>TESTAT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
     def test_strip_tags(self):
         XML = self.etree.XML
-        xml = _bytes('<test>TEST<a>A<b>B<c/>CT</b>BT</a>AT<x>X<a>A<b/>BT<c/>CT</a>AT</x>XT</test>')
+        xml = b'<test>TEST<a>A<b>B<c/>CT</b>BT</a>AT<x>X<a>A<b/>BT<c/>CT</a>AT</x>XT</test>'
 
         root = XML(xml)
         self.etree.strip_tags(root, 'a')
-        self.assertEqual(_bytes('<test>TESTA<b>B<c></c>CT</b>BTAT<x>XA<b></b>BT<c></c>CTAT</x>XT</test>'),
+        self.assertEqual(b'<test>TESTA<b>B<c></c>CT</b>BTAT<x>XA<b></b>BT<c></c>CTAT</x>XT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, 'b', 'c', 'X', 'Y', 'Z')
-        self.assertEqual(_bytes('<test>TEST<a>ABCTBT</a>AT<x>X<a>ABTCT</a>AT</x>XT</test>'),
+        self.assertEqual(b'<test>TEST<a>ABCTBT</a>AT<x>X<a>ABTCT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, 'c')
-        self.assertEqual(_bytes('<test>TEST<a>A<b>BCT</b>BT</a>AT<x>X<a>A<b></b>BTCT</a>AT</x>XT</test>'),
+        self.assertEqual(b'<test>TEST<a>A<b>BCT</b>BT</a>AT<x>X<a>A<b></b>BTCT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
     def test_strip_tags_pi_comment(self):
         XML = self.etree.XML
         PI = self.etree.ProcessingInstruction
         Comment = self.etree.Comment
-        xml = _bytes('<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT<?PI2?></test>\n<!--comment3-->\n<?PI1?>')
+        xml = b'<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT<?PI2?></test>\n<!--comment3-->\n<?PI1?>'
 
         root = XML(xml)
         self.etree.strip_tags(root, PI)
-        self.assertEqual(_bytes('<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT</test>\n<!--comment3-->\n<?PI1?>'),
+        self.assertEqual(b'<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT</test>\n<!--comment3-->\n<?PI1?>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, Comment)
-        self.assertEqual(_bytes('<!--comment1-->\n<?PI1?>\n<test>TESTXT<?PI2?></test>\n<!--comment3-->\n<?PI1?>'),
+        self.assertEqual(b'<!--comment1-->\n<?PI1?>\n<test>TESTXT<?PI2?></test>\n<!--comment3-->\n<?PI1?>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, PI, Comment)
-        self.assertEqual(_bytes('<!--comment1-->\n<?PI1?>\n<test>TESTXT</test>\n<!--comment3-->\n<?PI1?>'),
+        self.assertEqual(b'<!--comment1-->\n<?PI1?>\n<test>TESTXT</test>\n<!--comment3-->\n<?PI1?>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, Comment, PI)
-        self.assertEqual(_bytes('<!--comment1-->\n<?PI1?>\n<test>TESTXT</test>\n<!--comment3-->\n<?PI1?>'),
+        self.assertEqual(b'<!--comment1-->\n<?PI1?>\n<test>TESTXT</test>\n<!--comment3-->\n<?PI1?>',
                           self._writeElement(root))
 
     def test_strip_tags_pi_comment_all(self):
@@ -478,31 +465,31 @@ class ETreeOnlyTestCase(HelperTestCase):
         ElementTree = self.etree.ElementTree
         PI = self.etree.ProcessingInstruction
         Comment = self.etree.Comment
-        xml = _bytes('<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT<?PI2?></test>\n<!--comment3-->\n<?PI1?>')
+        xml = b'<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT<?PI2?></test>\n<!--comment3-->\n<?PI1?>'
 
         root = XML(xml)
         self.etree.strip_tags(ElementTree(root), PI)
-        self.assertEqual(_bytes('<!--comment1-->\n<test>TEST<!--comment2-->XT</test>\n<!--comment3-->'),
+        self.assertEqual(b'<!--comment1-->\n<test>TEST<!--comment2-->XT</test>\n<!--comment3-->',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(ElementTree(root), Comment)
-        self.assertEqual(_bytes('<?PI1?>\n<test>TESTXT<?PI2?></test>\n<?PI1?>'),
+        self.assertEqual(b'<?PI1?>\n<test>TESTXT<?PI2?></test>\n<?PI1?>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(ElementTree(root), PI, Comment)
-        self.assertEqual(_bytes('<test>TESTXT</test>'),
+        self.assertEqual(b'<test>TESTXT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(ElementTree(root), Comment, PI)
-        self.assertEqual(_bytes('<test>TESTXT</test>'),
+        self.assertEqual(b'<test>TESTXT</test>',
                           self._writeElement(root))
 
     def test_strip_tags_doc_style(self):
         XML = self.etree.XML
-        xml = _bytes('''
+        xml = b'''
         <div>
             <div>
                 I like <strong>sheep</strong>.
@@ -514,50 +501,85 @@ class ETreeOnlyTestCase(HelperTestCase):
                 <br/>
             </div>
         </div>
-        '''.strip())
+        '''.strip()
 
         root = XML(xml)
         self.etree.strip_tags(root, 'a')
-        self.assertEqual(re.sub(_bytes('</?a[^>]*>'), _bytes(''), xml).replace(_bytes('<br/>'), _bytes('<br></br>')),
+        self.assertEqual(re.sub(b'</?a[^>]*>', b'', xml).replace(b'<br/>', b'<br></br>'),
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, 'a', 'br')
-        self.assertEqual(re.sub(_bytes('</?a[^>]*>'), _bytes(''),
-                                 re.sub(_bytes('<br[^>]*>'), _bytes(''), xml)),
+        self.assertEqual(re.sub(b'</?a[^>]*>', b'',
+                                 re.sub(b'<br[^>]*>', b'', xml)),
                           self._writeElement(root))
 
     def test_strip_tags_ns(self):
         XML = self.etree.XML
-        xml = _bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"/>CT</b>BT</n:a>AT<x>X<a>A<b xmlns="urn:a"/>BT<c xmlns="urn:x"/>CT</a>AT</x>XT</test>')
+        xml = b'<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"/>CT</b>BT</n:a>AT<x>X<a>A<b xmlns="urn:a"/>BT<c xmlns="urn:x"/>CT</a>AT</x>XT</test>'
 
         root = XML(xml)
         self.etree.strip_tags(root, 'a')
-        self.assertEqual(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>CT</b>BT</n:a>AT<x>XA<b xmlns="urn:a"></b>BT<c xmlns="urn:x"></c>CTAT</x>XT</test>'),
+        self.assertEqual(b'<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>CT</b>BT</n:a>AT<x>XA<b xmlns="urn:a"></b>BT<c xmlns="urn:x"></c>CTAT</x>XT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, '{urn:a}b', 'c')
-        self.assertEqual(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>CT</b>BT</n:a>AT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+        self.assertEqual(b'<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>CT</b>BT</n:a>AT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, '{urn:a}*', 'c')
-        self.assertEqual(_bytes('<test>TESTA<b>B<c xmlns="urn:c"></c>CT</b>BTAT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+        self.assertEqual(b'<test>TESTA<b>B<c xmlns="urn:c"></c>CT</b>BTAT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
     def test_strip_tags_and_remove(self):
         # previously crashed
         HTML = self.etree.HTML
-        root = HTML(_bytes('<div><h1>title</h1> <b>foo</b> <p>boo</p></div>'))[0][0]
-        self.assertEqual(_bytes('<div><h1>title</h1> <b>foo</b> <p>boo</p></div>'),
+        root = HTML(b'<div><h1>title</h1> <b>foo</b> <p>boo</p></div>')[0][0]
+        self.assertEqual(b'<div><h1>title</h1> <b>foo</b> <p>boo</p></div>',
                           self.etree.tostring(root))
         self.etree.strip_tags(root, 'b')
-        self.assertEqual(_bytes('<div><h1>title</h1> foo <p>boo</p></div>'),
+        self.assertEqual(b'<div><h1>title</h1> foo <p>boo</p></div>',
                           self.etree.tostring(root))
         root.remove(root[0])
-        self.assertEqual(_bytes('<div><p>boo</p></div>'),
+        self.assertEqual(b'<div><p>boo</p></div>',
                           self.etree.tostring(root))
+
+    def test_append_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        self.assertRaises(ValueError, a.append, root)
+        self.assertRaises(ValueError, a[0].append, root)
+        self.assertRaises(ValueError, a[0].append, a)
+        self.assertRaises(ValueError, a[0][0].append, root)
+        self.assertRaises(ValueError, a[0][0].append, a)
+        self.assertRaises(ValueError, a[0][0].append, a[0])
+
+    def test_insert_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        self.assertRaises(ValueError, a.insert, 0, root)
+        self.assertRaises(ValueError, a[0].insert, 0, root)
+        self.assertRaises(ValueError, a[0].insert, 0, a)
+        self.assertRaises(ValueError, a[0][0].insert, 0, root)
+        self.assertRaises(ValueError, a[0][0].insert, 0, a)
+        self.assertRaises(ValueError, a[0][0].insert, 0, a[0])
+
+    def test_replace_rejects_ancestor(self):
+        XML = self.etree.XML
+        root = XML("<root><a><b><c /></b></a></root>")
+        a = root[0]
+        root.replace(a, a)
+        self.assertRaises(ValueError, root.replace, a, root)
+        a.replace(a[0], a[0])
+        self.assertRaises(ValueError, a.replace, a[0], root)
+        a[0].replace(a[0][0], a[0][0])
+        self.assertRaises(ValueError, a[0].replace, a[0][0], root)
+        self.assertRaises(ValueError, a[0].replace, a[0][0], a)
+        self.assertRaises(ValueError, a[0].replace, a[0][0], a[0])
 
     def test_pi(self):
         # lxml.etree separates target and text
@@ -572,13 +594,13 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_pi_parse(self):
         XML = self.etree.XML
-        root = XML(_bytes("<test><?mypi my test ?></test>"))
+        root = XML(b"<test><?mypi my test ?></test>")
         self.assertEqual(root[0].target, "mypi")
         self.assertEqual(root[0].text, "my test ")
 
     def test_pi_pseudo_attributes_get(self):
         XML = self.etree.XML
-        root = XML(_bytes("<test><?mypi my='1' test=\" abc \" quotes=\"' '\" only names ?></test>"))
+        root = XML(b"<test><?mypi my='1' test=\" abc \" quotes=\"' '\" only names ?></test>")
         self.assertEqual(root[0].target, "mypi")
         self.assertEqual(root[0].get('my'), "1")
         self.assertEqual(root[0].get('test'), " abc ")
@@ -589,7 +611,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_pi_pseudo_attributes_attrib(self):
         XML = self.etree.XML
-        root = XML(_bytes("<test><?mypi my='1' test=\" abc \" quotes=\"' '\" only names ?></test>"))
+        root = XML(b"<test><?mypi my='1' test=\" abc \" quotes=\"' '\" only names ?></test>")
         self.assertEqual(root[0].target, "mypi")
         self.assertEqual(root[0].attrib['my'], "1")
         self.assertEqual(root[0].attrib['test'], " abc ")
@@ -612,23 +634,23 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_deepcopy_elementtree_pi(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
-        root = XML(_bytes("<?mypi my test ?><test/><!--comment -->"))
+        root = XML(b"<?mypi my test ?><test/><!--comment -->")
         tree1 = self.etree.ElementTree(root)
-        self.assertEqual(_bytes("<?mypi my test ?><test/><!--comment -->"),
+        self.assertEqual(b"<?mypi my test ?><test/><!--comment -->",
                           tostring(tree1))
 
         tree2 = copy.deepcopy(tree1)
-        self.assertEqual(_bytes("<?mypi my test ?><test/><!--comment -->"),
+        self.assertEqual(b"<?mypi my test ?><test/><!--comment -->",
                           tostring(tree2))
 
         root2 = copy.deepcopy(tree1.getroot())
-        self.assertEqual(_bytes("<test/>"),
+        self.assertEqual(b"<test/>",
                           tostring(root2))
 
     def test_deepcopy_elementtree_dtd(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
-        xml = _bytes('<!DOCTYPE test [\n<!ENTITY entity "tasty">\n]>\n<test/>')
+        xml = b'<!DOCTYPE test [\n<!ENTITY entity "tasty">\n]>\n<test/>'
         root = XML(xml)
         tree1 = self.etree.ElementTree(root)
         self.assertEqual(xml, tostring(tree1))
@@ -637,13 +659,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(xml, tostring(tree2))
 
         root2 = copy.deepcopy(tree1.getroot())
-        self.assertEqual(_bytes("<test/>"),
+        self.assertEqual(b"<test/>",
                           tostring(root2))
 
     def test_deepcopy_pi_dtd(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
-        xml = _bytes('<!-- comment --><!DOCTYPE test [\n<!ENTITY entity "tasty">\n]>\n<test/>')
+        xml = b'<!-- comment --><!DOCTYPE test [\n<!ENTITY entity "tasty">\n]>\n<test/>'
         root = XML(xml)
         tree1 = self.etree.ElementTree(root)
         self.assertEqual(xml, tostring(tree1))
@@ -656,11 +678,11 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         XMLParser = self.etree.XMLParser
 
-        xml = _bytes('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        xml = b'<a><!--A--><b><!-- B --><c/></b><!--C--></a>'
         parser = XMLParser(remove_comments=True)
         root = fromstring(xml, parser)
         self.assertEqual(
-            _bytes('<a><b><c/></b></a>'),
+            b'<a><b><c/></b></a>',
             tostring(root))
 
     def test_parse_remove_pis(self):
@@ -668,7 +690,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         XMLParser = self.etree.XMLParser
 
-        xml = _bytes('<?test?><a><?A?><b><?B?><c/></b><?C?></a><?tail?>')
+        xml = b'<?test?><a><?A?><b><?B?><c/></b><?C?></a><?tail?>'
 
         f = BytesIO(xml)
         tree = parse(f)
@@ -679,7 +701,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = XMLParser(remove_pis=True)
         tree = parse(f, parser)
         self.assertEqual(
-            _bytes('<a><b><c/></b></a>'),
+            b'<a><b><c/></b></a>',
             tostring(tree))
 
     def test_parse_parser_type_error(self):
@@ -687,9 +709,26 @@ class ETreeOnlyTestCase(HelperTestCase):
         parse = self.etree.parse
         self.assertRaises(TypeError, parse, 'notthere.xml', object())
 
+    def test_parse_premature_end(self):
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = b'<a><b></b>'
+        parser = XMLParser()
+        self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
+    def test_parse_premature_end_with_target(self):
+        # tests issue https://bugs.launchpad.net/lxml/+bug/1980767 is fixed
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = b'<a><b></b>'
+        parser = XMLParser(target=etree.TreeBuilder())
+        self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
     def test_iterparse_getiterator(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><d/></b><c/></a>')
+        f = BytesIO(b'<a><b><d/></b><c/></a>')
 
         counts = []
         for event, elem in iterparse(f):
@@ -703,12 +742,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         iterparse = self.etree.iterparse
         tostring = self.etree.tostring
 
-        f = BytesIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        f = BytesIO(b'<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
         events = list(iterparse(f))
         root = events[-1][1]
         self.assertEqual(3, len(events))
         self.assertEqual(
-            _bytes('<a><!--A--><b><!-- B --><c/></b><!--C--></a>'),
+            b'<a><!--A--><b><!-- B --><c/></b><!--C--></a>',
             tostring(root))
 
     def test_iterparse_comments(self):
@@ -722,14 +761,14 @@ class ETreeOnlyTestCase(HelperTestCase):
             else:
                 return el.tag
 
-        f = BytesIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        f = BytesIO(b'<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
         events = list(iterparse(f, events=('end', 'comment')))
         root = events[-1][1]
         self.assertEqual(6, len(events))
         self.assertEqual(['A', ' B ', 'c', 'b', 'C', 'a'],
                           [ name(*item) for item in events ])
         self.assertEqual(
-            _bytes('<a><!--A--><b><!-- B --><c/></b><!--C--></a>'),
+            b'<a><!--A--><b><!-- B --><c/></b><!--C--></a>',
             tostring(root))
 
     def test_iterparse_pis(self):
@@ -744,7 +783,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             else:
                 return el.tag
 
-        f = BytesIO('<?pia a?><a><?pib b?><b><?pic c?><c/></b><?pid d?></a><?pie e?>')
+        f = BytesIO(b'<?pia a?><a><?pib b?><b><?pic c?><c/></b><?pid d?></a><?pie e?>')
         events = list(iterparse(f, events=('end', 'pi')))
         root = events[-2][1]
         self.assertEqual(8, len(events))
@@ -752,14 +791,14 @@ class ETreeOnlyTestCase(HelperTestCase):
                            ('pid','d'), 'a', ('pie','e')],
                           [ name(*item) for item in events ])
         self.assertEqual(
-            _bytes('<?pia a?><a><?pib b?><b><?pic c?><c/></b><?pid d?></a><?pie e?>'),
+            b'<?pia a?><a><?pib b?><b><?pic c?><c/></b><?pid d?></a><?pie e?>',
             tostring(ElementTree(root)))
 
     def test_iterparse_remove_comments(self):
         iterparse = self.etree.iterparse
         tostring = self.etree.tostring
 
-        f = BytesIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        f = BytesIO(b'<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
         events = list(iterparse(f, remove_comments=True,
                                 events=('end', 'comment')))
         root = events[-1][1]
@@ -767,18 +806,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(['c', 'b', 'a'],
                           [ el.tag for (event, el) in events ])
         self.assertEqual(
-            _bytes('<a><b><c/></b></a>'),
+            b'<a><b><c/></b></a>',
             tostring(root))
 
     def test_iterparse_broken(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><c/></a>')
+        f = BytesIO(b'<a><b><c/></a>')
         # ET raises ExpatError, lxml raises XMLSyntaxError
         self.assertRaises(self.etree.XMLSyntaxError, list, iterparse(f))
 
     def test_iterparse_broken_recover(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><c/></a>')
+        f = BytesIO(b'<a><b><c/></a>')
         it = iterparse(f, events=('start', 'end'), recover=True)
         events = [(ev, el.tag) for ev, el in it]
         root = it.root
@@ -795,7 +834,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_broken_multi_recover(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><c/></d><b><c/></a></b>')
+        f = BytesIO(b'<a><b><c/></d><b><c/></a></b>')
         it = iterparse(f, events=('start', 'end'), recover=True)
         events = [(ev, el.tag) for ev, el in it]
         root = it.root
@@ -812,7 +851,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_strip(self):
         iterparse = self.etree.iterparse
-        f = BytesIO("""
+        f = BytesIO(b"""
                <a>  \n \n  <b> b test </b>  \n
 
                \n\t <c> \n </c> </a>  \n """)
@@ -825,7 +864,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_tag(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><d/></b><c/></a>')
+        f = BytesIO(b'<a><b><d/></b><c/></a>')
 
         iterator = iterparse(f, tag="b", events=('start', 'end'))
         events = list(iterator)
@@ -836,7 +875,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_tag_all(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><d/></b><c/></a>')
+        f = BytesIO(b'<a><b><d/></b><c/></a>')
 
         iterator = iterparse(f, tag="*", events=('start', 'end'))
         events = list(iterator)
@@ -846,7 +885,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_tag_ns(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+        f = BytesIO(b'<a xmlns="urn:test:1"><b><d/></b><c/></a>')
 
         iterator = iterparse(f, tag="{urn:test:1}b", events=('start', 'end'))
         events = list(iterator)
@@ -857,7 +896,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_tag_ns_empty(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a><b><d/></b><c/></a>')
+        f = BytesIO(b'<a><b><d/></b><c/></a>')
         iterator = iterparse(f, tag="{}b", events=('start', 'end'))
         events = list(iterator)
         root = iterator.root
@@ -865,7 +904,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             [('start', root[0]), ('end', root[0])],
             events)
 
-        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+        f = BytesIO(b'<a xmlns="urn:test:1"><b><d/></b><c/></a>')
         iterator = iterparse(f, tag="{}b", events=('start', 'end'))
         events = list(iterator)
         root = iterator.root
@@ -873,27 +912,27 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_tag_ns_all(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+        f = BytesIO(b'<a xmlns="urn:test:1"><b><d/></b><c/></a>')
         iterator = iterparse(f, tag="{urn:test:1}*", events=('start', 'end'))
         events = list(iterator)
         self.assertEqual(8, len(events))
 
     def test_iterparse_tag_ns_empty_all(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+        f = BytesIO(b'<a xmlns="urn:test:1"><b><d/></b><c/></a>')
         iterator = iterparse(f, tag="{}*", events=('start', 'end'))
         events = list(iterator)
         self.assertEqual([], events)
 
-        f = BytesIO('<a><b><d/></b><c/></a>')
+        f = BytesIO(b'<a><b><d/></b><c/></a>')
         iterator = iterparse(f, tag="{}*", events=('start', 'end'))
         events = list(iterator)
         self.assertEqual(8, len(events))
 
     def test_iterparse_encoding_error(self):
-        text = _str('Søk på nettet')
+        text = 'Søk på nettet'
         wrong_declaration = "<?xml version='1.0' encoding='UTF-8'?>"
-        xml_latin1 = (_str('%s<a>%s</a>') % (wrong_declaration, text)
+        xml_latin1 = ('%s<a>%s</a>' % (wrong_declaration, text)
                       ).encode('iso-8859-1')
 
         self.assertRaises(self.etree.ParseError,
@@ -902,7 +941,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterparse_encoding_8bit_override(self):
         text = _str('Søk på nettet', encoding="UTF-8")
         wrong_declaration = "<?xml version='1.0' encoding='UTF-8'?>"
-        xml_latin1 = (_str('%s<a>%s</a>') % (wrong_declaration, text)
+        xml_latin1 = ('%s<a>%s</a>' % (wrong_declaration, text)
                       ).encode('iso-8859-1')
 
         iterator = self.etree.iterparse(BytesIO(xml_latin1),
@@ -914,12 +953,12 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterparse_keep_cdata(self):
         tostring = self.etree.tostring
-        f = BytesIO('<root><![CDATA[test]]></root>')
+        f = BytesIO(b'<root><![CDATA[test]]></root>')
         context = self.etree.iterparse(f, strip_cdata=False)
         content = [ el.text for event,el in context ]
 
         self.assertEqual(['test'], content)
-        self.assertEqual(_bytes('<root><![CDATA[test]]></root>'),
+        self.assertEqual(b'<root><![CDATA[test]]></root>',
                           tostring(context.root))
 
     def test_parser_encoding_unknown(self):
@@ -982,7 +1021,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         assertFalse  = self.assertFalse
 
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start")
                 assertFalse(attrib)
@@ -997,13 +1036,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         tree = self.etree.ElementTree()
 
         self.assertRaises(TypeError,
-                          tree.parse, BytesIO("<TAG/>"), parser=parser)
+                          tree.parse, BytesIO(b"<TAG/>"), parser=parser)
         self.assertEqual(["start", "end"], events)
 
     def test_parser_target_feed_exception(self):
         # ET doesn't call .close() on errors
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1019,7 +1058,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = self.etree.XMLParser(target=Target())
 
         try:
-            parser.feed(_bytes('<root>A<a>ca</a>B</root>'))
+            parser.feed(b'<root>A<a>ca</a>B</root>')
             done = parser.close()
             self.fail("error expected, but parsing succeeded")
         except ValueError:
@@ -1032,7 +1071,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_fromstring_exception(self):
         # ET doesn't call .close() on errors
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1048,7 +1087,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = self.etree.XMLParser(target=Target())
 
         try:
-            done = self.etree.fromstring(_bytes('<root>A<a>ca</a>B</root>'),
+            done = self.etree.fromstring(b'<root>A<a>ca</a>B</root>',
                                          parser=parser)
             self.fail("error expected, but parsing succeeded")
         except ValueError:
@@ -1061,7 +1100,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_target_feed_no_id_dict(self):
         # test that target parsing works nicely with the no-id-hash setup
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1075,8 +1114,8 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser = self.etree.XMLParser(target=Target(), collect_ids=False)
 
-        parser.feed(_bytes('<!--a--><root xml:id="123">A<!--b-->'))
-        parser.feed(_bytes('<sub xml:id="321"/>B</root>'))
+        parser.feed(b'<!--a--><root xml:id="123">A<!--b-->')
+        parser.feed(b'<sub xml:id="321"/>B</root>')
         done = parser.close()
 
         self.assertEqual("DONE", done)
@@ -1086,7 +1125,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_comment(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1100,7 +1139,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser = self.etree.XMLParser(target=Target())
 
-        parser.feed(_bytes('<!--a--><root>A<!--b--><sub/><!--c-->B</root><!--d-->'))
+        parser.feed(b'<!--a--><root>A<!--b--><sub/><!--c-->B</root><!--d-->')
         done = parser.close()
 
         self.assertEqual("DONE", done)
@@ -1111,7 +1150,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_pi(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1125,7 +1164,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser = self.etree.XMLParser(target=Target())
 
-        parser.feed(_bytes('<?test a?><root>A<?test b?>B</root><?test c?>'))
+        parser.feed(b'<?test a?><root>A<?test b?>B</root><?test c?>')
         done = parser.close()
 
         self.assertEqual("DONE", done)
@@ -1135,7 +1174,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_cdata(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1148,7 +1187,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = self.etree.XMLParser(target=Target(),
                                       strip_cdata=False)
 
-        parser.feed(_bytes('<root>A<a><![CDATA[ca]]></a>B</root>'))
+        parser.feed(b'<root>A<a><![CDATA[ca]]></a>B</root>')
         done = parser.close()
 
         self.assertEqual("DONE", done)
@@ -1158,7 +1197,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parser_target_recover(self):
         events = []
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 events.append("start-" + tag)
             def end(self, tag):
@@ -1172,7 +1211,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = self.etree.XMLParser(target=Target(),
                                       recover=True)
 
-        parser.feed(_bytes('<root>A<a>ca</a>B</not-root>'))
+        parser.feed(b'<root>A<a>ca</a>B</not-root>')
         done = parser.close()
 
         self.assertEqual("DONE", done)
@@ -1183,7 +1222,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_tag(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b><d/></b><c/></a>'))
+        root = self.etree.XML(b'<a><b><d/></b><c/></a>')
 
         iterator = iterwalk(root, tag="b", events=('start', 'end'))
         events = list(iterator)
@@ -1193,7 +1232,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_tag_all(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b><d/></b><c/></a>'))
+        root = self.etree.XML(b'<a><b><d/></b><c/></a>')
 
         iterator = iterwalk(root, tag="*", events=('start', 'end'))
         events = list(iterator)
@@ -1203,7 +1242,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b></b><c/></a>'))
+        root = self.etree.XML(b'<a><b></b><c/></a>')
 
         events = list(iterwalk(root))
         self.assertEqual(
@@ -1307,7 +1346,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_start(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b></b><c/></a>'))
+        root = self.etree.XML(b'<a><b></b><c/></a>')
 
         iterator = iterwalk(root, events=('start',))
         events = list(iterator)
@@ -1317,7 +1356,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_start_end(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b></b><c/></a>'))
+        root = self.etree.XML(b'<a><b></b><c/></a>')
 
         iterator = iterwalk(root, events=('start','end'))
         events = list(iterator)
@@ -1328,7 +1367,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_start_tags(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b></b><c/><b><d/></b></a>'))
+        root = self.etree.XML(b'<a><b></b><c/><b><d/></b></a>')
 
         iterator = iterwalk(root, events=('start',), tag='b')
         events = list(iterator)
@@ -1338,7 +1377,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_start_end_tags(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b></b><c/><b><d/></b></a>'))
+        root = self.etree.XML(b'<a><b></b><c/><b><d/></b></a>')
 
         iterator = iterwalk(root, events=('start', 'end'), tag='b')
         events = list(iterator)
@@ -1348,7 +1387,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_start_end_tags_with_root(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b></b><c/><b><d/></b></a>'))
+        root = self.etree.XML(b'<a><b></b><c/><b><d/></b></a>')
 
         iterator = iterwalk(root, events=('start', 'end'), tag=('b', 'a'))
         events = list(iterator)
@@ -1362,7 +1401,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_clear(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b></b><c/></a>'))
+        root = self.etree.XML(b'<a><b></b><c/></a>')
 
         iterator = iterwalk(root)
         for event, elem in iterator:
@@ -1373,7 +1412,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_attrib_ns(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a xmlns="ns1"><b><c xmlns="ns2"/></b></a>'))
+        root = self.etree.XML(b'<a xmlns="ns1"><b><c xmlns="ns2"/></b></a>')
 
         attr_name = '{testns}bla'
         events = []
@@ -1398,7 +1437,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_end_skip(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b><c/></b><d><e/></d></a>'))
+        root = self.etree.XML(b'<a><b><c/></b><d><e/></d></a>')
 
         iterator = iterwalk(root)
         tags = []
@@ -1411,7 +1450,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_start_end_skip(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b><c/></b><d><e/></d></a>'))
+        root = self.etree.XML(b'<a><b><c/></b><d><e/></d></a>')
 
         iterator = iterwalk(root, events=('start', 'end'))
         tags = []
@@ -1463,7 +1502,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_iterwalk_getiterator(self):
         iterwalk = self.etree.iterwalk
-        root = self.etree.XML(_bytes('<a><b><d/></b><c/></a>'))
+        root = self.etree.XML(b'<a><b><d/></b><c/></a>')
 
         counts = []
         for event, elem in iterwalk(root):
@@ -1504,6 +1543,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(["RTEXT", "ATAIL", "CTAIL", " PITAIL "],
                           text)
 
+    def test_itertext_no_tails(self):
+        XML = self.etree.XML
+        root = XML(_bytes(
+            "<root>RTEXT<a>ATEXT</a>ATAIL<b/><!-- COMMENT -->CTAIL<?PI PITEXT?> PITAIL </root>"
+        ))
+
+        text = list(root.itertext(with_tail=False))
+        self.assertEqual(["RTEXT", "ATEXT"],
+                          text)
+
     def test_resolve_string_dtd(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(dtd_validation=True)
@@ -1519,7 +1568,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = _str('<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>') % test_url
+        xml = '<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>' % test_url
         tree = parse(StringIO(xml), parser)
         root = tree.getroot()
         self.assertEqual(root.text, test_url)
@@ -1540,7 +1589,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = _str('<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>') % test_url
+        xml = '<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>' % test_url
         tree = parse(StringIO(xml), parser)
         root = tree.getroot()
         self.assertEqual(root.text, test_url)
@@ -1561,7 +1610,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = _str('<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>') % test_url
+        xml = '<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>' % test_url
         tree = parse(StringIO(xml), parser)
         root = tree.getroot()
         self.assertEqual(root.text, test_url)
@@ -1580,7 +1629,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
+        xml = '<!DOCTYPE a SYSTEM "%s"><a><b/></a>' % test_url
         tree = parse(StringIO(xml), parser)
         root = tree.getroot()
         self.assertEqual(
@@ -1605,7 +1654,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
+        xml = '<!DOCTYPE a SYSTEM "%s"><a><b/></a>' % test_url
         tree = parse(StringIO(xml), parser,
                      base_url=fileUrlInTestDir('__test.xml'))
         root = tree.getroot()
@@ -1628,7 +1677,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
+        xml = '<!DOCTYPE a SYSTEM "%s"><a><b/></a>' % test_url
         tree = parse(StringIO(xml), parser)
         root = tree.getroot()
         self.assertEqual(
@@ -1642,7 +1691,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         assertEqual = self.assertEqual
         test_url = _str("__nosuch.dtd")
 
-        class check(object):
+        class check:
             resolved = False
 
         class MyResolver(self.etree.Resolver):
@@ -1653,7 +1702,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = _str('<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>') % test_url
+        xml = '<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>' % test_url
         self.assertRaises(etree.XMLSyntaxError, parse, StringIO(xml), parser)
         self.assertTrue(check.resolved)
 
@@ -1670,7 +1719,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         parser.resolvers.add(MyResolver())
 
-        xml = '<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
+        xml = b'<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
         self.assertRaises(_LocalException, parse, BytesIO(xml), parser)
 
     def test_entity_parse(self):
@@ -1679,7 +1728,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = self.etree.XMLParser(resolve_entities=False)
         Entity = self.etree.Entity
 
-        xml = _bytes('<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>')
+        xml = b'<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
         tree = parse(BytesIO(xml), parser)
         root = tree.getroot()
         self.assertEqual(root[0].tag, Entity)
@@ -1687,16 +1736,94 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(root[0].tail, None)
         self.assertEqual(root[0].name, "myentity")
 
-        self.assertEqual(_bytes('<doc>&myentity;</doc>'),
+        self.assertEqual(b'<doc>&myentity;</doc>',
                           tostring(root))
 
+    @contextlib.contextmanager
+    def _xml_test_file(self, name, content=b'<evil>XML</evil>'):
+        temp_dir = tempfile.mkdtemp()
+        try:
+            xml_file = os.path.join(temp_dir, name)
+            with open(xml_file, 'wb') as tmpfile:
+                tmpfile.write(content)
+            yield xml_file
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_entity_parse_external(self):
+        fromstring = self.etree.fromstring
+        tostring = self.etree.tostring
+        parser = self.etree.XMLParser(resolve_entities=True)
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_external_entity;</doc>
+            ''' % path2url(entity_file)
+            root = fromstring(xml, parser)
+
+        self.assertEqual(b'<doc><evil>XML</evil></doc>',
+                          tostring(root))
+        self.assertEqual(root.tag, 'doc')
+        self.assertEqual(root[0].tag, 'evil')
+        self.assertEqual(root[0].text, 'XML')
+        self.assertEqual(root[0].tail, None)
+
+    def test_entity_parse_external_no_resolve(self):
+        fromstring = self.etree.fromstring
+        parser = self.etree.XMLParser(resolve_entities=False)
+        Entity = self.etree.Entity
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_external_entity;</doc>
+            ''' % path2url(entity_file)
+            root = fromstring(xml, parser)
+
+        self.assertEqual(root[0].tag, Entity)
+        self.assertEqual(root[0].text, "&my_external_entity;")
+
+    def test_entity_parse_no_external_default(self):
+        fromstring = self.etree.fromstring
+
+        with self._xml_test_file("entity.xml") as entity_file:
+            xml = '''
+            <!DOCTYPE doc [
+                <!ENTITY my_failing_external_entity SYSTEM "%s">
+            ]>
+            <doc>&my_failing_external_entity;</doc>
+            ''' % path2url(entity_file)
+
+            try:
+                fromstring(xml)
+            except self.etree.XMLSyntaxError as exc:
+                exception = exc
+            else:
+                self.assertTrue(False, "XMLSyntaxError was not raised")
+
+        self.assertIn("my_failing_external_entity", str(exception))
+        self.assertTrue(exception.error_log)
+        # Depending on the libxml2 version, we get different errors here,
+        # not necessarily the one that lxml produced. But it should fail either way.
+        for error in exception.error_log:
+            if "my_failing_external_entity" in error.message:
+                self.assertEqual(5, error.line)
+                break
+        else:
+            self.assertFalse("entity error not found in parser error log")
+
     def test_entity_restructure(self):
-        xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
+        xml = b'''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
             <root>
               <child1/>
               <child2/>
               <child3>&nbsp;</child3>
-            </root>''')
+            </root>'''
 
         parser = self.etree.XMLParser(resolve_entities=False)
         root = etree.fromstring(xml, parser)
@@ -1722,7 +1849,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(root[0].tail, None)
         self.assertEqual(root[0].name, "test")
 
-        self.assertEqual(_bytes('<root>&test;</root>'),
+        self.assertEqual(b'<root>&test;</root>',
                           tostring(root))
 
     def test_entity_append_parsed(self):
@@ -1768,7 +1895,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertEqual('test',
                           root.text)
-        self.assertEqual(_bytes('<root><![CDATA[test]]></root>'),
+        self.assertEqual(b'<root><![CDATA[test]]></root>',
                           tostring(root))
 
     def test_cdata_tail(self):
@@ -1782,14 +1909,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         child.tail = CDATA('test')
 
         self.assertEqual('test', child.tail)
-        self.assertEqual(_bytes('<root><child/><![CDATA[test]]></root>'),
+        self.assertEqual(b'<root><child/><![CDATA[test]]></root>',
                          tostring(root))
 
         root = Element("root")
         root.tail = CDATA('test')
 
         self.assertEqual('test', root.tail)
-        self.assertEqual(_bytes('<root/><![CDATA[test]]>'),
+        self.assertEqual(b'<root/><![CDATA[test]]>',
                          tostring(root))
 
     def test_cdata_type(self):
@@ -1820,17 +1947,17 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_cdata_parser(self):
         tostring = self.etree.tostring
         parser = self.etree.XMLParser(strip_cdata=False)
-        root = self.etree.XML(_bytes('<root><![CDATA[test]]></root>'), parser)
+        root = self.etree.XML(b'<root><![CDATA[test]]></root>', parser)
 
         self.assertEqual('test', root.text)
-        self.assertEqual(_bytes('<root><![CDATA[test]]></root>'),
+        self.assertEqual(b'<root><![CDATA[test]]></root>',
                           tostring(root))
 
     def test_cdata_xpath(self):
         tostring = self.etree.tostring
         parser = self.etree.XMLParser(strip_cdata=False)
-        root = self.etree.XML(_bytes('<root><![CDATA[test]]></root>'), parser)
-        self.assertEqual(_bytes('<root><![CDATA[test]]></root>'),
+        root = self.etree.XML(b'<root><![CDATA[test]]></root>', parser)
+        self.assertEqual(b'<root><![CDATA[test]]></root>',
                           tostring(root))
 
         self.assertEqual(['test'], root.xpath('//text()'))
@@ -1880,6 +2007,42 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
 
+    def test_addnext_tails(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a').tail = "A"
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd').tail = "D"
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'B', 'C', 'D'], [c.tail for c in root])
+
+        root[2].addnext(root[1])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'C', 'B', 'D'], [c.tail for c in root])
+
+    def test_addnext_with_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c')
+        SubElement(root, 'd')
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, 'B', None, None], [c.tail for c in root])
+
+        root[2].addnext(root[1])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, None, 'B', None], [c.tail for c in root])
+
     def test_addprevious(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -1892,6 +2055,42 @@ class ETreeOnlyTestCase(HelperTestCase):
         root[0].addprevious(root[1])
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
+
+    def test_addprevious_tails(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a').tail = "A"
+        SubElement(root, 'b').tail = "B"
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd').tail = "D"
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'B', 'C', 'D'], [c.tail for c in root])
+
+        root[1].addprevious(root[2])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual(['A', 'C', 'B', 'D'], [c.tail for c in root])
+
+    def test_addprevious_with_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b')
+        SubElement(root, 'c').tail = "C"
+        SubElement(root, 'd')
+
+        self.assertEqual(['a', 'b', 'c', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, None, 'C', None], [c.tail for c in root])
+
+        root[1].addprevious(root[2])
+        self.assertEqual(['a', 'c', 'b', 'd'],
+                          [c.tag for c in root])
+        self.assertEqual([None, 'C', None, None], [c.tail for c in root])
 
     def test_addnext_cycle(self):
         Element = self.etree.Element
@@ -1982,10 +2181,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         pi = PI('TARGET', 'TEXT')
         pi.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root><a></a></root>'),
+        self.assertEqual(b'<root><a></a></root>',
                           self._writeElement(root))
         root[0].addprevious(pi)
-        self.assertEqual(_bytes('<root><?TARGET TEXT?>TAIL<a></a></root>'),
+        self.assertEqual(b'<root><?TARGET TEXT?>TAIL<a></a></root>',
                           self._writeElement(root))
 
     def test_addprevious_root_pi(self):
@@ -1995,10 +2194,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         pi = PI('TARGET', 'TEXT')
         pi.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root></root>'),
+        self.assertEqual(b'<root></root>',
                           self._writeElement(root))
         root.addprevious(pi)
-        self.assertEqual(_bytes('<?TARGET TEXT?>\n<root></root>'),
+        self.assertEqual(b'<?TARGET TEXT?>\n<root></root>',
                           self._writeElement(root))
 
     def test_addnext_pi(self):
@@ -2010,10 +2209,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         pi = PI('TARGET', 'TEXT')
         pi.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root><a></a></root>'),
+        self.assertEqual(b'<root><a></a></root>',
                           self._writeElement(root))
         root[0].addnext(pi)
-        self.assertEqual(_bytes('<root><a></a><?TARGET TEXT?>TAIL</root>'),
+        self.assertEqual(b'<root><a></a><?TARGET TEXT?>TAIL</root>',
                           self._writeElement(root))
 
     def test_addnext_root_pi(self):
@@ -2023,10 +2222,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         pi = PI('TARGET', 'TEXT')
         pi.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root></root>'),
+        self.assertEqual(b'<root></root>',
                           self._writeElement(root))
         root.addnext(pi)
-        self.assertEqual(_bytes('<root></root>\n<?TARGET TEXT?>'),
+        self.assertEqual(b'<root></root>\n<?TARGET TEXT?>',
                           self._writeElement(root))
 
     def test_addnext_comment(self):
@@ -2038,10 +2237,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         comment = Comment('TEXT ')
         comment.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root><a></a></root>'),
+        self.assertEqual(b'<root><a></a></root>',
                           self._writeElement(root))
         root[0].addnext(comment)
-        self.assertEqual(_bytes('<root><a></a><!--TEXT -->TAIL</root>'),
+        self.assertEqual(b'<root><a></a><!--TEXT -->TAIL</root>',
                           self._writeElement(root))
 
     def test_addnext_root_comment(self):
@@ -2051,10 +2250,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         comment = Comment('TEXT ')
         comment.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root></root>'),
+        self.assertEqual(b'<root></root>',
                           self._writeElement(root))
         root.addnext(comment)
-        self.assertEqual(_bytes('<root></root>\n<!--TEXT -->'),
+        self.assertEqual(b'<root></root>\n<!--TEXT -->',
                           self._writeElement(root))
 
     def test_addprevious_comment(self):
@@ -2066,10 +2265,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         comment = Comment('TEXT ')
         comment.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root><a></a></root>'),
+        self.assertEqual(b'<root><a></a></root>',
                           self._writeElement(root))
         root[0].addprevious(comment)
-        self.assertEqual(_bytes('<root><!--TEXT -->TAIL<a></a></root>'),
+        self.assertEqual(b'<root><!--TEXT -->TAIL<a></a></root>',
                           self._writeElement(root))
 
     def test_addprevious_root_comment(self):
@@ -2079,17 +2278,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         comment = Comment('TEXT ')
         comment.tail = "TAIL"
 
-        self.assertEqual(_bytes('<root></root>'),
+        self.assertEqual(b'<root></root>',
                           self._writeElement(root))
         root.addprevious(comment)
-        self.assertEqual(_bytes('<!--TEXT -->\n<root></root>'),
+        self.assertEqual(b'<!--TEXT -->\n<root></root>',
                           self._writeElement(root))
 
     # ET's Elements have items() and key(), but not values()
     def test_attribute_values(self):
         XML = self.etree.XML
         
-        root = XML(_bytes('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>'))
+        root = XML(b'<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
         values = root.values()
         values.sort()
         self.assertEqual(['Alpha', 'Beta', 'Gamma'], values)
@@ -2102,7 +2301,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         a = Element('a')
         a.append(Comment())
         self.assertEqual(
-            _bytes('<a><!----></a>'),
+            b'<a><!----></a>',
             self._writeElement(a))
 
     # ElementTree ignores comments
@@ -2110,7 +2309,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         ElementTree = self.etree.ElementTree
         tostring = self.etree.tostring
 
-        xml = _bytes('<a><b/><!----><c/></a>')
+        xml = b'<a><b/><!----><c/></a>'
         f = BytesIO(xml)
         doc = ElementTree(file=f)
         a = doc.getroot()
@@ -2125,7 +2324,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_comment_no_proxy_yet(self):
         ElementTree = self.etree.ElementTree
         
-        f = BytesIO('<a><b></b><!-- hoi --><c></c></a>')
+        f = BytesIO(b'<a><b></b><!-- hoi --><c></c></a>')
         doc = ElementTree(file=f)
         a = doc.getroot()
         self.assertEqual(
@@ -2178,7 +2377,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_prefix(self):
         ElementTree = self.etree.ElementTree
         
-        f = BytesIO('<a xmlns:foo="http://www.infrae.com/ns/1"><foo:b/></a>')
+        f = BytesIO(b'<a xmlns:foo="http://www.infrae.com/ns/1"><foo:b/></a>')
         doc = ElementTree(file=f)
         a = doc.getroot()
         self.assertEqual(
@@ -2191,7 +2390,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_prefix_default_ns(self):
         ElementTree = self.etree.ElementTree
         
-        f = BytesIO('<a xmlns="http://www.infrae.com/ns/1"><b/></a>')
+        f = BytesIO(b'<a xmlns="http://www.infrae.com/ns/1"><b/></a>')
         doc = ElementTree(file=f)
         a = doc.getroot()
         self.assertEqual(
@@ -2225,7 +2424,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren(self):
         XML = self.etree.XML
         
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<three/></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<three/></doc>')
         result = []
         for el in root.iterchildren():
             result.append(el.tag)
@@ -2234,7 +2433,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren_reversed(self):
         XML = self.etree.XML
         
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<three/></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<three/></doc>')
         result = []
         for el in root.iterchildren(reversed=True):
             result.append(el.tag)
@@ -2243,7 +2442,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren_tag(self):
         XML = self.etree.XML
         
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<two>Bla</two></doc>')
         result = []
         for el in root.iterchildren(tag='two'):
             result.append(el.text)
@@ -2252,7 +2451,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren_tag_posarg(self):
         XML = self.etree.XML
 
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<two>Bla</two></doc>')
         result = []
         for el in root.iterchildren('two'):
             result.append(el.text)
@@ -2261,7 +2460,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren_tag_reversed(self):
         XML = self.etree.XML
         
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<two>Bla</two></doc>')
         result = []
         for el in root.iterchildren(reversed=True, tag='two'):
             result.append(el.text)
@@ -2270,7 +2469,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren_tag_multiple(self):
         XML = self.etree.XML
 
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>')
         result = []
         for el in root.iterchildren(tag=['two', 'three']):
             result.append(el.text)
@@ -2279,7 +2478,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren_tag_multiple_posarg(self):
         XML = self.etree.XML
 
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>')
         result = []
         for el in root.iterchildren('two', 'three'):
             result.append(el.text)
@@ -2288,7 +2487,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_iterchildren_tag_multiple_reversed(self):
         XML = self.etree.XML
 
-        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>'))
+        root = XML(b'<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>')
         result = []
         for el in root.iterchildren(reversed=True, tag=['two', 'three']):
             result.append(el.text)
@@ -2591,7 +2790,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parseid(self):
         parseid = self.etree.parseid
         XML     = self.etree.XML
-        xml_text = _bytes('''
+        xml_text = b'''
         <!DOCTYPE document [
         <!ELEMENT document (h1,p)*>
         <!ELEMENT h1 (#PCDATA)>
@@ -2606,7 +2805,7 @@ class ETreeOnlyTestCase(HelperTestCase):
           <p xml:id="xmlid">XML:ID paragraph.</p>
           <p someid="warn1" class="warning">...</p>
         </document>
-        ''')
+        '''
 
         tree, dic = parseid(BytesIO(xml_text))
         root = tree.getroot()
@@ -2626,7 +2825,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_XMLDTDID(self):
         XMLDTDID = self.etree.XMLDTDID
         XML      = self.etree.XML
-        xml_text = _bytes('''
+        xml_text = b'''
         <!DOCTYPE document [
         <!ELEMENT document (h1,p)*>
         <!ELEMENT h1 (#PCDATA)>
@@ -2641,7 +2840,7 @@ class ETreeOnlyTestCase(HelperTestCase):
           <p xml:id="xmlid">XML:ID paragraph.</p>
           <p someid="warn1" class="warning">...</p>
         </document>
-        ''')
+        '''
 
         root, dic = XMLDTDID(xml_text)
         root2 = XML(xml_text)
@@ -2660,14 +2859,14 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_XMLDTDID_empty(self):
         XMLDTDID = self.etree.XMLDTDID
         XML      = self.etree.XML
-        xml_text = _bytes('''
+        xml_text = b'''
         <document>
           <h1 myid="chapter1">...</h1>
           <p id="note1" class="note">...</p>
           <p>Regular paragraph.</p>
           <p someid="warn1" class="warning">...</p>
         </document>
-        ''')
+        '''
 
         root, dic = XMLDTDID(xml_text)
         root2 = XML(xml_text)
@@ -2679,7 +2878,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_XMLDTDID_no_id_dict(self):
         XMLDTDID = self.etree.XMLDTDID
         XML      = self.etree.XML
-        xml_text = _bytes('''
+        xml_text = b'''
         <!DOCTYPE document [
         <!ELEMENT document (h1,p)*>
         <!ELEMENT h1 (#PCDATA)>
@@ -2694,7 +2893,7 @@ class ETreeOnlyTestCase(HelperTestCase):
           <p xml:id="xmlid">XML:ID paragraph.</p>
           <p someid="warn1" class="warning">...</p>
         </document>
-        ''')
+        '''
 
         parser = etree.XMLParser(collect_ids=False)
         root, dic = XMLDTDID(xml_text, parser=parser)
@@ -2709,19 +2908,8 @@ class ETreeOnlyTestCase(HelperTestCase):
                           len(expected))
         self.assertEqual(sorted(dic.items()),
                           sorted(expected.items()))
-        if sys.version_info < (3,):
-            self.assertEqual(sorted(dic.iteritems()),
-                              sorted(expected.iteritems()))
         self.assertEqual(sorted(dic.keys()),
                           sorted(expected.keys()))
-        if sys.version_info < (3,):
-            self.assertEqual(sorted(dic.iterkeys()),
-                              sorted(expected.iterkeys()))
-        if sys.version_info < (3,):
-            self.assertEqual(sorted(dic.values()),
-                              sorted(expected.values()))
-            self.assertEqual(sorted(dic.itervalues()),
-                              sorted(expected.itervalues()))
 
     def test_register_namespace_xml(self):
         self.assertRaises(ValueError, self.etree.register_namespace,
@@ -2739,7 +2927,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             'foo',
             e.prefix)
         self.assertEqual(
-            _bytes('<foo:bar xmlns:foo="http://ns.infrae.com/foo"></foo:bar>'),
+            b'<foo:bar xmlns:foo="http://ns.infrae.com/foo"></foo:bar>',
             self._writeElement(e))
         
     def test_namespaces_default(self):
@@ -2754,7 +2942,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             '{http://ns.infrae.com/foo}bar',
             e.tag)
         self.assertEqual(
-            _bytes('<bar xmlns="http://ns.infrae.com/foo"></bar>'),
+            b'<bar xmlns="http://ns.infrae.com/foo"></bar>',
             self._writeElement(e))
 
     def test_namespaces_default_and_other(self):
@@ -2765,7 +2953,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(None, e.prefix)
         self.assertEqual('{http://ns.infrae.com/foo}bar', e.tag)
         self.assertEqual(
-            _bytes('<bar xmlns="http://ns.infrae.com/foo" xmlns:p="http://test/"></bar>'),
+            b'<bar xmlns="http://ns.infrae.com/foo" xmlns:p="http://test/"></bar>',
             self._writeElement(e))
 
     def test_namespaces_default_and_attr(self):
@@ -2776,7 +2964,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         e = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
         e.set('{http://ns.infrae.com/hoi}test', 'value')
         self.assertEqual(
-            _bytes('<bar xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi" hoi:test="value"></bar>'),
+            b'<bar xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi" hoi:test="value"></bar>',
             self._writeElement(e))
 
     def test_attribute_keeps_namespace_prefix_on_merge(self):
@@ -2790,14 +2978,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         sub.attrib['{http://test/ns}attr'] = 'value'
         self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
         self.assertEqual(
-            _bytes('<test:sub xmlns:test="http://test/ns" test:attr="value"/>'),
+            b'<test:sub xmlns:test="http://test/ns" test:attr="value"/>',
             etree.tostring(sub))
 
         root.append(sub)
         self.assertEqual(
-            _bytes('<root xmlns="http://test/ns">'
-                   '<sub xmlns:test="http://test/ns" test:attr="value"/>'
-                   '</root>'),
+            b'<root xmlns="http://test/ns">'
+                   b'<sub xmlns:test="http://test/ns" test:attr="value"/>'
+                   b'</root>',
             etree.tostring(root))
 
     def test_attribute_keeps_namespace_prefix_on_merge_with_nons(self):
@@ -2810,14 +2998,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         sub.attrib['{http://test/ns}attr'] = 'value'
         self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
         self.assertEqual(
-            _bytes('<test:sub xmlns:test="http://test/ns" test:attr="value"/>'),
+            b'<test:sub xmlns:test="http://test/ns" test:attr="value"/>',
             etree.tostring(sub))
 
         root.append(sub)
         self.assertEqual(
-            _bytes('<root>'
-                   '<test:sub xmlns:test="http://test/ns" test:attr="value"/>'
-                   '</root>'),
+            b'<root>'
+                   b'<test:sub xmlns:test="http://test/ns" test:attr="value"/>'
+                   b'</root>',
             etree.tostring(root))
 
     def test_attribute_gets_namespace_prefix_on_merge_with_nons(self):
@@ -2830,16 +3018,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         sub.attrib['{http://test/ns}attr'] = 'value'
         self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
         self.assertEqual(
-            _bytes('<sub xmlns="http://test/ns" '
-                   'xmlns:ns0="http://test/ns" ns0:attr="value"/>'),
+            b'<sub xmlns="http://test/ns" '
+                   b'xmlns:ns0="http://test/ns" ns0:attr="value"/>',
             etree.tostring(sub))
 
         root.append(sub)
         self.assertEqual(
-            _bytes('<root>'
-                   '<sub xmlns="http://test/ns"'
-                   ' xmlns:ns0="http://test/ns" ns0:attr="value"/>'
-                   '</root>'),
+            b'<root>'
+                   b'<sub xmlns="http://test/ns"'
+                   b' xmlns:ns0="http://test/ns" ns0:attr="value"/>'
+                   b'</root>',
             etree.tostring(root))
 
     def test_attribute_gets_namespace_prefix_on_merge(self):
@@ -2854,15 +3042,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         sub.attrib['{http://test/ns}attr'] = 'value'
         self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
         self.assertEqual(
-            _bytes('<sub xmlns="http://test/ns" '
-                   'xmlns:ns0="http://test/ns" ns0:attr="value"/>'),
+            b'<sub xmlns="http://test/ns" '
+                   b'xmlns:ns0="http://test/ns" ns0:attr="value"/>',
             etree.tostring(sub))
 
         root.append(sub)
         self.assertEqual(
-            _bytes('<test:root xmlns:test="http://test/ns" xmlns="http://test/ns">'
-                   '<test:sub test:attr="value"/>'
-                   '</test:root>'),
+            b'<test:root xmlns:test="http://test/ns" xmlns="http://test/ns">'
+                   b'<test:sub test:attr="value"/>'
+                   b'</test:root>',
             etree.tostring(root))
 
     def test_namespaces_elementtree(self):
@@ -2873,7 +3061,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         tree = etree.ElementTree(element=e)
         etree.SubElement(e, '{http://ns.infrae.com/hoi}x')
         self.assertEqual(
-            _bytes('<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>'),
+            b'<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
             self._writeElement(e))
 
     def test_namespaces_default_copy_element(self):
@@ -2923,48 +3111,48 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_namespaces_reuse_after_move(self):
         ns_href = "http://a.b.c"
         one = self.etree.fromstring(
-            _bytes('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
+            '<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href)
         baz = one[0][0]
 
         two = self.etree.fromstring(
-            _bytes('<root xmlns:ns="%s"/>' % ns_href))
+            '<root xmlns:ns="%s"/>' % ns_href)
         two.append(baz)
         del one # make sure the source document is deallocated
 
         self.assertEqual('{%s}baz' % ns_href, baz.tag)
         self.assertEqual(
-            _bytes('<root xmlns:ns="%s"><ns:baz/></root>' % ns_href),
+            ('<root xmlns:ns="%s"><ns:baz/></root>' % ns_href).encode('utf-8'),
             self.etree.tostring(two))
 
     def test_namespace_cleanup(self):
-        xml = _bytes(
-            '<foo xmlns="F" xmlns:x="x">'
-            '<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
-            '<ns:baz/>'
-            '</bar></foo>'
+        xml = (
+            b'<foo xmlns="F" xmlns:x="x">'
+            b'<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
+            b'<ns:baz/>'
+            b'</bar></foo>'
         )
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root)
         self.assertEqual(
-            _bytes('<foo xmlns="F"><bar xmlns:ns="NS" xmlns="B"><ns:baz/></bar></foo>'),
+            b'<foo xmlns="F"><bar xmlns:ns="NS" xmlns="B"><ns:baz/></bar></foo>',
             self.etree.tostring(root))
 
     def test_namespace_cleanup_attributes(self):
-        xml = _bytes(
-            '<foo xmlns="F" xmlns:x="X" xmlns:a="A">'
-            '<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
-            '<ns:baz a:test="attr"/>'
-            '</bar></foo>'
+        xml = (
+            b'<foo xmlns="F" xmlns:x="X" xmlns:a="A">'
+            b'<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
+            b'<ns:baz a:test="attr"/>'
+            b'</bar></foo>'
         )
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root)
         self.assertEqual(
-            _bytes('<foo xmlns="F" xmlns:a="A">'
-                   '<bar xmlns:ns="NS" xmlns="B">'
-                   '<ns:baz a:test="attr"/>'
-                   '</bar></foo>'),
+            b'<foo xmlns="F" xmlns:a="A">'
+                   b'<bar xmlns:ns="NS" xmlns="B">'
+                   b'<ns:baz a:test="attr"/>'
+                   b'</bar></foo>',
             self.etree.tostring(root))
 
     def test_namespace_cleanup_many(self):
@@ -3005,10 +3193,10 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(root))
 
     def test_namespace_cleanup_keep_prefixes(self):
-        xml = ('<root xmlns:n64="NS64" xmlns:foo="FOO" xmlns:unused1="UNUSED" xmlns:no="NO">'
-               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
-               '<foo>foo:bar</foo>'
-               '</root>').encode('utf8')
+        xml = (b'<root xmlns:n64="NS64" xmlns:foo="FOO" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               b'<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               b'<foo>foo:bar</foo>'
+               b'</root>')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root, keep_ns_prefixes=['foo'])
@@ -3020,12 +3208,12 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(root))
 
     def test_namespace_cleanup_keep_prefixes_top(self):
-        xml = ('<root xmlns:n64="NS64" xmlns:unused1="UNUSED" xmlns:no="NO">'
-               '<sub xmlns:foo="FOO">'
-               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
-               '<foo>foo:bar</foo>'
-               '</sub>'
-               '</root>').encode('utf8')
+        xml = (b'<root xmlns:n64="NS64" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               b'<sub xmlns:foo="FOO">'
+               b'<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               b'<foo>foo:bar</foo>'
+               b'</sub>'
+               b'</root>')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(
@@ -3069,11 +3257,29 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_html_prefix_nsmap(self):
         etree = self.etree
-        el = etree.HTML('<hha:page-description>aa</hha:page-description>').find('.//page-description')
-        if etree.LIBXML_VERSION < (2, 9, 11):
-            self.assertEqual({'hha': None}, el.nsmap)
+        el = etree.HTML('<hha:page-description>aa</hha:page-description>')
+        pd = el[-1]
+        while len(pd):
+            pd = pd[-1]
+
+        if etree.LIBXML_VERSION >= (2, 10, 4):
+            # "Prefix" is kept as part of the tag name.
+            self.assertEqual("hha:page-description", pd.tag)
+            self.assertIsNone(el.find('.//page-description'))
+            self.assertIsNotNone(el.find('.//hha:page-description'))  # no namespaces!
+            for e in el.iter():
+                self.assertEqual({}, e.nsmap)
+        elif etree.LIBXML_VERSION >= (2, 9, 11):
+            # "Prefix" is stripped.
+            self.assertEqual("page-description", pd.tag)
+            self.assertIsNotNone(el.find('.//page-description'))
+            for e in el.iter():
+                self.assertEqual({}, e.nsmap)
         else:
-            self.assertEqual({}, el.nsmap)
+            # "Prefix" is parsed as XML prefix.
+            self.assertEqual("page-description", pd.tag)
+            pd = el.find('.//page-description')
+            self.assertEqual({'hha': None}, pd.nsmap)
 
     def test_getchildren(self):
         Element = self.etree.Element
@@ -3085,7 +3291,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(b, 'd')
         e = SubElement(c, 'e')
         self.assertEqual(
-            _bytes('<a><b><d></d></b><c><e></e></c></a>'),
+            b'<a><b><d></d></b><c><e></e></c></a>',
             self.etree.tostring(a, method="c14n"))
         self.assertEqual(
             [b, c],
@@ -3554,7 +3760,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         ElementTree = self.etree.ElementTree
         QName = self.etree.QName
         tree = ElementTree(XML(
-                _bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')))
+                b'<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>'))
         self.assertEqual(
             list(tree.iter(QName("b"))),
             list(tree.iter("b")),
@@ -3577,14 +3783,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         XML = self.etree.XML
         ElementTree = self.etree.ElementTree
         QName = self.etree.QName
-        tree = ElementTree(XML(_bytes('<a><b><c/></b><b/><c><b/></c></a>')))
+        tree = ElementTree(XML(b'<a><b><c/></b><b/><c><b/></c></a>'))
         self.assertEqual(tree.find(QName("c")), tree.getroot()[2])
 
     def test_elementtree_findall_qname(self):
         XML = self.etree.XML
         ElementTree = self.etree.ElementTree
         QName = self.etree.QName
-        tree = ElementTree(XML(_bytes('<a><b><c/></b><b/><c><b/></c></a>')))
+        tree = ElementTree(XML(b'<a><b><c/></b><b/><c><b/></c></a>'))
         self.assertEqual(len(list(tree.findall(QName("c")))), 1)
 
     def test_elementtree_findall_ns_qname(self):
@@ -3592,20 +3798,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         ElementTree = self.etree.ElementTree
         QName = self.etree.QName
         tree = ElementTree(XML(
-                _bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')))
+                b'<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>'))
         self.assertEqual(len(list(tree.findall(QName("b")))), 2)
         self.assertEqual(len(list(tree.findall(QName("X", "b")))), 1)
 
     def test_findall_ns(self):
         XML = self.etree.XML
-        root = XML(_bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>'))
+        root = XML(b'<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')
         self.assertEqual(len(root.findall(".//{X}b")), 2)
         self.assertEqual(len(root.findall(".//{X}*")), 2)
         self.assertEqual(len(root.findall(".//b")), 3)
 
     def test_findall_different_nsmaps(self):
         XML = self.etree.XML
-        root = XML(_bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><y:b/></a>'))
+        root = XML(b'<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><y:b/></a>')
         nsmap = {'xx': 'X'}
         self.assertEqual(len(root.findall(".//xx:b", namespaces=nsmap)), 2)
         self.assertEqual(len(root.findall(".//xx:*", namespaces=nsmap)), 2)
@@ -3617,7 +3823,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_findall_empty_prefix(self):
         XML = self.etree.XML
-        root = XML(_bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><y:b/></a>'))
+        root = XML(b'<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><y:b/></a>')
         nsmap = {'xx': 'X'}
         self.assertEqual(len(root.findall(".//xx:b", namespaces=nsmap)), 2)
         nsmap = {'xx': 'X', None: 'Y'}
@@ -3627,7 +3833,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_findall_syntax_error(self):
         XML = self.etree.XML
-        root = XML(_bytes('<a><b><c/></b><b/><c><b/><b/></c><b/></a>'))
+        root = XML(b'<a><b><c/></b><b/><c><b/><b/></c><b/></a>')
         self.assertRaises(SyntaxError, root.findall, '')
         self.assertRaises(SyntaxError, root.findall, '//')  # absolute path on Element
         self.assertRaises(SyntaxError, root.findall, './//')
@@ -3819,12 +4025,12 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_sourceline_XML(self):
         XML = self.etree.XML
-        root = XML(_bytes('''<?xml version="1.0"?>
+        root = XML(b'''<?xml version="1.0"?>
         <root><test>
 
         <bla/></test>
         </root>
-        '''))
+        ''')
 
         self.assertEqual(
             [2, 2, 4],
@@ -3832,12 +4038,12 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_large_sourceline_XML(self):
         XML = self.etree.XML
-        root = XML(_bytes(
-            '<?xml version="1.0"?>\n'
-            '<root>' + '\n' * 65536 +
-            '<p>' + '\n' * 65536 + '</p>\n' +
-            '<br/>\n'
-            '</root>'))
+        root = XML(
+            b'<?xml version="1.0"?>\n'
+            b'<root>' + b'\n' * 65536 +
+            b'<p>' + b'\n' * 65536 + b'</p>\n' +
+            b'<br/>\n'
+            b'</root>')
 
         if self.etree.LIBXML_VERSION >= (2, 9):
             expected = [2, 131074, 131076]
@@ -3885,13 +4091,13 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_XML_base_url_docinfo(self):
         etree = self.etree
-        root = etree.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = etree.XML(b"<root/>", base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
 
     def test_XML_set_base_url_docinfo(self):
         etree = self.etree
-        root = etree.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = etree.XML(b"<root/>", base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
         docinfo.URL = "https://secret/url"
@@ -3899,7 +4105,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parse_stringio_base_url(self):
         etree = self.etree
-        tree = etree.parse(BytesIO("<root/>"), base_url="http://no/such/url")
+        tree = etree.parse(BytesIO(b"<root/>"), base_url="http://no/such/url")
         docinfo = tree.docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
 
@@ -3912,7 +4118,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_HTML_base_url_docinfo(self):
         etree = self.etree
-        root = etree.HTML(_bytes("<html/>"), base_url="http://no/such/url")
+        root = etree.HTML(b"<html/>", base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
 
@@ -3952,7 +4158,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_docinfo_empty(self):
         etree = self.etree
-        xml = _bytes('<html><body></body></html>')
+        xml = b'<html><body></body></html>'
         tree = etree.parse(BytesIO(xml))
         docinfo = tree.docinfo
         self.assertEqual(docinfo.encoding,    "UTF-8")
@@ -3964,7 +4170,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_docinfo_name_only(self):
         etree = self.etree
-        xml = _bytes('<!DOCTYPE root><root></root>')
+        xml = b'<!DOCTYPE root><root></root>'
         tree = etree.parse(BytesIO(xml))
         docinfo = tree.docinfo
         self.assertEqual(docinfo.encoding,    "UTF-8")
@@ -3976,24 +4182,24 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_doctype_name_only_roundtrip(self):
         etree = self.etree
-        xml = _bytes('<!DOCTYPE root>\n<root/>')
+        xml = b'<!DOCTYPE root>\n<root/>'
         tree = etree.parse(BytesIO(xml))
         self.assertEqual(xml, etree.tostring(tree))
 
     def test_doctype_output_override(self):
         etree = self.etree
-        pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-        doctype_string = _bytes('<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_id))
+        pub_id = b"-//W3C//DTD XHTML 1.0 Transitional//EN"
+        sys_id = b"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+        doctype_string = b'<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_id)
 
-        xml = _bytes('<!DOCTYPE root>\n<root/>')
+        xml = b'<!DOCTYPE root>\n<root/>'
         tree = etree.parse(BytesIO(xml))
-        self.assertEqual(xml.replace(_bytes('<!DOCTYPE root>'), doctype_string),
+        self.assertEqual(xml.replace(b'<!DOCTYPE root>', doctype_string),
                           etree.tostring(tree, doctype=doctype_string))
 
     def test_xml_base(self):
         etree = self.etree
-        root = etree.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = etree.XML(b"<root/>", base_url="http://no/such/url")
         self.assertEqual(root.base, "http://no/such/url")
         self.assertEqual(
             root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
@@ -4005,7 +4211,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_xml_base_attribute(self):
         etree = self.etree
-        root = etree.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        root = etree.XML(b"<root/>", base_url="http://no/such/url")
         self.assertEqual(root.base, "http://no/such/url")
         self.assertEqual(
             root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
@@ -4018,13 +4224,13 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_html_base(self):
         etree = self.etree
-        root = etree.HTML(_bytes("<html><body></body></html>"),
+        root = etree.HTML(b"<html><body></body></html>",
                           base_url="http://no/such/url")
         self.assertEqual(root.base, "http://no/such/url")
 
     def test_html_base_tag(self):
         etree = self.etree
-        root = etree.HTML(_bytes('<html><head><base href="http://no/such/url"></head></html>'))
+        root = etree.HTML(b'<html><head><base href="http://no/such/url"></head></html>')
         self.assertEqual(root.base, "http://no/such/url")
 
     def test_indent(self):
@@ -4166,17 +4372,17 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_dtd_io(self):
         # check that DTDs that go in also go back out
-        xml = _bytes('''\
+        xml = b'''\
         <!DOCTYPE test SYSTEM "test.dtd" [
           <!ENTITY entity "tasty">
           <!ELEMENT test (a)>
           <!ELEMENT a (#PCDATA)>
         ]>
         <test><a>test-test</a></test>\
-        ''')
+        '''
         tree = self.etree.parse(BytesIO(xml))
-        self.assertEqual(self.etree.tostring(tree).replace(_bytes(" "), _bytes("")),
-                         xml.replace(_bytes(" "), _bytes("")))
+        self.assertEqual(self.etree.tostring(tree).replace(b" ", b""),
+                         xml.replace(b" ", b""))
 
     def test_byte_zero(self):
         Element = self.etree.Element
@@ -4192,12 +4398,12 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         a = Element('a')
         self.assertRaises(ValueError, setattr, a, "text",
-                          _str('ha\0ho'))
+                          'ha\0ho')
         self.assertRaises(ValueError, setattr, a, "tail",
-                          _str('ha\0ho'))
+                          'ha\0ho')
 
         self.assertRaises(ValueError, Element,
-                          _str('ha\0ho'))
+                          'ha\0ho')
 
     def test_byte_invalid(self):
         Element = self.etree.Element
@@ -4217,38 +4423,38 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         a = Element('a')
         self.assertRaises(ValueError, setattr, a, "text",
-                          _str('ha\x07ho'))
+                          'ha\x07ho')
         self.assertRaises(ValueError, setattr, a, "text",
-                          _str('ha\x02ho'))
+                          'ha\x02ho')
 
         self.assertRaises(ValueError, setattr, a, "tail",
-                          _str('ha\x07ho'))
+                          'ha\x07ho')
         self.assertRaises(ValueError, setattr, a, "tail",
-                          _str('ha\x02ho'))
+                          'ha\x02ho')
 
         self.assertRaises(ValueError, Element,
-                          _str('ha\x07ho'))
+                          'ha\x07ho')
         self.assertRaises(ValueError, Element,
-                          _str('ha\x02ho'))
+                          'ha\x02ho')
 
     def test_unicode_byte_invalid_sequence(self):
         Element = self.etree.Element
 
         a = Element('a')
         self.assertRaises(ValueError, setattr, a, "text",
-                          _str('ha\u1234\x07ho'))
+                          'ha\u1234\x07ho')
         self.assertRaises(ValueError, setattr, a, "text",
-                          _str('ha\u1234\x02ho'))
+                          'ha\u1234\x02ho')
 
         self.assertRaises(ValueError, setattr, a, "tail",
-                          _str('ha\u1234\x07ho'))
+                          'ha\u1234\x07ho')
         self.assertRaises(ValueError, setattr, a, "tail",
-                          _str('ha\u1234\x02ho'))
+                          'ha\u1234\x02ho')
 
         self.assertRaises(ValueError, Element,
-                          _str('ha\u1234\x07ho'))
+                          'ha\u1234\x07ho')
         self.assertRaises(ValueError, Element,
-                          _str('ha\u1234\x02ho'))
+                          'ha\u1234\x02ho')
 
     def test_encoding_tostring_utf16(self):
         # ElementTree fails to serialize this
@@ -4261,7 +4467,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         c = SubElement(a, 'c')
 
         result = tostring(a, encoding='UTF-16')
-        self.assertEqual(_bytes('<a><b></b><c></c></a>'),
+        self.assertEqual(b'<a><b></b><c></c></a>',
                           canonicalize(result))
 
     def test_tostring_none(self):
@@ -4279,13 +4485,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         c = SubElement(a, 'c')
 
         result = tostring(a)
-        self.assertEqual(result, _bytes("<a><b/><c/></a>"))
+        self.assertEqual(result, b"<a><b/><c/></a>")
 
         result = tostring(a, pretty_print=False)
-        self.assertEqual(result, _bytes("<a><b/><c/></a>"))
+        self.assertEqual(result, b"<a><b/><c/></a>")
 
         result = tostring(a, pretty_print=True)
-        self.assertEqual(result, _bytes("<a>\n  <b/>\n  <c/>\n</a>\n"))
+        self.assertEqual(result, b"<a>\n  <b/>\n  <c/>\n</a>\n")
 
     def test_tostring_with_tail(self):
         tostring = self.etree.tostring
@@ -4299,13 +4505,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         c = SubElement(a, 'c')
 
         result = tostring(a)
-        self.assertEqual(result, _bytes("<a><b/>bTAIL<c/></a>aTAIL"))
+        self.assertEqual(result, b"<a><b/>bTAIL<c/></a>aTAIL")
 
         result = tostring(a, with_tail=False)
-        self.assertEqual(result, _bytes("<a><b/>bTAIL<c/></a>"))
+        self.assertEqual(result, b"<a><b/>bTAIL<c/></a>")
 
         result = tostring(a, with_tail=True)
-        self.assertEqual(result, _bytes("<a><b/>bTAIL<c/></a>aTAIL"))
+        self.assertEqual(result, b"<a><b/>bTAIL<c/></a>aTAIL")
 
     def test_tostring_method_html_with_tail(self):
         tostring = self.etree.tostring
@@ -4320,15 +4526,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         result = tostring(div, method='html')
         self.assertEqual(
             result,
-            _bytes("<div><p>Some text<i>\r\n</i></p></div>\r\n"))
+            b"<div><p>Some text<i>\r\n</i></p></div>\r\n")
         result = tostring(div, method='html', with_tail=True)
         self.assertEqual(
             result,
-            _bytes("<div><p>Some text<i>\r\n</i></p></div>\r\n"))
+            b"<div><p>Some text<i>\r\n</i></p></div>\r\n")
         result = tostring(div, method='html', with_tail=False)
         self.assertEqual(
             result,
-            _bytes("<div><p>Some text<i>\r\n</i></p></div>"))
+            b"<div><p>Some text<i>\r\n</i></p></div>")
 
     def test_standalone(self):
         tostring = self.etree.tostring
@@ -4339,7 +4545,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         tree = Element("root").getroottree()
         self.assertEqual(None, tree.docinfo.standalone)
 
-        tree = XML(_bytes("<root/>")).getroottree()
+        tree = XML(b"<root/>").getroottree()
         self.assertEqual(None, tree.docinfo.standalone)
 
         tree = XML(_bytes(
@@ -4357,7 +4563,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         XML = self.etree.XML
         ElementTree = self.etree.ElementTree
 
-        root = XML(_bytes("<root/>"))
+        root = XML(b"<root/>")
 
         tree = ElementTree(root)
         self.assertEqual(None, tree.docinfo.standalone)
@@ -4418,7 +4624,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         result = tostring(a, method="text", encoding="UTF-16")
 
-        self.assertEqual(_str('ABSøk på nettetCtail').encode("UTF-16"),
+        self.assertEqual('ABSøk på nettetCtail'.encode("UTF-16"),
                           result)
 
     def test_tostring_method_text_unicode(self):
@@ -4427,11 +4633,11 @@ class ETreeOnlyTestCase(HelperTestCase):
         SubElement = self.etree.SubElement
         
         a = Element('a')
-        a.text = _str('Søk på nettetA')
+        a.text = 'Søk på nettetA'
         a.tail = "tail"
         b = SubElement(a, 'b')
         b.text = "B"
-        b.tail = _str('Søk på nettetB')
+        b.tail = 'Søk på nettetB'
         c = SubElement(a, 'c')
         c.text = "C"
         
@@ -4439,7 +4645,7 @@ class ETreeOnlyTestCase(HelperTestCase):
                           tostring, a, method="text")
         
         self.assertEqual(
-            _str('Søk på nettetABSøk på nettetBCtail').encode('utf-8'),
+            'Søk på nettetABSøk på nettetBCtail'.encode(),
             tostring(a, encoding="UTF-8", method="text"))
 
     def test_tounicode(self):
@@ -4451,8 +4657,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         
-        self.assertTrue(isinstance(tounicode(a), _unicode))
-        self.assertEqual(_bytes('<a><b></b><c></c></a>'),
+        self.assertTrue(isinstance(tounicode(a), str))
+        self.assertEqual(b'<a><b></b><c></c></a>',
                           canonicalize(tounicode(a)))
 
     def test_tounicode_element(self):
@@ -4464,11 +4670,11 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         d = SubElement(c, 'd')
-        self.assertTrue(isinstance(tounicode(b), _unicode))
-        self.assertTrue(isinstance(tounicode(c), _unicode))
-        self.assertEqual(_bytes('<b></b>'),
+        self.assertTrue(isinstance(tounicode(b), str))
+        self.assertTrue(isinstance(tounicode(c), str))
+        self.assertEqual(b'<b></b>',
                           canonicalize(tounicode(b)))
-        self.assertEqual(_bytes('<c><d></d></c>'),
+        self.assertEqual(b'<c><d></d></c>',
                           canonicalize(tounicode(c)))
 
     def test_tounicode_none(self):
@@ -4486,7 +4692,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(c, 'd')
         b.tail = 'Foo'
 
-        self.assertTrue(isinstance(tounicode(b), _unicode))
+        self.assertTrue(isinstance(tounicode(b), str))
         self.assertTrue(tounicode(b) == '<b/>Foo' or
                      tounicode(b) == '<b />Foo')
 
@@ -4517,9 +4723,9 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         
-        self.assertTrue(isinstance(tostring(a, encoding=_unicode), _unicode))
-        self.assertEqual(_bytes('<a><b></b><c></c></a>'),
-                          canonicalize(tostring(a, encoding=_unicode)))
+        self.assertTrue(isinstance(tostring(a, encoding='unicode'), str))
+        self.assertEqual(b'<a><b></b><c></c></a>',
+                          canonicalize(tostring(a, encoding='unicode')))
 
     def test_tostring_unicode_element(self):
         tostring = self.etree.tostring
@@ -4530,17 +4736,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         d = SubElement(c, 'd')
-        self.assertTrue(isinstance(tostring(b, encoding=_unicode), _unicode))
-        self.assertTrue(isinstance(tostring(c, encoding=_unicode), _unicode))
-        self.assertEqual(_bytes('<b></b>'),
-                          canonicalize(tostring(b, encoding=_unicode)))
-        self.assertEqual(_bytes('<c><d></d></c>'),
-                          canonicalize(tostring(c, encoding=_unicode)))
+        self.assertTrue(isinstance(tostring(b, encoding='unicode'), str))
+        self.assertTrue(isinstance(tostring(c, encoding='unicode'), str))
+        self.assertEqual(b'<b></b>',
+                          canonicalize(tostring(b, encoding=str)))
+        self.assertEqual(b'<c><d></d></c>',
+                          canonicalize(tostring(c, encoding=str)))
 
     def test_tostring_unicode_none(self):
         tostring = self.etree.tostring
         self.assertRaises(TypeError, self.etree.tostring,
-                          None, encoding=_unicode)
+                          None, encoding='unicode')
 
     def test_tostring_unicode_element_tail(self):
         tostring = self.etree.tostring
@@ -4553,9 +4759,9 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(c, 'd')
         b.tail = 'Foo'
 
-        self.assertTrue(isinstance(tostring(b, encoding=_unicode), _unicode))
-        self.assertTrue(tostring(b, encoding=_unicode) == '<b/>Foo' or
-                     tostring(b, encoding=_unicode) == '<b />Foo')
+        self.assertTrue(isinstance(tostring(b, encoding='unicode'), str))
+        self.assertTrue(tostring(b, encoding='unicode') == '<b/>Foo' or
+                     tostring(b, encoding='unicode') == '<b />Foo')
 
     def test_tostring_unicode_pretty(self):
         tostring = self.etree.tostring
@@ -4566,13 +4772,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
 
-        result = tostring(a, encoding=_unicode)
+        result = tostring(a, encoding='unicode')
         self.assertEqual(result, "<a><b/><c/></a>")
 
-        result = tostring(a, encoding=_unicode, pretty_print=False)
+        result = tostring(a, encoding='unicode', pretty_print=False)
         self.assertEqual(result, "<a><b/><c/></a>")
 
-        result = tostring(a, encoding=_unicode, pretty_print=True)
+        result = tostring(a, encoding='unicode', pretty_print=True)
         self.assertEqual(result, "<a>\n  <b/>\n  <c/>\n</a>\n")
 
     def test_pypy_proxy_collect(self):
@@ -4638,7 +4844,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         tounicode = self.etree.tounicode
 
         tree = etree.parse(SimpleFSPath(fileInTestDir('test.xml')))
-        self.assertEqual(_bytes('<a><b></b></a>'),
+        self.assertEqual(b'<a><b></b></a>',
                          canonicalize(tounicode(tree)))
     
     def test_iterparse_source_pathlike(self):
@@ -4665,11 +4871,11 @@ class ETreeOnlyTestCase(HelperTestCase):
 class _XIncludeTestCase(HelperTestCase):
     def test_xinclude_text(self):
         filename = fileInTestDir('test_broken.xml')
-        root = etree.XML(_bytes('''\
+        root = etree.XML('''\
         <doc xmlns:xi="http://www.w3.org/2001/XInclude">
           <xi:include href="%s" parse="text"/>
         </doc>
-        ''' % path2url(filename)))
+        ''' % path2url(filename))
         old_text = root.text
         content = read_file(filename)
         old_tail = root[0].tail
@@ -4908,63 +5114,63 @@ class ElementIncludeTestCase(_XIncludeTestCase):
 
 class ETreeC14NTestCase(HelperTestCase):
     def test_c14n(self):
-        tree = self.parse(_bytes('<a><b/></a>'))
+        tree = self.parse(b'<a><b/></a>')
         f = BytesIO()
         tree.write_c14n(f)
         s = f.getvalue()
-        self.assertEqual(_bytes('<a><b></b></a>'),
+        self.assertEqual(b'<a><b></b></a>',
                           s)
 
     def test_c14n_gzip(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         f = BytesIO()
         tree.write_c14n(f, compression=9)
         with gzip.GzipFile(fileobj=BytesIO(f.getvalue())) as gzfile:
             s = gzfile.read()
-        self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b></b>'*200+b'</a>',
                           s)
 
     def test_c14n_file(self):
-        tree = self.parse(_bytes('<a><b/></a>'))
+        tree = self.parse(b'<a><b/></a>')
         with tmpfile() as filename:
             tree.write_c14n(filename)
             data = read_file(filename, 'rb')
-        self.assertEqual(_bytes('<a><b></b></a>'),
+        self.assertEqual(b'<a><b></b></a>',
                           data)
     
     def test_c14n_file_pathlike(self):
-        tree = self.parse(_bytes('<a><b/></a>'))
+        tree = self.parse(b'<a><b/></a>')
         with tmpfile() as filename:
             tree.write_c14n(SimpleFSPath(filename))
             data = read_file(filename, 'rb')
-        self.assertEqual(_bytes('<a><b></b></a>'),
+        self.assertEqual(b'<a><b></b></a>',
                         data)
 
     def test_c14n_file_gzip(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
             tree.write_c14n(filename, compression=9)
             with gzip.open(filename, 'rb') as f:
                 data = f.read()
-        self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b></b>'*200+b'</a>',
                           data)
     
     def test_c14n_file_gzip_pathlike(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
             tree.write_c14n(SimpleFSPath(filename), compression=9)
             with gzip.open(filename, 'rb') as f:
                 data = f.read()
-        self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b></b>'*200+b'</a>',
                         data)
 
     def test_c14n2_file_gzip(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
             tree.write(filename, method='c14n2', compression=9)
             with gzip.open(filename, 'rb') as f:
                 data = f.read()
-        self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b></b>'*200+b'</a>',
                           data)
 
     def test_c14n2_with_text(self):
@@ -4983,21 +5189,21 @@ class ETreeC14NTestCase(HelperTestCase):
                          s)
 
     def test_c14n_with_comments(self):
-        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
+        tree = self.parse(b'<!--hi--><a><!--ho--><b/></a><!--hu-->')
         f = BytesIO()
         tree.write_c14n(f)
         s = f.getvalue()
-        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+        self.assertEqual(b'<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->',
                           s)
         f = BytesIO()
         tree.write_c14n(f, with_comments=True)
         s = f.getvalue()
-        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+        self.assertEqual(b'<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->',
                           s)
         f = BytesIO()
         tree.write_c14n(f, with_comments=False)
         s = f.getvalue()
-        self.assertEqual(_bytes('<a><b></b></a>'),
+        self.assertEqual(b'<a><b></b></a>',
                           s)
 
     def test_c14n2_with_comments(self):
@@ -5024,15 +5230,15 @@ class ETreeC14NTestCase(HelperTestCase):
             etree.tostring(tree, method='c14n2', with_comments=False, strip_text=True))
 
     def test_c14n_tostring_with_comments(self):
-        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
+        tree = self.parse(b'<!--hi--><a><!--ho--><b/></a><!--hu-->')
         s = etree.tostring(tree, method='c14n')
-        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+        self.assertEqual(b'<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->',
                           s)
         s = etree.tostring(tree, method='c14n', with_comments=True)
-        self.assertEqual(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+        self.assertEqual(b'<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->',
                           s)
         s = etree.tostring(tree, method='c14n', with_comments=False)
-        self.assertEqual(_bytes('<a><b></b></a>'),
+        self.assertEqual(b'<a><b></b></a>',
                           s)
 
     def test_c14n2_tostring_with_comments(self):
@@ -5048,15 +5254,15 @@ class ETreeC14NTestCase(HelperTestCase):
                           s)
 
     def test_c14n_element_tostring_with_comments(self):
-        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
+        tree = self.parse(b'<!--hi--><a><!--ho--><b/></a><!--hu-->')
         s = etree.tostring(tree.getroot(), method='c14n')
-        self.assertEqual(_bytes('<a><!--ho--><b></b></a>'),
+        self.assertEqual(b'<a><!--ho--><b></b></a>',
                           s)
         s = etree.tostring(tree.getroot(), method='c14n', with_comments=True)
-        self.assertEqual(_bytes('<a><!--ho--><b></b></a>'),
+        self.assertEqual(b'<a><!--ho--><b></b></a>',
                           s)
         s = etree.tostring(tree.getroot(), method='c14n', with_comments=False)
-        self.assertEqual(_bytes('<a><b></b></a>'),
+        self.assertEqual(b'<a><b></b></a>',
                           s)
 
     def test_c14n_exclusive(self):
@@ -5065,64 +5271,64 @@ class ETreeC14NTestCase(HelperTestCase):
         f = BytesIO()
         tree.write_c14n(f)
         s = f.getvalue()
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
         f = BytesIO()
         tree.write_c14n(f, exclusive=False)
         s = f.getvalue()
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
         f = BytesIO()
         tree.write_c14n(f, exclusive=True)
         s = f.getvalue()
-        self.assertEqual(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>',
                           s)
 
         f = BytesIO()
         tree.write_c14n(f, exclusive=True, inclusive_ns_prefixes=['z'])
         s = f.getvalue()
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
 
     def test_c14n_tostring_exclusive(self):
         tree = self.parse(_bytes(
                 '<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
         s = etree.tostring(tree, method='c14n')
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
         s = etree.tostring(tree, method='c14n', exclusive=False)
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
         s = etree.tostring(tree, method='c14n', exclusive=True)
-        self.assertEqual(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>',
                           s)
 
         s = etree.tostring(tree, method='c14n', exclusive=True, inclusive_ns_prefixes=['y'])
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd"><z:b xmlns:z="http://cde"></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:y="http://bcd"><z:b xmlns:z="http://cde"></z:b></a>',
                           s)
 
     def test_c14n_element_tostring_exclusive(self):
         tree = self.parse(_bytes(
                 '<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
         s = etree.tostring(tree.getroot(), method='c14n')
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
         s = etree.tostring(tree.getroot(), method='c14n', exclusive=False)
-        self.assertEqual(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
         s = etree.tostring(tree.getroot(), method='c14n', exclusive=True)
-        self.assertEqual(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
+        self.assertEqual(b'<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>',
                           s)
 
         s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=False)
-        self.assertEqual(_bytes('<z:b xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>'),
+        self.assertEqual(b'<z:b xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>',
                           s)
         s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=True)
-        self.assertEqual(_bytes('<z:b xmlns:z="http://cde"></z:b>'),
+        self.assertEqual(b'<z:b xmlns:z="http://cde"></z:b>',
                           s)
 
         s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=True, inclusive_ns_prefixes=['y'])
-        self.assertEqual(_bytes('<z:b xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>'),
+        self.assertEqual(b'<z:b xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>',
                           s)
 
     def test_c14n_tostring_inclusive_ns_prefixes(self):
@@ -5131,11 +5337,11 @@ class ETreeC14NTestCase(HelperTestCase):
                 '<a xmlns:x="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
 
         s = etree.tostring(tree, method='c14n', exclusive=True, inclusive_ns_prefixes=['x', 'y', 'z'])
-        self.assertEqual(_bytes('<a xmlns:x="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+        self.assertEqual(b'<a xmlns:x="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>',
                           s)
     
     def test_python3_problem_bytesio_iterparse(self):
-        content = BytesIO('''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>'''.encode('utf-8'))
+        content = BytesIO(b'''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>''')
         def handle_div_end(event, element):
             if event == 'end' and element.tag.lower().startswith("{http://www.w3.org/1999/xhtml}div"):
                 # for ns_id, ns_uri in element.nsmap.items():
@@ -5149,7 +5355,7 @@ class ETreeC14NTestCase(HelperTestCase):
     
     def test_python3_problem_filebased_iterparse(self):
         with open('test.xml', 'w+b') as f:
-            f.write('''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>'''.encode('utf-8'))
+            f.write(b'''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>''')
         def handle_div_end(event, element):
             if event == 'end' and element.tag.lower() == "{http://www.w3.org/1999/xhtml}div":
                 # for ns_id, ns_uri in element.nsmap.items():
@@ -5163,7 +5369,7 @@ class ETreeC14NTestCase(HelperTestCase):
     
     def test_python3_problem_filebased_parse(self):
         with open('test.xml', 'w+b') as f:
-            f.write('''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>'''.encode('utf-8'))
+            f.write(b'''<?xml version="1.0" encoding="utf-8"?> <some_ns_id:some_head_elem xmlns:some_ns_id="http://www.example.com" xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:div></xhtml:div></some_ns_id:some_head_elem>''')
         def serialize_div_element(element):        
             # for ns_id, ns_uri in element.nsmap.items():
             #     print(type(ns_id), type(ns_uri), ns_id, '=', ns_uri)
@@ -5176,41 +5382,41 @@ class ETreeC14NTestCase(HelperTestCase):
 
 class ETreeWriteTestCase(HelperTestCase):
     def test_write(self):
-        tree = self.parse(_bytes('<a><b/></a>'))
+        tree = self.parse(b'<a><b/></a>')
         f = BytesIO()
         tree.write(f)
         s = f.getvalue()
-        self.assertEqual(_bytes('<a><b/></a>'),
+        self.assertEqual(b'<a><b/></a>',
                           s)
 
     def test_write_doctype(self):
-        tree = self.parse(_bytes('<a><b/></a>'))
+        tree = self.parse(b'<a><b/></a>')
         f = BytesIO()
         tree.write(f, doctype='HUHU')
         s = f.getvalue()
-        self.assertEqual(_bytes('HUHU\n<a><b/></a>'),
-                          s)
+        self.assertEqual(b'HUHU\n<a><b/></a>',
+                         s)
 
     def test_write_gzip(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         f = BytesIO()
         tree.write(f, compression=9)
         with gzip.GzipFile(fileobj=BytesIO(f.getvalue())) as gzfile:
             s = gzfile.read()
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
-                          s)
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
+                         s)
 
     def test_write_gzip_doctype(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         f = BytesIO()
         tree.write(f, compression=9, doctype='<!DOCTYPE a>')
         with gzip.GzipFile(fileobj=BytesIO(f.getvalue())) as gzfile:
             s = gzfile.read()
-        self.assertEqual(_bytes('<!DOCTYPE a>\n<a>'+'<b/>'*200+'</a>'),
-                          s)
+        self.assertEqual(b'<!DOCTYPE a>\n<a>'+b'<b/>'*200+b'</a>',
+                         s)
 
     def test_write_gzip_level(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         f = BytesIO()
         tree.write(f, compression=0)
         s0 = f.getvalue()
@@ -5233,72 +5439,72 @@ class ETreeWriteTestCase(HelperTestCase):
         with gzip.GzipFile(fileobj=BytesIO(s)) as gzfile:
             s9 = gzfile.read()
 
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           s0)
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           s1)
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           s9)
 
     def test_write_file(self):
-        tree = self.parse(_bytes('<a><b/></a>'))
+        tree = self.parse(b'<a><b/></a>')
         with tmpfile() as filename:
             tree.write(filename)
             data = read_file(filename, 'rb')
-        self.assertEqual(_bytes('<a><b/></a>'),
+        self.assertEqual(b'<a><b/></a>',
                           data)
     
     def test_write_file_pathlike(self):
-        tree = self.parse(_bytes('<a><b/></a>'))
+        tree = self.parse(b'<a><b/></a>')
         with tmpfile() as filename:
             tree.write(SimpleFSPath(filename))
             data = read_file(filename, 'rb')
-        self.assertEqual(_bytes('<a><b/></a>'),
+        self.assertEqual(b'<a><b/></a>',
                         data)
 
     def test_write_file_gzip(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
             tree.write(filename, compression=9)
             with gzip.open(filename, 'rb') as f:
                 data = f.read()
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           data)
 
     def test_write_file_gzip_pathlike(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
             tree.write(SimpleFSPath(filename), compression=9)
             with gzip.open(filename, 'rb') as f:
                 data = f.read()
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                         data)
 
     def test_write_file_gzip_parse(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
             tree.write(filename, compression=9)
             data = etree.tostring(etree.parse(filename))
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           data)
 
     def test_write_file_gzipfile_parse(self):
-        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
             tree.write(filename, compression=9)
             with gzip.GzipFile(filename) as f:
                 data = etree.tostring(etree.parse(f))
-        self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+        self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           data)
 
     def test_write_file_url(self):
-        xml = _bytes('<a>'+'<b/>'*200+'</a>')
+        xml = b'<a>'+b'<b/>'*200+b'</a>'
         tree = self.parse(xml)
         with tmpfile(prefix="p+%20", suffix=".xml") as filename:
             url = 'file://' + (filename if sys.platform != 'win32'
                                else '/' + filename.replace('\\', '/'))
             tree.write(url)
-            data = read_file(filename, 'rb').replace(_bytes('\n'), _bytes(''))
+            data = read_file(filename, 'rb').replace(b'\n', b'')
         self.assertEqual(data, xml)
 
 
@@ -5307,7 +5513,7 @@ class ETreeErrorLogTest(HelperTestCase):
 
     def test_parse_error_logging(self):
         parse = self.etree.parse
-        f = BytesIO('<a><b></c></b></a>')
+        f = BytesIO(b'<a><b></c></b></a>')
         self.etree.clear_error_log()
         try:
             parse(f)
@@ -5339,7 +5545,7 @@ class ETreeErrorLogTest(HelperTestCase):
                 messages.append(message)
 
         self.etree.use_global_python_log(Logger())
-        f = BytesIO('<a><b></c></b></a>')
+        f = BytesIO(b'<a><b></c></b></a>')
         try:
             parse(f)
         except SyntaxError:
@@ -5364,7 +5570,7 @@ class XMLPullParserTest(unittest.TestCase):
                          expected)
 
     def test_pull_from_simple_target(self):
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 return 'start(%s)' % tag
             def end(self, tag):
@@ -5388,7 +5594,7 @@ class XMLPullParserTest(unittest.TestCase):
         self.assertEqual('close()', parser.close())
 
     def test_pull_from_simple_target_start_end(self):
-        class Target(object):
+        class Target:
             def start(self, tag, attrib):
                 return 'start(%s)' % tag
             def end(self, tag):
@@ -5445,7 +5651,7 @@ class XMLPullParserTest(unittest.TestCase):
     def test_pull_from_tree_builder_subclass(self):
         class Target(etree.TreeBuilder):
             def end(self, tag):
-                el = super(Target, self).end(tag)
+                el = super().end(tag)
                 el.tag += '-huhu'
                 return el
 
@@ -5473,13 +5679,13 @@ class XMLPullParserTest(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeXIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
-    suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
-    suite.addTests([unittest.makeSuite(XMLPullParserTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeOnlyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementIncludeTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeC14NTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeWriteTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeErrorLogTest)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(XMLPullParserTest)])
 
     # add original doctests from ElementTree selftest modules
     from . import selftest, selftest2

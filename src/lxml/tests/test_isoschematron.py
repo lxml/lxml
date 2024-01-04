@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to ISO-Schematron parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 from lxml import isoschematron
@@ -55,6 +52,8 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         schema = isoschematron.Schematron(schema)
         self.assertTrue(schema)
 
+    @unittest.skipIf(not isoschematron.schematron_schema_valid_supported,
+                     'SchematronParseError is only raised when validate_schema is true')
     def test_schematron_invalid_schema_empty(self):
         schema = self.parse('''\
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" />
@@ -860,7 +859,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeISOSchematronTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeISOSchematronTestCase)])
     suite.addTests(doctest.DocTestSuite(isoschematron))
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
