@@ -9,7 +9,7 @@ skip = ["pp*-manylinux_aarch64", "pp*-manylinux_i686", "*-musllinux_i686"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64", "i686"]
-repair-wheel-command = "auditwheel repair -w --strip {dest_dir} {wheel}"
+repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
 CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2"
