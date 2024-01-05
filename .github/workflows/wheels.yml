@@ -15,6 +15,7 @@ on:
     paths:
       - .github/workflows/wheels.yml
       - requirements.txt
+      - pyproject.toml
       - MANIFEST.in
       - Makefile
       - setup*
@@ -24,6 +25,7 @@ on:
     paths:
       - .github/workflows/wheels.yml
       - requirements.txt
+      - pyproject.toml
       - MANIFEST.in
       - Makefile
       - setup*
