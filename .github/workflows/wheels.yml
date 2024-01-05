@@ -143,7 +143,7 @@ jobs:
     steps:
       - name: Download bdist files
         id: download_artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: lxml-wheels
           path: ~/downloads
