@@ -35,23 +35,10 @@
 #endif
 
 /* unused */
-#if PY_MAJOR_VERSION >= 3
-#  define IS_PYTHON2 0  /* prefer for special casing Python 2.x */
-#  define IS_PYTHON3 1  /* avoid */
-#else
-#  define IS_PYTHON2 1
-#  define IS_PYTHON3 0
-#endif
-
-/* unused */
-#if IS_PYTHON2
-#ifndef LXML_UNICODE_STRINGS
-#define LXML_UNICODE_STRINGS 0
-#endif
-#else
+#define IS_PYTHON2 0
+#define IS_PYTHON3 1
 #undef LXML_UNICODE_STRINGS
 #define LXML_UNICODE_STRINGS 1
-#endif
 
 #if !IS_PYPY
 #  define PyWeakref_LockObject(obj)          (NULL)
@@ -69,7 +56,7 @@
 #  define PyFile_AsFile(o)                   (NULL)
 #  undef PyByteArray_Check
 #  define PyByteArray_Check(o)               (0)
-#elif !IS_PYTHON2
+#else
    /* Python 3+ doesn't have PyFile_*() anymore */
 #  define PyFile_AsFile(o)                   (NULL)
 #endif
