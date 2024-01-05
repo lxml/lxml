@@ -5,6 +5,18 @@ lxml changelog
 Under development
 ==================
 
+Features added
+--------------
+
+* Parsing ASCII strings is slightly faster.
+
+Bugs fixed
+----------
+
+* GH#349: The HTML ``Cleaner()`` interpreted an accidentally provided string parameter
+  for the ``host_whitelist`` as list of characters and silently failed to reject any hosts.
+  Passing a non-collection is now rejected.
+
 Other changes
 -------------
 
