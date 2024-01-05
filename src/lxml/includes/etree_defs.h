@@ -52,16 +52,6 @@
 #endif
 
 #if IS_PYPY
-#  undef PyFile_AsFile
-#  define PyFile_AsFile(o)                   (NULL)
-#  undef PyByteArray_Check
-#  define PyByteArray_Check(o)               (0)
-#else
-   /* Python 3+ doesn't have PyFile_*() anymore */
-#  define PyFile_AsFile(o)                   (NULL)
-#endif
-
-#if IS_PYPY
 #  ifndef PyUnicode_FromFormat
 #    define PyUnicode_FromFormat  PyString_FromFormat
 #  endif

@@ -317,56 +317,36 @@ cdef class _FileReaderContext:
             close()
 
     cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self) noexcept:
-        cdef stdio.FILE* c_stream
-        cdef xmlparser.xmlParserInputBuffer* c_buffer
-        c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
-        c_stream = python.PyFile_AsFile(self._filelike)
-        if c_stream is NULL:
+        cdef xmlparser.xmlParserInputBuffer* c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
+        if c_buffer:
             c_buffer.readcallback  = _readFilelikeParser
-            c_buffer.context = <python.PyObject*>self
-        else:
-            c_buffer.readcallback  = _readFileParser
-            c_buffer.context = c_stream
+            c_buffer.context = <python.PyObject*> self
         return c_buffer
 
     cdef xmlparser.xmlParserInput* _createParserInput(
             self, xmlparser.xmlParserCtxt* ctxt) noexcept:
-        cdef xmlparser.xmlParserInputBuffer* c_buffer
-        c_buffer = self._createParserInputBuffer()
+        cdef xmlparser.xmlParserInputBuffer* c_buffer = self._createParserInputBuffer()
+        if not c_buffer:
+            return NULL
         return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
 
     cdef tree.xmlDtd* _readDtd(self) noexcept:
-        cdef xmlparser.xmlParserInputBuffer* c_buffer
-        c_buffer = self._createParserInputBuffer()
+        cdef xmlparser.xmlParserInputBuffer* c_buffer = self._createParserInputBuffer()
+        if not c_buffer:
+            return NULL
         with nogil:
             return xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
 
     cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options) noexcept:
         cdef xmlDoc* result
-        cdef char* c_encoding
-        cdef stdio.FILE* c_stream
-        cdef xmlparser.xmlInputReadCallback c_read_callback
-        cdef xmlparser.xmlInputCloseCallback c_close_callback
-        cdef void* c_callback_context
-
-        if self._encoding is None:
-            c_encoding = NULL
-        else:
-            c_encoding = _cstr(self._encoding)
-
-        c_stream = python.PyFile_AsFile(self._filelike)
-        if c_stream is NULL:
-            c_read_callback  = _readFilelikeParser
-            c_callback_context = <python.PyObject*>self
-        else:
-            c_read_callback  = _readFileParser
-            c_callback_context = c_stream
+        cdef void* c_callback_context = <python.PyObject*> self
+        cdef char* c_encoding = _cstr(self._encoding) if self._encoding is not None else NULL
 
         orig_options = ctxt.options
         with nogil:
             if ctxt.html:
                 result = htmlparser.htmlCtxtReadIO(
-                        ctxt, c_read_callback, NULL, c_callback_context,
+                        ctxt, _readFilelikeParser, NULL, c_callback_context,
                         self._c_url, c_encoding, options)
                 if result is not NULL:
                     if _fixHtmlDictNames(ctxt.dict, result) < 0:
@@ -374,9 +354,10 @@ cdef class _FileReaderContext:
                         result = NULL
             else:
                 result = xmlparser.xmlCtxtReadIO(
-                    ctxt, c_read_callback, NULL, c_callback_context,
+                    ctxt, _readFilelikeParser, NULL, c_callback_context,
                     self._c_url, c_encoding, options)
         ctxt.options = orig_options # work around libxml2 problem
+
         try:
             self._close_file()
         except:
