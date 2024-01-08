@@ -180,13 +180,13 @@ def ext_modules(static_include_dirs, static_library_dirs,
         from Cython.Build import cythonize
         result = cythonize(result, compiler_directives=cythonize_directives)
 
-        # Temporary fix for Cython 3.0.7
+        # Temporary fix for Cython 3.0.7, really only needed in Py2.7 (old MSVC).
         if Cython.__version__.startswith('3.0.'):
             for ext in result:
                 source_file = ext.sources[0]
                 fixed = False
                 lines = []
-                with open(source_file, encoding='iso8859-1') as f:
+                with io.open(source_file, encoding='iso8859-1') as f:
                     source_lines = iter(f)
                     for line in source_lines:
                         lines.append(line)
@@ -205,7 +205,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
                         lines.extend(source_lines)
                 if fixed:
                     print("Applying work-around for Cython 3.0.x to %s" % source_file)
-                    with open(source_file, mode='w', encoding='iso8859-1') as f:
+                    with io.open(source_file, mode='w', encoding='iso8859-1') as f:
                         f.writelines(lines)
 
     # for backwards compatibility reasons, provide "etree[_api].h" also as "lxml.etree[_api].h"
