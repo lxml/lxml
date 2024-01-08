@@ -180,26 +180,37 @@ def ext_modules(static_include_dirs, static_library_dirs,
         from Cython.Build import cythonize
         result = cythonize(result, compiler_directives=cythonize_directives)
 
-        # Temporary fix for Cython 3.0.7, really only needed in Py2.7 (old MSVC).
+        # Temporary C89 fixes for Cython 3.0.7, really only needed in Py2.7 with an old MSVC.
         if Cython.__version__.startswith('3.0.'):
             for ext in result:
                 source_file = ext.sources[0]
-                fixed = False
+                fixed = 0
                 lines = []
                 with io.open(source_file, encoding='iso8859-1') as f:
                     source_lines = iter(f)
                     for line in source_lines:
                         lines.append(line)
                         if u'SelflessCall' in line:
-                            break
-                    for line in source_lines:
-                        if line == u"    PyObject *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n":
-                            line = u"    PyObject *result, *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n"
-                        elif line.startswith(u"    PyObject *result = "):
-                            line = u"    " + line[len(u"    PyObject *"):]
-                            fixed = True
-                        lines.append(line)
-                        if u"return result" in line:
+                            for line in source_lines:
+                                if line == u"    PyObject *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n":
+                                    line = u"    PyObject *result, *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n"
+                                elif line.startswith(u"    PyObject *result = "):
+                                    line = u"    " + line[len(u"    PyObject *"):]
+                                    fixed += 1
+                                lines.append(line)
+                                if u"return result" in line:
+                                    break
+                        if u'/* IterFinish */' in line:
+                            for line in source_lines:
+                                if line == u'    __Pyx_PyThreadState_assign\n':
+                                    lines.append(u"PyObject* exc_type;\n")
+                                elif line.startswith(u"    PyObject* exc_type = "):
+                                    line = u"    " + line[len(u"    PyObject *"):]
+                                    fixed += 1
+                                lines.append(line)
+                                if u'exc_type' in line:
+                                    break
+                        if fixed >= 2:
                             break
                     if fixed:
                         lines.extend(source_lines)
