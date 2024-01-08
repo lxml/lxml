@@ -129,7 +129,7 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
           name: lxml-wheels
@@ -143,7 +143,7 @@ jobs:
     steps:
       - name: Download bdist files
         id: download_artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: lxml-wheels
           path: ~/downloads
