@@ -190,16 +190,16 @@ def ext_modules(static_include_dirs, static_library_dirs,
                     source_lines = iter(f)
                     for line in source_lines:
                         lines.append(line)
-                        if 'SelflessCall' in line:
+                        if u'SelflessCall' in line:
                             break
                     for line in source_lines:
-                        if line == "    PyObject *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n":
-                            line = "    PyObject *result, *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n"
-                        elif line.startswith("    PyObject *result = "):
-                            line = "    " + line[len("    PyObject *"):]
+                        if line == u"    PyObject *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n":
+                            line = u"    PyObject *result, *selfless_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));\n"
+                        elif line.startswith(u"    PyObject *result = "):
+                            line = u"    " + line[len(u"    PyObject *"):]
                             fixed = True
                         lines.append(line)
-                        if "return result" in line:
+                        if u"return result" in line:
                             break
                     if fixed:
                         lines.extend(source_lines)
