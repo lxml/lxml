@@ -632,7 +632,7 @@ class _MethodFunc:
         self.__doc__ = getattr(source_class, self.name).__doc__
     def __call__(self, doc, *args, **kw):
         result_type = type(doc)
-        if isinstance(doc, str):
+        if isinstance(doc, (str, bytes)):
             if 'copy' in kw:
                 raise TypeError(
                     "The keyword 'copy' can only be used with element inputs to %s, not a string input" % self.name)

@@ -138,6 +138,11 @@ link)``, which is awkward to test here, so we'll make a printer::
     img src="/logo.gif"
     td style="/quoted.png"@23
 
+This also works directly on bytes input::
+
+    >>> print_iter(iterlinks(b'<html><body><a href="https://lxml.de/">lxml</a></body></html>'))
+    a href="https://lxml.de/"
+
 An application of ``iterlinks()`` is ``make_links_absolute()``::
 
     >>> from lxml.html import make_links_absolute
