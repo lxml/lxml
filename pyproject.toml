@@ -30,8 +30,7 @@ archs = ["AMD64", "x86"]
 
 [tool.cibuildwheel.macos]
 # https://cibuildwheel.readthedocs.io/en/stable/faq/#what-to-provide suggests to provide
-# x86_64 and one of universal2 or amr64 wheels, since unviversal pack what is already in
-# x86_64, currently universal2 is not built but arm64 is built instead
-# x86_64 is still reuqired because of older pips, when remcomendation changes we can
-# build only universal2
-archs = ["x86_64", "arm64"]
+# x86_64 and one of universal2 or arm64 wheels.  x86_64 is still required by older pips,
+# so additional arm64 wheels would suffice.  However, since the library build uses a mixed
+# amd64/arm64 setup, we build universal2 wheels regardless.
+archs = ["x86_64", "universal2"]
