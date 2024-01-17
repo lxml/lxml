@@ -133,7 +133,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
-          name: lxml-wheel-${ matrix.only }
+          name: lxml-wheel-${{ matrix.only }}
 
   upload_release_assets:
     name: Upload Release Assets
