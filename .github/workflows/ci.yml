@@ -228,12 +228,14 @@ jobs:
           if-no-files-found: ignore
 
   collect-wheels:
-    needs: cii
+    needs: [ci]
+    runs-on: ubuntu-latest
     steps:
       - name: Collect wheels
         uses: actions/download-artifacts@3
         with:
           path: ~/downloads
+          merge-multiple: true
 
       - name: List downloaded artifacts
         run: ls -la ~/downloads
