@@ -143,10 +143,10 @@ jobs:
 
     steps:
       - name: Download bdist files
-        id: download_artifact
         uses: actions/download-artifact@v3
         with:
           path: ~/downloads
+          merge-multiple: true
 
       - name: List downloaded artifacts
         run: ls -la ~/downloads
