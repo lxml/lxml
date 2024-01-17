@@ -102,6 +102,7 @@ jobs:
               | jq -nRc '{"only": inputs, "os": "windows-2019"}'
             } | jq -sc
           )
+          echo "include=$MATRIX"
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
 
   build_wheels:
