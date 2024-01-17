@@ -623,7 +623,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
         stringval = funicode(xpathObj.stringval)
         if context._build_smart_strings:
             stringval = _elementStringResultFactory(
-                stringval, None, None, 0)
+                stringval, None, None, False)
         return stringval
     elif xpathObj.type == xpath.XPATH_POINT:
         raise NotImplementedError, "XPATH_POINT"
@@ -721,60 +721,25 @@ cdef class _ElementUnicodeResult(unicode):
     cdef _Element _parent
     cdef readonly object attrname
     cdef readonly bint is_tail
-    cdef readonly bint is_text
-    cdef readonly bint is_attribute
 
     def getparent(self):
         return self._parent
 
-cdef object _PyElementUnicodeResult
-if python.IS_PYPY:
-    class _PyElementUnicodeResult(unicode):
-        # we need to use a Python class here, or PyPy will crash on creation
-        # https://bitbucket.org/pypy/pypy/issues/2021/pypy3-pytype_ready-crashes-for-extension
-        def getparent(self):
-            return self._parent
+    @property
+    def is_text(self):
+        return self._parent is not None and not (self.is_tail or self.attrname is not None)
 
-class _ElementStringResult(bytes):
-    # we need to use a Python class here, bytes cannot be C-subclassed
-    # in Pyrex/Cython
-    def getparent(self):
-        return self._parent
+    @property
+    def is_attribute(self):
+        return self.attrname is not None
 
 cdef object _elementStringResultFactory(string_value, _Element parent,
                                         attrname, bint is_tail):
-    cdef _ElementUnicodeResult uresult
-    cdef bint is_text
-    cdef bint is_attribute = attrname is not None
-    if parent is None:
-        is_text = 0
-    else:
-        is_text = not (is_tail or is_attribute)
-
-    if type(string_value) is bytes:
-        result = _ElementStringResult(string_value)
-        result._parent = parent
-        result.is_attribute = is_attribute
-        result.is_tail = is_tail
-        result.is_text = is_text
-        result.attrname = attrname
-        return result
-    elif python.IS_PYPY:
-        result = _PyElementUnicodeResult(string_value)
-        result._parent = parent
-        result.is_attribute = is_attribute
-        result.is_tail = is_tail
-        result.is_text = is_text
-        result.attrname = attrname
-        return result
-    else:
-        uresult = _ElementUnicodeResult(string_value)
-        uresult._parent = parent
-        uresult.is_attribute = is_attribute
-        uresult.is_tail = is_tail
-        uresult.is_text = is_text
-        uresult.attrname = attrname
-        return uresult
+    result = _ElementUnicodeResult(string_value)
+    result._parent = parent
+    result.is_tail = is_tail
+    result.attrname = attrname
+    return result
 
 cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
                                       _BaseContext context):
