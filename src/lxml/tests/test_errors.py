@@ -5,10 +5,13 @@ import unittest
 # It is likely that if there are errors, instead of failing the code
 # will simply crash.
 
-import sys, gc, os.path
+import gc
+import os.path
+import sys
+import unittest
 from lxml import etree
 
-from .common_imports import HelperTestCase
+from .common_imports import HelperTestCase, IS_PYPY
 
 
 class ErrorTestCase(HelperTestCase):
@@ -22,6 +25,7 @@ class ErrorTestCase(HelperTestCase):
     def test_empty_parse(self):
         self.assertRaises(etree.XMLSyntaxError, etree.fromstring, '')
 
+    @unittest.skipIf(IS_PYPY, "needs sys.getrefcount()")
     def test_element_cyclic_gc_none(self):
         # test if cyclic reference can crash etree
         Element = self.etree.Element
