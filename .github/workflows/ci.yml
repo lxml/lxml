@@ -228,7 +228,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Collect wheels
-        uses: actions/download-artifacts@3
+        uses: actions/download-artifact@3
         with:
           path: ~/downloads
           merge-multiple: true
@@ -237,19 +237,19 @@ jobs:
         run: ls -la ~/downloads
 
       - name: Upload Linux wheels
-        uses: actions/upload-artifacts@3
+        uses: actions/upload-artifact@3
         with:
           name: wheels-linux
           path: ~/downloads/*linux*.whl
 
       - name: Upload macOS wheels
-        uses: actions/upload-artifacts@3
+        uses: actions/upload-artifact@3
         with:
           name: wheels-macosx
           path: ~/downloads/*macosx*.whl
 
       - name: Upload Windows wheels
-        uses: actions/upload-artifacts@3
+        uses: actions/upload-artifact@3
         with:
           name: wheels-windows
           path: ~/downloads/*-win*/*.whl
