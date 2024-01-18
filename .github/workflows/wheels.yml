@@ -115,6 +115,10 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
 
+    env:
+      LIBXML2_VERSION: 2.12.3
+      LIBXSLT_VERSION: 1.1.39
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
