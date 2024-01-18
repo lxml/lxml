@@ -66,13 +66,13 @@ jobs:
         files: dist/*.tar.gz
 
     - name: Upload sdist
-      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
+      uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
       with:
         name: sdist
         path: dist/*.tar.gz
 
     - name: Upload website
-      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
+      uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
       with:
         name: website
         path: doc/html
@@ -120,7 +120,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cache [libs]
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
         with:
           path: |
             libs/*.xz
@@ -139,7 +139,7 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
           name: lxml-wheel-${{ matrix.only }}
