@@ -200,7 +200,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
         if: matrix.extra_hash == '-docs'
         with:
           name: website_html
@@ -208,7 +208,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
         if: matrix.env.COVERAGE
         with:
           name: pycoverage_html
@@ -228,7 +228,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Collect wheels
-        uses: actions/download-artifact@3
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
         with:
           path: ~/downloads
           merge-multiple: true
@@ -237,19 +237,19 @@ jobs:
         run: ls -la ~/downloads
 
       - name: Upload Linux wheels
-        uses: actions/upload-artifact@3
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
         with:
           name: wheels-linux
           path: ~/downloads/*linux*.whl
 
       - name: Upload macOS wheels
-        uses: actions/upload-artifact@3
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
         with:
           name: wheels-macosx
           path: ~/downloads/*macosx*.whl
 
       - name: Upload Windows wheels
-        uses: actions/upload-artifact@3
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
         with:
           name: wheels-windows
           path: ~/downloads/*-win*/*.whl
