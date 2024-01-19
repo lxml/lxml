@@ -57,7 +57,7 @@ jobs:
 
     - name: Build docs and sdist
       run: make html sdist
-      env: { STATIC_DEPS: false }
+      env: { STATIC_DEPS: false; CFLAGS="-Og" }  # it's run-once, so build more quickly
 
     - name: Release
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
@@ -124,7 +124,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cache [libs]
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
         with:
           path: |
             libs/*.xz
