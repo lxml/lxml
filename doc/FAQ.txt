@@ -625,7 +625,7 @@ make sure that both use the same version of libxml2.  The binary wheels of
 lxml statically include a (usually recent) version of libxml2, whereas
 xmlsec often depends on the systemwide installed libraries.  If you get
 crashes or unexpected behaviour when using both, please make sure that both
-get to use the same libxml2 version.  Anaconda/miniconda/etc. based installations
+get to use the same libxml2 version.  Anaconda/condaforge/etc. based installations
 will usually come with matching C libraries.  If you use xmlsec with the system
 libraries, please build lxml from sources against those as well, e.g. by installing
 the development packages of libxml2 and libxslt and then installing lxml with
