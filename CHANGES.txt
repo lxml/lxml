@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+5.1.1 (2024-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#2048920: ``iterlinks()`` in ``lxml.html`` rejected ``bytes`` input in 5.1.0.
+
+* Built with Cython 3.0.8.
+
+
 5.1.0 (2024-01-05)
 ==================
 
