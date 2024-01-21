@@ -42,6 +42,7 @@ ElementTree_.
      4.2  My application crashes on MacOS-X!
      4.3  I think I have found a bug in lxml. What should I do?
      4.4  How do I know a bug is really in lxml and not in libxml2?
+     4.5 My application crashes with xmlsec!
    5  Threading
      5.1  Can I use threads to concurrently access the lxml API?
      5.2  Does my program run faster if I use threads?
@@ -618,6 +619,18 @@ your problem.
 
 Remember: even if you see lxml appear in a crash stack trace, it is
 not necessarily lxml that *caused* the crash.
+
+If you are using the *``xmlsec``* library together with lxml, you have to
+make sure that both use the same version of libxml2.  The binary wheels of
+lxml statically include a (usually recent) version of libxml2, whereas
+xmlsec often depends on the systemwide installed libraries.  If you get
+crashes or unexpected behaviour when using both, please make sure that both
+get to use the same libxml2 version.  Anaconda/miniconda/etc. based installations
+will usually come with matching C libraries.  If you use xmlsec with the system
+libraries, please build lxml from sources against those as well, e.g. by installing
+the development packages of libxml2 and libxslt and then installing lxml with
+
+``python -m pip install --no-binary lxml lxml``
 
 
 My application crashes on MacOS-X!
