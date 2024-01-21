@@ -6,8 +6,6 @@
 The ``lxml.etree`` module implements the extended ElementTree API for XML.
 """
 
-from __future__ import absolute_import
-
 __docformat__ = "restructuredtext en"
 
 __all__ = [
@@ -88,10 +86,7 @@ from itertools import islice
 cdef object ITER_EMPTY = iter(())
 
 cdef object MutableMapping
-try:
-    from collections.abc import MutableMapping  # Py3.3+
-except ImportError:
-    from collections import MutableMapping  # Py2.7
+from collections.abc import MutableMapping
 
 class _ImmutableMapping(MutableMapping):
     def __getitem__(self, key):
@@ -172,7 +167,7 @@ cdef dict _DEFAULT_NAMESPACE_PREFIXES = {
 }
 
 # To avoid runtime encoding overhead, we keep a Unicode copy
-# of the uri-prefix mapping as (str, str) items view (list in Py2).
+# of the uri-prefix mapping as (str, str) items view.
 cdef object _DEFAULT_NAMESPACE_PREFIXES_ITEMS = []
 
 cdef _update_default_namespace_prefixes_items():

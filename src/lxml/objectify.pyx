@@ -7,8 +7,6 @@ The ``lxml.objectify`` module implements a Python object API for XML.
 It is based on `lxml.etree`.
 """
 
-from __future__ import absolute_import
-
 cimport cython
 
 from lxml.includes.etreepublic cimport _Document, _Element, ElementBase, ElementClassLookup
