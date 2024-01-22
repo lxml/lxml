@@ -204,7 +204,7 @@ class HtmlParserTestCase(HelperTestCase):
         tree = self.etree.parse(
             BytesIO(html_latin1),
             self.etree.HTMLParser(encoding="iso-8859-1"))
-        p = tree.find("//p")
+        p = tree.find(".//p")
         self.assertEqual(p.text, text)
 
     def test_parse_encoding_8bit_override(self):
@@ -225,7 +225,7 @@ class HtmlParserTestCase(HelperTestCase):
         tree = self.etree.parse(
             BytesIO(html_latin1),
             self.etree.HTMLParser(encoding="iso-8859-1"))
-        p = tree.find("//p")
+        p = tree.find(".//p")
         self.assertEqual(p.text, text)
 
     def test_module_HTML_broken(self):

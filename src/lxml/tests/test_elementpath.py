@@ -270,6 +270,9 @@ class EtreeElementPathTestCase(HelperTestCase):
 
         # FIXME: ET's Path module handles this case incorrectly; this gives
         # a warning in 1.3, and the behaviour will be modified in 1.4.
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).findall, "/tag")
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/tag")),
                          ['tag', 'tag'])
         # This would be correct:

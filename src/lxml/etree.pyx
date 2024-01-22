@@ -2235,6 +2235,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if _isString(path):
             if path[:1] == "/":
                 path = "." + path
+                from warnings import warn
+                warn(
+                    "This search icorrectly ingnores the root element, and will be "
+                    "fixed in a future version.  If you rely on the current "
+                    f"behaviour, change it to {path!r}",
+                    FutureWarning, stacklevel=1
+                )
         return root.find(path, namespaces)
 
     def findtext(self, path, default=None, namespaces=None):
@@ -2252,6 +2259,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if _isString(path):
             if path[:1] == "/":
                 path = "." + path
+                from warnings import warn
+                warn(
+                    "This search icorrectly ingnores the root element, and will be "
+                    "fixed in a future version.  If you rely on the current "
+                    f"behaviour, change it to {path!r}",
+                    FutureWarning, stacklevel=1
+                )
         return root.findtext(path, default, namespaces)
 
     def findall(self, path, namespaces=None):
@@ -2269,6 +2283,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if _isString(path):
             if path[:1] == "/":
                 path = "." + path
+                from warnings import warn
+                warn(
+                    "This search icorrectly ingnores the root element, and will be "
+                    "fixed in a future version.  If you rely on the current "
+                    f"behaviour, change it to {path!r}",
+                    FutureWarning, stacklevel=1
+                )
         return root.findall(path, namespaces)
 
     def iterfind(self, path, namespaces=None):
@@ -2285,7 +2306,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         root = self.getroot()
         if _isString(path):
             if path[:1] == "/":
-                path = "." + path
+                from warnings import warn
+                warn(
+                    "This search icorrectly ingnores the root element, and will be "
+                    "fixed in a future version.  If you rely on the current "
+                    f"behaviour, change it to {path!r}",
+                    FutureWarning, stacklevel=1
+                )
         return root.iterfind(path, namespaces)
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
