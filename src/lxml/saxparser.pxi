@@ -31,8 +31,7 @@ ctypedef enum _ParseEventFilter:
 
 
 cdef int _buildParseEventFilter(events) except -1:
-    cdef int event_filter
-    event_filter = 0
+    cdef int event_filter = 0
     for event in events:
         if event == 'start':
             event_filter |= PARSE_EVENT_FILTER_START
@@ -53,8 +52,6 @@ cdef int _buildParseEventFilter(events) except -1:
 
 cdef class _SaxParserTarget:
     cdef int _sax_event_filter
-    def __cinit__(self):
-        self._sax_event_filter = 0
 
     cdef _handleSaxStart(self, tag, attrib, nsmap):
         return None
@@ -366,9 +363,6 @@ cdef void _handleSaxTargetStart(
             if sax_event_filter & SAX_EVENT_START_NS:
                 for prefix, uri in declared_namespaces:
                     context._target._handleSaxStartNs(prefix, uri)
-                #if not context._target._sax_event_filter & SAX_EVENT_START:
-                #    # *Only* collecting start-ns events.
-                #    return
         else:
             declared_namespaces = None
 
