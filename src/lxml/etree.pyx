@@ -2237,7 +2237,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = "." + path
                 from warnings import warn
                 warn(
-                    "This search icorrectly ingnores the root element, and will be "
+                    "This search incorrectly ignores the root element, and will be "
                     "fixed in a future version.  If you rely on the current "
                     f"behaviour, change it to {path!r}",
                     FutureWarning, stacklevel=1
@@ -2261,7 +2261,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = "." + path
                 from warnings import warn
                 warn(
-                    "This search icorrectly ingnores the root element, and will be "
+                    "This search incorrectly ignores the root element, and will be "
                     "fixed in a future version.  If you rely on the current "
                     f"behaviour, change it to {path!r}",
                     FutureWarning, stacklevel=1
@@ -2285,7 +2285,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = "." + path
                 from warnings import warn
                 warn(
-                    "This search icorrectly ingnores the root element, and will be "
+                    "This search incorrectly ignores the root element, and will be "
                     "fixed in a future version.  If you rely on the current "
                     f"behaviour, change it to {path!r}",
                     FutureWarning, stacklevel=1
@@ -2308,7 +2308,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             if path[:1] == "/":
                 from warnings import warn
                 warn(
-                    "This search icorrectly ingnores the root element, and will be "
+                    "This search incorrectly ignores the root element, and will be "
                     "fixed in a future version.  If you rely on the current "
                     f"behaviour, change it to {path!r}",
                     FutureWarning, stacklevel=1
