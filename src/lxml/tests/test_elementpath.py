@@ -272,6 +272,10 @@ class EtreeElementPathTestCase(HelperTestCase):
         # a warning in 1.3, and the behaviour will be modified in 1.4.
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/tag")),
                          ['tag', 'tag'])
+        # This would be correct:
+        if False:
+            self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/body")),
+                            ['body'])
 
         # duplicate section => 2x tag matches
         elem[1] = deepcopy(elem[2])
@@ -283,15 +287,18 @@ class EtreeElementPathTestCase(HelperTestCase):
                          ['tag', 'tag'])
 
 
-#class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
-#    import xml.etree.ElementTree as etree
-#    import xml.etree.ElementPath as _elementpath
+class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
+    import xml.etree.ElementTree as etree
+    import xml.etree.ElementPath as _elementpath
+
+    test_cache = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_cache)
+    test_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_tokenizer)
 
 
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathTestCase)])
-    #suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementPathTestCase)])
     return suite
 
 
