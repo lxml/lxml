@@ -7,7 +7,7 @@
 @cython.linetrace(False)
 @cython.profile(False)
 cdef inline _Element getProxy(xmlNode* c_node):
-    u"""Get a proxy for a given node.
+    """Get a proxy for a given node.
     """
     #print "getProxy for:", <int>c_node
     if c_node is not NULL and c_node._private is not NULL:
@@ -28,10 +28,10 @@ cdef inline bint hasProxy(xmlNode* c_node):
 @cython.profile(False)
 cdef inline int _registerProxy(_Element proxy, _Document doc,
                                xmlNode* c_node) except -1:
-    u"""Register a proxy and type for the node it's proxying for.
+    """Register a proxy and type for the node it's proxying for.
     """
     #print "registering for:", <int>proxy._c_node
-    assert not hasProxy(c_node), u"double registering proxy!"
+    assert not hasProxy(c_node), "double registering proxy!"
     proxy._doc = doc
     proxy._c_node = c_node
     c_node._private = <void*>proxy
@@ -41,10 +41,10 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
 @cython.linetrace(False)
 @cython.profile(False)
 cdef inline int _unregisterProxy(_Element proxy) except -1:
-    u"""Unregister a proxy for the node it's proxying for.
+    """Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node = proxy._c_node
-    assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
+    assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
     c_node._private = NULL
     return 0
 
@@ -112,7 +112,7 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc) noexcept:
     tree.xmlFreeDoc(c_doc)
 
 cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
-    u"""Special element factory for cases where we need to create a fake
+    """Special element factory for cases where we need to create a fake
     root document, but still need to instantiate arbitrary nodes from
     it.  If we instantiate the fake root node, things will turn bad
     when it's destroyed.
@@ -131,7 +131,7 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
 # support for freeing tree elements when proxy objects are destroyed
 
 cdef int attemptDeallocation(xmlNode* c_node) noexcept:
-    u"""Attempt deallocation of c_node (or higher up in tree).
+    """Attempt deallocation of c_node (or higher up in tree).
     """
     cdef xmlNode* c_top
     # could be we actually aren't referring to the tree at all
@@ -147,7 +147,7 @@ cdef int attemptDeallocation(xmlNode* c_node) noexcept:
     return 0
 
 cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
-    u"""Return the top of the tree that can be deallocated, or NULL.
+    """Return the top of the tree that can be deallocated, or NULL.
     """
     cdef xmlNode* c_next
     #print "trying to do deallocating:", c_node.type
@@ -196,7 +196,7 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent) noexcept:
 # fix _Document references and namespaces when a node changes documents
 
 cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) noexcept nogil:
-    u"""Copy the namespaces of all ancestors of c_from_node to c_to_node.
+    """Copy the namespaces of all ancestors of c_from_node to c_to_node.
     """
     cdef xmlNode* c_parent
     cdef xmlNs* c_ns
@@ -250,7 +250,7 @@ cdef inline int _appendToNsCache(_nscache* c_ns_cache,
 
 cdef int _stripRedundantNamespaceDeclarations(xmlNode* c_element, _nscache* c_ns_cache,
                                               xmlNs** c_del_ns_list) except -1:
-    u"""Removes namespace declarations from an element that are already
+    """Removes namespace declarations from an element that are already
     defined in its parents.  Does not free the xmlNs's, just prepends
     them to the c_del_ns_list.
     """
@@ -297,7 +297,7 @@ cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
 
 cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                             xmlNode* c_element) except -1:
-    u"""Fix the xmlNs pointers of a node and its subtree that were moved.
+    """Fix the xmlNs pointers of a node and its subtree that were moved.
 
     Originally copied from libxml2's xmlReconciliateNs().  Expects
     libxml2 doc pointers of node to be correct already, but fixes

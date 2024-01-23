@@ -1,4 +1,3 @@
-
 @cython.final
 @cython.internal
 cdef class _MemDebug:

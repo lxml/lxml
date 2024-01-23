@@ -55,7 +55,6 @@
 # you, if needed.
 ##
 
-from __future__ import absolute_import
 
 import re
 
@@ -100,15 +99,13 @@ def prepare_child(next, token):
     tag = token[1]
     def select(result):
         for elem in result:
-            for e in elem.iterchildren(tag):
-                yield e
+            yield from elem.iterchildren(tag)
     return select
 
 def prepare_star(next, token):
     def select(result):
         for elem in result:
-            for e in elem.iterchildren('*'):
-                yield e
+            yield from elem.iterchildren('*')
     return select
 
 def prepare_self(next, token):
@@ -126,8 +123,7 @@ def prepare_descendant(next, token):
         raise SyntaxError("invalid descendant")
     def select(result):
         for elem in result:
-            for e in elem.iterdescendants(tag):
-                yield e
+            yield from elem.iterdescendants(tag)
     return select
 
 def prepare_parent(next, token):

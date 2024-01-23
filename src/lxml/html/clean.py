@@ -6,36 +6,14 @@ Removes unwanted tags and content.  See the `Cleaner` class for
 details.
 """
 
-from __future__ import absolute_import
-
 import copy
 import re
-import sys
-try:
-    from urlparse import urlsplit
-    from urllib import unquote_plus
-except ImportError:
-    # Python 3
-    from urllib.parse import urlsplit, unquote_plus
+from urllib.parse import urlsplit, unquote_plus
+
 from lxml import etree
 from lxml.html import defs
 from lxml.html import fromstring, XHTML_NAMESPACE
 from lxml.html import xhtml_to_html, _transform_result
-
-try:
-    unichr
-except NameError:
-    # Python 3
-    unichr = chr
-try:
-    unicode
-except NameError:
-    # Python 3
-    unicode = str
-try:
-    basestring
-except NameError:
-    basestring = (str, bytes)
 
 
 __all__ = ['clean_html', 'clean', 'Cleaner', 'autolink', 'autolink_html',
@@ -71,7 +49,7 @@ _replace_css_import = re.compile(
 
 _looks_like_tag_content = re.compile(
     r'</?[a-zA-Z]+|\son[a-zA-Z]+\s*=',
-    *((re.ASCII,) if sys.version_info[0] >= 3 else ())).search
+    (re.ASCII)).search
 
 # All kinds of schemes besides just javascript: that can cause
 # execution:
@@ -106,7 +84,7 @@ _find_external_links = etree.XPath(
     namespaces={'x':XHTML_NAMESPACE})
 
 
-class Cleaner(object):
+class Cleaner:
     """
     Instances cleans the document of each of the possible offending
     elements.  The cleaning is controlled by attributes; you can
@@ -214,9 +192,9 @@ class Cleaner(object):
     frames = True
     forms = True
     annoying_tags = True
-    remove_tags = None
-    allow_tags = None
-    kill_tags = None
+    remove_tags = ()
+    allow_tags = ()
+    kill_tags = ()
     remove_unknown_tags = True
     safe_attrs_only = True
     safe_attrs = defs.safe_attrs
@@ -228,11 +206,18 @@ class Cleaner(object):
         not_an_attribute = object()
         for name, value in kw.items():
             default = getattr(self, name, not_an_attribute)
-            if (default is not None and default is not True and default is not False
-                    and not isinstance(default, (frozenset, set, tuple, list))):
+            if default is None or default is True or default is False:
+                pass
+            elif isinstance(default, (frozenset, set, tuple, list)):
+                # Catch common error of passing ('host') instead of a tuple.
+                if isinstance(value, str):
+                    raise TypeError(
+                        f"Expected a collection, got str: {name}={value!r}")
+            else:
                 raise TypeError(
-                    "Unknown parameter: %s=%r" % (name, value))
+                    f"Unknown parameter: {name}={value!r}")
             setattr(self, name, value)
+
         if self.inline_style is None and 'inline_style' not in kw:
             self.inline_style = self.style
 
@@ -241,6 +226,8 @@ class Cleaner(object):
                 raise ValueError("It does not make sense to pass in both "
                                  "allow_tags and remove_unknown_tags")
             self.remove_unknown_tags = False
+
+        self.host_whitelist = frozenset(self.host_whitelist) if self.host_whitelist else ()
 
     # Used to lookup the primary URL for a given tag that is up for
     # removal:
@@ -557,7 +544,7 @@ class Cleaner(object):
 
     def clean_html(self, html):
         result_type = type(html)
-        if isinstance(html, basestring):
+        if isinstance(html, (str, bytes)):
             doc = fromstring(html)
         else:
             doc = copy.deepcopy(html)
@@ -692,7 +679,7 @@ def _link_text(text, link_regexes, avoid_hosts, factory):
                 
 def autolink_html(html, *args, **kw):
     result_type = type(html)
-    if isinstance(html, basestring):
+    if isinstance(html, (str, bytes)):
         doc = fromstring(html)
     else:
         doc = copy.deepcopy(html)
@@ -711,7 +698,7 @@ _avoid_word_break_classes = ['nobreak']
 def word_break(el, max_width=40,
                avoid_elements=_avoid_word_break_elements,
                avoid_classes=_avoid_word_break_classes,
-               break_character=unichr(0x200b)):
+               break_character=chr(0x200b)):
     """
     Breaks any long words found in the body of the text (not attributes).
 

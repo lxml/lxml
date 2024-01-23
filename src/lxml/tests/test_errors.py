@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-
 import unittest
 
 # These tests check that error handling in the Pyrex code is
@@ -8,10 +5,13 @@ import unittest
 # It is likely that if there are errors, instead of failing the code
 # will simply crash.
 
-import sys, gc, os.path
+import gc
+import os.path
+import sys
+import unittest
 from lxml import etree
 
-from .common_imports import HelperTestCase
+from .common_imports import HelperTestCase, IS_PYPY
 
 
 class ErrorTestCase(HelperTestCase):
@@ -25,6 +25,7 @@ class ErrorTestCase(HelperTestCase):
     def test_empty_parse(self):
         self.assertRaises(etree.XMLSyntaxError, etree.fromstring, '')
 
+    @unittest.skipIf(IS_PYPY, "needs sys.getrefcount()")
     def test_element_cyclic_gc_none(self):
         # test if cyclic reference can crash etree
         Element = self.etree.Element
@@ -67,7 +68,7 @@ class ErrorTestCase(HelperTestCase):
             self.assertEqual(e.lineno, 1)
             self.assertEqual(e.offset, 10)
         except Exception as e:
-            self.fail('{0}, not {1}'.format(fail_msg, type(e)))
+            self.fail(f'{fail_msg}, not {type(e)}')
         else:
             self.fail('test_broken.xml should raise an etree.XMLSyntaxError')
 

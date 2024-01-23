@@ -6,7 +6,6 @@ See the `CSSSelector` class for details.
 This is a thin wrapper around cssselect 0.7 or later.
 """
 
-from __future__ import absolute_import
 
 from . import etree
 try:
@@ -92,7 +91,7 @@ class CSSSelector(etree.XPath):
         elif translator == 'xhtml':
             translator = LxmlHTMLTranslator(xhtml=True)
         path = translator.css_to_xpath(css)
-        super(CSSSelector, self).__init__(path, namespaces=namespaces)
+        super().__init__(path, namespaces=namespaces)
         self.css = css
 
     def __repr__(self):

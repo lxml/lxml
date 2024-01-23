@@ -1,6 +1,5 @@
 # cython: language_level=3
 
-from __future__ import absolute_import
 
 import difflib
 from lxml import etree
@@ -140,15 +139,13 @@ def markup_serialize_tokens(tokens, markup_func):
     markup_func around text to add annotations.
     """
     for token in tokens:
-        for pre in token.pre_tags:
-            yield pre
+        yield from token.pre_tags
         html = token.html()
         html = markup_func(html, token.annotation)
         if token.trailing_whitespace:
             html += token.trailing_whitespace
         yield html
-        for post in token.post_tags:
-            yield post
+        yield from token.post_tags
 
 
 ############################################################
@@ -221,15 +218,13 @@ def expand_tokens(tokens, equal=False):
     text for the data in the tokens.
     """
     for token in tokens:
-        for pre in token.pre_tags:
-            yield pre
+        yield from token.pre_tags
         if not equal or not token.hide_when_equal:
             if token.trailing_whitespace:
                 yield token.html() + token.trailing_whitespace
             else:
                 yield token.html()
-        for post in token.post_tags:
-            yield post
+        yield from token.post_tags
 
 def merge_insert(ins_chunks, doc):
     """ doc is the already-handled document (as a list of text chunks);
@@ -699,8 +694,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
     for word in start_words:
         yield html_escape(word)
     for child in el:
-        for item in flatten_el(child, include_hrefs=include_hrefs):
-            yield item
+        yield from flatten_el(child, include_hrefs=include_hrefs)
     if el.tag == 'a' and el.get('href') and include_hrefs:
         yield ('href', el.get('href'))
     if not skip_tag:

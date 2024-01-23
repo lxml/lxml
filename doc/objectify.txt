@@ -1091,7 +1091,7 @@ arguments 'pytype' (default: True) and 'xsi' (default: True).
         d = 5 [IntElement]
         i = 5 [IntElement]
         s = 5 [IntElement]
-        n = u'' [StringElement]
+        n = '' [StringElement]
 
 Note that ``deannotate()`` does not remove the namespace declarations
 of the ``pytype`` namespace by default.  To remove them as well, and

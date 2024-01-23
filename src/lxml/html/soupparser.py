@@ -223,7 +223,7 @@ def _init_node_converters(makeelement):
                     v = " ".join(v)
                 attribs[k] = unescape(v)
         else:
-            attribs = dict((k, unescape(v)) for k, v in bs_attrs)
+            attribs = {k: unescape(v) for k, v in bs_attrs}
         return attribs
 
     def append_text(parent, text):

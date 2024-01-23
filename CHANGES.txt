@@ -2,13 +2,66 @@
 lxml changelog
 ==============
 
-5.0.0 (2023-??-??)
+5.1.1 (2024-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#2048920: ``iterlinks()`` in ``lxml.html`` rejected ``bytes`` input in 5.1.0.
+
+* Built with Cython 3.0.8.
+
+
+5.1.0 (2024-01-05)
 ==================
 
 Features added
 --------------
 
-* Character escaping in ``C14N2` serialisation now uses a single pass over the text
+* Parsing ASCII strings is slightly faster.
+
+Bugs fixed
+----------
+
+* GH#349: The HTML ``Cleaner()`` interpreted an accidentally provided string parameter
+  for the ``host_whitelist`` as list of characters and silently failed to reject any hosts.
+  Passing a non-collection is now rejected.
+
+Other changes
+-------------
+
+* Support for Python 2.7 and Python versions < 3.6 was removed.
+
+* The wheel build was migrated to use ``cibuildwheel``.
+  Patch by Primož Godec.
+
+
+5.0.1 (2024-01-05)
+==================
+
+Bugs fixed
+----------
+
+* LP#2046208: Parsing non-BMP Python Unicode strings could fail on macOS.
+
+* LP#2044225: When incrementally parsing broken HTML, reporting start events on
+  missing structural tags failed and could lead to subsequent exceptions.
+
+* LP#2045435: Some (not all) issues with stricter C compilers were resolved.
+
+* The binary wheels in the 5.0.0 release did not validate cleanly (but installed ok).
+
+
+.. _latest_release:
+
+5.0.0 (2023-12-29)
+==================
+
+Features added
+--------------
+
+* Character escaping in ``C14N2`` serialisation now uses a single pass over the text
   instead of searching for each unescaped character separately.
 
 * Early support for Python 3.13a2 was added.
@@ -44,10 +97,18 @@ Bugs fixed
 * LP#1522052: A file-system specific test is now optional and should no longer fail
   on systems that don't support it.
 
+* GH#392: Some tests were adapted for libxml2 2.13.
+  Patch by Nick Wellnhofer.
+
 * Contains all fixes from lxml 4.9.4.
 
 Other changes
 -------------
+
+* LP#1742885: lxml no longer expands external entities (XXE) by default to prevent
+  the security risk of loading arbitrary files and URLs.  If this feature is needed,
+  it can be enabled in a backwards compatible way by using a parser with the option
+  ``resolve_entities=True``.  The new default is ``resolve_entities='internal'``.
 
 * With libxml2 2.10.4 and later (as provided by the lxml 5.0 binary wheels),
   parsing HTML tags with "prefixes" no longer builds a namespace dictionary

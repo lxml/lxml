@@ -29,10 +29,9 @@ class FeedTestCase(unittest.TestCase):
         unittest.TestCase.__init__(self)
 
     def parse(self):
-        f = open(self.filename, 'r')
-        headers = Message(f)
-        c = f.read()
-        f.close()
+        with open(self.filename) as f:
+            headers = Message(f)
+            c = f.read()
         if not c.strip():
             c = headers.get_payload()
         if not headers.keys():

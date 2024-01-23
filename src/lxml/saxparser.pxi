@@ -31,8 +31,7 @@ ctypedef enum _ParseEventFilter:
 
 
 cdef int _buildParseEventFilter(events) except -1:
-    cdef int event_filter
-    event_filter = 0
+    cdef int event_filter = 0
     for event in events:
         if event == 'start':
             event_filter |= PARSE_EVENT_FILTER_START
@@ -53,8 +52,6 @@ cdef int _buildParseEventFilter(events) except -1:
 
 cdef class _SaxParserTarget:
     cdef int _sax_event_filter
-    def __cinit__(self):
-        self._sax_event_filter = 0
 
     cdef _handleSaxStart(self, tag, attrib, nsmap):
         return None
@@ -78,7 +75,7 @@ cdef class _SaxParserTarget:
 @cython.internal
 @cython.no_gc_clear  # Required because parent class uses it - Cython bug.
 cdef class _SaxParserContext(_ParserContext):
-    u"""This class maps SAX2 events to parser target events.
+    """This class maps SAX2 events to parser target events.
     """
     cdef _SaxParserTarget _target
     cdef _BaseParser _parser
@@ -321,6 +318,12 @@ cdef void _handleSaxStart(
                               c_nb_defaulted, c_attributes)
         if c_ctxt.html:
             _fixHtmlDictNodeNames(c_ctxt.dict, c_ctxt.node)
+            # The HTML parser in libxml2 reports the missing opening tags when it finds
+            # misplaced ones, but with tag names from C string constants that ignore the
+            # parser dict.  Thus, we need to intern the name ourselves.
+            c_localname = tree.xmlDictLookup(c_ctxt.dict, c_localname, -1)
+            if c_localname is NULL:
+                raise MemoryError()
 
         if event_filter & PARSE_EVENT_FILTER_END_NS:
             context._ns_stack.append(declared_namespaces)
@@ -360,9 +363,6 @@ cdef void _handleSaxTargetStart(
             if sax_event_filter & SAX_EVENT_START_NS:
                 for prefix, uri in declared_namespaces:
                     context._target._handleSaxStartNs(prefix, uri)
-                #if not context._target._sax_event_filter & SAX_EVENT_START:
-                #    # *Only* collecting start-ns events.
-                #    return
         else:
             declared_namespaces = None
 
@@ -418,6 +418,12 @@ cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
         context._origSaxStartNoNs(c_ctxt, c_name, c_attributes)
         if c_ctxt.html:
             _fixHtmlDictNodeNames(c_ctxt.dict, c_ctxt.node)
+            # The HTML parser in libxml2 reports the missing opening tags when it finds
+            # misplaced ones, but with tag names from C string constants that ignore the
+            # parser dict.  Thus, we need to intern the name ourselves.
+            c_name = tree.xmlDictLookup(c_ctxt.dict, c_name, -1)
+            if c_name is NULL:
+                raise MemoryError()
         if context._event_filter & (PARSE_EVENT_FILTER_END |
                                     PARSE_EVENT_FILTER_START):
             _pushSaxStartEvent(context, c_ctxt, NULL, c_name, None)
@@ -700,7 +706,7 @@ cdef inline xmlNode* _findLastEventNode(xmlparser.xmlParserCtxt* c_ctxt):
 ############################################################
 
 cdef class TreeBuilder(_SaxParserTarget):
-    u"""TreeBuilder(self, element_factory=None, parser=None,
+    """TreeBuilder(self, element_factory=None, parser=None,
                     comment_factory=None, pi_factory=None,
                     insert_comments=True, insert_pis=True)
 
@@ -748,12 +754,12 @@ cdef class TreeBuilder(_SaxParserTarget):
     cdef int _flush(self) except -1:
         if self._data:
             if self._last is not None:
-                text = u"".join(self._data)
+                text = "".join(self._data)
                 if self._in_tail:
-                    assert self._last.tail is None, u"internal error (tail)"
+                    assert self._last.tail is None, "internal error (tail)"
                     self._last.tail = text
                 else:
-                    assert self._last.text is None, u"internal error (text)"
+                    assert self._last.text is None, "internal error (text)"
                     self._last.text = text
             del self._data[:]
         return 0
@@ -813,7 +819,7 @@ cdef class TreeBuilder(_SaxParserTarget):
     # Python level event handlers
 
     def close(self):
-        u"""close(self)
+        """close(self)
 
         Flushes the builder buffers, and returns the toplevel document
         element.  Raises XMLSyntaxError on inconsistencies.
@@ -826,7 +832,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._last
 
     def data(self, data):
-        u"""data(self, data)
+        """data(self, data)
 
         Adds text to the current element.  The value should be either an
         8-bit string containing ASCII text, or a Unicode string.
@@ -834,7 +840,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         self._handleSaxData(data)
 
     def start(self, tag, attrs, nsmap=None):
-        u"""start(self, tag, attrs, nsmap=None)
+        """start(self, tag, attrs, nsmap=None)
 
         Opens a new element.
         """
@@ -843,7 +849,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._handleSaxStart(tag, attrs, nsmap)
 
     def end(self, tag):
-        u"""end(self, tag)
+        """end(self, tag)
 
         Closes the current element.
         """
@@ -853,7 +859,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return element
 
     def pi(self, target, data=None):
-        u"""pi(self, target, data=None)
+        """pi(self, target, data=None)
 
         Creates a processing instruction using the factory, appends it
         (unless disabled) and returns it.
@@ -861,7 +867,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._handleSaxPi(target, data)
 
     def comment(self, comment):
-        u"""comment(self, comment)
+        """comment(self, comment)
 
         Creates a comment using the factory, appends it (unless disabled)
         and returns it.

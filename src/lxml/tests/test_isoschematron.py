@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to ISO-Schematron parsing and validation
 """
 
-from __future__ import absolute_import
 
 import unittest
 from lxml import isoschematron

@@ -840,7 +840,7 @@ cdef extern from "libxml/xmlerror.h" nogil:
 
     ctypedef void (*xmlGenericErrorFunc)(void* ctxt, char* msg, ...) noexcept
     ctypedef void (*xmlStructuredErrorFunc)(void* userData,
-                                            xmlError* error) noexcept
+                                            const xmlError* error) noexcept
 
     cdef void xmlSetGenericErrorFunc(
         void* ctxt, xmlGenericErrorFunc func)

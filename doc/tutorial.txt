@@ -16,7 +16,7 @@ enhancements that make your life as a programmer easier.
 For a complete reference of the API, see the `generated API
 documentation`_.
 
-.. _`ElementTree API`: http://effbot.org/zone/element-index.htm#documentation
+.. _`ElementTree API`: https://docs.python.org/3/library/xml.etree.elementtree.html
 .. _`generated API documentation`: api/index.html
 
 .. contents::
@@ -41,17 +41,6 @@ documentation`_.
    6  ElementPath
 
 
-..
-  >>> try: unicode = unicode
-  ... except (NameError, KeyError): unicode = str
-
-  >>> try: basestring = basestring
-  ... except (NameError, KeyError): basestring = str
-
-  >>> try: next = next
-  ... except NameError:
-  ...     def next(it): return it.next()
-
 A common way to import ``lxml.etree`` is as follows:
 
 .. sourcecode:: pycon
@@ -59,63 +48,21 @@ A common way to import ``lxml.etree`` is as follows:
     >>> from lxml import etree
 
 If your code only uses the ElementTree API and does not rely on any
-functionality that is specific to ``lxml.etree``, you can also use (any part
-of) the following import chain as a fall-back to the original ElementTree:
+functionality that is specific to ``lxml.etree``, you can also use the following
+import chain as a fall-back to ElementTree in the Python standard library:
 
 .. sourcecode:: python
 
     try:
-      from lxml import etree
-      print("running with lxml.etree")
+        from lxml import etree
+        print("running with lxml.etree")
     except ImportError:
-      try:
-        # Python 2.5
-        import xml.etree.cElementTree as etree
-        print("running with cElementTree on Python 2.5+")
-      except ImportError:
-        try:
-          # Python 2.5
-          import xml.etree.ElementTree as etree
-          print("running with ElementTree on Python 2.5+")
-        except ImportError:
-          try:
-            # normal cElementTree install
-            import cElementTree as etree
-            print("running with cElementTree")
-          except ImportError:
-            try:
-              # normal ElementTree install
-              import elementtree.ElementTree as etree
-              print("running with ElementTree")
-            except ImportError:
-              print("Failed to import ElementTree from any known place")
+        import xml.etree.ElementTree as etree
+        print("running with Python's xml.etree.ElementTree")
 
 To aid in writing portable code, this tutorial makes it clear in the examples
 which part of the presented API is an extension of ``lxml.etree`` over the
-original `ElementTree API`_, as defined by Fredrik Lundh's `ElementTree
-library`_.
-
-.. _`ElementTree library`: http://effbot.org/zone/element-index.htm
-
-..
-  >>> import sys
-  >>> from lxml import etree as _etree
-  >>> if sys.version_info[0] >= 3:
-  ...   class etree_mock(object):
-  ...     def __getattr__(self, name): return getattr(_etree, name)
-  ...     def tostring(self, *args, **kwargs):
-  ...       s = _etree.tostring(*args, **kwargs)
-  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
-  ...       if s[-1] == '\n': s = s[:-1]
-  ...       return s
-  ... else:
-  ...   class etree_mock(object):
-  ...     def __getattr__(self, name): return getattr(_etree, name)
-  ...     def tostring(self, *args, **kwargs):
-  ...       s = _etree.tostring(*args, **kwargs)
-  ...       if s[-1] == '\n': s = s[:-1]
-  ...       return s
-  >>> etree = etree_mock()
+original `ElementTree API`_.
 
 
 The Element class
@@ -156,7 +103,16 @@ To see that this is really XML, you can serialise the tree you have created:
 
 .. sourcecode:: pycon
 
-    >>> print(etree.tostring(root, pretty_print=True))
+    >>> etree.tostring(root)
+    b'<root><child1/><child2/><child3/></root>'
+
+We'll create a little helper function to pretty-print the XML for us:
+
+    >>> def prettyprint(element, **kwargs):
+    ...     xml = etree.tostring(element, pretty_print=True, **kwargs)
+    ...     print(xml.decode(), end='')
+
+    >>> prettyprint(root)
     <root>
       <child1/>
       <child2/>
@@ -180,7 +136,7 @@ possible:
     >>> print(len(root))
     3
 
-    >>> root.index(root[1]) # lxml.etree only!
+    >>> root.index(root[1])  # lxml.etree only!
     1
 
     >>> children = list(root)
@@ -531,7 +487,7 @@ serialised the tree to XML:
     >>> etree.SubElement(root, "child").text = "Child 2"
     >>> etree.SubElement(root, "another").text = "Child 3"
 
-    >>> print(etree.tostring(root, pretty_print=True))
+    >>> prettyprint(root)
     <root>
       <child>Child 1</child>
       <child>Child 2</child>
@@ -539,7 +495,7 @@ serialised the tree to XML:
     </root>
 
     >>> for element in root.iter():
-    ...     print("%s - %s" % (element.tag, element.text))
+    ...     print(f"{element.tag} - {element.text}")
     root - None
     child - Child 1
     child - Child 2
@@ -552,12 +508,12 @@ pass more than one tag to intercept on multiple tags during iteration.
 .. sourcecode:: pycon
 
     >>> for element in root.iter("child"):
-    ...     print("%s - %s" % (element.tag, element.text))
+    ...     print(f"{element.tag} - {element.text}")
     child - Child 1
     child - Child 2
 
     >>> for element in root.iter("another", "child"):
-    ...     print("%s - %s" % (element.tag, element.text))
+    ...     print(f"{element.tag} - {element.text}")
     child - Child 1
     child - Child 2
     another - Child 3
@@ -573,10 +529,10 @@ make sure only Element objects are returned, you can pass the
     >>> root.append(etree.Comment("some comment"))
 
     >>> for element in root.iter():
-    ...     if isinstance(element.tag, basestring):  # or 'str' in Python 3
-    ...         print("%s - %s" % (element.tag, element.text))
+    ...     if isinstance(element.tag, str):
+    ...         print(f"{element.tag} - {element.text}")
     ...     else:
-    ...         print("SPECIAL: %s - %s" % (element, element.text))
+    ...         print(f"SPECIAL: {element} - {element.text}")
     root - None
     child - Child 1
     child - Child 2
@@ -585,7 +541,7 @@ make sure only Element objects are returned, you can pass the
     SPECIAL: <!--some comment--> - some comment
 
     >>> for element in root.iter(tag=etree.Element):
-    ...     print("%s - %s" % (element.tag, element.text))
+    ...     print(f"{element.tag} - {element.text}")
     root - None
     child - Child 1
     child - Child 2
@@ -621,15 +577,17 @@ ASCII:
    >>> etree.tostring(root)
    b'<root><a><b/></a></root>'
 
-   >>> print(etree.tostring(root, xml_declaration=True))
+   >>> xml_string = etree.tostring(root, xml_declaration=True)
+   >>> print(xml_string.decode(), end='')
    <?xml version='1.0' encoding='ASCII'?>
    <root><a><b/></a></root>
 
-   >>> print(etree.tostring(root, encoding='iso-8859-1'))
-   <?xml version='1.0' encoding='iso-8859-1'?>
+   >>> latin1_bytesstring = etree.tostring(root, encoding='iso8859-1')
+   >>> print(latin1_bytesstring.decode('iso8859-1'), end='')
+   <?xml version='1.0' encoding='iso8859-1'?>
    <root><a><b/></a></root>
 
-   >>> print(etree.tostring(root, pretty_print=True))
+   >>> print(etree.tostring(root, pretty_print=True).decode(), end='')
    <root>
      <a>
        <b/>
@@ -637,6 +595,8 @@ ASCII:
    </root>
 
 Note that pretty printing appends a newline at the end.
+We therefore use the ``end=''`` option here to prevent the ``print()``
+function from adding another line break.
 
 For more fine-grained control over the pretty-printing, you can add
 whitespace indentation to the tree before serialising it, using the
@@ -645,12 +605,12 @@ whitespace indentation to the tree before serialising it, using the
 .. sourcecode:: pycon
 
    >>> root = etree.XML('<root><a><b/>\n</a></root>')
-   >>> print(etree.tostring(root))
+   >>> print(etree.tostring(root).decode())
    <root><a><b/>
    </a></root>
 
    >>> etree.indent(root)
-   >>> print(etree.tostring(root))
+   >>> print(etree.tostring(root).decode())
    <root>
      <a>
        <b/>
@@ -663,7 +623,7 @@ whitespace indentation to the tree before serialising it, using the
    '\n    '
 
    >>> etree.indent(root, space="    ")
-   >>> print(etree.tostring(root))
+   >>> print(etree.tostring(root).decode())
    <root>
        <a>
            <b/>
@@ -672,9 +632,9 @@ whitespace indentation to the tree before serialising it, using the
 
    >>> etree.indent(root, space="\t")
    >>> etree.tostring(root)
-   '<root>\n\t<a>\n\t\t<b/>\n\t</a>\n</root>'
+   b'<root>\n\t<a>\n\t\t<b/>\n\t</a>\n</root>'
 
-In lxml 2.0 and later (as well as ElementTree 1.3), the serialisation
+In lxml 2.0 and later, as well as in ``xml.etree``, the serialisation
 functions can do more than XML serialisation.  You can serialise to
 HTML or extract the text content by passing the ``method`` keyword:
 
@@ -683,16 +643,16 @@ HTML or extract the text content by passing the ``method`` keyword:
    >>> root = etree.XML(
    ...    '<html><head/><body><p>Hello<br/>World</p></body></html>')
 
-   >>> etree.tostring(root) # default: method = 'xml'
+   >>> etree.tostring(root)  # default: method = 'xml'
    b'<html><head/><body><p>Hello<br/>World</p></body></html>'
 
-   >>> etree.tostring(root, method='xml') # same as above
+   >>> etree.tostring(root, method='xml')  # same as above
    b'<html><head/><body><p>Hello<br/>World</p></body></html>'
 
    >>> etree.tostring(root, method='html')
    b'<html><head></head><body><p>Hello<br>World</p></body></html>'
 
-   >>> print(etree.tostring(root, method='html', pretty_print=True))
+   >>> prettyprint(root, method='html')
    <html>
    <head></head>
    <body><p>Hello<br>World</p></body>
@@ -707,26 +667,27 @@ serialisation is ASCII:
 .. sourcecode:: pycon
 
    >>> br = next(root.iter('br'))  # get first result of iteration
-   >>> br.tail = u'W\xf6rld'
+   >>> br.tail = 'Wörld'
 
    >>> etree.tostring(root, method='text')  # doctest: +ELLIPSIS
    Traceback (most recent call last):
      ...
-   UnicodeEncodeError: 'ascii' codec can't encode character u'\xf6' ...
+   UnicodeEncodeError: 'ascii' codec can't encode character '\xf6' ...
 
    >>> etree.tostring(root, method='text', encoding="UTF-8")
    b'HelloW\xc3\xb6rld'
 
-Here, serialising to a Python unicode string instead of a byte string
+Here, serialising to a Python text string instead of a byte string
 might become handy.  Just pass the name ``'unicode'`` as encoding:
 
 .. sourcecode:: pycon
 
    >>> etree.tostring(root, encoding='unicode', method='text')
-   u'HelloW\xf6rld'
+   'HelloWörld'
+   >>> etree.tostring(root, encoding='unicode')
+   '<html><head/><body><p>Hello<br/>Wörld</p></body></html>'
 
-The W3C has a good `article about the Unicode character set and
-character encodings
+The W3C has a good article about the Unicode character set and character encodings
 <http://www.w3.org/International/tutorials/tutorial-char-enc/>`_.
 
 
@@ -769,7 +730,7 @@ as a DOCTYPE and other DTD content in the document:
 
 .. sourcecode:: pycon
 
-    >>> print(etree.tostring(tree))  # lxml 1.3.4 and later
+    >>> prettyprint(tree)  # lxml 1.3.4 and later
     <!DOCTYPE root PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "file://local.dtd" [
     <!ENTITY tasty "parsnips">
     ]>
@@ -783,7 +744,7 @@ the root Element:
 
 .. sourcecode:: pycon
 
-    >>> print(etree.tostring(tree.getroot()))
+    >>> prettyprint(tree.getroot())
     <root>
       <a>parsnips</a>
     </root>
@@ -850,10 +811,8 @@ The ``parse()`` function is used to parse from files and file-like objects.
 
 As an example of such a file-like object, the following code uses the
 ``BytesIO`` class for reading from a string instead of an external file.
-That class comes from the ``io`` module in Python 2.6 and later.  In older
-Python versions, you will have to use the ``StringIO`` class from the
-``StringIO`` module.  However, in real life, you would obviously avoid
-doing this all together and use the string parsing functions above.
+However, in real life, you would obviously avoid doing this and use the
+string parsing functions like ``fromstring()`` above.
 
 .. sourcecode:: pycon
 
@@ -907,7 +866,7 @@ you want to configure the parser, you can create a new instance:
 
 .. sourcecode:: pycon
 
-    >>> parser = etree.XMLParser(remove_blank_text=True) # lxml.etree only!
+    >>> parser = etree.XMLParser(remove_blank_text=True)  # lxml.etree only!
 
 This creates a parser that removes empty text between tags while parsing,
 which can reduce the size of the tree and avoid dangling tail text if you know
@@ -1014,11 +973,11 @@ Here is a simple ``iterparse()`` example:
     >>> some_file_like = BytesIO(b"<root><a>data</a></root>")
 
     >>> for event, element in etree.iterparse(some_file_like):
-    ...     print("%s, %4s, %s" % (event, element.tag, element.text))
+    ...     print(f"{event}, {element.tag:>4}, {element.text}")
     end,    a, data
     end, root, None
 
-By default, ``iterparse()`` only generates events when it is done parsing an
+By default, ``iterparse()`` only generates an event when it is done parsing an
 element, but you can control this through the ``events`` keyword argument:
 
 .. sourcecode:: pycon
@@ -1027,7 +986,7 @@ element, but you can control this through the ``events`` keyword argument:
 
     >>> for event, element in etree.iterparse(some_file_like,
     ...                                       events=("start", "end")):
-    ...     print("%5s, %4s, %s" % (event, element.tag, element.text))
+    ...     print(f"{event:>5}, {element.tag:>4}, {element.text}")
     start, root, None
     start,    a, data
       end,    a, data
@@ -1112,9 +1071,9 @@ events are generated:
     1
 
     >>> for event in events:
-    ...     print('event: %s - tag: %s' % (event[0], event[1]))
+    ...     print(f'event: {event[0]} - tag: {event[1]}')
     ...     for attr, value in event[2].items():
-    ...         print(' * %s = %s' % (attr, value))
+    ...         print(f' * {attr} = {value}')
     event: start - tag: root
      * test = true
 
@@ -1135,9 +1094,9 @@ target to a usable state (also in the case of an error!).
     4
 
     >>> for event in events:
-    ...     print('event: %s - tag: %s' % (event[0], event[1]))
+    ...     print(f'event: {event[0]} - tag: {event[1]}')
     ...     for attr, value in event[2].items():
-    ...         print(' * %s = %s' % (attr, value))
+    ...         print(f' * {attr} = {value}')
     event: start - tag: root
      * test = true
 
@@ -1155,7 +1114,7 @@ wherever possible and deploys the real namespace (the URI) instead:
     >>> body = etree.SubElement(xhtml, "{http://www.w3.org/1999/xhtml}body")
     >>> body.text = "Hello World"
 
-    >>> print(etree.tostring(xhtml, pretty_print=True))
+    >>> prettyprint(xhtml)
     <html:html xmlns:html="http://www.w3.org/1999/xhtml">
       <html:body>Hello World</html:body>
     </html:html>
@@ -1186,7 +1145,7 @@ the Element factory function, e.g. to define the default namespace:
     >>> body = etree.SubElement(xhtml, XHTML + "body")
     >>> body.text = "Hello World"
 
-    >>> print(etree.tostring(xhtml, pretty_print=True))
+    >>> prettyprint(xhtml)
     <html xmlns="http://www.w3.org/1999/xhtml">
       <body>Hello World</body>
     </html>
@@ -1262,7 +1221,7 @@ element.
 
     >>> body.set(XHTML + "bgcolor", "#CCFFAA")
 
-    >>> print(etree.tostring(xhtml, pretty_print=True))
+    >>> prettyprint(xhtml)
     <html xmlns="http://www.w3.org/1999/xhtml">
       <body xmlns:html="http://www.w3.org/1999/xhtml" html:bgcolor="#CCFFAA">Hello World</body>
     </html>
@@ -1293,9 +1252,11 @@ both for tag names and namespaces:
     >>> for el in xhtml.iter('*'): print(el.tag)   # any element
     {http://www.w3.org/1999/xhtml}html
     {http://www.w3.org/1999/xhtml}body
+
     >>> for el in xhtml.iter('{http://www.w3.org/1999/xhtml}*'): print(el.tag)
     {http://www.w3.org/1999/xhtml}html
     {http://www.w3.org/1999/xhtml}body
+
     >>> for el in xhtml.iter('{*}body'): print(el.tag)
     {http://www.w3.org/1999/xhtml}body
 
@@ -1324,7 +1285,7 @@ HTML:
 
     >>> from lxml.builder import E
 
-    >>> def CLASS(*args): # class is a reserved word in Python
+    >>> def CLASS(*args):  # class is a reserved word in Python
     ...     return {"class":' '.join(args)}
 
     >>> html = page = (
@@ -1343,7 +1304,7 @@ HTML:
     ...   )
     ... )
 
-    >>> print(etree.tostring(page, pretty_print=True))
+    >>> prettyprint(page)
     <html>
       <head>
         <title>This is a sample document</title>
@@ -1363,7 +1324,7 @@ simple vocabulary for an XML language:
 
 .. sourcecode:: pycon
 
-    >>> from lxml.builder import ElementMaker # lxml only !
+    >>> from lxml.builder import ElementMaker  # lxml only !
 
     >>> E = ElementMaker(namespace="http://my.de/fault/namespace",
     ...                  nsmap={'p' : "http://my.de/fault/namespace"})
@@ -1386,7 +1347,7 @@ simple vocabulary for an XML language:
     ...   )
     ... )
 
-    >>> print(etree.tostring(my_doc, pretty_print=True))
+    >>> prettyprint(my_doc)
     <p:doc xmlns:p="http://my.de/fault/namespace">
       <p:title>The dog and the hog</p:title>
       <p:section>

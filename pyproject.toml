@@ -1,0 +1,36 @@
+[build-system]
+requires = ["Cython>=3.0.8", "setuptools", "wheel"]
+
+[tool.cibuildwheel]
+build-verbosity = 2
+environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.12.3", LIBXSLT_VERSION = "1.1.39"}
+skip = ["pp*-manylinux_aarch64", "pp*-manylinux_i686", "*-musllinux_i686"]
+# test-command = "python {package}/test.py -p -v"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64", "i686"]
+repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.linux.environment]
+CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2"
+AR = "gcc-ar"
+NM = "gcc-nm"
+RANLIB = "gcc-ranlib"
+LDFLAGS = "-flto"
+STATIC_DEPS = "true"
+LIBXML2_VERSION = "2.12.3"
+LIBXSLT_VERSION = "1.1.39"
+
+[[tool.cibuildwheel.overrides]]
+select = "*aarch64"
+environment = {CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72", AR = "gcc-ar", NM = "gcc-nm", RANLIB = "gcc-ranlib", LDFLAGS = "-flto", STATIC_DEPS = "true", LIBXML2_VERSION = "2.12.3", LIBXSLT_VERSION = "1.1.39" }
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64", "x86"]
+
+[tool.cibuildwheel.macos]
+# https://cibuildwheel.readthedocs.io/en/stable/faq/#what-to-provide suggests to provide
+# x86_64 and one of universal2 or arm64 wheels.  x86_64 is still required by older pips,
+# so additional arm64 wheels would suffice.  However, since the library build uses a mixed
+# amd64/arm64 setup, we build universal2 wheels regardless.
+archs = ["x86_64", "universal2"]

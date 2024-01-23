@@ -41,7 +41,6 @@ jobs:
         #
         os: [ubuntu-latest, macos-latest, windows-2019]
         python-version:
-          - "2.7"
           - "3.6"
           - "3.7"
           - "3.8"
@@ -53,32 +52,24 @@ jobs:
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          #- os: windows-2016
-          #  python-version: 2.7
-          #  env: { STATIC_DEPS: true }  # always static
-
           - os: ubuntu-latest
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
-            allowed_failure: true
           - os: ubuntu-latest
             python-version: "3.12"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
-            allowed_failure: true
 
           # Coverage setup
           - os: ubuntu-latest
             python-version: "3.10"
             env: { COVERAGE: true, STATIC_DEPS: true }
             extra_hash: "-coverage"
-            allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
             python-version: "3.10"
             env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
             extra_hash: "-docs"
-            allowed_failure: true   # shouldn't fail but currently does...
 
           # Old library setup with minimum version requirements
           - os: ubuntu-latest
@@ -89,7 +80,6 @@ jobs:
               LIBXSLT_VERSION: 1.1.27,
             }
             extra_hash: "-oldlibs29"
-            #allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
             python-version: "3.10"
             env: {
@@ -98,7 +88,6 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs210"
-            #allowed_failure: true   # shouldn't fail but currently does...
           - os: ubuntu-latest
             python-version: "3.10"
             env: {
@@ -107,19 +96,10 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs211"
-            #allowed_failure: true   # shouldn't fail but currently does...
 
           # Ubuntu sub-jobs:
           # ================
           # Pypy
-          - os: ubuntu-latest
-            python-version: pypy-2.7
-            env: { STATIC_DEPS: false }
-            allowed_failure: true
-          - os: ubuntu-latest
-            python-version: pypy-3.7
-            env: { STATIC_DEPS: false }
-            allowed_failure: true
           - os: ubuntu-latest
             python-version: pypy-3.8
             env: { STATIC_DEPS: false }
@@ -149,8 +129,6 @@ jobs:
           # Windows sub-jobs
           # ==============
           - os: windows-2019
-            python-version: 2.7  # needs older image
-          - os: windows-2019
             env: { STATIC_DEPS: false }  # always static
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
@@ -178,21 +156,9 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Python
-        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
-        if: startsWith(matrix.python-version, '3.')
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Setup Python2 (Linux)
-        if: matrix.python-version == '2.7' && startsWith(matrix.os, 'ubuntu')
-        run: |
-            sudo ln -fs python2 /usr/bin/python
-            sudo apt-get update
-            sudo apt-get install python-setuptools python2-dev
-            curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-            sudo python2 get-pip.py
-            ls -l /usr/bin/pip* /usr/local/bin/pip*
-            which pip
 
       - name: Install MacOS dependencies
         if: runner.os == 'macOS'
@@ -208,14 +174,14 @@ jobs:
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
       - name: Cache [libs]
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
         if: matrix.env.STATIC_DEPS
         with:
           path: |
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}${{ matrix.extra_hash }}
+          key: libs-${{ runner.os }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
 
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
@@ -227,7 +193,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
         if: matrix.extra_hash == '-docs'
         with:
           name: website_html
@@ -235,16 +201,48 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
+        if: matrix.env.COVERAGE
         with:
           name: pycoverage_html
           path: coverage*
           if-no-files-found: ignore
 
       - name: Upload Wheel
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
-        if: matrix.env.STATIC_DEPS
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
+        if: matrix.env.STATIC_DEPS && !matrix.extra_hash
         with:
-          name: wheels-${{ runner.os }}
+          name: wheels-${{ runner.os }}-${{ matrix.python-version }}
           path: dist/*.whl
           if-no-files-found: ignore
+
+  collect-wheels:
+    needs: [ci]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect wheels
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
+        with:
+          path: ~/downloads
+          merge-multiple: true
+
+      - name: List downloaded artifacts
+        run: ls -la ~/downloads
+
+      - name: Upload Linux wheels
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
+        with:
+          name: wheels-linux
+          path: ~/downloads/*linux*.whl
+
+      - name: Upload macOS wheels
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
+        with:
+          name: wheels-macosx
+          path: ~/downloads/*macosx*.whl
+
+      - name: Upload Windows wheels
+        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
+        with:
+          name: wheels-windows
+          path: ~/downloads/*-win*/*.whl

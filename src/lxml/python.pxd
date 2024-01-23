@@ -16,11 +16,6 @@ cdef extern from "Python.h":
       #define PyUnicode_GET_DATA_SIZE(s)  (0)
       #undef PyUnicode_GET_SIZE
       #define PyUnicode_GET_SIZE(s)  (0)
-    #elif PY_VERSION_HEX <= 0x03030000
-      #define PyUnicode_IS_READY(op)    (0)
-      #define PyUnicode_GET_LENGTH(u)   PyUnicode_GET_SIZE(u)
-      #define PyUnicode_KIND(u)         (sizeof(Py_UNICODE))
-      #define PyUnicode_DATA(u)         ((void*)PyUnicode_AS_UNICODE(u))
     #endif
     """
 
@@ -53,6 +48,7 @@ cdef extern from "Python.h":
     cdef char* PyUnicode_AS_DATA(object ustring)
     cdef Py_ssize_t PyUnicode_GET_DATA_SIZE(object ustring)
     cdef Py_ssize_t PyUnicode_GET_SIZE(object ustring)
+    cdef Py_UCS4 PyUnicode_MAX_CHAR_VALUE(object ustring)
     cdef bytes PyBytes_FromStringAndSize(char* s, Py_ssize_t size)
     cdef bytes PyBytes_FromFormat(char* format, ...)
     cdef Py_ssize_t PyBytes_GET_SIZE(object s)
@@ -81,7 +77,7 @@ cdef extern from "Python.h":
     cdef bint PyTuple_CheckExact(object instance)
 
     cdef int _PyEval_SliceIndex(object value, Py_ssize_t* index) except 0
-    cdef int PySlice_GetIndicesEx "_lx_PySlice_GetIndicesEx" (
+    cdef int PySlice_GetIndicesEx(
             object slice, Py_ssize_t length,
             Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
             Py_ssize_t *slicelength) except -1
@@ -136,11 +132,25 @@ cdef extern from "includes/etree_defs.h": # redefines some functions as macros
     cdef bint _isString(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)
-    cdef bint LXML_UNICODE_STRINGS
-    cdef bint IS_PYTHON2
-    cdef bint IS_PYTHON3  # legacy, avoid
     cdef bint IS_PYPY
-    cdef object PY_FSPath "lxml_PyOS_FSPath" (object obj)
+    cdef object PyOS_FSPath(object obj)
 
-cdef extern from "lxml_endian.h":
+
+cdef extern from *:
+    """
+    #ifndef PY_BIG_ENDIAN
+
+    #ifdef _MSC_VER
+    typedef unsigned __int32 uint32_t;
+    #else
+    #include <stdint.h>
+    #endif
+
+    static CYTHON_INLINE int _lx__is_big_endian(void) {
+        union {uint32_t i; char c[4];} x = {0x01020304};
+        return x.c[0] == 1;
+    }
+    #define PY_BIG_ENDIAN _lx__is_big_endian()
+    #endif
+    """
     cdef bint PY_BIG_ENDIAN  # defined in later Py3.x versions

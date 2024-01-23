@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Test cases related to XPath evaluation and the XPath class
 """
 
-from __future__ import absolute_import
 
 import unittest, sys
 
@@ -99,11 +96,11 @@ class ETreeXPathTestCase(HelperTestCase):
                            tree.xpath('/a/b/text()', smart_strings=True)])
 
     def test_xpath_list_unicode_text_parent(self):
-        xml = _bytes('<a><b>FooBar\\u0680\\u3120</b><b>BarFoo\\u0680\\u3120</b></a>').decode("unicode_escape")
+        xml = b'<a><b>FooBar\\u0680\\u3120</b><b>BarFoo\\u0680\\u3120</b></a>'.decode("unicode_escape")
         tree = self.parse(xml.encode('utf-8'))
         root = tree.getroot()
-        self.assertEqual([_bytes('FooBar\\u0680\\u3120').decode("unicode_escape"),
-                           _bytes('BarFoo\\u0680\\u3120').decode("unicode_escape")],
+        self.assertEqual([b'FooBar\\u0680\\u3120'.decode("unicode_escape"),
+                           b'BarFoo\\u0680\\u3120'.decode("unicode_escape")],
                           tree.xpath('/a/b/text()'))
         self.assertEqual([root[0], root[1]],
                           [r.getparent() for r in tree.xpath('/a/b/text()')])
@@ -612,20 +609,19 @@ class ETreeETXPathClassTestCase(HelperTestCase):
     # disabled this test as non-ASCII characters in namespace URIs are
     # not acceptable
     def _test_xpath_compile_unicode(self):
-        x = self.parse(_bytes('<a><b xmlns="http://nsa/\\uf8d2"/><b xmlns="http://nsb/\\uf8d1"/></a>'
-                              ).decode("unicode_escape"))
+        x = self.parse('<a><b xmlns="http://nsa/\uf8d2"/><b xmlns="http://nsb/\uf8d1"/></a>')
 
-        expr = etree.ETXPath(_bytes("/a/{http://nsa/\\uf8d2}b").decode("unicode_escape"))
+        expr = etree.ETXPath("/a/{http://nsa/\uf8d2}b")
         r = expr(x)
         self.assertEqual(1, len(r))
-        self.assertEqual(_bytes('{http://nsa/\\uf8d2}b').decode("unicode_escape"), r[0].tag)
+        self.assertEqual('{http://nsa/\uf8d2}b', r[0].tag)
 
-        expr = etree.ETXPath(_bytes("/a/{http://nsb/\\uf8d1}b").decode("unicode_escape"))
+        expr = etree.ETXPath("/a/{http://nsb/\\uf8d1}b")
         r = expr(x)
         self.assertEqual(1, len(r))
-        self.assertEqual(_bytes('{http://nsb/\\uf8d1}b').decode("unicode_escape"), r[0].tag)
+        self.assertEqual('{http://nsb/\uf8d1}b', r[0].tag)
 
-SAMPLE_XML = etree.parse(BytesIO("""
+SAMPLE_XML = etree.parse(BytesIO(b"""
 <body>
   <tag>text</tag>
   <section>
@@ -687,14 +683,14 @@ extension = {(None, 'stringTest'): stringTest,
              (None, 'resultTypesTest2'): resultTypesTest2,}
 
 def xpath():
-    u"""
+    """
     Test xpath extension functions.
     
     >>> root = SAMPLE_XML
     >>> e = etree.XPathEvaluator(root, extensions=[extension])
     >>> e("stringTest('you')")
     'Hello you'
-    >>> print(e(_bytes("stringTest('\\\\xe9lan')").decode("unicode_escape")))
+    >>> print(e(b"stringTest('\\\\xe9lan')".decode("unicode_escape")))
     Hello \xe9lan
     >>> e("stringTest('you','there')")   #doctest: +ELLIPSIS
     Traceback (most recent call last):
@@ -725,12 +721,6 @@ def xpath():
     Got error
     """
 
-if sys.version_info[0] >= 3:
-    xpath.__doc__ = xpath.__doc__.replace(" u'", " '")
-    xpath.__doc__ = xpath.__doc__.replace(" XPathResultError",
-                                          " lxml.etree.XPathResultError")
-    xpath.__doc__ = xpath.__doc__.replace(" exactly 2 arguments",
-                                          " exactly 2 positional arguments")
 
 def test_suite():
     suite = unittest.TestSuite()

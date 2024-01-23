@@ -33,49 +33,14 @@ try:
 except ImportError:
     html5lib = None
 
-    class BogusModules(object):
-        # See PEP 302 for details on how this works
-        def __init__(self, mocks):
-            self.mocks = mocks
-
-        def find_module(self, fullname, path=None):
-            if fullname in self.mocks:
-                return self
-            return None
-
-        def load_module(self, fullname):
-            class Cls: pass
-            fake_module = Cls()
-            fake_module.__qualname__ = fullname
-            fake_module.__name__ = fullname.rsplit('.', 1)[-1]
-            mod = sys.modules.setdefault(fullname, fake_module)
-            mod.__file__, mod.__loader__, mod.__path__ = "<dummy>", self, []
-            mod.__dict__.update(self.mocks[fullname])
-            return mod
-
-    # Fake just enough of html5lib so that html5parser.py is importable
-    # without errors.
-    sys.meta_path.append(BogusModules({
-        'html5lib': {
-            # A do-nothing HTMLParser class
-            'HTMLParser': type('HTMLParser', (object,), {
-                '__init__': lambda self, **kw: None,
-                }),
-            },
-        'html5lib.treebuilders': {
-            },
-        'html5lib.treebuilders.etree_lxml': {
-            'TreeBuilder': 'dummy treebuilder',
-            },
-        }))
-
 
 class Test_HTMLParser(unittest.TestCase):
     def make_one(self, **kwargs):
+        if html5lib is None:
+            raise unittest.SkipTest("html5lib is not installed")
         from lxml.html.html5parser import HTMLParser
         return HTMLParser(**kwargs)
 
-    @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration(self):
         parser = self.make_one(strict=True)
         tree = parser.parse(XHTML_TEST_DOCUMENT)
@@ -100,6 +65,8 @@ class Test_XHTMLParser(unittest.TestCase):
 
 class Test_document_fromstring(unittest.TestCase):
     def call_it(self, *args, **kwargs):
+        if html5lib is None:
+            raise unittest.SkipTest("html5lib is not installed")
         from lxml.html.html5parser import document_fromstring
         return document_fromstring(*args, **kwargs)
 
@@ -124,7 +91,6 @@ class Test_document_fromstring(unittest.TestCase):
         not_a_string = None
         self.assertRaises(TypeError, self.call_it, not_a_string)
 
-    @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration(self):
         elem = self.call_it(XHTML_TEST_DOCUMENT)
         self.assertEqual(elem.tag, xhtml_tag('html'))
@@ -132,6 +98,8 @@ class Test_document_fromstring(unittest.TestCase):
 
 class Test_fragments_fromstring(unittest.TestCase):
     def call_it(self, *args, **kwargs):
+        if html5lib is None:
+            raise unittest.SkipTest("html5lib is not installed")
         from lxml.html.html5parser import fragments_fromstring
         return fragments_fromstring(*args, **kwargs)
 
@@ -165,7 +133,6 @@ class Test_fragments_fromstring(unittest.TestCase):
         self.assertRaises(ParserError, self.call_it,
                           '', parser=parser, no_leading_text=True)
 
-    @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration(self):
         fragments = self.call_it('a<b>c</b>')
         self.assertEqual(len(fragments), 2)
@@ -175,6 +142,8 @@ class Test_fragments_fromstring(unittest.TestCase):
 
 class Test_fragment_fromstring(unittest.TestCase):
     def call_it(self, *args, **kwargs):
+        if html5lib is None:
+            raise unittest.SkipTest("html5lib is not installed")
         from lxml.html.html5parser import fragment_fromstring
         return fragment_fromstring(*args, **kwargs)
 
@@ -218,6 +187,8 @@ class Test_fragment_fromstring(unittest.TestCase):
 
 class Test_fromstring(unittest.TestCase):
     def call_it(self, *args, **kwargs):
+        if html5lib is None:
+            raise unittest.SkipTest("html5lib is not installed")
         from lxml.html.html5parser import fromstring
         return fromstring(*args, **kwargs)
 
@@ -233,7 +204,7 @@ class Test_fromstring(unittest.TestCase):
 
     def test_returns_whole_doc_if_input_is_encoded(self):
         parser = DummyParser(root='the doc')
-        input = '<!DOCTYPE html>'.encode('ascii')
+        input = b'<!DOCTYPE html>'
         self.assertEqual(self.call_it(input, parser=parser),
                          'the doc')
 
@@ -288,12 +259,10 @@ class Test_fromstring(unittest.TestCase):
         not_a_string = None
         self.assertRaises(TypeError, self.call_it, not_a_string)
 
-    @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration_whole_doc(self):
         elem = self.call_it(XHTML_TEST_DOCUMENT)
         self.assertEqual(elem.tag, xhtml_tag('html'))
 
-    @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration_single_fragment(self):
         elem = self.call_it('<p></p>')
         self.assertEqual(elem.tag, xhtml_tag('p'))
@@ -301,6 +270,8 @@ class Test_fromstring(unittest.TestCase):
 
 class Test_parse(unittest.TestCase):
     def call_it(self, *args, **kwargs):
+        if html5lib is None:
+            raise unittest.SkipTest("html5lib is not installed")
         from lxml.html.html5parser import parse
         return parse(*args, **kwargs)
 
@@ -320,12 +291,9 @@ class Test_parse(unittest.TestCase):
 
     def test_with_file_object(self):
         parser = DummyParser(doc='the doc')
-        fp = open(__file__)
-        try:
+        with open(__file__) as fp:
             self.assertEqual(self.call_it(fp, parser=parser), 'the doc')
             self.assertEqual(parser.parse_args, (fp,))
-        finally:
-            fp.close()
 
     def test_with_file_name(self):
         parser = DummyParser(doc='the doc')
@@ -362,7 +330,6 @@ class Test_parse(unittest.TestCase):
         finally:
             os.unlink(tmpfile.name)
 
-    @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration(self):
         doc = self.call_it(StringIO(XHTML_TEST_DOCUMENT))
         root = doc.getroot()
@@ -383,7 +350,7 @@ class HTMLElementMaker(ElementMaker):
         ElementMaker.__init__(self, **initargs)
 
 
-class DummyParser(object):
+class DummyParser:
     def __init__(self, doc=None, root=None,
                  fragments=None, namespaceHTMLElements=True):
         self.doc = doc or DummyElementTree(root=root)
@@ -401,12 +368,12 @@ class DummyParser(object):
         return self.fragments
 
 
-class DummyTreeBuilder(object):
+class DummyTreeBuilder:
     def __init__(self, namespaceHTMLElements=True):
         self.namespaceHTMLElements = namespaceHTMLElements
 
 
-class DummyElementTree(object):
+class DummyElementTree:
     def __init__(self, root):
         self.root = root
 
@@ -414,7 +381,7 @@ class DummyElementTree(object):
         return self.root
 
 
-class DummyElement(object):
+class DummyElement:
     def __init__(self, tag='tag', tail=None):
         self.tag = tag
         self.tail = tail

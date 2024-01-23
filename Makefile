@@ -1,16 +1,11 @@
-PYTHON?=python
-PYTHON3?=python3
+PYTHON?=python3
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
-LXMLVERSION:=$(shell $(PYTHON3) -c 'import re; print(re.findall(r"__version__\s*=\s*\"([^\"]+)\"", open("src/lxml/__init__.py").read())[0])' )
+LXMLVERSION:=$(shell $(PYTHON) -c 'import re; print(re.findall(r"__version__\s*=\s*\"([^\"]+)\"", open("src/lxml/__init__.py").read())[0])' )
 
-PARALLEL?=$(shell $(PYTHON) -c 'import sys; print("-j7" if sys.version_info >= (3, 5) else "")' )
-PARALLEL3?=$(shell $(PYTHON3) -c 'import sys; print("-j7" if sys.version_info >= (3, 5) else "")' )
 PYTHON_WITH_CYTHON?=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
-PY3_WITH_CYTHON?=$(shell $(PYTHON3) -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
-CYTHON3_WITH_COVERAGE?=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
 PYTHON_BUILD_VERSION ?= *
 MANYLINUX_LIBXML2_VERSION=2.12.3
@@ -33,16 +28,13 @@ MANYLINUX_IMAGES= \
 	musllinux_1_1_x86_64 \
     musllinux_1_1_aarch64
 
-.PHONY: all inplace inplace3 rebuild-sdist sdist build require-cython wheel_manylinux wheel
+.PHONY: all inplace rebuild-sdist sdist build require-cython wheel_manylinux wheel
 
 all: inplace
 
 # Build in-place
 inplace:
-	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON) --warnings $(subst --,--with-,$(CYTHON_WITH_COVERAGE)) $(PARALLEL)
-
-inplace3:
-	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON) --warnings $(subst --,--with-,$(CYTHON3_WITH_COVERAGE)) $(PARALLEL3)
+	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON) --warnings $(subst --,--with-,$(CYTHON_WITH_COVERAGE)) -j7
 
 rebuild-sdist: require-cython
 	rm -f dist/lxml-$(LXMLVERSION).tar.gz
@@ -95,9 +87,6 @@ test_build: build
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON_WITH_COVERAGE)
 
-test_inplace3: inplace3
-	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON3_WITH_COVERAGE)
-
 valgrind_test_inplace: inplace
 	valgrind --tool=memcheck --leak-check=full --num-callers=30 --suppressions=valgrind-python.supp \
 		$(PYTHON) test.py
@@ -108,8 +97,8 @@ fuzz: clean
 		CFLAGS="$$CFLAGS -fsanitize=fuzzer-no-link -g2" \
 		CXX="/usr/bin/clang++" \
 		CXXFLAGS="-fsanitize=fuzzer-no-link" \
-		inplace3
-	$(PYTHON3) src/lxml/tests/fuzz_xml_parse.py
+		inplace
+	$(PYTHON) src/lxml/tests/fuzz_xml_parse.py
 
 gdb_test_inplace: inplace
 	@echo "file $(PYTHON)\nrun test.py" > .gdb.command
@@ -127,7 +116,7 @@ ftest_build: build
 ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
-apidoc: apidocclean inplace3
+apidoc: apidocclean inplace
 	@[ -x "`which sphinx-apidoc`" ] \
 		&& (echo "Generating API docs ..." && \
 			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
@@ -135,21 +124,21 @@ apidoc: apidocclean inplace3
 				"*.so" "*.pyd") \
 		|| (echo "not generating Sphinx autodoc API rst files")
 
-apihtml: apidoc inplace3
+apihtml: apidoc inplace
 	@[ -x "`which sphinx-build`" ] \
 		&& (echo "Generating API docs ..." && \
 			make -C doc/api html) \
 		|| (echo "not generating Sphinx autodoc API documentation")
 
-website: inplace3 docclean
-	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) doc/mkhtml.py doc/html . ${LXMLVERSION}
+website: inplace docclean
+	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
 
 html: apihtml website s5
 
 s5:
 	$(MAKE) -C doc/s5 slides
 
-apipdf: apidoc inplace3
+apipdf: apidoc inplace
 	rm -fr doc/api/_build
 	@[ -x "`which sphinx-build`" ] \
 		&& (echo "Generating API PDF docs ..." && \
@@ -167,8 +156,6 @@ pdf: apipdf pdfclean
 # Two pdflatex runs are needed to build the correct Table of contents.
 
 test: test_inplace
-
-test3: test_inplace3
 
 valtest: valgrind_test_inplace
 

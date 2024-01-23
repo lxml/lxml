@@ -43,10 +43,10 @@
 ... </form>
 ... </body></html>''', base_url='http://example.org/form.html')
 >>> h.base_url
-u'http://example.org/form.html'
+'http://example.org/form.html'
 >>> f = h.forms[0]
 >>> f.action
-u'http://example.org/test'
+'http://example.org/test'
 >>> f.method
 'GET'
 
