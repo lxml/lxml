@@ -2,7 +2,7 @@
 Tests for the ElementPath implementation.
 """
 
-
+import sys
 import unittest
 from copy import deepcopy
 from .common_imports import etree, HelperTestCase
@@ -296,6 +296,9 @@ class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
 
     test_cache = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_cache)
     test_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_tokenizer)
+
+    if sys.version_info < (3, 8):
+        test_xpath_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_xpath_tokenizer)
 
 
 def test_suite():
