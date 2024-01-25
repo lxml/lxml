@@ -3342,6 +3342,10 @@ class ElementTree(ABC):
 
         return _elementTreeFactory(doc, element)
 
+    # Allow subscripting ElementTree in type annotions (PEP 560)
+    def __class_getitem__(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
 # Register _ElementTree as a virtual subclass of ElementTree
 ElementTree.register(_ElementTree)
 

@@ -1660,6 +1660,10 @@ cdef class XMLParser(_FeedParser):
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding, resolve_external)
 
+    # Allow subscripting XMLParser in type annotions (PEP 560)
+    def __class_getitem__(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
 
 cdef class XMLPullParser(XMLParser):
     """XMLPullParser(self, events=None, *, tag=None, **kwargs)
@@ -1838,6 +1842,10 @@ cdef class HTMLParser(_FeedParser):
         _BaseParser.__init__(self, parse_options, True, schema,
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding)
+
+    # Allow subscripting HTMLParser in type annotions (PEP 560)
+    def __class_getitem__(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
 
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
