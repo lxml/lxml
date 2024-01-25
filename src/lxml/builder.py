@@ -227,6 +227,10 @@ class ElementMaker:
     def __getattr__(self, tag):
         return partial(self, tag)
 
+    # Allow subscripting ElementMaker in type annotions (PEP 560)
+    def __class_getitem__(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
 
 # create factory object
 E = ElementMaker()

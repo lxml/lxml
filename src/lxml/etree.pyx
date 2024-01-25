@@ -1947,6 +1947,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             # so what ...
             return self
 
+    # Allow subscripting ElementTree in type annotions (PEP 560)
+    def __class_getitem__(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
     # not in ElementTree
     @property
     def docinfo(self) -> DocInfo:

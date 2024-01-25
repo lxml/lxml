@@ -95,6 +95,10 @@ cdef class _IDDict:
     def get(self, id_name):
         return self[id_name]
 
+    # Allow subscripting _IDDict in type annotions (PEP 560)
+    def __class_getitem__(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
     def __contains__(self, id_name):
         cdef tree.xmlID* c_id
         id_utf = _utf8(id_name)

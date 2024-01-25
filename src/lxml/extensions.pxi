@@ -733,6 +733,11 @@ cdef class _ElementUnicodeResult(unicode):
     def is_attribute(self):
         return self.attrname is not None
 
+    # Allow subscripting _ElementUnicodeResult in type annotions (PEP 560)
+    def __class_getitem__(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
+
 cdef object _elementStringResultFactory(string_value, _Element parent,
                                         attrname, bint is_tail):
     result = _ElementUnicodeResult(string_value)
