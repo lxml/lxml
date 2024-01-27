@@ -61,7 +61,7 @@ jobs:
 
     - name: Release
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
-      if: startsWith(github.ref, 'refs/tags/')
+      if: github.ref_type == 'tag'
       with:
         files: dist/*.tar.gz
 
@@ -152,7 +152,7 @@ jobs:
     name: Upload Release Assets
     needs: [ build_wheels ]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags')
+    if: github.ref_type == 'tag'
 
     steps:
       - name: Download bdist files
