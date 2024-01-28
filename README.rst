@@ -74,13 +74,18 @@ Another supporter of the lxml project is
 Project income report
 ---------------------
 
-lxml has `about 60 million downloads <https://pypistats.org/packages/lxml>`_
+lxml has `about 80 million downloads <https://pypistats.org/packages/lxml>`_
 per month on PyPI.
+
+* Total project income in 2023: EUR 2776.56  (231,38 € / month)
+
+  - Tidelift: EUR 2738.46
+  - Paypal: EUR 38.10
 
 * Total project income in 2022: EUR 2566.38  (213.87 € / month)
 
   - Tidelift: EUR 2539.38
-  - Paypal: EUR 27.00
+  - Paypal: EUR 24.32
 
 * Total project income in 2021: EUR 4640.37  (386.70 € / month)
 
