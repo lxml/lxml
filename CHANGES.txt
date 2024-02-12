@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+5.0.2 (2024-??-??)
+==================
+
+Other changes
+-------------
+
+* Binary wheels use the library versions libxml2 2.12.5 and libxslt 1.1.39.
+
+
 5.0.1 (2024-01-05)
 ==================
 
