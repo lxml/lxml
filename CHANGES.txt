@@ -10,6 +10,11 @@ Bugs fixed
 
 * LP#2048920: ``iterlinks()`` in ``lxml.html`` rejected ``bytes`` input in 5.1.0.
 
+Other changes
+-------------
+
+* Binary wheels use the library versions libxml2 2.12.3 and libxslt 1.1.39.
+
 * Built with Cython 3.0.8.
 
 
