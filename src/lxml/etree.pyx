@@ -59,6 +59,8 @@ from libc cimport limits, stdio, stdlib
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 from libc.string cimport const_char
 
+from abc import ABC
+
 cdef object os_path_abspath
 from os.path import abspath as os_path_abspath
 
@@ -3058,18 +3060,31 @@ cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name) noexcept:
 
 # module-level API for ElementTree
 
-def Element(_tag, attrib=None, nsmap=None, **_extra):
+
+class Element(ABC):
     """Element(_tag, attrib=None, nsmap=None, **_extra)
 
-    Element factory.  This function returns an object implementing the
+    Element class. An instance of this class is an object implementing the
     Element interface.
+
+        >>> element = Element("test")
+        >>> type(element)
+        <class 'lxml.etree._Element'>
+        >>> isinstance(element, Element)
+        True
+        >>> issubclass(_Element, Element)
+        True
 
     Also look at the `_Element.makeelement()` and
     `_BaseParser.makeelement()` methods, which provide a faster way to
     create an Element within a specific document or parser context.
     """
-    return _makeElement(_tag, NULL, None, None, None, None,
-                        attrib, nsmap, _extra)
+    def __new__(cls, _tag, attrib=None, nsmap=None, **_extra):
+        return _makeElement(_tag, NULL, None, None, None, None,
+                               attrib, nsmap, _extra)
+
+# Register _Element as a virtual subclass of Element
+Element.register(_Element)
 
 
 def Comment(text=None):
@@ -3185,7 +3200,8 @@ def SubElement(_Element _parent not None, _tag,
     return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
 
 
-def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
+class ElementTree(ABC):
+  def __new__(cls, _Element element=None, *, file=None, _BaseParser parser=None):
     """ElementTree(element=None, file=None, parser=None)
 
     ElementTree wrapper class.
@@ -3209,6 +3225,9 @@ def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
         doc = _documentFactory(c_doc, parser)
 
     return _elementTreeFactory(doc, element)
+
+# Register _ElementTree as a virtual subclass of ElementTree
+ElementTree.register(_ElementTree)
 
 
 def HTML(text, _BaseParser parser=None, *, base_url=None):
