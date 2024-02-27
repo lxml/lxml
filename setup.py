@@ -78,6 +78,7 @@ if 'setuptools' in sys.modules:
             'cssselect': 'cssselect>=0.7',
             'html5': 'html5lib',
             'htmlsoup': 'BeautifulSoup4',
+            'html_clean': 'lxml_html_clean',
         }
 
 extra_options.update(setupinfo.extra_setup_args())
