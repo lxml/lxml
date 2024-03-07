@@ -7,8 +7,8 @@ import os.path
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
 
-if sys.version_info[:2] < (3, 6):
-    print("This lxml version requires Python 3.6 or later.")
+if sys.version_info[:2] < (3, 7):
+    print("This lxml version requires Python 3.7 or later.")
     sys.exit(1)
 
 try:
@@ -61,7 +61,7 @@ if 'setuptools' in sys.modules:
     extra_options['zip_safe'] = False
     extra_options['python_requires'] = (
         # NOTE: keep in sync with Trove classifier list below.
-        '>=3.6')
+        '>=3.7')
 
     try:
         import pkg_resources
@@ -255,7 +255,6 @@ an appropriate version of Cython installed.
         'Programming Language :: Cython',
         # NOTE: keep in sync with 'python_requires' list above.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
