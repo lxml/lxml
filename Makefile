@@ -47,7 +47,7 @@ dist/lxml-$(LXMLVERSION).tar.gz:
 sdist: dist/lxml-$(LXMLVERSION).tar.gz
 
 build:
-	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
+	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON) --warnings
 
 require-cython:
 	@[ -n "$(PYTHON_WITH_CYTHON)" ] || { \
@@ -76,10 +76,10 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
 wheel:
-	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON) --warnings
 
 wheel_static:
-	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON) --static-deps
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON) --warnings --static-deps
 
 test_build: build
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
