@@ -467,6 +467,23 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual([root[1]], list(root.iter('body')))
         self.assertEqual([root[1][0]], list(root.iter('p')))
 
+    def test_html_pull_parser_chunky(self):
+        # See https://bugs.launchpad.net/lxml/+bug/2058828
+        parser = self.etree.HTMLPullParser()
+        parser.feed(b'<html><body><a href="2011-03-13_')
+        parser.feed(b'135411/">2011-03-13_135411/</a></body></html>')
+
+        events = parser.read_events()
+        self.assertEqual(
+            ['a', 'body', 'html'],
+            [el.tag for _, el in events])
+        root = parser.close()
+
+        self.assertEqual('html', root.tag)
+        self.assertEqual('body', root[0].tag)
+        self.assertEqual('a', root[0][0].tag)
+        self.assertEqual('2011-03-13_135411/', root[0][0].get("href"))
+
     def test_html_parser_target_tag(self):
         assertFalse  = self.assertFalse
         events = []
