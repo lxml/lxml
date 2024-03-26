@@ -178,7 +178,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
         result = cythonize(result, compiler_directives=cythonize_directives)
 
         # Fix compiler warning due to missing pragma-push in Cython 3.0.9.
-        for ext in ext_modules:
+        for ext in result:
             for source_file in ext.sources:
                 if not source_file.endswith('.c'):
                     continue
