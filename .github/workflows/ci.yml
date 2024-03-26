@@ -92,7 +92,7 @@ jobs:
             python-version: "3.10"
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.11.6,
+              LIBXML2_VERSION: 2.11.7,
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs211"
