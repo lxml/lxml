@@ -458,6 +458,8 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_pull_parser_chunky(self):
         # See https://bugs.launchpad.net/lxml/+bug/2058828
+        if self.etree.LIBXML2_VERSION < (2, 11):
+            return
         parser = self.etree.HTMLPullParser()
         parser.feed(b'<html><body><a href="2011-03-13_')
         parser.feed(b'135411/">2011-03-13_135411/</a></body></html>')
