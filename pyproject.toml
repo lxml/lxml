@@ -1,9 +1,9 @@
 [build-system]
-requires = ["Cython>=3.0.8", "setuptools", "wheel"]
+requires = ["Cython>=3.0.9", "setuptools", "wheel"]
 
 [tool.cibuildwheel]
 build-verbosity = 2
-environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.12.5", LIBXSLT_VERSION = "1.1.39"}
+environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.12.6", LIBXSLT_VERSION = "1.1.39"}
 skip = ["pp*-manylinux_aarch64", "pp*-manylinux_i686", "*-musllinux_i686"]
 # test-command = "python {package}/test.py -p -v"
 
@@ -18,12 +18,12 @@ NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
 LDFLAGS = "-flto"
 STATIC_DEPS = "true"
-LIBXML2_VERSION = "2.12.5"
+LIBXML2_VERSION = "2.12.6"
 LIBXSLT_VERSION = "1.1.39"
 
 [[tool.cibuildwheel.overrides]]
 select = "*aarch64"
-environment = {CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72", AR = "gcc-ar", NM = "gcc-nm", RANLIB = "gcc-ranlib", LDFLAGS = "-flto", STATIC_DEPS = "true", LIBXML2_VERSION = "2.12.5", LIBXSLT_VERSION = "1.1.39" }
+environment = {CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72", AR = "gcc-ar", NM = "gcc-nm", RANLIB = "gcc-ranlib", LDFLAGS = "-flto", STATIC_DEPS = "true", LIBXML2_VERSION = "2.12.6", LIBXSLT_VERSION = "1.1.39" }
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "x86"]
