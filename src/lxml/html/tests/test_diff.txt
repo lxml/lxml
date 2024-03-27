@@ -54,8 +54,8 @@ As a special case, changing the href of a link is displayed, and
 images are treated like words:
 
     >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://google.com">search</a>')
-    <a href="http://google.com">search <ins> Link: http://google.com</ins>
-    <del> Link: http://yahoo.com</del> </a>
+    <a href="http://google.com">search <ins> Link: http://google.com
+    </ins> <del> Link: http://yahoo.com</del> </a>
     >>> pdiff('<p>Print this <img src="print.gif"></p>', '<p>Print this</p>')
     <p>Print this <del><img src="print.gif"></del> </p>
     >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://yahoo.com">search</a>')
@@ -86,6 +86,21 @@ Whitespace is generally ignored for the diff but preserved during the diff:
     <pre>first
     second
      <ins>third</ins> </pre>
+
+Ensure we preserve the html structure on doing the diff:
+
+    >>> a = "<div id='first'>some old text</div><div id='last'>more old text</div>"
+    >>> b = "<div id='first'>some old text</div><div id='middle'>and new text</div><div id='last'>more old text</div>"
+    >>> pdiff(a, b)
+    <div id="first"><ins>some old text</ins></div> <div id="middle">
+    <ins>and new</ins> <del>some old</del> text</div><div id="last">more
+    old text</div>
+    >>> a = "<div><p>Some text that will change</p><p>Some tags will be added</p></div>"
+    >>> b = "<div><div><p>Some text that has changed a bit</p><p>All of this is new</p></div></div>"
+    >>> pdiff(a, b)
+    <div><div><p>Some text that <ins>has changed a bit</ins> </p>
+    <p><ins>All of this is new</ins></p> </div> <del>will
+    change</del><p><del>Some tags will be added</del></p> </div>
 
 The sixteen combinations::
 
