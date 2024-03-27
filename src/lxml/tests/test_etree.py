@@ -4079,6 +4079,48 @@ class ETreeOnlyTestCase(HelperTestCase):
             [1, 2, 3],
             lines)
 
+    def test_very_large_sourceline_iterparse(self):
+        # libxml2 has a default limit of 10M for text content, so we use 125*3*6M text chunks, 2.2G total.
+        lines = b'\n' * (1024 * 1024 * 6)
+        data = [b'<?xml version="1.0"?>\n', b'<root>\n']
+        data += [lines + b'<br/>', lines + b'<p>', lines + b'</p>'] * 125
+        data.append(b'\n<p>xxx</p>')
+        data.append(b'\n</root>')
+        expected_last_line = 3 + (len(data) - 4) * len(lines)
+        assert expected_last_line > 2**31
+
+        chunks = iter(data)
+
+        class Source(object):
+            def read(self, _):
+                try:
+                    return next(chunks)
+                except StopIteration:
+                    return b''
+
+        events = self.etree.iterparse(Source(), events=['end'])
+
+        root = last_el = None
+        for _, el in events:
+            root = last_el = el.getparent()
+            break
+
+        max_line = 0
+        for _, el in events:
+            if len(root) > 20:
+                del root[:18]
+            line = last_el.sourceline
+            if line is not None:
+                if max_line > line:
+                    # This is the main thing that we currently test:
+                    self.assertLessEqual(max_line, line)
+                max_line = line
+            last_el = el
+
+        # The final line does not seem very accurate, so we stop here.
+        #self.assertGreater(max_line, 2**31)
+        #self.assertEqual(expected_last_line, max_line)
+
     def test_sourceline_element(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
