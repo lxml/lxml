@@ -2,11 +2,14 @@
 lxml changelog
 ==============
 
-5.0.2 (2024-??-??)
+5.0.2 (2024-03-28)
 ==================
 
 Other changes
 -------------
+
+* GH#407: A compatibility test was adapted to recent expat versions.
+  Patch by Miro Hrončok.
 
 * Binary wheels use the library versions libxml2 2.12.6 and libxslt 1.1.39.
 
