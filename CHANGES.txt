@@ -50,13 +50,18 @@ Other changes
   Patch by Primož Godec.
 
 
-5.0.2 (2024-??-??)
+5.0.2 (2024-03-28)
 ==================
 
 Other changes
 -------------
 
-* Binary wheels use the library versions libxml2 2.12.5 and libxslt 1.1.39.
+* GH#407: A compatibility test was adapted to recent expat versions.
+  Patch by Miro Hrončok.
+
+* Binary wheels use the library versions libxml2 2.12.6 and libxslt 1.1.39.
+
+* Built with Cython 3.0.9.
 
 
 5.0.1 (2024-01-05)

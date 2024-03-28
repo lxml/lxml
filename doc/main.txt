@@ -262,6 +262,8 @@ See the websites of lxml
 
 * `lxml 5.1.0`_, released 2024-01-05 (`changes for 5.1.0`_)
 
+* `lxml 5.0.2`_, released 2024-03-28 (`changes for 5.0.2`_)
+
 * `lxml 5.0.1`_, released 2024-01-05 (`changes for 5.0.1`_)
 
 * `lxml 5.0.0`_, released 2023-12-29 (`changes for 5.0.0`_)
@@ -279,6 +281,7 @@ See the websites of lxml
 * `older releases <https://lxml.de/4.9/#old-versions>`_
 
 .. _`lxml 5.1.0`: /files/lxml-5.1.0.tgz
+.. _`lxml 5.0.2`: /files/lxml-5.0.2.tgz
 .. _`lxml 5.0.1`: /files/lxml-5.0.1.tgz
 .. _`lxml 5.0.0`: /files/lxml-5.0.0.zip
 .. _`lxml 4.9.4`: /files/lxml-4.9.4.tgz
@@ -288,6 +291,7 @@ See the websites of lxml
 .. _`lxml 4.9.0`: /files/lxml-4.9.0.tgz
 
 .. _`changes for 5.1.0`: /changes-5.1.0.html
+.. _`changes for 5.0.2`: /changes-5.0.2.html
 .. _`changes for 5.0.1`: /changes-5.0.1.html
 .. _`changes for 5.0.0`: /changes-5.0.0.html
 .. _`changes for 4.9.4`: /changes-4.9.4.html
