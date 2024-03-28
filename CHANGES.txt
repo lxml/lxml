@@ -10,6 +10,12 @@ Bugs fixed
 
 * LP#2048920: ``iterlinks()`` in ``lxml.html`` rejected ``bytes`` input in 5.1.0.
 
+* High source line numbers from the parser are no longer truncated
+  (up to a C ``long``) when using libxml2 2.11 or later.
+
+* GH#407: A compatibility test was adapted to recent expat versions.
+  Patch by Miro Hrončok.
+
 Other changes
 -------------
 
