@@ -54,7 +54,7 @@ _looks_like_tag_content = re.compile(
 # All kinds of schemes besides just javascript: that can cause
 # execution:
 _find_image_dataurls = re.compile(
-    r'data:image/(.+);base64,', re.I).findall
+    r'data:image/(.+?);base64,', re.I).findall
 _possibly_malicious_schemes = re.compile(
     r'(javascript|jscript|livescript|vbscript|data|about|mocha):',
     re.I).findall
