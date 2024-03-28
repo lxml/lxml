@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-5.1.1 (2024-??-??)
+5.1.1 (2024-03-28)
 ==================
 
 Bugs fixed
@@ -21,7 +21,7 @@ Other changes
 
 * Binary wheels use the library versions libxml2 2.12.6 and libxslt 1.1.39.
 
-* Windows binary wheels use the library versions libxml2 2.11.7 and 1.1.39.
+* Windows binary wheels use the library versions libxml2 2.11.7 and libxslt 1.1.39.
 
 * Built with Cython 3.0.9.
 
