@@ -25,7 +25,7 @@ from itertools import islice
 
 from .common_imports import (
     BytesIO, etree, HelperTestCase,
-    ElementTree, cElementTree, ET_VERSION, CET_VERSION,
+    ElementTree, cElementTree, ET_VERSION, CET_VERSION, IS_PYPY,
     filter_by_version, fileInTestDir, canonicalize, tmpfile,
     _str, _bytes, unicode, IS_PYTHON2
 )
@@ -4420,14 +4420,14 @@ class _XMLPullParserTest(unittest.TestCase):
         self.assertEqual(root.tag, 'root')
 
     def test_simple_xml_chunk_1(self):
-        if self.etree is not etree and pyexpat.version_info >= (2, 6, 0):
+        if self.etree is not etree and (pyexpat.version_info >= (2, 6, 0) or IS_PYPY):
             raise unittest.SkipTest(
                 "Feeding the parser by too small chunks defers parsing"
             )
         self.test_simple_xml(chunk_size=1)
 
     def test_simple_xml_chunk_5(self):
-        if self.etree is not etree and pyexpat.version_info >= (2, 6, 0):
+        if self.etree is not etree and (pyexpat.version_info >= (2, 6, 0) or IS_PYPY):
             raise unittest.SkipTest(
                 "Feeding the parser by too small chunks defers parsing"
             )
