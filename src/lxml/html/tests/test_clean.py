@@ -256,6 +256,31 @@ class CleanerTest(unittest.TestCase):
                 cleaned,
                 "%s  ->  %s" % (url, cleaned))
 
+    def test_image_data_links_in_inline_style(self):
+        safe_attrs = set(lxml.html.defs.safe_attrs)
+        safe_attrs.add('style')
+
+        cleaner = Cleaner(
+            safe_attrs_only=True,
+            safe_attrs=safe_attrs)
+
+        data = b'123'
+        data_b64 = base64.b64encode(data).decode('ASCII')
+        url = "url(data:image/jpeg;base64,%s)" % data_b64
+        styles = [
+            "background: %s" % url,
+            "background: %s; background-image: %s" % (url, url),
+        ]
+        for style in styles:
+            html = '<div style="%s"></div>' % style
+            s = lxml.html.fragment_fromstring(html)
+
+            cleaned = lxml.html.tostring(cleaner.clean_html(s))
+            self.assertEqual(
+                html.encode("UTF-8"),
+                cleaned,
+                "%s  ->  %s" % (style, cleaned))
+
     def test_formaction_attribute_in_button_input(self):
         # The formaction attribute overrides the form's action and should be
         # treated as a malicious link attribute
