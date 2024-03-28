@@ -4080,6 +4080,8 @@ class ETreeOnlyTestCase(HelperTestCase):
             lines)
 
     def test_very_large_sourceline_iterparse(self):
+        if self.etree.LIBXML_VERSION < (2, 11):
+            return
         # libxml2 has a default limit of 10M for text content, so we use 125*3*6M text chunks, 2.2G total.
         lines = b'\n' * (1024 * 1024 * 6)
         data = [b'<?xml version="1.0"?>\n', b'<root>\n']
