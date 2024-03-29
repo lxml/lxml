@@ -152,7 +152,6 @@ jobs:
     name: Upload Release Assets
     needs: [ build_wheels ]
     runs-on: ubuntu-latest
-    if: github.ref_type == 'tag'
 
     permissions:
       contents: write
@@ -174,5 +173,6 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
           files: ./wheel_upload/*.whl
