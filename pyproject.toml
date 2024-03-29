@@ -12,7 +12,7 @@ archs = ["x86_64", "aarch64", "i686"]
 repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
-CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2"
+CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=sandybridge"
 AR = "gcc-ar"
 NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
