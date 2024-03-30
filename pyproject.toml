@@ -8,11 +8,11 @@ skip = ["pp*-manylinux_i686", "*-musllinux_i686"]
 # test-command = "python {package}/test.py -p -v"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64", "i686"] # , "ppc64le", "s390x"]
+archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x"]
 repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
-CFLAGS = "-O3 -g1 -pipe -fPIC -flto -mtune=generic"
+CFLAGS = "-O3 -g1 -pipe -fPIC -flto"
 AR = "gcc-ar"
 NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
@@ -24,12 +24,12 @@ LIBXSLT_VERSION = "1.1.39"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
 inherit.environment = "append"
-environment.CFLAGS="-O3 -g1 -pipe -fPIC -flto -march=sandybridge"
+environment.CFLAGS="-O3 -g1 -pipe -fPIC -flto -march=sandybridge -mtune=generic"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_x86_64"
 inherit.environment = "append"
-environment.CFLAGS="-O3 -g1 -pipe -fPIC -flto -march=sandybridge"
+environment.CFLAGS="-O3 -g1 -pipe -fPIC -flto -march=sandybridge -mtune=generic"
 
 [[tool.cibuildwheel.overrides]]
 select = "*aarch64"
