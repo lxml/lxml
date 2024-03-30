@@ -22,6 +22,8 @@ Other changes
 * The minimum CPU architecture for the Linux x86 binary wheels was upgraded to
   "sandybridge" (launched 2011), and glibc 2.28 / gcc 12 (manylinux_2_28) wheels were added.
 
+* Built with Cython 3.0.10.
+
 
 5.1.1 (2024-03-28)
 ==================
