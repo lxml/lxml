@@ -53,6 +53,10 @@ jobs:
 
         include:
           - os: ubuntu-latest
+            python-version: "3.13-dev"
+            allowed_failure: true
+
+          - os: ubuntu-latest
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
