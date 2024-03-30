@@ -107,7 +107,7 @@ if [[ "$COVERAGE" != "true" ]]; then
   echo "Building a clean wheel ..."
   GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
         CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
-        LDFLAGS="-flto $EXTRA_LDFLAGS" \
+        LDFLAGS="-flto -fPIC $EXTRA_LDFLAGS" \
         make clean wheel || exit 1
 fi
 
