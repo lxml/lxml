@@ -4,7 +4,7 @@ requires = ["Cython>=3.0.10", "setuptools", "wheel"]
 [tool.cibuildwheel]
 build-verbosity = 2
 environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.12.6", LIBXSLT_VERSION = "1.1.39"}
-skip = ["pp*-manylinux_i686", "*-musllinux_i686"]
+skip = ["pp*-manylinux_i686", "*-musllinux_i686", "cp38_macosx_universal2"]
 # test-command = "python {package}/test.py -p -v"
 
 [tool.cibuildwheel.linux]
