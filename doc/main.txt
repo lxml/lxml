@@ -277,6 +277,7 @@ See the websites of lxml
 
 .. _`lxml 5.2.0`: /files/lxml-5.2.0.tgz
 .. _`lxml 5.1.1`: /files/lxml-5.1.1.tgz
+.. _`lxml 5.1.0`: /files/lxml-5.1.0.tgz
 .. _`lxml 5.0.2`: /files/lxml-5.0.2.tgz
 .. _`lxml 5.0.1`: /files/lxml-5.0.1.tgz
 .. _`lxml 5.0.0`: /files/lxml-5.0.0.zip
