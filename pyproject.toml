@@ -1,3 +1,6 @@
+[project]
+name = "lxml"
+
 [build-system]
 requires = ["Cython>=3.0.10", "setuptools", "wheel"]
 
