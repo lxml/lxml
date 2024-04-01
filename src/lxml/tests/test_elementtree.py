@@ -4394,27 +4394,27 @@ class _XMLPullParserTest(unittest.TestCase):
                    chunk_size)
         self.assert_event_tags(parser, [])
         self._feed(parser, ">\n", chunk_size)
-        self.assert_event_tags(parser, [('end', 'element')])
         self._feed(parser, "<element>text</element>tail\n", chunk_size)
         self._feed(parser, "<empty-element/>\n", chunk_size)
+        self._feed(parser, "</root>\n", chunk_size)
         self.assert_event_tags(parser, [
             ('end', 'element'),
+            ('end', 'element'),
             ('end', 'empty-element'),
+            ('end', 'root'),
             ])
-        self._feed(parser, "</root>\n", chunk_size)
-        self.assert_event_tags(parser, [('end', 'root')])
         root = self._close_and_return_root(parser)
         self.assertEqual(root.tag, 'root')
 
     def test_simple_xml_chunk_1(self):
-        if self.etree is not etree and (pyexpat.version_info >= (2, 6, 0) or IS_PYPY):
+        if self.etree is not etree and pyexpat.version_info >= (2, 6, 0):
             raise unittest.SkipTest(
                 "Feeding the parser by too small chunks defers parsing"
             )
         self.test_simple_xml(chunk_size=1)
 
     def test_simple_xml_chunk_5(self):
-        if self.etree is not etree and (pyexpat.version_info >= (2, 6, 0) or IS_PYPY):
+        if self.etree is not etree and pyexpat.version_info >= (2, 6, 0):
             raise unittest.SkipTest(
                 "Feeding the parser by too small chunks defers parsing"
             )
