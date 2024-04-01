@@ -160,8 +160,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 5.2.0`_, released 2024-03-30
-(`changes for 5.2.0`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 5.2.1`_, released 2024-04-02
+(`changes for 5.2.1`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -259,7 +259,9 @@ See the websites of lxml
 ..
    and the `latest in-development version <https://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-5.2.0.pdf
+.. _`PDF documentation`: lxmldoc-5.2.1.pdf
+
+* `lxml 5.2.1`_, released 2024-04-02 (`changes for 5.2.1`_)
 
 * `lxml 5.2.0`_, released 2024-03-30 (`changes for 5.2.0`_)
 
@@ -275,6 +277,7 @@ See the websites of lxml
 
 * `older releases <https://lxml.de/5.0/#old-versions>`_
 
+.. _`lxml 5.2.1`: /files/lxml-5.2.1.tgz
 .. _`lxml 5.2.0`: /files/lxml-5.2.0.tgz
 .. _`lxml 5.1.1`: /files/lxml-5.1.1.tgz
 .. _`lxml 5.1.0`: /files/lxml-5.1.0.tgz
@@ -282,6 +285,7 @@ See the websites of lxml
 .. _`lxml 5.0.1`: /files/lxml-5.0.1.tgz
 .. _`lxml 5.0.0`: /files/lxml-5.0.0.zip
 
+.. _`changes for 5.2.1`: /changes-5.2.1.html
 .. _`changes for 5.2.0`: /changes-5.2.0.html
 .. _`changes for 5.1.1`: /changes-5.1.1.html
 .. _`changes for 5.1.0`: /changes-5.1.0.html
