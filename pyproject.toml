@@ -16,7 +16,7 @@ CFLAGS = "-O3 -g1 -pipe -fPIC -flto"
 AR = "gcc-ar"
 NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
-LDFLAGS = "-flto"
+LDFLAGS = "-fPIC -flto"
 STATIC_DEPS = "true"
 LIBXML2_VERSION = "2.12.6"
 LIBXSLT_VERSION = "1.1.39"
@@ -24,12 +24,12 @@ LIBXSLT_VERSION = "1.1.39"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
 inherit.environment = "append"
-environment.CFLAGS="-O3 -g1 -pipe -fPIC -flto -march=sandybridge -mtune=generic"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_x86_64"
 inherit.environment = "append"
-environment.CFLAGS="-O3 -g1 -pipe -fPIC -flto -march=sandybridge -mtune=generic"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -msse4.1 -msse4.2 -mtune=generic"
 
 [[tool.cibuildwheel.overrides]]
 select = "*aarch64"
