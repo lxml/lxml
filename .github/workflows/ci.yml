@@ -172,6 +172,7 @@ jobs:
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
+        if: runner.os == 'Linux' || runner.os == 'macOS'
         with:
           max_size: 950M
           create-symlink: true
