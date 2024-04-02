@@ -11,6 +11,9 @@ Bugs fixed
 * LP#2059910: The minimum CPU architecture for the Linux x86 binary wheels was set back to
   "core2", but with SSE 4.2 enabled.
 
+* LP#2059977: ``Element.iterfind("//absolute_path")`` failed with a ``SyntaxError``
+  where it should have issued a warning.
+
 * GH#416: The documentation build was using the non-standard ``which`` command.
   Patch by Michał Górny.
 
