@@ -170,11 +170,11 @@ jobs:
           brew install automake libtool ccache
           ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
 
-      - name: Cache [ccache]
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          path: ~/.ccache
+          create-symlink: true
+          verbose: 1
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
       - name: Cache [libs]
