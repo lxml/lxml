@@ -268,11 +268,6 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("./tag")),
                          ['tag', 'tag'])
 
-        # FIXME: ET's Path module handles this case incorrectly; this gives
-        # a warning in 1.3, and the behaviour will be modified in 1.4.
-        self.assertWarnsRegex(
-            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
-            etree.ElementTree(elem).findall, "/tag")
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/tag")),
                          ['tag', 'tag'])
         # This would be correct:
@@ -288,6 +283,32 @@ class EtreeElementPathTestCase(HelperTestCase):
                          ['tag', 'tag'])
         self.assertEqual(summarize_list(elem.findall(".//tag[@class][@id]")),
                          ['tag', 'tag'])
+
+    def test_find_warning(self):
+        elem = etree.XML("""
+        <body>
+          <tag class='a'>text</tag>
+          <tag class='b' />
+          <section>
+            <tag class='b' id='inner'>subtext</tag>
+          </section>
+        </body>
+        """)
+
+        # FIXME: ET's Path module handles this case incorrectly; this gives
+        # a warning in 1.3, and the behaviour will be modified in the future.
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).findall, "/tag")
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).findtext, "/tag")
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).iterfind, "/tag")
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).iterfind, "/tag")
 
 
 class ElementTreeElementPathTestCase(EtreeElementPathTestCase):

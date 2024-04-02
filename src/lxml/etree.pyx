@@ -2306,6 +2306,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         root = self.getroot()
         if _isString(path):
             if path[:1] == "/":
+                path = "." + path
                 from warnings import warn
                 warn(
                     "This search incorrectly ignores the root element, and will be "
