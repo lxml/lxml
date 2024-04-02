@@ -176,7 +176,7 @@ jobs:
           max_size: 950M
           create-symlink: true
           verbose: 1
-          key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
+          key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}-${{ hashFiles('.github/workflows/ci.yml', 'tools/ci-run.sh') }}
 
       - name: Cache [libs]
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
