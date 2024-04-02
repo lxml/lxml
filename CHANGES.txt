@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+5.1.2 (2024-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#2059977: ``Element.iterfind("//absolute_path")`` failed with a ``SyntaxError``
+  where it should have issued a warning.
+
+
 5.1.1 (2024-03-28)
 ==================
 
