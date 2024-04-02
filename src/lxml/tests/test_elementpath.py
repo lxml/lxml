@@ -285,6 +285,7 @@ class EtreeElementPathTestCase(HelperTestCase):
                          ['tag', 'tag'])
 
     def test_find_warning(self):
+        etree = self.etree
         elem = etree.XML("""
         <body>
           <tag class='a'>text</tag>
@@ -305,7 +306,7 @@ class EtreeElementPathTestCase(HelperTestCase):
             etree.ElementTree(elem).findtext, "/tag")
         self.assertWarnsRegex(
             FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
-            etree.ElementTree(elem).iterfind, "/tag")
+            etree.ElementTree(elem).find, "/tag")
         self.assertWarnsRegex(
             FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
             etree.ElementTree(elem).iterfind, "/tag")
