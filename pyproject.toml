@@ -12,12 +12,20 @@ skip = [
     # Reduce job load and HTTP hit rate on library servers.
     "cp36-manylinux_aarch64",
     "cp37-manylinux_aarch64",
+    "cp36-musllinux_aarch64",
+    "cp37-musllinux_aarch64",
     "cp36-manylinux_ppc64le",
     "cp37-manylinux_ppc64le",
     "cp38-manylinux_ppc64le",
+    "cp36-musllinux_ppc64le",
+    "cp37-musllinux_ppc64le",
+    "cp38-musllinux_ppc64le",
     "cp36-manylinux_s390x",
     "cp37-manylinux_s390x",
     "cp38-manylinux_s390x",
+    "cp36-musllinux_s390x",
+    "cp37-musllinux_s390x",
+    "cp38-musllinux_s390x",
 ]
 # test-command = "python {package}/test.py -p -v"
 
