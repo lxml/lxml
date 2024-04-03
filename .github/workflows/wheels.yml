@@ -137,6 +137,16 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
+      - name: Build old Linux wheels
+        # also build wheels with the most recent manylinux images and gcc
+        if: contains(matrix.only, '-manylinux-') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
+        uses: pypa/cibuildwheel@v2.17.0
+        env:
+          CIBW_MANYLINUX_i686_IMAGE: manylinux1
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
+        with:
+          only: ${{ matrix.only }}
+
       - name: Build faster Linux wheels
         # also build wheels with the most recent manylinux images and gcc
         if: runner.os == 'Linux' && !contains(matrix.only, 'i686')
