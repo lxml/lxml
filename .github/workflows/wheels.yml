@@ -138,7 +138,6 @@ jobs:
           only: ${{ matrix.only }}
 
       - name: Build old Linux wheels
-        # also build wheels with the most recent manylinux images and gcc
         if: contains(matrix.only, '-manylinux-') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
         uses: pypa/cibuildwheel@v2.17.0
         env:
