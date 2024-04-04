@@ -138,7 +138,7 @@ jobs:
           only: ${{ matrix.only }}
 
       - name: Build old Linux wheels
-        if: contains(matrix.only, '-manylinux-') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
+        if: contains(matrix.only, '-manylinux_') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
         uses: pypa/cibuildwheel@v2.17.0
         env:
           CIBW_MANYLINUX_i686_IMAGE: manylinux1
