@@ -174,7 +174,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         if: runner.os == 'Linux' || runner.os == 'macOS'
         with:
-          max-size: 950M
+          max-size: 100M
           create-symlink: true
           verbose: 1
           key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}
