@@ -572,7 +572,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
 # output to file-like objects
 
 cdef object io_open
-from io import open
+from io import open as io_open
 
 cdef object gzip
 import gzip
