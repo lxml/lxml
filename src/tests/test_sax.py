@@ -405,7 +405,7 @@ def test_suite():
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeSaxTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(NSPrefixSaxTestCase)])
     suite.addTests(
-        [make_doctest('../../../doc/sax.txt')])
+        [make_doctest('sax.txt')])
     return suite
 
 

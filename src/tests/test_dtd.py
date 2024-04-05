@@ -423,7 +423,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeDtdTestCase)])
     suite.addTests(
-        [make_doctest('../../../doc/validation.txt')])
+        [make_doctest('validation.txt')])
     return suite
 
 if __name__ == '__main__':

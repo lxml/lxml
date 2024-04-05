@@ -248,7 +248,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeRelaxNGTestCase)])
     suite.addTests(
-        [make_doctest('../../../doc/validation.txt')])
+        [make_doctest('validation.txt')])
     if rnc2rng is not None:
         suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(RelaxNGCompactTestCase)])
     return suite

@@ -5739,15 +5739,15 @@ def test_suite():
     # add doctests
     suite.addTests(doctest.DocTestSuite(etree))
     suite.addTests(
-        [make_doctest('../../../doc/tutorial.txt')])
+        [make_doctest('tutorial.txt')])
     suite.addTests(
-        [make_doctest('../../../doc/api.txt')])
+        [make_doctest('api.txt')])
     suite.addTests(
-        [make_doctest('../../../doc/FAQ.txt')])
+        [make_doctest('FAQ.txt')])
     suite.addTests(
-        [make_doctest('../../../doc/parsing.txt')])
+        [make_doctest('parsing.txt')])
     suite.addTests(
-        [make_doctest('../../../doc/resolvers.txt')])
+        [make_doctest('resolvers.txt')])
     return suite
 
 

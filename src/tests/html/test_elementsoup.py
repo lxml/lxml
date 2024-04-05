@@ -119,7 +119,7 @@ def test_suite():
     suite = unittest.TestSuite()
     if BS_INSTALLED:
         suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(SoupParserTestCase)])
-        #suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])  # FIXME: Py2-only ?
+        #suite.addTests([make_doctest('elementsoup.txt')])  # FIXME: Py2-only ?
     return suite
 
 

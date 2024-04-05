@@ -2743,7 +2743,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ObjectifyTestCase)])
     suite.addTests(doctest.DocTestSuite(objectify))
-    suite.addTests([make_doctest('../../../doc/objectify.txt')])
+    suite.addTests([make_doctest('objectify.txt')])
     return suite
 
 if __name__ == '__main__':

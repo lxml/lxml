@@ -37,6 +37,8 @@ if hasattr(ElementTree, 'VERSION'):
 else:
     ET_VERSION = (0,0,0)
 
+DOC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'doc')
+
 
 def filter_by_version(test_class, version_dict, current_version):
     """Remove test methods that do not work with the current lib version.
@@ -69,12 +71,6 @@ else:
     skipif = pytest.mark.skipif
 
 
-def _get_caller_relative_path(filename, frame_depth=2):
-    module = sys.modules[sys._getframe(frame_depth).f_globals['__name__']]
-    return os.path.normpath(os.path.join(
-            os.path.dirname(getattr(module, '__file__', '')), filename))
-
-
 unichr_escape = re.compile(r'\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}')
 
 
@@ -95,7 +91,7 @@ def BytesIO(*args):
 doctest_parser = doctest.DocTestParser()
 
 def make_doctest(filename):
-    file_path = _get_caller_relative_path(filename)
+    file_path = os.path.join(DOC_DIR, filename)
     return doctest.DocFileSuite(file_path, module_relative=False, encoding='utf-8')
 
 

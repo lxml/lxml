@@ -499,7 +499,7 @@ def test_suite():
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXMLSchemaTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXMLSchemaResolversTestCase)])
     suite.addTests(
-        [make_doctest('../../../doc/validation.txt')])
+        [make_doctest('validation.txt')])
     return suite
 
 
