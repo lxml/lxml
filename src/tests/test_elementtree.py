@@ -54,7 +54,6 @@ def et_exclude_pyversion(*version):
 class _ETreeTestCaseBase(HelperTestCase):
     etree = None
     required_versions_ET = {}
-    required_versions_cET = {}
 
     def XMLParser(self, **kwargs):
         try:
