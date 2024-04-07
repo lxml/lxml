@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+5.2.2 (2024-??-??)
+==================
+
+Bugs fixed
+----------
+
+* GH#417: The ``test_feed_parser`` test could fail if ``lxml_html_clean`` was not installed.
+  It is now skipped in that case.
+
+
 5.2.1 (2024-04-02)
 ==================
 
