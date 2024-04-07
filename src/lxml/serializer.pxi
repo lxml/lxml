@@ -403,53 +403,10 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_sibling = c_sibling.next
 
 
-# copied and adapted from libxml2
-cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val) noexcept:
-    cdef xmlChar *ptr
-    cdef const xmlChar* hexdigits = b"0123456789ABCDEF"
-
-    out[0] = b'&'
-    out += 1
-    out[0] = b'#'
-    out += 1
-    out[0] = b'x'
-    out += 1
-
-    if val < 0x10:
-        ptr = out
-    elif val < 0x100:
-        ptr = out + 1
-    elif val < 0x1000:
-        ptr = out + 2
-    elif val < 0x10000:
-        ptr = out + 3
-    elif val < 0x100000:
-        ptr = out + 4
-    else:
-        ptr = out + 5
-
-    out = ptr + 1
-    while val > 0:
-        ptr[0] = hexdigits[val & 0xF]
-        ptr -= 1
-        val >>= 4
-
-    out[0] = b';'
-    out += 1
-    out[0] = 0
-
-    return out
-
-
 # copied and adapted from libxml2 (xmlBufAttrSerializeTxtContent())
 cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
     cdef const char *base
     cdef const char *cur
-    cdef const unsigned char *ucur
-
-    cdef unsigned char tmp[12]
-    cdef int val = 0
-    cdef int l
 
     if string == NULL:
         return
@@ -511,57 +468,8 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             cur += 1
             base = cur
 
-        elif (<const unsigned char>cur[0] >= 0x80) and (cur[1] != 0):
-
-            if base != cur:
-                tree.xmlOutputBufferWrite(buf, cur - base, base)
-
-            ucur = <const unsigned char *>cur
-
-            if ucur[0] < 0xC0:
-                # invalid UTF-8 sequence
-                val = ucur[0]
-                l = 1
-
-            elif ucur[0] < 0xE0:
-                val = (ucur[0]) & 0x1F
-                val <<= 6
-                val |= (ucur[1]) & 0x3F
-                l = 2
-
-            elif (ucur[0] < 0xF0) and (ucur[2] != 0):
-                val = (ucur[0]) & 0x0F
-                val <<= 6
-                val |= (ucur[1]) & 0x3F
-                val <<= 6
-                val |= (ucur[2]) & 0x3F
-                l = 3
-
-            elif (ucur[0] < 0xF8) and (ucur[2] != 0) and (ucur[3] != 0):
-                val = (ucur[0]) & 0x07
-                val <<= 6
-                val |= (ucur[1]) & 0x3F
-                val <<= 6
-                val |= (ucur[2]) & 0x3F
-                val <<= 6
-                val |= (ucur[3]) & 0x3F
-                l = 4
-            else:
-                # invalid UTF-8 sequence
-                val = ucur[0]
-                l = 1
-
-            if (l == 1) or (not tree.xmlIsCharQ(val)):
-                raise ValueError(f"Invalid character: {val:X}")
-
-            # We could do multiple things here. Just save
-            # as a char ref
-            xmlSerializeHexCharRef(tmp, val)
-            tree.xmlOutputBufferWrite(buf, len(tmp), <const char*> tmp)
-            cur += l
-            base = cur
-
         else:
+            # Leave further encoding and escaping to the buffer encoder.
             cur += 1
 
     if base != cur:
@@ -1412,9 +1320,11 @@ cdef class _IncrementalFileWriter:
         self._status = WRITER_STARTING
         self._element_stack = []
         if encoding is None:
+            # We always need a document encoding to make the attribute serialisation
+            # of libxml2 identical to ours.
             encoding = b'ASCII'
         self._encoding = encoding
-        self._c_encoding = _cstr(encoding) if encoding is not None else NULL
+        self._c_encoding = _cstr(encoding)
         self._buffered = buffered
         self._target = _create_output_buffer(
             outfile, self._c_encoding, compresslevel, &self._c_out, close)

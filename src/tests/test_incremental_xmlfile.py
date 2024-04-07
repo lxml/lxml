@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Tests for the incremental XML serialisation API.
 """
@@ -160,6 +161,13 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 pass
         self.assertXml('<test k="V"></test>')
 
+    def test_attribute_unicode(self):
+        with etree.xmlfile(self._file, encoding="utf-8") as xf:
+            with xf.element('älämänt', attrib={"Тест": "Атрибут"}):
+                el = etree.Element("älämänt", attrib={"Тест": "Атрибут"})
+                xf.write(el)
+        self.assertXml('<älämänt Тест="Атрибут"><älämänt Тест="Атрибут"/></älämänt>')
+
     def test_escaping(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
@@ -177,31 +185,31 @@ class _XmlFileTestCaseBase(HelperTestCase):
     def test_buffering(self):
         with etree.xmlfile(self._file, buffered=False) as xf:
             with xf.element('test'):
-                self.assertXml("<test>")
+                self.assertXml("<test>", reparse=False)
                 xf.write('toast')
-                self.assertXml("<test>toast")
+                self.assertXml("<test>toast", reparse=False)
                 with xf.element('taste'):
-                    self.assertXml("<test>toast<taste>")
+                    self.assertXml("<test>toast<taste>", reparse=False)
                     xf.write('some', etree.Element("more"), "toast")
-                    self.assertXml("<test>toast<taste>some<more/>toast")
-                self.assertXml("<test>toast<taste>some<more/>toast</taste>")
+                    self.assertXml("<test>toast<taste>some<more/>toast", reparse=False)
+                self.assertXml("<test>toast<taste>some<more/>toast</taste>", reparse=False)
                 xf.write('end')
-                self.assertXml("<test>toast<taste>some<more/>toast</taste>end")
-            self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>")
+                self.assertXml("<test>toast<taste>some<more/>toast</taste>end", reparse=False)
+            self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>", reparse=False)
         self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>")
 
     def test_flush(self):
         with etree.xmlfile(self._file, buffered=True) as xf:
             with xf.element('test'):
-                self.assertXml("")
+                self.assertXml("", reparse=False)
                 xf.write('toast')
-                self.assertXml("")
+                self.assertXml("", reparse=False)
                 with xf.element('taste'):
-                    self.assertXml("")
+                    self.assertXml("", reparse=False)
                     xf.flush()
-                    self.assertXml("<test>toast<taste>")
-                self.assertXml("<test>toast<taste>")
-            self.assertXml("<test>toast<taste>")
+                    self.assertXml("<test>toast<taste>", reparse=False)
+                self.assertXml("<test>toast<taste>", reparse=False)
+            self.assertXml("<test>toast<taste>", reparse=False)
         self.assertXml("<test>toast<taste></taste></test>")
 
     def test_non_io_exception_continues_closing(self):
@@ -305,8 +313,26 @@ class _XmlFileTestCaseBase(HelperTestCase):
         if self._file is not None:
             self._file.close()
 
-    def assertXml(self, expected, encoding='utf8'):
-        self.assertEqual(self._read_file().decode(encoding), expected)
+    def assertXml(self, expected, encoding='utf8', reparse=True):
+        output = self._read_file()
+        self.assertEqual(output.decode(encoding), expected)
+
+        if not reparse:
+            return
+
+        def compare(el1, el2):
+            self.assertEqual(el1.tag, el2.tag)
+            self.assertEqual(el1.text, el2.text)
+            self.assertEqual(el1.tail, el2.tail)
+            self.assertEqual(el1.attrib, el2.attrib)
+
+            self.assertEqual(len(el1), len(el2))
+            for child1, child2 in zip(el1, el2):
+                compare(child1, child2)
+
+        root_out = etree.fromstring(output)
+        root_expected = etree.fromstring(expected)
+        compare(root_out, root_expected)
 
 
 class BytesIOXmlFileTestCase(_XmlFileTestCaseBase):
@@ -433,6 +459,9 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):
         self._file = BytesIO()
 
+    def assertXml(self, expected, encoding='utf8', reparse=False):
+        super(HtmlFileTestCase, self).assertXml(expected, encoding, reparse=reparse)
+
     def test_void_elements(self):
         # http://www.w3.org/TR/html5/syntax.html#elements-0
         void_elements = {
@@ -532,7 +561,7 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             with xf.element("tagname", attrib={"attr": '"misquöted\u3344\U00013344"'}):
                 xf.write("foo")
 
-        self.assertXml('<tagname attr="&quot;misqu&#xF6;ted&#x3344;&#x13344;&quot;">foo</tagname>')
+        self.assertXml('<tagname attr="&quot;misqu&#246;ted&#13124;&#78660;&quot;">foo</tagname>')
 
     def test_unescaped_script(self):
         with etree.htmlfile(self._file) as xf:

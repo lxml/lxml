@@ -176,15 +176,23 @@ class EncodingsTestCase(HelperTestCase):
             self.assertRaises(etree.XMLSyntaxError, etree.fromstring, data, parser)
 
     def _test_encoding(self, encoding, xml_encoding_name=None):
-        foo = """<?xml version='1.0' encoding='%s'?>\n<tag attrib='123'></tag>""" % (
-            xml_encoding_name or encoding)
+        self._test_encoded_input("<tag attrib='123'></tag>", 'tag', encoding, xml_encoding_name)
+        self._test_encoded_input("<älämänt öttrib='Атрибут'></älämänt>", 'älämänt', encoding, xml_encoding_name)
+
+    def _test_encoded_input(self, xml_input, tag_name, encoding, xml_encoding_name=None):
+        foo = """<?xml version='1.0' encoding='%s'?>\n""" % (
+            xml_encoding_name or encoding) + xml_input
         root = etree.fromstring(foo.encode(encoding))
-        self.assertEqual('tag', root.tag)
+        self.assertEqual(tag_name, root.tag)
 
         doc_encoding = root.getroottree().docinfo.encoding
         self.assertTrue(
             doc_encoding.lower().rstrip('lbe'),
             (xml_encoding_name or encoding).lower().rstrip('lbe'))
+
+        if 'sig' not in encoding:
+            xml = etree.tostring(root, encoding=encoding)
+            etree.fromstring(xml)  # encoding
 
     def test_utf8_fromstring(self):
         self._test_encoding('utf-8')
