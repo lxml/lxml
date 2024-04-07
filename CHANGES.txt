@@ -2,6 +2,20 @@
 lxml changelog
 ==============
 
+5.3.0 (2024-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#2060160: Attribute values serialised differently in ``xmlfile.element()`` and ``xmlfile.write()``.
+
+Other changes
+-------------
+
+* LP#2059794: The ``tests`` packages were moved out of the ``lxml`` package into a separate directory.
+
+
 5.2.1 (2024-04-02)
 ==================
 
