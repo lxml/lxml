@@ -136,8 +136,8 @@ jobs:
             env: { STATIC_DEPS: false }  # always static
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
-    # From testing, the runs tend to take 3-8 minutes, so a limit of 30 minutes should be enough.
-    timeout-minutes: 30
+    # From testing, the runs tend to take 8-20 minutes, so a limit of 45 minutes should be enough.
+    timeout-minutes: 45
     runs-on: ${{ matrix.os }}
 
     env:
