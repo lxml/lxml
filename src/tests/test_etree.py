@@ -1962,6 +1962,20 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertEqual(['test'], root.xpath('//text()'))
 
+    def test_cdata_split_cdend(self):
+        # Tests that existing ']]>' in CDATA is split to 'escape' it
+        CDATA = self.etree.CDATA
+        Element = self.etree.Element
+        tostring = self.etree.tostring
+
+        root = Element("root")
+        root.text = CDATA('test]]>')
+
+        self.assertEqual('test]]>',
+                          root.text)
+        self.assertEqual(b'<root><![CDATA[test]]]]><![CDATA[>]]></root>',
+                          tostring(root))
+
     # TypeError in etree, AssertionError in ElementTree;
     def test_setitem_assert(self):
         Element = self.etree.Element

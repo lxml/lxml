@@ -3144,10 +3144,7 @@ cdef class CDATA:
     """
     cdef bytes _utf8_data
     def __cinit__(self, data):
-        _utf8_data = _utf8(data)
-        if b']]>' in _utf8_data:
-            raise ValueError, "']]>' not allowed inside CDATA"
-        self._utf8_data = _utf8_data
+        self._utf8_data = _utf8(data)
 
 
 def Entity(name):
