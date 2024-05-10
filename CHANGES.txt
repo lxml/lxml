@@ -11,6 +11,9 @@ Bugs fixed
 * GH#417: The ``test_feed_parser`` test could fail if ``lxml_html_clean`` was not installed.
   It is now skipped in that case.
 
+* LP#2059910: The minimum CPU architecture for the Linux x86 binary wheels was set back to
+  "core2", without SSE 4.2.
+
 
 5.2.1 (2024-04-02)
 ==================
