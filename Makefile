@@ -65,7 +65,7 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		-e AR=gcc-ar \
 		-e NM=gcc-nm \
 		-e RANLIB=gcc-ranlib \
-		-e CFLAGS="$(MANYLINUX_CFLAGS) $(if $(patsubst %aarch64,,$@),-march=core2 -msse4.1 -msse4.2,-march=armv8-a -mtune=cortex-a72)" \
+		-e CFLAGS="$(MANYLINUX_CFLAGS) $(if $(patsubst %aarch64,,$@),-march=core2,-march=armv8-a -mtune=cortex-a72)" \
 		-e LDFLAGS="$(MANYLINUX_LDFLAGS)" \
 		-e STATIC_DEPS="${STATIC_DEPS}" \
 		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \

@@ -51,7 +51,7 @@ environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_x86_64"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -msse4.1 -msse4.2 -mtune=generic"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic"
 
 [[tool.cibuildwheel.overrides]]
 select = "*aarch64"
@@ -67,3 +67,4 @@ archs = ["AMD64", "x86"]
 # so additional arm64 wheels would suffice.  However, since the library build uses a mixed
 # amd64/arm64 setup, we build universal2 wheels regardless.
 archs = ["x86_64", "universal2"]
+M
