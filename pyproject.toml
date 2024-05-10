@@ -67,4 +67,3 @@ archs = ["AMD64", "x86"]
 # so additional arm64 wheels would suffice.  However, since the library build uses a mixed
 # amd64/arm64 setup, we build universal2 wheels regardless.
 archs = ["x86_64", "universal2"]
-M
