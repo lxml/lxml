@@ -232,7 +232,7 @@ cdef class C14NError(LxmlError):
     """
 
 # version information
-cdef __unpackDottedVersion(version):
+cdef tuple __unpackDottedVersion(version):
     version_list = []
     l = (version.decode("ascii").replace('-', '.').split('.') + [0]*4)[:4]
     for item in l:
@@ -255,11 +255,11 @@ cdef __unpackDottedVersion(version):
         version_list.append(item)
     return tuple(version_list)
 
-cdef __unpackIntVersion(int c_version):
+cdef tuple __unpackIntVersion(int c_version, int base=100):
     return (
-        ((c_version // (100*100)) % 100),
-        ((c_version // 100)       % 100),
-        (c_version                % 100)
+        ((c_version // (base*base)) % base),
+        ((c_version // base)        % base),
+        (c_version                  % base)
         )
 
 cdef int _LIBXML_VERSION_INT
@@ -275,6 +275,26 @@ LIBXML_COMPILED_VERSION = __unpackIntVersion(tree.LIBXML_VERSION)
 LXML_VERSION = __unpackDottedVersion(tree.LXML_VERSION_STRING)
 
 __version__ = tree.LXML_VERSION_STRING.decode("ascii")
+
+cdef extern from *:
+    """
+    #ifdef ZLIB_VERNUM
+      #define __lxml_zlib_version (ZLIB_VERNUM >> 4)
+    #else
+      #define __lxml_zlib_version 0
+    #endif
+    #ifdef _LIBICONV_VERSION
+      #define __lxml_iconv_version (_LIBICONV_VERSION << 8)
+    #else
+      #define __lxml_iconv_version 0
+    #endif
+    """
+    # zlib isn't included automatically by libxml2's headers
+    #long ZLIB_HEX_VERSION "__lxml_zlib_version"
+    long LIBICONV_HEX_VERSION "__lxml_iconv_version"
+
+#ZLIB_COMPILED_VERSION = __unpackIntVersion(ZLIB_HEX_VERSION, base=0x10)
+ICONV_COMPILED_VERSION = __unpackIntVersion(LIBICONV_HEX_VERSION, base=0x100)[:2]
 
 
 # class for temporary storage of Python references,

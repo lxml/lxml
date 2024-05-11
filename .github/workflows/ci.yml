@@ -129,6 +129,10 @@ jobs:
         exclude:
           - os: ubuntu-latest
             python-version: "3.6"
+          - os: macos-latest
+            python-version: "3.6"
+          - os: macos-latest
+            python-version: "3.7"
 
           # Windows sub-jobs
           # ==============
@@ -213,42 +217,3 @@ jobs:
           name: pycoverage_html
           path: coverage*
           if-no-files-found: ignore
-
-      - name: Upload Wheel
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        if: matrix.env.STATIC_DEPS && !matrix.extra_hash
-        with:
-          name: wheels-${{ runner.os }}-${{ matrix.python-version }}
-          path: dist/*.whl
-          if-no-files-found: ignore
-
-  collect-wheels:
-    needs: [ci]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Collect wheels
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
-        with:
-          path: ~/downloads
-          merge-multiple: true
-
-      - name: List downloaded artifacts
-        run: ls -la ~/downloads
-
-      - name: Upload Linux wheels
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        with:
-          name: wheels-linux
-          path: ~/downloads/*linux*.whl
-
-      - name: Upload macOS wheels
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        with:
-          name: wheels-macosx
-          path: ~/downloads/*macosx*.whl
-
-      - name: Upload Windows wheels
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        with:
-          name: wheels-windows
-          path: ~/downloads/*-win*.whl

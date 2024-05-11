@@ -28,18 +28,19 @@ from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_d
 from .common_imports import canonicalize, _str, _bytes
 from .common_imports import SimpleFSPath
 
-print("""
-TESTED VERSION: %s""" % etree.__version__ + """
-    Python:           %r""" % (sys.version_info,) + """
-    lxml.etree:       %r""" % (etree.LXML_VERSION,) + """
-    libxml used:      %r""" % (etree.LIBXML_VERSION,) + """
-    libxml compiled:  %r""" % (etree.LIBXML_COMPILED_VERSION,) + """
-    libxslt used:     %r""" % (etree.LIBXSLT_VERSION,) + """
-    libxslt compiled: %r""" % (etree.LIBXSLT_COMPILED_VERSION,) + """
-    FS encoding:      %s""" % (sys.getfilesystemencoding(),) + """
-    Default encoding: %s""" % (sys.getdefaultencoding(),) + """
-    Max Unicode:      %s""" % (sys.maxunicode,) + """
-    PyUCS4 encoding:  %s""" % (getattr(etree, '_pyucs4_encoding_name', ''),) + """
+print(f"""
+TESTED VERSION: {etree.__version__}
+    Python:           {tuple(sys.version_info)!r}
+    lxml.etree:       {etree.LXML_VERSION!r}
+    libxml used:      {etree.LIBXML_VERSION!r}
+    libxml compiled:  {etree.LIBXML_COMPILED_VERSION!r}
+    libxslt used:     {etree.LIBXSLT_VERSION!r}
+    libxslt compiled: {etree.LIBXSLT_COMPILED_VERSION!r}
+    iconv compiled:   {etree.ICONV_COMPILED_VERSION!r}
+    FS encoding:      {sys.getfilesystemencoding()}
+    Default encoding: {sys.getdefaultencoding()}
+    Max Unicode:      {sys.maxunicode}
+    PyUCS4 encoding:  {getattr(etree, '_pyucs4_encoding_name', '')}
 """)
 
 

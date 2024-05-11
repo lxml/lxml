@@ -78,7 +78,8 @@ fi
 if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ]; then
   python -m pip install -U beautifulsoup4==4.9.3 cssselect==1.1.0 html5lib==1.1 rnc2rng==2.6.5 ${EXTRA_DEPS} || exit 1
 else
-  python -m pip install -U beautifulsoup4 cssselect html5lib lxml_html_clean rnc2rng ${EXTRA_DEPS} || exit 1
+  python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
+  python -m pip install --no-deps lxml_html_clean || exit 1
 fi
 if [[ "$COVERAGE" == "true" ]]; then
   python -m pip install "coverage<5" || exit 1
@@ -93,8 +94,6 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
 
-ccache -s || true
-
 # Run tests
 echo "Running the tests ..."
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
@@ -102,13 +101,5 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
       PYTHONUNBUFFERED=x \
       make test || exit 1
-
-if [[ "$COVERAGE" != "true" ]]; then
-  echo "Building a clean wheel ..."
-  GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-        CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
-        LDFLAGS="-flto $EXTRA_LDFLAGS" \
-        make clean wheel || exit 1
-fi
 
 ccache -s || true
