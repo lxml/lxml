@@ -93,8 +93,6 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
 
-ccache -s || true
-
 # Run tests
 echo "Running the tests ..."
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
@@ -102,13 +100,5 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
       PYTHONUNBUFFERED=x \
       make test || exit 1
-
-if [[ "$COVERAGE" != "true" ]]; then
-  echo "Building a clean wheel ..."
-  GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-        CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
-        LDFLAGS="-flto $EXTRA_LDFLAGS" \
-        make clean wheel || exit 1
-fi
 
 ccache -s || true
