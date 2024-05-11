@@ -129,6 +129,10 @@ jobs:
         exclude:
           - os: ubuntu-latest
             python-version: "3.6"
+          - os: macos-latest
+            python-version: "3.6"
+          - os: macos-latest
+            python-version: "3.7"
 
           # Windows sub-jobs
           # ==============
