@@ -14,6 +14,8 @@ Bugs fixed
 * LP#2059910: The minimum CPU architecture for the Linux x86 binary wheels was set back to
   "core2", without SSE 4.2.
 
+* If libxml2 uses iconv, the compile time version is available as `etree.ICONV_COMPILED_VERSION`.
+
 
 5.2.1 (2024-04-02)
 ==================
