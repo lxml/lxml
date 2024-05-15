@@ -68,6 +68,20 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assertRaises(etree.SchematronParseError,
                           isoschematron.Schematron, schema)
 
+    def test_schematron_invalid_namespace_prefix(self):
+        schema = self.parse('''\
+<xml:i />
+''')
+        self.assertRaises(etree.SchematronParseError,
+                          isoschematron.Schematron, schema)
+
+    def test_schematron_missing_namespace_prefix(self):
+        schema = self.parse('''\
+<rr />
+''')
+        self.assertRaises(etree.SchematronParseError,
+                          isoschematron.Schematron, schema)
+
     def test_schematron_from_tree(self):
         schema = self.parse('''\
 <sch:schema xmlns:sch="http://purl.oclc.org/dsdl/schematron">
