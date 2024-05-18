@@ -16,7 +16,7 @@ Other changes
 * LP#2059794: The ``tests`` packages were moved out of the ``lxml`` package into a separate directory.
 
 
-5.2.2 (2024-??-??)
+5.2.2 (2024-05-12)
 ==================
 
 Bugs fixed

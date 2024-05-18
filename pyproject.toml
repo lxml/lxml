@@ -11,9 +11,7 @@ skip = [
     "cp38-macosx_universal2",
     # Reduce job load and HTTP hit rate on library servers.
     "cp36-manylinux_aarch64",
-    "cp37-manylinux_aarch64",
     "cp36-musllinux_aarch64",
-    "cp37-musllinux_aarch64",
     "cp36-manylinux_ppc64le",
     "cp37-manylinux_ppc64le",
     "cp38-manylinux_ppc64le",
