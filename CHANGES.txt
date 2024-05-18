@@ -5,6 +5,13 @@ lxml changelog
 5.3.0 (2024-??-??)
 ==================
 
+Features added
+--------------
+
+* GH#421: Nested ``CDATA`` sections are no longer rejected but split on output
+  to represent ``]]>`` correctly.
+  Patch by Gertjan Klein.
+
 Bugs fixed
 ----------
 
