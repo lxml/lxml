@@ -225,7 +225,7 @@ class Schematron(_etree._Validator):
         schematron = None
         if element.tag == _xml_schema_root:
             schematron = self._extract_xsd(element)
-        elif element.nsmap[element.prefix] == RELAXNG_NS:
+        elif element.nsmap.get(element.prefix) == RELAXNG_NS:
             # RelaxNG does not have a single unique root element
             schematron = self._extract_rng(element)
         return schematron
