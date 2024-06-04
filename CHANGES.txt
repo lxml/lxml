@@ -22,6 +22,8 @@ Other changes
 
 * LP#2059794: The ``tests`` packages were moved out of the ``lxml`` package into a separate directory.
 
+* LP#2067707: The ``strip_cdata`` option in ``HTMLParser()`` turned out to be useless and is now deprecated.
+
 
 5.2.2 (2024-05-12)
 ==================

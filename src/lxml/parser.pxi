@@ -1747,9 +1747,11 @@ _HTML_DEFAULT_PARSE_OPTIONS = (
     htmlparser.HTML_PARSE_COMPACT
     )
 
+cdef object _UNUSED = object()
+
 cdef class HTMLParser(_FeedParser):
     """HTMLParser(self, encoding=None, remove_blank_text=False, \
-                   remove_comments=False, remove_pis=False, strip_cdata=True, \
+                   remove_comments=False, remove_pis=False, \
                    no_network=True, target=None, schema: XMLSchema =None, \
                    recover=True, compact=True, collect_ids=True, huge_tree=False)
 
@@ -1767,7 +1769,6 @@ cdef class HTMLParser(_FeedParser):
     - remove_blank_text  - discard empty text nodes that are ignorable (i.e. not actual text content)
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
-    - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - save memory for short text content (default: True)
     - default_doctype    - add a default doctype even if it is not found in the HTML (default: True)
     - collect_ids        - use a hash table of XML IDs for fast access (default: True)
@@ -1784,7 +1785,7 @@ cdef class HTMLParser(_FeedParser):
     reasons.
     """
     def __init__(self, *, encoding=None, remove_blank_text=False,
-                 remove_comments=False, remove_pis=False, strip_cdata=True,
+                 remove_comments=False, remove_pis=False, strip_cdata=_UNUSED,
                  no_network=True, target=None, XMLSchema schema=None,
                  recover=True, compact=True, default_doctype=True,
                  collect_ids=True, huge_tree=False):
@@ -1803,6 +1804,11 @@ cdef class HTMLParser(_FeedParser):
         if huge_tree:
             parse_options = parse_options | xmlparser.XML_PARSE_HUGE
 
+        if strip_cdata is not _UNUSED:
+            import warnings
+            warnings.warn(
+                "The 'strip_cdata' option of HTMLParser() has never done anything and will eventually be removed.",
+                DeprecationWarning)
         _BaseParser.__init__(self, parse_options, True, schema,
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding)

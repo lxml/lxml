@@ -233,11 +233,41 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(self.etree.tostring(element, method="html"),
                          self.html_str)
 
-    def test_module_HTML_cdata(self):
+    def test_module_HTML_script(self):
         # by default, libxml2 generates CDATA nodes for <script> content
-        html = b'<html><head><style>foo</style></head></html>'
+        html = b'<html><head><style>foo</style><script>too</script></head></html>'
         element = self.etree.HTML(html)
+        self.assertEqual(element[0][0].tag, "style")
         self.assertEqual(element[0][0].text, "foo")
+
+        self.assertEqual(element[0][1].tag, "script")
+        self.assertEqual(element[0][1].text, "too")
+
+    def test_module_HTML_cdata_ignored(self):
+        # libxml2 discards CDATA "content" since HTML does not know them.
+        import warnings
+        html = b'<html><body><!CDATA[[foo]]></head></html>'
+        element = self.etree.HTML(html)
+        self.assertEqual(element[0].tag, "body")
+        self.assertFalse(element[0].text)
+
+        with warnings.catch_warnings(record=True) as warnings_seen:
+            warnings.simplefilter("always")
+            parser = self.etree.HTMLParser(strip_cdata=True)
+        self.assertTrue(warnings_seen)
+
+        element = self.etree.HTML(html, parser)
+        self.assertEqual(element[0].tag, "body")
+        self.assertFalse(element[0].text)
+
+        with warnings.catch_warnings(record=True) as warnings_seen:
+            warnings.simplefilter("always")
+            parser = self.etree.HTMLParser(strip_cdata=False)
+        self.assertTrue(warnings_seen)
+
+        element = self.etree.HTML(html, parser)
+        self.assertEqual(element[0].tag, "body")
+        self.assertFalse(element[0].text)
 
     def test_module_HTML_access(self):
         element = self.etree.HTML(self.html_str)
