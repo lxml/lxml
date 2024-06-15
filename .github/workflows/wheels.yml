@@ -164,6 +164,12 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
+      - name: Test wheels
+        run: |
+          ls ./wheelhouse/*.whl
+          pip install -f ./wheelhouse lxml
+          python test.py -vv
+
       - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           path: ./wheelhouse/*.whl
