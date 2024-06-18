@@ -1,7 +1,5 @@
 import unittest, sys
-from lxml.tests.common_imports import make_doctest, doctest
 import lxml.html
-from lxml.html import html_parser, XHTML_NAMESPACE
 
 class FrameTest(unittest.TestCase):
 

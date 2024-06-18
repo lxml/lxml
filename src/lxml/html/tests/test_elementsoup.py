@@ -1,5 +1,5 @@
 import unittest, sys
-from lxml.tests.common_imports import make_doctest, HelperTestCase
+from ...tests.common_imports import make_doctest, HelperTestCase
 
 try:
     import lxml.html.soupparser

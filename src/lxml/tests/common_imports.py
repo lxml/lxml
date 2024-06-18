@@ -37,7 +37,7 @@ if hasattr(ElementTree, 'VERSION'):
 else:
     ET_VERSION = (0,0,0)
 
-DOC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'doc')
+DOC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'doc')
 
 
 def filter_by_version(test_class, version_dict, current_version):
@@ -107,6 +107,12 @@ class HelperTestCase(unittest.TestCase):
     def _rootstring(self, tree):
         return etree.tostring(tree.getroot()).replace(
             b' ', b'').replace(b'\n', b'')
+
+    try:
+        unittest.TestCase.assertRegex
+    except AttributeError:
+        def assertRegex(self, *args, **kwargs):
+            return self.assertRegex(*args, **kwargs)
 
 
 class SillyFileLike:

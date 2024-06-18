@@ -1,6 +1,6 @@
+import doctest
 import sys
 import unittest
-from lxml.tests.common_imports import make_doctest, doctest
 from lxml import html
 
 class TestBasicFeatures(unittest.TestCase):
@@ -43,7 +43,7 @@ class TestBasicFeatures(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([make_doctest('test_basic.txt')])
+    suite.addTests([doctest.DocFileSuite('test_basic.txt')])
     suite.addTests([doctest.DocTestSuite(html)])
     suite.addTest(unittest.TestLoader().loadTestsFromModule(sys.modules[__name__]))
     return suite

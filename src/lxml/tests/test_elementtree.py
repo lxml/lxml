@@ -20,7 +20,7 @@ from functools import wraps, partial
 from itertools import islice
 
 from .common_imports import (
-    BytesIO, etree, HelperTestCase,
+    BytesIO, etree, HelperTestCase as helper_base,
     ElementTree, ET_VERSION, IS_PYPY,
     filter_by_version, fileInTestDir, canonicalize, tmpfile,
 )
@@ -51,7 +51,7 @@ def et_exclude_pyversion(*version):
     return wrap
 
 
-class _ETreeTestCaseBase(HelperTestCase):
+class _ETreeTestCaseBase(helper_base):
     etree = None
     required_versions_ET = {}
 
@@ -62,12 +62,6 @@ class _ETreeTestCaseBase(HelperTestCase):
             assert 'ElementTree' in self.etree.__name__
             XMLParser = self.etree.TreeBuilder
         return XMLParser(**kwargs)
-
-    try:
-        HelperTestCase.assertRegex
-    except AttributeError:
-        def assertRegex(self, *args, **kwargs):
-            return self.assertRegex(*args, **kwargs)
 
     @et_needs_pyversion(3, 6)
     def test_interface(self):

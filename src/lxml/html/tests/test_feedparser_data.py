@@ -6,7 +6,6 @@ except ImportError:
     # Python 3
     from email import message_from_file as Message
 import unittest
-from lxml.tests.common_imports import doctest
 from lxml.doctestcompare import LHTMLOutputChecker
 
 try:
