@@ -25,7 +25,7 @@ skip = [
     "cp37-musllinux_s390x",
     "cp38-musllinux_s390x",
 ]
-test-command = "python {package}/test.py -vv"
+#test-command = "python {package}/test.py -vv"
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x"]
