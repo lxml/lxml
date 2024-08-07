@@ -81,7 +81,7 @@ jobs:
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.9.3,
-              LIBXSLT_VERSION: 1.1.27,
+              LIBXSLT_VERSION: 1.1.28,
             }
             extra_hash: "-oldlibs29"
           - os: ubuntu-latest
