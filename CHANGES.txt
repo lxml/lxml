@@ -17,10 +17,17 @@ Bugs fixed
 
 * LP#2060160: Attribute values serialised differently in ``xmlfile.element()`` and ``xmlfile.write()``.
 
+* LP#2058177: The ISO-Schematron implementation could fail on unknown prefixes.
+  Patch by David Lakin.
+
 Other changes
 -------------
 
 * LP#2067707: The ``strip_cdata`` option in ``HTMLParser()`` turned out to be useless and is now deprecated.
+
+* Binary wheels use the library versions libxml2 2.12.9 and libxslt 1.1.41.
+
+* Built with Cython 3.0.11.
 
 
 5.2.2 (2024-05-12)
