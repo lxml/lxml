@@ -25,7 +25,7 @@ Other changes
 
 * LP#2067707: The ``strip_cdata`` option in ``HTMLParser()`` turned out to be useless and is now deprecated.
 
-* Binary wheels use the library versions libxml2 2.12.9 and libxslt 1.1.41.
+* Binary wheels use the library versions libxml2 2.12.9 and libxslt 1.1.42.
 
 * Built with Cython 3.0.11.
 

@@ -3,7 +3,7 @@ requires = ["Cython>=3.0.11", "setuptools", "wheel"]
 
 [tool.cibuildwheel]
 build-verbosity = 2
-environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.12.9", LIBXSLT_VERSION = "1.1.41"}
+environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.12.9", LIBXSLT_VERSION = "1.1.42"}
 skip = [
     "pp*-manylinux_i686",
     "*-musllinux_i686",
@@ -39,7 +39,7 @@ RANLIB = "gcc-ranlib"
 LDFLAGS = "-fPIC -flto"
 STATIC_DEPS = "true"
 LIBXML2_VERSION = "2.12.9"
-LIBXSLT_VERSION = "1.1.41"
+LIBXSLT_VERSION = "1.1.42"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
