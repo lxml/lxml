@@ -263,7 +263,7 @@ operations:
   >>> result = transform(normal_doc)
   Resolved url hoi:test as prefix hoi
 
-  >>> ac = etree.XSLTAccessControl(read_network=False)
+  >>> ac = etree.XSLTAccessControl(read_network=False, read_file=False)
   >>> transform = etree.XSLT(honk_doc, access_control=ac)
   Resolved url honk:test as prefix honk
   >>> result = transform(normal_doc)
