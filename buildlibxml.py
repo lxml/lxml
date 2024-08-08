@@ -264,7 +264,7 @@ def py2_tarxz(filename):
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
     #version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
-    version_re = re.compile(r'libxml2-([0-9.]+[0-9]).tar.xz')
+    version_re = re.compile(r'libxml2-([0-9.]+[0-9])[.]tar[.]xz')
     filename = 'libxml2-%s.tar.xz'
 
     if version == "2.9.12":
@@ -281,7 +281,7 @@ def download_libxml2(dest_dir, version=None):
 def download_libxslt(dest_dir, version=None):
     """Downloads libxslt, returning the filename where the library was downloaded"""
     #version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
-    version_re = re.compile(r'libxslt-([0-9.]+[0-9]).tar.xz')
+    version_re = re.compile(r'libxslt-([0-9.]+[0-9])[.]tar[.]xz')
     filename = 'libxslt-%s.tar.xz'
     from_location = http_find_latest_version_directory(LIBXSLT_LOCATION, version=version)
     return download_library(dest_dir, from_location, 'libxslt',
@@ -290,7 +290,7 @@ def download_libxslt(dest_dir, version=None):
 
 def download_libiconv(dest_dir, version=None):
     """Downloads libiconv, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'libiconv-([0-9.]+[0-9]).tar.gz')
+    version_re = re.compile(r'libiconv-([0-9.]+[0-9])[.]tar[.]gz')
     filename = 'libiconv-%s.tar.gz'
     return download_library(dest_dir, LIBICONV_LOCATION, 'libiconv',
                             version_re, filename, version=version)
@@ -298,7 +298,7 @@ def download_libiconv(dest_dir, version=None):
 
 def download_zlib(dest_dir, version):
     """Downloads zlib, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'zlib-([0-9.]+[0-9]).tar.gz')
+    version_re = re.compile(r'zlib-([0-9.]+[0-9])[.]tar[.]gz')
     filename = 'zlib-%s.tar.gz'
     return download_library(dest_dir, ZLIB_LOCATION, 'zlib',
                             version_re, filename, version=version)
