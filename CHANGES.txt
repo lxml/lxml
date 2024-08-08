@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-5.3.0 (2024-??-??)
+5.3.0 (2024-08-09)
 ==================
 
 Features added
@@ -26,6 +26,8 @@ Other changes
 * LP#2067707: The ``strip_cdata`` option in ``HTMLParser()`` turned out to be useless and is now deprecated.
 
 * Binary wheels use the library versions libxml2 2.12.9 and libxslt 1.1.42.
+
+* Windows binary wheels use the library versions libxml2 2.11.8 and libxslt 1.1.39.
 
 * Built with Cython 3.0.11.
 
