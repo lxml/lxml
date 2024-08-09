@@ -1,10 +1,12 @@
 import json
 import os, re, sys, subprocess, platform
 import tarfile
+import time
 from distutils import log
 from contextlib import closing, contextmanager
 from ftplib import FTP
 
+import urllib.error
 from urllib.parse import urljoin, unquote, urlparse
 from urllib.request import urlretrieve, urlopen, Request
 
@@ -360,7 +362,15 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
         return dest_filename
 
     print('Downloading %s into %s from %s' % (name, dest_filename, full_url))
-    urlretrieve(full_url, dest_filename)
+    try:
+        urlretrieve(full_url, dest_filename)
+    except urllib.error.URLError as exc:
+        # retry once
+        retry_after_seconds = 2
+        print(f"Download failed: {exc}, retrying in {int(retry_after_seconds)} seconds…")
+        time.sleep(retry_after_seconds)
+        urlretrieve(full_url, dest_filename)
+
     return dest_filename
 
 
