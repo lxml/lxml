@@ -330,10 +330,10 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
     if version is None:
         try:
             if location.startswith('ftp://'):
-                fns = remote_listdir(location)
+                fns = list(remote_listdir(location))
             else:
-                print(location)
                 fns = http_listfiles(location, '(%s)' % filename.replace('%s', '(?:[0-9.]+[0-9])'))
+            print(f"Found {len(fns)} links at {location}")
             version = find_max_version(name, fns, version_re)
         except IOError:
             # network failure - maybe we have the files already?
