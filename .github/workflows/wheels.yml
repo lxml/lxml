@@ -60,13 +60,13 @@ jobs:
       env: { STATIC_DEPS: false; CFLAGS="-Og" }  # it's run-once, so build more quickly
 
     - name: Upload sdist
-      uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
+      uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
       with:
         name: sdist
         path: dist/*.tar.gz
 
     - name: Upload website
-      uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
+      uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
       with:
         name: website
         path: doc/html
@@ -164,7 +164,7 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
-      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
+      - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           path: ./wheelhouse/*.whl
           name: lxml-wheel-${{ matrix.only }}
@@ -187,7 +187,7 @@ jobs:
       - name: List downloaded artifacts
         run: ls -la ./release_upload
 
-      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
+      - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           path: ./release_upload/*.whl
           name: all_wheels
