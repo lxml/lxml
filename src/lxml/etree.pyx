@@ -1636,11 +1636,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return CSSSelector(expr, translator=translator)(self)
 
 
-cdef extern from "includes/etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef object NEW_ELEMENT "PY_NEW" (object t)
-
-
 @cython.linetrace(False)
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
@@ -1650,12 +1645,15 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     if c_node is NULL:
         return None
 
-    element_class = LOOKUP_ELEMENT_CLASS(
+    element_class = <type> LOOKUP_ELEMENT_CLASS(
         ELEMENT_CLASS_LOOKUP_STATE, doc, c_node)
+    if type(element_class) is not type:
+        if not isinstance(element_class, type):
+            raise TypeError(f"Element class is not a type, got {type(element_class)}")
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
         return getProxy(c_node)
-    result = NEW_ELEMENT(element_class)
+    result = element_class.__new__(element_class)
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
         result._c_node = NULL
