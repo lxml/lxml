@@ -1214,7 +1214,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """__bool__(self)"""
         import warnings
         warnings.warn(
-            "The behavior of this method will change in future versions. "
+            "Truth-testing of elements was a source of confusion and will always "
+            "return True in future versions. "
             "Use specific 'len(elem)' or 'elem is not None' test instead.",
             FutureWarning
             )
