@@ -1162,7 +1162,7 @@ safely expose their values to the evaluation engine.
 The defusedxml_ package comes with an example setup and a wrapper
 API for lxml that applies certain counter measures internally.
 
-.. _defusedxml: https://bitbucket.org/tiran/defusedxml
+.. _defusedxml: https://github.com/tiran/defusedxml
 
 
 How can I sort the attributes?
