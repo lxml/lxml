@@ -60,13 +60,13 @@ jobs:
       env: { STATIC_DEPS: false; CFLAGS="-Og" }  # it's run-once, so build more quickly
 
     - name: Upload sdist
-      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: sdist
         path: dist/*.tar.gz
 
     - name: Upload website
-      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: website
         path: doc/html
@@ -118,7 +118,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cache [libs]
-        uses: actions/cache@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # v4.1.0
+        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         with:
           path: |
             libs/*.xz
@@ -133,13 +133,13 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.2
+        uses: pypa/cibuildwheel@v2.21.3
         with:
           only: ${{ matrix.only }}
 
       - name: Build old Linux wheels
         if: contains(matrix.only, '-manylinux_') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
-        uses: pypa/cibuildwheel@v2.21.2
+        uses: pypa/cibuildwheel@v2.21.3
         env:
           CIBW_MANYLINUX_i686_IMAGE: manylinux1
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
@@ -149,7 +149,7 @@ jobs:
       - name: Build faster Linux wheels
         # also build wheels with the most recent manylinux images and gcc
         if: runner.os == 'Linux' && !contains(matrix.only, 'i686')
-        uses: pypa/cibuildwheel@v2.21.2
+        uses: pypa/cibuildwheel@v2.21.3
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
@@ -164,7 +164,7 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           path: ./wheelhouse/*.whl
           name: lxml-wheel-${{ matrix.only }}
@@ -187,7 +187,7 @@ jobs:
       - name: List downloaded artifacts
         run: ls -la ./release_upload
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           path: ./release_upload/*.whl
           name: all_wheels
