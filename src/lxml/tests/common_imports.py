@@ -103,7 +103,7 @@ class HelperTestCase(unittest.TestCase):
     def parse(self, text, parser=None):
         f = BytesIO(text) if isinstance(text, bytes) else StringIO(text)
         return etree.parse(f, parser=parser)
-    
+
     def _rootstring(self, tree):
         return etree.tostring(tree.getroot()).replace(
             b' ', b'').replace(b'\n', b'')
@@ -118,7 +118,7 @@ class HelperTestCase(unittest.TestCase):
 class SillyFileLike:
     def __init__(self, xml_data=b'<foo><bar/></foo>'):
         self.xml_data = xml_data
-        
+
     def read(self, amount=None):
         if self.xml_data:
             if amount:
@@ -202,7 +202,7 @@ def fileInTestDir(name):
 
 def path2url(path):
     return urlparse.urljoin(
-        'file:', pathname2url(path))
+        'file://', pathname2url(path))
 
 
 def fileUrlInTestDir(name):
