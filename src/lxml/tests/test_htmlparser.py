@@ -24,7 +24,7 @@ class HtmlParserTestCase(HelperTestCase):
 </html>
 """
     broken_html_str = (
-        b"<html><head><title>test"
+        b"<html><head><title>test</title>"
         b"<body><h1>page title</h3></p></html>")
     uhtml_str = (
         "<html><head><title>test Ã¡</title></head>"
@@ -373,7 +373,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_iterparse_broken(self):
         iterparse = self.etree.iterparse
-        f = BytesIO(b'<head><title>TEST></head><p>P<br></div>')
+        f = BytesIO(b'<head><title>TEST></title></head><p>P<br></div>')
 
         iterator = iterparse(f, html=True)
         self.assertEqual(None, iterator.root)

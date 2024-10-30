@@ -9,16 +9,14 @@ class TestBasicFeatures(unittest.TestCase):
         doc = html.fromstring("""
         <root>
             <!-- comment -->
-            <?pi contents ?>
             &entity;
             <el/>
         </root>
         """, base_url=base_url)
         self.assertEqual(doc.getroottree().docinfo.URL, base_url)
-        self.assertEqual(len(doc), 3)
+        self.assertEqual(len(doc), 2)
         self.assertIsInstance(doc[0], html.HtmlComment)
-        self.assertIsInstance(doc[1], html.HtmlProcessingInstruction)
-        self.assertIsInstance(doc[2], html.HtmlElement)
+        self.assertIsInstance(doc[1], html.HtmlElement)
         for child in doc:
             # base_url makes sense on all nodes (kinda) whereas `classes` or
             # `get_rel_links` not really

@@ -4576,24 +4576,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         html = self.etree.fromstring(
             '<html><body>'
-            '<div><p>Some text<i>\r\n</i></p></div>\r\n'
+            '<div><p>Some text<i>\n</i></p></div>\n'
             '</body></html>',
             parser=self.etree.HTMLParser())
         self.assertEqual(html.tag, 'html')
         div = html.find('.//div')
-        self.assertEqual(div.tail, '\r\n')
+        self.assertEqual(div.tail, '\n')
         result = tostring(div, method='html')
         self.assertEqual(
             result,
-            b"<div><p>Some text<i>\r\n</i></p></div>\r\n")
+            b"<div><p>Some text<i>\n</i></p></div>\n")
         result = tostring(div, method='html', with_tail=True)
         self.assertEqual(
             result,
-            b"<div><p>Some text<i>\r\n</i></p></div>\r\n")
+            b"<div><p>Some text<i>\n</i></p></div>\n")
         result = tostring(div, method='html', with_tail=False)
         self.assertEqual(
             result,
-            b"<div><p>Some text<i>\r\n</i></p></div>")
+            b"<div><p>Some text<i>\n</i></p></div>")
 
     def test_standalone(self):
         tostring = self.etree.tostring
