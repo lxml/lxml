@@ -352,13 +352,6 @@ def cflags(static_cflags):
             if not possible_cflag.startswith('-I'):
                 result.append(possible_cflag)
 
-    if sys.platform in ('darwin',):
-        for opt in result:
-            if 'flat_namespace' in opt:
-                break
-        else:
-            result.append('-flat_namespace')
-
     return result
 
 def define_macros():
