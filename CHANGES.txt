@@ -2,6 +2,29 @@
 lxml changelog
 ==============
 
+Latest development
+==================
+
+Features added
+--------------
+
+* GH#437: ``lxml.html.builder`` was missing several HTML5 tag names.
+  Patch by Nick Tarleton.
+
+* GH#438: Wheels include the ``arm7l`` target.
+
+Bugs fixed
+----------
+
+* GH#440: Some tests were adapted for libxml2 2.14.0.
+  Patch by Nick Wellnhofer.
+
+Other changes
+-------------
+
+* GH#442: Binary wheels for macOS no longer use the linker flag ``-flat_namespace``.
+
+
 5.3.0 (2024-08-10)
 ==================
 
