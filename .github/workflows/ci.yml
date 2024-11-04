@@ -107,7 +107,7 @@ jobs:
             allowed_failure: true
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.13.3,
+              LIBXML2_VERSION: 2.13.4,
               LIBXSLT_VERSION: 1.1.42,
             }
             extra_hash: "-latestlibs"
