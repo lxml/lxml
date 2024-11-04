@@ -177,10 +177,10 @@ class _XmlFileTestCaseBase(HelperTestCase):
             '<test>Comments: &lt;!-- text --&gt;\nEntities: &amp;amp;</test>')
 
     def test_encoding(self):
-        with etree.xmlfile(self._file, encoding='utf16') as xf:
+        with etree.xmlfile(self._file, encoding='utf-16') as xf:
             with xf.element('test'):
                 xf.write('toast')
-        self.assertXml('<test>toast</test>', encoding='utf16')
+        self.assertXml('<test>toast</test>', encoding='utf-16')
 
     def test_buffering(self):
         with etree.xmlfile(self._file, buffered=False) as xf:
