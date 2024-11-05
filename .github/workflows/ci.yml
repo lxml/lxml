@@ -202,7 +202,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+          key: libs-${{ runner.os }}-${{ matrix.env.LIBXML2_VERSION }}-${{ matrix.env.LIBXSLT_VERSION }}
 
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
