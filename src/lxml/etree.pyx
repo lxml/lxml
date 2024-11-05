@@ -19,6 +19,7 @@ __all__ = [
     'FallbackElementClassLookup', 'FunctionNamespace', 'HTML', 'HTMLParser',
     'ICONV_COMPILED_VERSION',
     'LIBXML_COMPILED_VERSION', 'LIBXML_VERSION',
+    'LIBXML_FEATURES',
     'LIBXSLT_COMPILED_VERSION', 'LIBXSLT_VERSION',
     'LXML_VERSION',
     'LxmlError', 'LxmlRegistryError', 'LxmlSyntaxError',
@@ -297,6 +298,17 @@ cdef extern from *:
 
 #ZLIB_COMPILED_VERSION = __unpackIntVersion(ZLIB_HEX_VERSION, base=0x10)
 ICONV_COMPILED_VERSION = __unpackIntVersion(LIBICONV_HEX_VERSION, base=0x100)[:2]
+
+
+cdef set _copy_lib_features():
+    features = set()
+    feature = tree._LXML_LIB_FEATURES
+    while feature[0]:
+        features.add(feature[0].decode('ASCII'))
+        feature += 1
+    return features
+
+LIBXML_FEATURES = _copy_lib_features()
 
 
 # class for temporary storage of Python references,
