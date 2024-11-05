@@ -1,5 +1,5 @@
 PYTHON?=python3
-TESTFLAGS=-p -v
+TESTFLAGS=-p -vv
 TESTOPTS=
 SETUPFLAGS=
 LXMLVERSION:=$(shell $(PYTHON) -c 'import re; print(re.findall(r"__version__\s*=\s*\"([^\"]+)\"", open("src/lxml/__init__.py").read())[0])' )
