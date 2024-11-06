@@ -11,6 +11,7 @@ Things to try out when life permits
   * requires a libxml2 I/O OutputBuffer with appropriate I/O functions
     that call into the lzma compression routines
 
+
   * advantage over zlib: probably faster and better compression
 
   * maybe embed the lzma C sources in the distro
