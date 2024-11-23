@@ -86,6 +86,7 @@ class Options:
     # test location
     basedir = ''                # base directory for tests (defaults to
                                 # basedir of argv[0] + 'src'), must be absolute
+    src_in_path = True          # add 'src/' to sys.path
     follow_symlinks = True      # should symlinks to subdirectories be
                                 # followed? (hardcoded, may cause loops)
 
@@ -479,7 +480,7 @@ def main(argv):
     # Option processing
     opts, args = getopt.gnu_getopt(argv[1:], 'hvpqufw',
                                    ['list-files', 'list-tests', 'list-hooks',
-                                    'level=', 'all-levels', 'coverage'])
+                                    'level=', 'all-levels', 'coverage', 'no-src'])
     for k, v in opts:
         if k == '-h':
             print(__doc__)
@@ -511,6 +512,8 @@ def main(argv):
             cfg.run_tests = False
         elif k == '--coverage':
             cfg.coverage = True
+        elif k == '--no-src':
+            cfg.src_in_path = False
         elif k == '--level':
             try:
                 cfg.level = int(v)
@@ -536,7 +539,8 @@ def main(argv):
         cfg.unit_tests = True
 
     # Set up the python path
-    sys.path[0] = cfg.basedir
+    if cfg.src_in_path:
+        sys.path[0] = cfg.basedir
 
     # Set up tracing before we start importing things
     cov = None

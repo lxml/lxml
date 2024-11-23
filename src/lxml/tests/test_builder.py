@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests that ElementMaker works properly.
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -21,16 +18,16 @@ class BuilderTestCase(HelperTestCase):
     def test_build_from_xpath_result(self):
         class StringSubclass(str): pass
         wrapped = E.b(StringSubclass('Hello'))
-        self.assertEqual(_bytes('<b>Hello</b>'), etree.tostring(wrapped))
+        self.assertEqual(b'<b>Hello</b>', etree.tostring(wrapped))
 
     def test_unknown_type_raises(self):
-        class UnknownType(object):
+        class UnknownType:
             pass
         self.assertRaises(TypeError, E.b, UnknownType())
 
     def test_cdata(self):
         wrapped = E.b(etree.CDATA('Hello'))
-        self.assertEqual(_bytes('<b><![CDATA[Hello]]></b>'), etree.tostring(wrapped))
+        self.assertEqual(b'<b><![CDATA[Hello]]></b>', etree.tostring(wrapped))
 
     def test_cdata_solo(self):
         self.assertRaises(ValueError, E.b, 'Hello', etree.CDATA('World'))
@@ -62,7 +59,7 @@ class BuilderTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(BuilderTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(BuilderTestCase)])
     return suite
 
 if __name__ == '__main__':

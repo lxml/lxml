@@ -179,7 +179,7 @@ def _find_form_ids(el):
 ## Error filling
 ############################################################
 
-class DefaultErrorCreator(object):
+class DefaultErrorCreator:
     insert_before = True
     block_inside = True
     error_container_tag = 'div'

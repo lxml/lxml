@@ -7,7 +7,7 @@ from benchbase import (with_attributes, with_text, onlylib,
                        serialized, children, nochange)
 
 TEXT  = "some ASCII text"
-UTEXT = u"some klingon: \F8D2"
+UTEXT = u"some klingon: \uF8D2"
 
 ############################################################
 # Benchmarks

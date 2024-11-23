@@ -41,7 +41,8 @@ see below.
 Requirements
 ------------
 
-You need Python 2.7 or 3.4+.
+You need Python 3.6+ for lxml 5.0 and later.
+lxml versions before 5.0 support Python 2.7 and 3.6+.
 
 Unless you are using a static binary distribution (e.g. from a
 Windows binary installer), lxml requires libxml2 and libxslt to
@@ -68,7 +69,7 @@ build dependencies of the provided lxml package, e.g.
 
 ::
 
-    sudo apt-get build-dep python3-lxml
+    sudo apt-get install build-dep python3-lxml
 
 
 Installation
@@ -90,7 +91,7 @@ To install a specific version, either download the distribution
 manually and let pip install that, or pass the desired version
 to pip::
 
-  pip install lxml==3.4.2
+  pip install lxml==5.0.0
 
 .. _pip: http://pypi.python.org/pypi/pip
 
@@ -105,14 +106,15 @@ the ``CFLAGS`` environment variable::
 MS Windows
 ..........
 
-For MS Windows, recent lxml releases feature community donated
-binary distributions, although you might still want to take a look
-at the related `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
-If you fail to build lxml on your MS Windows system from the signed
-and tested sources that we release, consider using the binary builds
-from PyPI or the `unofficial Windows binaries
-<http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
-that Christoph Gohlke generously provides.
+For MS Windows, we try to provide binary wheels with reasonably up-to-date
+libraries, although you might still want to take a look at the related
+`FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
+Since it is generally difficult to build software on Windows, the library
+versions (libxml2, libxslt, libiconv, zlib) might not always be at the
+same version level as the builds on Linux or macOS.  This usually means
+that the `WinLibs project <https://github.com/orgs/winlibs>`_
+has not updated their repositories yet.  If you need a more recent version,
+please file a ticket on their side to update it.
 
 Linux
 .....
@@ -131,8 +133,13 @@ both libraries automatically in their latest version, e.g.
 MacOS-X
 .......
 
-On MacOS-X, use the following to build the source distribution,
-and make sure you have a working Internet connection, as this will
+On MacOS-X, we provide binary wheels ("universal2" for Python 3.9+),
+so just use::
+
+  sudo pip3 install lxml
+
+To build the source distribution, use the following and
+make sure you have a working Internet connection, as this will
 download libxml2 and libxslt in order to build them::
 
   STATIC_DEPS=true sudo pip install lxml

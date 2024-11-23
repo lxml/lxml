@@ -19,12 +19,12 @@ cdef class XMLSchemaValidateError(XMLSchemaError):
 # XMLSchema
 
 cdef XPath _check_for_default_attributes = XPath(
-    u"boolean(//xs:attribute[@default or @fixed][1])",
-    namespaces={u'xs': u'http://www.w3.org/2001/XMLSchema'})
+    "boolean(//xs:attribute[@default or @fixed][1])",
+    namespaces={'xs': 'http://www.w3.org/2001/XMLSchema'})
 
 
 cdef class XMLSchema(_Validator):
-    u"""XMLSchema(self, etree=None, file=None)
+    """XMLSchema(self, etree=None, file=None)
     Turn a document into an XML Schema validator.
 
     Either pass a schema as Element or ElementTree, or pass a file or
@@ -64,13 +64,14 @@ cdef class XMLSchema(_Validator):
                 self._doc = _parseDocument(file, None, None)
                 parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(self._doc._c_doc)
         else:
-            raise XMLSchemaParseError, u"No tree or file given"
+            raise XMLSchemaParseError, "No tree or file given"
 
         if parser_ctxt is NULL:
             raise MemoryError()
 
+        # Need a cast here because older libxml2 releases do not use 'const' in the functype.
         xmlschema.xmlSchemaSetParserStructuredErrors(
-            parser_ctxt, _receiveError, <void*>self._error_log)
+            parser_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
         if self._doc is not None:
             # calling xmlSchemaParse on a schema with imports or
             # includes will cause libxml2 to create an internal
@@ -88,7 +89,7 @@ cdef class XMLSchema(_Validator):
         if self._c_schema is NULL:
             raise XMLSchemaParseError(
                 self._error_log._buildExceptionMessage(
-                    u"Document is not valid XML Schema"),
+                    "Document is not valid XML Schema"),
                 self._error_log)
 
         if self._doc is not None:
@@ -99,7 +100,7 @@ cdef class XMLSchema(_Validator):
         xmlschema.xmlSchemaFree(self._c_schema)
 
     def __call__(self, etree):
-        u"""__call__(self, etree)
+        """__call__(self, etree)
 
         Validate doc using XML Schema.
 
@@ -125,8 +126,9 @@ cdef class XMLSchema(_Validator):
                     valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
 
             self._error_log.clear()
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             xmlschema.xmlSchemaSetValidStructuredErrors(
-                valid_ctxt, _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
 
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
@@ -137,7 +139,7 @@ cdef class XMLSchema(_Validator):
 
         if ret == -1:
             raise XMLSchemaValidateError(
-                u"Internal error in XML Schema validation.",
+                "Internal error in XML Schema validation.",
                 self._error_log)
         if ret == 0:
             return True
@@ -175,7 +177,7 @@ cdef class _ParserSchemaValidationContext:
         return self._schema._newSaxValidator(
             self._add_default_attributes)
 
-    cdef void inject_default_attributes(self, xmlDoc* c_doc):
+    cdef void inject_default_attributes(self, xmlDoc* c_doc) noexcept:
         # we currently need to insert default attributes manually
         # after parsing, as libxml2 does not support this at parse
         # time
@@ -193,12 +195,13 @@ cdef class _ParserSchemaValidationContext:
                 xmlschema.xmlSchemaSetValidOptions(
                     self._valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
         if error_log is not None:
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             xmlschema.xmlSchemaSetValidStructuredErrors(
-                self._valid_ctxt, _receiveError, <void*>error_log)
+                self._valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>error_log)
         self._sax_plug = xmlschema.xmlSchemaSAXPlug(
             self._valid_ctxt, &c_ctxt.sax, &c_ctxt.userData)
 
-    cdef void disconnect(self):
+    cdef void disconnect(self) noexcept:
         if self._sax_plug is not NULL:
             xmlschema.xmlSchemaSAXUnplug(self._sax_plug)
             self._sax_plug = NULL
@@ -206,7 +209,7 @@ cdef class _ParserSchemaValidationContext:
             xmlschema.xmlSchemaSetValidStructuredErrors(
                 self._valid_ctxt, NULL, NULL)
 
-    cdef bint isvalid(self):
+    cdef bint isvalid(self) noexcept:
         if self._valid_ctxt is NULL:
             return 1 # valid
         return xmlschema.xmlSchemaIsValid(self._valid_ctxt)

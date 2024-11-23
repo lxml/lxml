@@ -5,19 +5,12 @@
 # *test script* works as expected.
 
 import sys
-
-try:
-    from StringIO import StringIO
-    BytesIO = StringIO
-except ImportError:
-    from io import BytesIO, StringIO
+from io import BytesIO, StringIO
 
 from lxml import etree as ElementTree
 
 def stdout():
-    if sys.version_info[0] < 3:
-        return sys.stdout
-    class bytes_stdout(object):
+    class bytes_stdout:
         def write(self, data):
             if isinstance(data, bytes):
                 data = data.decode('ISO8859-1')
@@ -37,8 +30,7 @@ def serialize(elem, encoding=None):
     else:
         tree.write(file)
     result = file.getvalue()
-    if sys.version_info[0] >= 3:
-        result = result.decode('ISO8859-1')
+    result = result.decode('ISO8859-1')
     result = result.replace(' />', '/>')
     if result[-1:] == '\n':
         result = result[:-1]
@@ -162,7 +154,7 @@ def encoding():
     Test encoding issues.
 
     >>> elem = ElementTree.Element("tag")
-    >>> elem.text = u'abc'
+    >>> elem.text = 'abc'
     >>> serialize(elem)
     '<tag>abc</tag>'
     >>> serialize(elem, "utf-8")
@@ -193,7 +185,7 @@ def encoding():
     >>> serialize(elem, "iso-8859-1").lower()
     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;\'&gt;"/>'
 
-    >>> elem.text = u'\xe5\xf6\xf6<>'
+    >>> elem.text = '\xe5\xf6\xf6<>'
     >>> elem.attrib.clear()
     >>> serialize(elem)
     '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
@@ -204,7 +196,7 @@ def encoding():
     >>> serialize(elem, "iso-8859-1").lower()
     "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>\xe5\xf6\xf6&lt;&gt;</tag>"
 
-    >>> elem.attrib["key"] = u'\xe5\xf6\xf6<>'
+    >>> elem.attrib["key"] = '\xe5\xf6\xf6<>'
     >>> elem.text = None
     >>> serialize(elem)
     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
@@ -217,8 +209,6 @@ def encoding():
 
     """
 
-if sys.version_info[0] >= 3:
-    encoding.__doc__ = encoding.__doc__.replace("u'", "'")
 
 def qname():
     """

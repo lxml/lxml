@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Test cases related to direct loading of external libxml2 documents
 """
 
-from __future__ import absolute_import
 
 import sys
 import unittest
@@ -98,7 +96,7 @@ class ExternalDocumentTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     if sys.platform != 'win32':
-        suite.addTests([unittest.makeSuite(ExternalDocumentTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ExternalDocumentTestCase)])
     return suite
 
 

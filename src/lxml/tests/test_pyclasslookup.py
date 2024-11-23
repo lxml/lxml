@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests specific to the Python based class lookup.
 """
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -13,7 +10,7 @@ from .common_imports import etree, HelperTestCase, _bytes
 from lxml.etree import PythonElementClassLookup
 
 
-xml_str = _bytes('''\
+xml_str = b'''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">
   <obj:c1 a1="A1" a2="A2" other:a3="A3">
     <obj:c2>0</obj:c2>
@@ -22,7 +19,7 @@ xml_str = _bytes('''\
     <other:c2>3</other:c2>
     <c2>3</c2>
   </obj:c1>
-</obj:root>''')
+</obj:root>'''
 
 
 class PyClassLookupTestCase(HelperTestCase):
@@ -34,7 +31,7 @@ class PyClassLookupTestCase(HelperTestCase):
 
     def tearDown(self):
         self.parser.set_element_class_lookup(None)
-        super(PyClassLookupTestCase, self).tearDown()
+        super().tearDown()
 
     def _setClassLookup(self, lookup_function):
         class Lookup(PythonElementClassLookup):
@@ -344,7 +341,7 @@ class PyClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(PyClassLookupTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(PyClassLookupTestCase)])
     return suite
 
 if __name__ == '__main__':

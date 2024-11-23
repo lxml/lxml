@@ -1,24 +1,21 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for different Element class lookup mechanisms.
 """
 
 
-from __future__ import absolute_import
 
 import unittest, gc
 
 from .common_imports import etree, HelperTestCase, _bytes, BytesIO
 
-xml_str = _bytes('''\
+xml_str = b'''\
 <root xmlns="myNS" xmlns:other="otherNS">
   <c1 a1="A1" a2="A2" other:a3="A3">
     <c2 a1="C2">0</c2>
     <c2>1</c2>
     <other:c2>2</other:c2>
   </c1>
-</root>''')
+</root>'''
 
 
 class ProxyTestCase(HelperTestCase):
@@ -109,7 +106,7 @@ class ClassLookupTestCase(HelperTestCase):
 
     def tearDown(self):
         etree.set_element_class_lookup()
-        super(ClassLookupTestCase, self).tearDown()
+        super().tearDown()
 
     def test_namespace_lookup(self):
         class TestElement(etree.ElementBase):
@@ -142,12 +139,12 @@ class ClassLookupTestCase(HelperTestCase):
             element=TestElement, comment=TestComment, pi=TestPI)
         parser.set_element_class_lookup(lookup)
 
-        root = etree.XML(_bytes("""<?xml version='1.0'?>
+        root = etree.XML(b"""<?xml version='1.0'?>
         <root>
           <?myPI?>
           <!-- hi -->
         </root>
-        """), parser)
+        """, parser)
 
         self.assertEqual("default element", root.FIND_ME)
         self.assertEqual("default pi", root[0].FIND_ME)
@@ -209,14 +206,14 @@ class ClassLookupTestCase(HelperTestCase):
         parser = etree.XMLParser()
         parser.set_element_class_lookup(MyLookup())
 
-        root = etree.XML(_bytes('<none/>'), parser)
+        root = etree.XML(b'<none/>', parser)
         self.assertEqual('none', root.tag)
 
         self.assertRaises(
             TypeError,
-            etree.XML, _bytes("<obj />"), parser)
+            etree.XML, b"<obj />", parser)
 
-        root = etree.XML(_bytes('<root/>'), parser)
+        root = etree.XML(b'<root/>', parser)
         self.assertEqual('root', root.tag)
 
     def test_class_lookup_type_mismatch(self):
@@ -238,26 +235,26 @@ class ClassLookupTestCase(HelperTestCase):
         parser = etree.XMLParser(resolve_entities=False)
         parser.set_element_class_lookup(MyLookup())
 
-        root = etree.XML(_bytes('<root></root>'), parser)
+        root = etree.XML(b'<root></root>', parser)
         self.assertEqual('root', root.tag)
         self.assertEqual(etree.ElementBase, type(root))
 
-        root = etree.XML(_bytes("<root><test/></root>"), parser)
+        root = etree.XML(b"<root><test/></root>", parser)
         self.assertRaises(TypeError, root.__getitem__, 0)
 
-        root = etree.XML(_bytes("<root><!-- test --></root>"), parser)
+        root = etree.XML(b"<root><!-- test --></root>", parser)
         self.assertRaises(TypeError, root.__getitem__, 0)
 
-        root = etree.XML(_bytes("<root><?test?></root>"), parser)
+        root = etree.XML(b"<root><?test?></root>", parser)
         self.assertRaises(TypeError, root.__getitem__, 0)
 
         root = etree.XML(
-            _bytes('<!DOCTYPE root [<!ENTITY myent "ent">]>'
-                   '<root>&myent;</root>'),
+            b'<!DOCTYPE root [<!ENTITY myent "ent">]>'
+                   b'<root>&myent;</root>',
             parser)
         self.assertRaises(TypeError, root.__getitem__, 0)
 
-        root = etree.XML(_bytes('<root><root/></root>'), parser)
+        root = etree.XML(b'<root><root/></root>', parser)
         self.assertEqual('root', root[0].tag)
 
     def test_attribute_based_lookup(self):
@@ -362,7 +359,7 @@ class ClassLookupTestCase(HelperTestCase):
         parser = self.etree.XMLParser()
         parser.set_element_class_lookup(MyLookup())
 
-        root = XML(_bytes('<root><a>A</a><b xmlns="test">B</b></root>'),
+        root = XML(b'<root><a>A</a><b xmlns="test">B</b></root>',
                    parser)
 
         a = root[0]
@@ -394,8 +391,8 @@ class ClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ProxyTestCase)])
-    suite.addTests([unittest.makeSuite(ClassLookupTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ProxyTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ClassLookupTestCase)])
     return suite
 
 if __name__ == '__main__':

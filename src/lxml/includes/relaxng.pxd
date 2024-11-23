@@ -1,7 +1,7 @@
 from lxml.includes.tree cimport xmlDoc
 from lxml.includes.xmlerror cimport xmlStructuredErrorFunc
 
-cdef extern from "libxml/relaxng.h":
+cdef extern from "libxml/relaxng.h" nogil:
     ctypedef struct xmlRelaxNG
     ctypedef struct xmlRelaxNGParserCtxt
     
@@ -49,16 +49,16 @@ cdef extern from "libxml/relaxng.h":
         XML_RELAXNG_ERR_ELEMWRONG = 38
         XML_RELAXNG_ERR_TEXTWRONG = 39
         
-    cdef xmlRelaxNGValidCtxt* xmlRelaxNGNewValidCtxt(xmlRelaxNG* schema) nogil
-    cdef int xmlRelaxNGValidateDoc(xmlRelaxNGValidCtxt* ctxt, xmlDoc* doc) nogil
-    cdef xmlRelaxNG* xmlRelaxNGParse(xmlRelaxNGParserCtxt* ctxt) nogil
-    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewParserCtxt(char* URL) nogil
-    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewDocParserCtxt(xmlDoc* doc) nogil
-    cdef void xmlRelaxNGFree(xmlRelaxNG* schema) nogil
-    cdef void xmlRelaxNGFreeParserCtxt(xmlRelaxNGParserCtxt* ctxt) nogil
-    cdef void xmlRelaxNGFreeValidCtxt(xmlRelaxNGValidCtxt* ctxt) nogil
+    cdef xmlRelaxNGValidCtxt* xmlRelaxNGNewValidCtxt(xmlRelaxNG* schema)
+    cdef int xmlRelaxNGValidateDoc(xmlRelaxNGValidCtxt* ctxt, xmlDoc* doc)
+    cdef xmlRelaxNG* xmlRelaxNGParse(xmlRelaxNGParserCtxt* ctxt)
+    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewParserCtxt(char* URL)
+    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewDocParserCtxt(xmlDoc* doc)
+    cdef void xmlRelaxNGFree(xmlRelaxNG* schema)
+    cdef void xmlRelaxNGFreeParserCtxt(xmlRelaxNGParserCtxt* ctxt)
+    cdef void xmlRelaxNGFreeValidCtxt(xmlRelaxNGValidCtxt* ctxt)
 
     cdef void xmlRelaxNGSetValidStructuredErrors(
-        xmlRelaxNGValidCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx) nogil
+        xmlRelaxNGValidCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx)
     cdef void xmlRelaxNGSetParserStructuredErrors(
-        xmlRelaxNGParserCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx) nogil
+        xmlRelaxNGParserCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx)

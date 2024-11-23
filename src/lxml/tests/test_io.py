@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
 IO test cases that apply to both etree and ElementTree
 """
 
-from __future__ import absolute_import
 
 import unittest
 import tempfile, gzip, os, os.path, gc, shutil
@@ -110,7 +107,7 @@ class _IOTestCaseBase(HelperTestCase):
                 after_write = os.listdir(tempfile.gettempdir())
                 self.assertEqual(read_file(filename, 'rb').replace(b'\n', b''),
                                  self.root_str)
-            except (AssertionError, IOError, OSError):
+            except (AssertionError, OSError):
                 print("Before write: %s, after write: %s" % (
                     difference(before_write), difference(after_write))
                 )
@@ -129,7 +126,7 @@ class _IOTestCaseBase(HelperTestCase):
             'invalid_file.xml')
         try:
             self.tree.write(filename)
-        except IOError:
+        except OSError:
             pass
         else:
             self.assertTrue(
@@ -252,24 +249,28 @@ class _IOTestCaseBase(HelperTestCase):
 
     def test_etree_parse_io_error(self):
         # this is a directory name that contains characters beyond latin-1
-        dirnameEN = _str('Directory')
-        dirnameRU = _str('ÐšÐ°Ñ‚Ð°Ð»Ð¾Ð³')
-        filename = _str('nosuchfile.xml')
+        dirnameEN = 'Directory'
+        dirnameRU = 'ÐšÐ°Ñ‚Ð°Ð»Ð¾Ð³'
+        filename = 'nosuchfile.xml'
         dn = tempfile.mkdtemp(prefix=dirnameEN)
         try:
             self.assertRaises(IOError, self.etree.parse, os.path.join(dn, filename))
         finally:
             os.rmdir(dn)
-        dn = tempfile.mkdtemp(prefix=dirnameRU)
+        try:
+            dn = tempfile.mkdtemp(prefix=dirnameRU)
+        except (OSError, UnicodeEncodeError, UnicodeDecodeError):
+            # Creating the directory might fail on some platforms depending on encodings.
+            raise unittest.SkipTest("file system cannot create slavic file names")
         try:
             self.assertRaises(IOError, self.etree.parse, os.path.join(dn, filename))
         finally:
             os.rmdir(dn)
 
     def test_parse_utf8_bom(self):
-        utext = _str('Søk på nettet')
+        utext = 'Søk på nettet'
         uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
-        bom = _bytes('\\xEF\\xBB\\xBF').decode(
+        bom = b'\\xEF\\xBB\\xBF'.decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
         f = tempfile.NamedTemporaryFile(delete=False)
@@ -285,9 +286,9 @@ class _IOTestCaseBase(HelperTestCase):
         self.assertEqual(utext, tree.getroot().text)
 
     def test_iterparse_utf8_bom(self):
-        utext = _str('Søk på nettet')
+        utext = 'Søk på nettet'
         uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
-        bom = _bytes('\\xEF\\xBB\\xBF').decode(
+        bom = b'\\xEF\\xBB\\xBF'.decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
         f = tempfile.NamedTemporaryFile(delete=False)
@@ -305,9 +306,9 @@ class _IOTestCaseBase(HelperTestCase):
         self.assertEqual(utext, root.text)
 
     def test_iterparse_utf16_bom(self):
-        utext = _str('Søk på nettet')
+        utext = 'Søk på nettet'
         uxml = '<?xml version="1.0" encoding="UTF-16"?><p>%s</p>' % utext
-        boms = _bytes('\\xFE\\xFF \\xFF\\xFE').decode(
+        boms = b'\\xFE\\xFF \\xFF\\xFE'.decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(5, len(boms))
         xml = uxml.encode("utf-16")
@@ -363,9 +364,9 @@ if ElementTree:
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeIOTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeIOTestCase)])
     if ElementTree:
-        suite.addTests([unittest.makeSuite(ElementTreeIOTestCase)])
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeIOTestCase)])
     return suite
 
 
