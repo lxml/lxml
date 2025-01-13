@@ -16,7 +16,7 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   sudo apt-get update -y -q
   sudo apt-get install -y -q ccache gcc-$GCC_VERSION || exit 1
   if [ -n "${STATIC_DEPS##true}" ]; then
-    sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev
+    sudo apt-get install -y -q "libxml2=2.9.14*" "libxml2-dev=2.9.14*" libxslt1.1 libxslt1-dev
   fi
   sudo /usr/sbin/update-ccache-symlinks
   echo "/usr/lib/ccache" >> $GITHUB_PATH # export ccache to path
