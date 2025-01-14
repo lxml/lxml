@@ -137,9 +137,16 @@ jobs:
             python-version: "3.6"
             env: { STATIC_DEPS: true }  # only static
 
+          # Legacy jobs
+          # ===========
+          - os: ubuntu-22.04
+            python-version: "3.7"
+
         exclude:
           - os: ubuntu-latest
             python-version: "3.6"
+          - os: ubuntu-latest
+            python-version: "3.7"
           - os: macos-latest
             python-version: "3.6"
           - os: macos-latest
