@@ -8,16 +8,16 @@ cdef extern from "lxml-version.h":
 
 cdef extern from "etree_defs.h":
     # test if c_node is considered an Element (i.e. Element, Comment, etc.)
-    cdef bint _isElement(tree.xmlNode* c_node) nogil
+    cdef bint _isElement(tree.xmlNode* c_node) noexcept nogil
 
     # return the namespace URI of the node or NULL
-    cdef const_xmlChar* _getNs(tree.xmlNode* node) nogil
+    cdef const_xmlChar* _getNs(tree.xmlNode* node) noexcept nogil
 
     # pair of macros for tree traversal
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(tree.xmlNode* tree_top,
                                           tree.xmlNode* start_node,
-                                          int start_node_inclusive) nogil
-    cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node) nogil
+                                          int start_node_inclusive) noexcept nogil
+    cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node) noexcept nogil
 
 cdef extern from "etree_api.h":
 
@@ -101,12 +101,12 @@ cdef extern from "etree_api.h":
     # XML attribute access
 
     # return an attribute value for a C attribute on a C element node
-    cdef object attributeValue(tree.xmlNode* c_element,
-                               tree.xmlAttr* c_attrib_node)
+    cdef unicode attributeValue(tree.xmlNode* c_element,
+                                tree.xmlAttr* c_attrib_node)
 
     # return the value of the attribute with 'ns' and 'name' (or None)
-    cdef object attributeValueFromNsName(tree.xmlNode* c_element,
-                                         const_xmlChar* c_ns, const_xmlChar* c_name)
+    cdef unicode attributeValueFromNsName(tree.xmlNode* c_element,
+                                          const_xmlChar* c_ns, const_xmlChar* c_name)
 
     # return the value of attribute "{ns}name", or the default value
     cdef object getAttributeValue(_Element element, key, default)
@@ -129,17 +129,17 @@ cdef extern from "etree_api.h":
     # delete an attribute based on name and namespace URI
     # returns -1 if the attribute was not found (no exception)
     cdef int delAttributeFromNsName(tree.xmlNode* c_element,
-                                    const_xmlChar* c_href, const_xmlChar* c_name)
+                                    const_xmlChar* c_href, const_xmlChar* c_name) noexcept
 
     ##########################################################################
     # XML node helper functions
 
     # check if the element has at least one child
-    cdef bint hasChild(tree.xmlNode* c_node) nogil
+    cdef bint hasChild(tree.xmlNode* c_node) noexcept nogil
 
     # find child element number 'index' (supports negative indexes)
     cdef tree.xmlNode* findChild(tree.xmlNode* c_node,
-                                 Py_ssize_t index) nogil
+                                 Py_ssize_t index) noexcept nogil
 
     # find child element number 'index' starting at first one
     cdef tree.xmlNode* findChildForwards(tree.xmlNode* c_node,
@@ -181,8 +181,8 @@ cdef extern from "etree_api.h":
     # (NULL allowed for each => always matches)
     cdef int tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name)
 
-    # convert a UTF-8 char* to a Python string or unicode string
-    cdef object pyunicode(const_xmlChar* s)
+    # convert a UTF-8 char* to a Python unicode string
+    cdef unicode pyunicode(const_xmlChar* s)
 
     # convert the string to UTF-8 using the normal lxml.etree semantics
     cdef bytes utf8(object s)
@@ -194,10 +194,10 @@ cdef extern from "etree_api.h":
     cdef tuple getNsTagWithEmptyNs(object tag)
 
     # get the "{ns}tag" string for a C node
-    cdef object namespacedName(tree.xmlNode* c_node)
+    cdef unicode namespacedName(tree.xmlNode* c_node)
 
     # get the "{ns}tag" string for a href/tagname pair (c_ns may be NULL)
-    cdef object namespacedNameFromNsName(const_xmlChar* c_ns, const_xmlChar* c_tag)
+    cdef unicode namespacedNameFromNsName(const_xmlChar* c_ns, const_xmlChar* c_tag)
 
     # check if the node has a text value (which may be '')
     cdef bint hasText(tree.xmlNode* c_node) nogil
@@ -206,10 +206,10 @@ cdef extern from "etree_api.h":
     cdef bint hasTail(tree.xmlNode* c_node) nogil
 
     # get the text content of an element (or None)
-    cdef object textOf(tree.xmlNode* c_node)
+    cdef unicode textOf(tree.xmlNode* c_node)
 
     # get the tail content of an element (or None)
-    cdef object tailOf(tree.xmlNode* c_node)
+    cdef unicode tailOf(tree.xmlNode* c_node)
 
     # set the text value of an element
     cdef int setNodeText(tree.xmlNode* c_node, text) except -1

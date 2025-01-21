@@ -1,7 +1,7 @@
 # Public C API for lxml.etree
 
 cdef public api _Element deepcopyNodeToDocument(_Document doc, xmlNode* c_root):
-    u"Recursively copy the element into the document. doc is not modified."
+    "Recursively copy the element into the document. doc is not modified."
     cdef xmlNode* c_node
     c_node = _copyNodeToDoc(c_root, doc._c_doc)
     return _elementFactory(doc, c_node)
@@ -68,12 +68,12 @@ cdef public api bint hasText(xmlNode* c_node):
 cdef public api bint hasTail(xmlNode* c_node):
     return _hasTail(c_node)
 
-cdef public api object textOf(xmlNode* c_node):
+cdef public api unicode textOf(xmlNode* c_node):
     if c_node is NULL:
         return None
     return _collectText(c_node.children)
 
-cdef public api object tailOf(xmlNode* c_node):
+cdef public api unicode tailOf(xmlNode* c_node):
     if c_node is NULL:
         return None
     return _collectText(c_node.next)
@@ -88,10 +88,10 @@ cdef public api int setTailText(xmlNode* c_node, text) except -1:
         raise ValueError
     return _setTailText(c_node, text)
 
-cdef public api object attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
+cdef public api unicode attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     return _attributeValue(c_element, c_attrib_node)
 
-cdef public api object attributeValueFromNsName(xmlNode* c_element,
+cdef public api unicode attributeValueFromNsName(xmlNode* c_element,
                                                 const_xmlChar* ns, const_xmlChar* name):
     return _attributeValueFromNsName(c_element, ns, name)
 
@@ -143,7 +143,7 @@ cdef public api void appendChild(_Element parent, _Element child):
 cdef public api int appendChildToElement(_Element parent, _Element child) except -1:
     return _appendChild(parent, child)
 
-cdef public api object pyunicode(const_xmlChar* s):
+cdef public api unicode pyunicode(const_xmlChar* s):
     if s is NULL:
         raise TypeError
     return funicode(s)
@@ -157,10 +157,10 @@ cdef public api tuple getNsTag(object tag):
 cdef public api tuple getNsTagWithEmptyNs(object tag):
     return _getNsTagWithEmptyNs(tag)
 
-cdef public api object namespacedName(xmlNode* c_node):
+cdef public api unicode namespacedName(xmlNode* c_node):
     return _namespacedName(c_node)
 
-cdef public api object namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
+cdef public api unicode namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
     return _namespacedNameFromNsName(href, name)
 
 cdef public api void iteratorStoreNext(_ElementIterator iterator, _Element node):

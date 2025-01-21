@@ -11,7 +11,7 @@ cdef object _NO_DEFAULT = object()
 
 
 cdef class ObjectPath:
-    u"""ObjectPath(path)
+    """ObjectPath(path)
     Immutable object that represents a compiled object path.
 
     Example for a path: 'root.child[1].{other}child[25]'
@@ -27,7 +27,7 @@ cdef class ObjectPath:
             self._path_str = path
         else:
             self._path = _parse_object_path_list(path)
-            self._path_str = u'.'.join(path)
+            self._path_str = '.'.join(path)
         self._path_len = len(self._path)
         self._c_path = _build_object_path_segments(self._path)
         self.find = self.__call__
@@ -40,7 +40,7 @@ cdef class ObjectPath:
         return self._path_str
 
     def __call__(self, _Element root not None, *_default):
-        u"""Follow the attribute path in the object structure and return the
+        """Follow the attribute path in the object structure and return the
         target attribute value.
 
         If it it not found, either returns a default value (if one was passed
@@ -48,14 +48,14 @@ cdef class ObjectPath:
         """
         if _default:
             if len(_default) > 1:
-                raise TypeError, u"invalid number of arguments: needs one or two"
+                raise TypeError, "invalid number of arguments: needs one or two"
             default = _default[0]
         else:
             default = _NO_DEFAULT
         return _find_object_path(root, self._c_path, self._path_len, default)
 
     def hasattr(self, _Element root not None):
-        u"hasattr(self, root)"
+        "hasattr(self, root)"
         try:
             _find_object_path(root, self._c_path, self._path_len, _NO_DEFAULT)
         except AttributeError:
@@ -63,7 +63,7 @@ cdef class ObjectPath:
         return True
 
     def setattr(self, _Element root not None, value):
-        u"""setattr(self, root, value)
+        """setattr(self, root, value)
 
         Set the value of the target element in a subtree.
 
@@ -72,7 +72,7 @@ cdef class ObjectPath:
         _create_object_path(root, self._c_path, self._path_len, 1, value)
 
     def addattr(self, _Element root not None, value):
-        u"""addattr(self, root, value)
+        """addattr(self, root, value)
 
         Append a value to the target element in a subtree.
 
@@ -82,14 +82,14 @@ cdef class ObjectPath:
 
 
 cdef object __MATCH_PATH_SEGMENT = re.compile(
-    ur"(\.?)\s*(?:\{([^}]*)\})?\s*([^.{}\[\]\s]+)\s*(?:\[\s*([-0-9]+)\s*\])?",
+    r"(\.?)\s*(?:\{([^}]*)\})?\s*([^.{}\[\]\s]+)\s*(?:\[\s*([-0-9]+)\s*\])?",
     re.U).match
 
 cdef tuple _RELATIVE_PATH_SEGMENT = (None, None, 0)
 
 
 cdef list _parse_object_path_string(_path):
-    u"""Parse object path string into a (ns, name, index) list.
+    """Parse object path string into a (ns, name, index) list.
     """
     cdef bint has_dot
     cdef unicode path
@@ -101,7 +101,7 @@ cdef list _parse_object_path_string(_path):
     else:
         path = _path
     path = path.strip()
-    if path == u'.':
+    if path == '.':
         return [_RELATIVE_PATH_SEGMENT]
     path_pos = 0
     while path:
@@ -111,15 +111,15 @@ cdef list _parse_object_path_string(_path):
 
         dot, ns, name, index = match.groups()
         index = int(index) if index else 0
-        has_dot = dot == u'.'
+        has_dot = dot == '.'
         if not new_path:
             if has_dot:
                 # path '.child' => ignore root
                 new_path.append(_RELATIVE_PATH_SEGMENT)
             elif index:
-                raise ValueError, u"index not allowed on root node"
+                raise ValueError, "index not allowed on root node"
         elif not has_dot:
-            raise ValueError, u"invalid path"
+            raise ValueError, "invalid path"
         if ns is not None:
             ns = python.PyUnicode_AsUTF8String(ns)
         name = python.PyUnicode_AsUTF8String(name)
@@ -127,17 +127,17 @@ cdef list _parse_object_path_string(_path):
 
         path_pos = match.end()
     if not new_path or len(path) > path_pos:
-        raise ValueError, u"invalid path"
+        raise ValueError, "invalid path"
     return new_path
 
 
 cdef list _parse_object_path_list(path):
-    u"""Parse object path sequence into a (ns, name, index) list.
+    """Parse object path sequence into a (ns, name, index) list.
     """
     new_path = []
     for item in path:
         item = item.strip()
-        if not new_path and item == u'':
+        if not new_path and item == '':
             # path '.child' => ignore root
             ns = name = None
             index = 0
@@ -150,14 +150,14 @@ cdef list _parse_object_path_list(path):
             else:
                 index_end = tree.xmlStrchr(index_pos + 1, c']')
                 if index_end is NULL:
-                    raise ValueError, u"index must be enclosed in []"
+                    raise ValueError, "index must be enclosed in []"
                 index = int(index_pos[1:index_end - index_pos])
                 if not new_path and index != 0:
-                    raise ValueError, u"index not allowed on root node"
+                    raise ValueError, "index not allowed on root node"
                 name = <bytes>c_name[:index_pos - c_name]
         new_path.append( (ns, name, index) )
     if not new_path:
-        raise ValueError, u"invalid path"
+        raise ValueError, "invalid path"
     return new_path
 
 
@@ -177,7 +177,7 @@ cdef _ObjectPath* _build_object_path_segments(list path_list) except NULL:
 
 
 cdef _find_object_path(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len, default_value):
-    u"""Follow the path to find the target element.
+    """Follow the path to find the target element.
     """
     cdef tree.xmlNode* c_node
     cdef Py_ssize_t c_index
@@ -221,7 +221,7 @@ cdef _find_object_path(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len
 
 cdef _create_object_path(_Element root, _ObjectPath* c_path,
                          Py_ssize_t c_path_len, int replace, value):
-    u"""Follow the path to find the target element, build the missing children
+    """Follow the path to find the target element, build the missing children
     as needed and set the target element to 'value'.  If replace is true, an
     existing value is replaced, otherwise the new value is added.
     """
@@ -230,7 +230,7 @@ cdef _create_object_path(_Element root, _ObjectPath* c_path,
     cdef tree.xmlNode* c_child
     cdef Py_ssize_t c_index
     if c_path_len == 1:
-        raise TypeError, u"cannot update root node"
+        raise TypeError, "cannot update root node"
 
     c_node = root._c_node
     c_name = c_path[0].name
@@ -258,7 +258,7 @@ cdef _create_object_path(_Element root, _ObjectPath* c_path,
         if c_child is not NULL:
             c_node = c_child
         elif c_index != 0:
-            raise TypeError, u"creating indexed path attributes is not supported"
+            raise TypeError, "creating indexed path attributes is not supported"
         elif c_path_len == 1:
             _appendValue(cetree.elementFactory(root._doc, c_node),
                          cetree.namespacedNameFromNsName(c_href, c_name),
@@ -281,13 +281,13 @@ cdef _create_object_path(_Element root, _ObjectPath* c_path,
 
 
 cdef list _build_descendant_paths(tree.xmlNode* c_node, prefix_string):
-    u"""Returns a list of all descendant paths.
+    """Returns a list of all descendant paths.
     """
     cdef list path, path_list
     tag = cetree.namespacedName(c_node)
     if prefix_string:
-        if prefix_string[-1] != u'.':
-            prefix_string += u'.'
+        if prefix_string[-1] != '.':
+            prefix_string += '.'
         prefix_string = prefix_string + tag
     else:
         prefix_string = tag
@@ -299,12 +299,12 @@ cdef list _build_descendant_paths(tree.xmlNode* c_node, prefix_string):
 
 cdef int _recursive_build_descendant_paths(tree.xmlNode* c_node,
                                            list path, list path_list) except -1:
-    u"""Fills the list 'path_list' with all descendant paths, initial prefix
+    """Fills the list 'path_list' with all descendant paths, initial prefix
     being in the list 'path'.
     """
     cdef tree.xmlNode* c_child
     tags = {}
-    path_list.append(u'.'.join(path))
+    path_list.append('.'.join(path))
     c_href = tree._getNs(c_node)
     c_child = c_node.children
     while c_child is not NULL:
@@ -316,7 +316,7 @@ cdef int _recursive_build_descendant_paths(tree.xmlNode* c_node,
             tag = pyunicode(c_child.name)
         elif c_href is not NULL and tree._getNs(c_child) is NULL:
             # special case: parent has namespace, child does not
-            tag = u'{}' + pyunicode(c_child.name)
+            tag = '{}' + pyunicode(c_child.name)
         else:
             tag = cetree.namespacedName(c_child)
         count = tags.get(tag)

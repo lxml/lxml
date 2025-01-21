@@ -3,6 +3,10 @@ image: Visual Studio 2019
 
 environment:
   matrix:
+  - python: 312
+  - python: 312-x64
+  - python: 311
+  - python: 311-x64
   - python: 310
   - python: 310-x64
   - python: 39
@@ -19,6 +23,13 @@ environment:
   - python: 36-x64
   - python: 35
   - python: 35-x64
+
+  - python: 312
+    arch: arm64
+    env: STATIC_DEPS=true
+  - python: 311
+    arch: arm64
+    env: STATIC_DEPS=true
   - python: 310
     arch: arm64
     env: STATIC_DEPS=true
@@ -44,9 +55,9 @@ install:
 build: off
 build_script:
   - python -u setup.py bdist_wheel --static-deps
+  - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
   - python -u setup.py build_ext --inplace --static-deps
-  - python -u test.py -vv -p
 
 test: off
 test_script:
-  - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+  - python -u test.py -vv -p

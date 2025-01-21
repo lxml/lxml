@@ -2,7 +2,7 @@
 
 @cython.internal
 cdef class _ReadOnlyProxy:
-    u"A read-only proxy class suitable for PIs/Comments (for internal use only!)."
+    "A read-only proxy class suitable for PIs/Comments (for internal use only!)."
     cdef bint _free_after_use
     cdef xmlNode* _c_node
     cdef _ReadOnlyProxy _source_proxy
@@ -12,7 +12,7 @@ cdef class _ReadOnlyProxy:
         self._free_after_use = 0
 
     cdef int _assertNode(self) except -1:
-        u"""This is our way of saying: this proxy is invalid!
+        """This is our way of saying: this proxy is invalid!
         """
         if not self._c_node:
             raise ReferenceError("Proxy invalidated!")
@@ -21,8 +21,8 @@ cdef class _ReadOnlyProxy:
     cdef int _raise_unsupported_type(self) except -1:
         raise TypeError(f"Unsupported node type: {self._c_node.type}")
 
-    cdef void free_after_use(self):
-        u"""Should the xmlNode* be freed when releasing the proxy?
+    cdef void free_after_use(self) noexcept:
+        """Should the xmlNode* be freed when releasing the proxy?
         """
         self._free_after_use = 1
 
@@ -85,22 +85,22 @@ cdef class _ReadOnlyProxy:
     def __repr__(self):
         self._assertNode()
         if self._c_node.type == tree.XML_ELEMENT_NODE:
-            return "<Element %s at 0x%x>" % (strrepr(self.tag), id(self))
+            return "<Element %s at 0x%x>" % (self.tag, id(self))
         elif self._c_node.type == tree.XML_COMMENT_NODE:
-            return "<!--%s-->" % strrepr(self.text)
+            return "<!--%s-->" % self.text
         elif self._c_node.type == tree.XML_ENTITY_NODE:
-            return "&%s;" % strrepr(funicode(self._c_node.name))
+            return "&%s;" % funicode(self._c_node.name)
         elif self._c_node.type == tree.XML_PI_NODE:
             text = self.text
             if text:
-                return "<?%s %s?>" % (strrepr(self.target), text)
+                return "<?%s %s?>" % (self.target, text)
             else:
-                return "<?%s?>" % strrepr(self.target)
+                return "<?%s?>" % self.target
         else:
             self._raise_unsupported_type()
 
     def __getitem__(self, x):
-        u"""Returns the subelement at the given position or the requested
+        """Returns the subelement at the given position or the requested
         slice.
         """
         cdef xmlNode* c_node = NULL
@@ -134,11 +134,11 @@ cdef class _ReadOnlyProxy:
             # indexing
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError, u"list index out of range"
+                raise IndexError, "list index out of range"
             return _newReadOnlyProxy(self._source_proxy, c_node)
 
     def __len__(self):
-        u"""Returns the number of subelements.
+        """Returns the number of subelements.
         """
         cdef Py_ssize_t c
         cdef xmlNode* c_node
@@ -151,18 +151,18 @@ cdef class _ReadOnlyProxy:
             c_node = c_node.next
         return c
 
-    def __nonzero__(self):
+    def __bool__(self):
         cdef xmlNode* c_node
         self._assertNode()
         c_node = _findChildBackwards(self._c_node, 0)
         return c_node != NULL
 
     def __deepcopy__(self, memo):
-        u"__deepcopy__(self, memo)"
+        "__deepcopy__(self, memo)"
         return self.__copy__()
         
     cpdef __copy__(self):
-        u"__copy__(self)"
+        "__copy__(self)"
         cdef xmlDoc* c_doc
         cdef xmlNode* c_node
         cdef _Document new_doc
@@ -185,7 +185,7 @@ cdef class _ReadOnlyProxy:
         return iter(self.getchildren())
 
     def iterchildren(self, tag=None, *, reversed=False):
-        u"""iterchildren(self, tag=None, reversed=False)
+        """iterchildren(self, tag=None, reversed=False)
 
         Iterate over the children of this element.
         """
@@ -197,7 +197,7 @@ cdef class _ReadOnlyProxy:
         return iter(children)
 
     cpdef getchildren(self):
-        u"""Returns all subelements. The elements are returned in document
+        """Returns all subelements. The elements are returned in document
         order.
         """
         cdef xmlNode* c_node
@@ -212,7 +212,7 @@ cdef class _ReadOnlyProxy:
         return result
 
     def getparent(self):
-        u"""Returns the parent of this element or None for the root element.
+        """Returns the parent of this element or None for the root element.
         """
         cdef xmlNode* c_parent
         self._assertNode()
@@ -223,7 +223,7 @@ cdef class _ReadOnlyProxy:
             return _newReadOnlyProxy(self._source_proxy, c_parent)
 
     def getnext(self):
-        u"""Returns the following sibling of this element or None.
+        """Returns the following sibling of this element or None.
         """
         cdef xmlNode* c_node
         self._assertNode()
@@ -233,7 +233,7 @@ cdef class _ReadOnlyProxy:
         return None
 
     def getprevious(self):
-        u"""Returns the preceding sibling of this element or None.
+        """Returns the preceding sibling of this element or None.
         """
         cdef xmlNode* c_node
         self._assertNode()
@@ -262,7 +262,7 @@ cdef class _ReadOnlyEntityProxy(_ReadOnlyProxy):
 
         def __set__(self, value):
             value_utf = _utf8(value)
-            if u'&' in value or u';' in value:
+            if '&' in value or ';' in value:
                 raise ValueError(f"Invalid entity name '{value}'")
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
@@ -302,27 +302,27 @@ cdef class _ReadOnlyElementProxy(_ReadOnlyProxy):
         return _build_nsmap(self._c_node)
 
     def get(self, key, default=None):
-        u"""Gets an element attribute.
+        """Gets an element attribute.
         """
         self._assertNode()
         return _getNodeAttributeValue(self._c_node, key, default)
 
     def keys(self):
-        u"""Gets a list of attribute names. The names are returned in an
+        """Gets a list of attribute names. The names are returned in an
         arbitrary order (just like for an ordinary Python dictionary).
         """
         self._assertNode()
         return _collectAttributes(self._c_node, 1)
 
     def values(self):
-        u"""Gets element attributes, as a sequence. The attributes are returned
+        """Gets element attributes, as a sequence. The attributes are returned
         in an arbitrary order.
         """
         self._assertNode()
         return _collectAttributes(self._c_node, 2)
 
     def items(self):
-        u"""Gets element attributes, as a sequence. The attributes are returned
+        """Gets element attributes, as a sequence. The attributes are returned
         in an arbitrary order.
         """
         self._assertNode()
@@ -376,19 +376,19 @@ cdef _freeReadOnlyProxies(_ReadOnlyProxy sourceProxy):
 cdef class _OpaqueNodeWrapper:
     cdef tree.xmlNode* _c_node
     def __init__(self):
-        raise TypeError, u"This type cannot be instantiated from Python"
+        raise TypeError, "This type cannot be instantiated from Python"
 
 @cython.final
 @cython.internal
 cdef class _OpaqueDocumentWrapper(_OpaqueNodeWrapper):
     cdef int _assertNode(self) except -1:
-        u"""This is our way of saying: this proxy is invalid!
+        """This is our way of saying: this proxy is invalid!
         """
-        assert self._c_node is not NULL, u"Proxy invalidated!"
+        assert self._c_node is not NULL, "Proxy invalidated!"
         return 0
 
     cpdef append(self, other_element):
-        u"""Append a copy of an Element to the list of children.
+        """Append a copy of an Element to the list of children.
         """
         cdef xmlNode* c_next
         cdef xmlNode* c_node
@@ -396,7 +396,7 @@ cdef class _OpaqueDocumentWrapper(_OpaqueNodeWrapper):
         c_node = _roNodeOf(other_element)
         if c_node.type == tree.XML_ELEMENT_NODE:
             if tree.xmlDocGetRootElement(<tree.xmlDoc*>self._c_node) is not NULL:
-                raise ValueError, u"cannot append, document already has a root element"
+                raise ValueError, "cannot append, document already has a root element"
         elif c_node.type not in (tree.XML_PI_NODE, tree.XML_COMMENT_NODE):
             raise TypeError, f"unsupported element type for top-level node: {c_node.type}"
         c_node = _copyNodeToDoc(c_node, <tree.xmlDoc*>self._c_node)
@@ -405,7 +405,7 @@ cdef class _OpaqueDocumentWrapper(_OpaqueNodeWrapper):
         _moveTail(c_next, c_node)
 
     def extend(self, elements):
-        u"""Append a copy of all Elements from a sequence to the list of
+        """Append a copy of all Elements from a sequence to the list of
         children.
         """
         self._assertNode()
@@ -425,7 +425,7 @@ cdef _OpaqueNodeWrapper _newOpaqueAppendOnlyNodeWrapper(xmlNode* c_node):
 
 @cython.internal
 cdef class _ModifyContentOnlyProxy(_ReadOnlyProxy):
-    u"""A read-only proxy that allows changing the text content.
+    """A read-only proxy that allows changing the text content.
     """
     property text:
         def __get__(self):
@@ -472,7 +472,7 @@ cdef class _ModifyContentOnlyEntityProxy(_ModifyContentOnlyProxy):
 
         def __set__(self, value):
             value = _utf8(value)
-            assert u'&' not in value and u';' not in value, \
+            assert '&' not in value and ';' not in value, \
                 f"Invalid entity name '{value}'"
             c_text = _xcstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
@@ -481,11 +481,11 @@ cdef class _ModifyContentOnlyEntityProxy(_ModifyContentOnlyProxy):
 @cython.final
 @cython.internal
 cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
-    u"""A read-only element that allows adding children and changing the
+    """A read-only element that allows adding children and changing the
     text content (i.e. everything that adds to the subtree).
     """
     cpdef append(self, other_element):
-        u"""Append a copy of an Element to the list of children.
+        """Append a copy of an Element to the list of children.
         """
         cdef xmlNode* c_next
         cdef xmlNode* c_node
@@ -497,7 +497,7 @@ cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
         _moveTail(c_next, c_node)
             
     def extend(self, elements):
-        u"""Append a copy of all Elements from a sequence to the list of
+        """Append a copy of all Elements from a sequence to the list of
         children.
         """
         self._assertNode()
@@ -546,7 +546,7 @@ cdef xmlNode* _roNodeOf(element) except NULL:
         raise TypeError, f"invalid argument type {type(element)}"
 
     if c_node is NULL:
-        raise TypeError, u"invalid element"
+        raise TypeError, "invalid element"
     return c_node
 
 cdef xmlNode* _nonRoNodeOf(element) except NULL:
@@ -561,5 +561,5 @@ cdef xmlNode* _nonRoNodeOf(element) except NULL:
         raise TypeError, f"invalid argument type {type(element)}"
 
     if c_node is NULL:
-        raise TypeError, u"invalid element"
+        raise TypeError, "invalid element"
     return c_node

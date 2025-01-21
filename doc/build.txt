@@ -47,8 +47,8 @@ working Cython installation.  You can use pip_ to install it::
 
 https://github.com/lxml/lxml/blob/master/requirements.txt
 
-lxml currently requires at least Cython 0.29.  Later release versions
-are generally preferred.
+lxml 5.x currently uses at least Cython 3.0.  Later release versions
+are generally preferred.  lxml 4.x used Cython 0.29.x instead.
 
 
 Github, git and hg
@@ -140,8 +140,8 @@ on your Python module search path (PYTHONPATH) and then import
 ``lxml.etree`` to play with it::
 
   # cd lxml
-  # PYTHONPATH=src python
-  Python 2.7.2
+  # PYTHONPATH=src python3
+  Python 3.10.2
   Type "help", "copyright", "credits" or "license" for more information.
   >>> from lxml import etree
   >>>

@@ -32,7 +32,7 @@ cdef class RelaxNGValidateError(RelaxNGError):
 # RelaxNG
 
 cdef class RelaxNG(_Validator):
-    u"""RelaxNG(self, etree=None, file=None)
+    """RelaxNG(self, etree=None, file=None)
     Turn a document into a Relax NG validator.
 
     Either pass a schema as Element or ElementTree, or pass a file or
@@ -77,18 +77,19 @@ cdef class RelaxNG(_Validator):
                 doc = _parseDocument(file, parser=None, base_url=None)
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:
-            raise RelaxNGParseError, u"No tree or file given"
+            raise RelaxNGParseError, "No tree or file given"
 
         if parser_ctxt is NULL:
             if fake_c_doc is not NULL:
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
-                    u"Document is not parsable as Relax NG"),
+                    "Document is not parsable as Relax NG"),
                 self._error_log)
 
+        # Need a cast here because older libxml2 releases do not use 'const' in the functype.
         relaxng.xmlRelaxNGSetParserStructuredErrors(
-            parser_ctxt, _receiveError, <void*>self._error_log)
+            parser_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
         _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGP)
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
         _connectGenericErrorLog(None)
@@ -99,7 +100,7 @@ cdef class RelaxNG(_Validator):
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
-                    u"Document is not valid Relax NG"),
+                    "Document is not valid Relax NG"),
                 self._error_log)
         if fake_c_doc is not NULL:
             _destroyFakeDoc(doc._c_doc, fake_c_doc)
@@ -108,7 +109,7 @@ cdef class RelaxNG(_Validator):
         relaxng.xmlRelaxNGFree(self._c_schema)
 
     def __call__(self, etree):
-        u"""__call__(self, etree)
+        """__call__(self, etree)
 
         Validate doc using Relax NG.
 
@@ -129,8 +130,9 @@ cdef class RelaxNG(_Validator):
 
         try:
             self._error_log.clear()
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             relaxng.xmlRelaxNGSetValidStructuredErrors(
-                valid_ctxt, _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
             _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGV)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
@@ -142,7 +144,7 @@ cdef class RelaxNG(_Validator):
 
         if ret == -1:
             raise RelaxNGValidateError(
-                u"Internal error in Relax NG validation",
+                "Internal error in Relax NG validation",
                 self._error_log)
         if ret == 0:
             return True

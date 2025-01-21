@@ -121,13 +121,13 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
 @cython.internal
 @cython.no_gc_clear  # Required because parent class uses it - Cython bug.
 cdef class _TargetParserContext(_SaxParserContext):
-    u"""This class maps SAX2 events to the ET parser target interface.
+    """This class maps SAX2 events to the ET parser target interface.
     """
     cdef object _python_target
     cdef int _setTarget(self, target) except -1:
         self._python_target = target
         if not isinstance(target, _SaxParserTarget) or \
-                hasattr(target, u'__dict__'):
+                hasattr(target, '__dict__'):
             target = _PythonSaxParserTarget(target)
         self._setSaxParserTarget(target)
         return 0
@@ -138,7 +138,7 @@ cdef class _TargetParserContext(_SaxParserContext):
         context._setTarget(self._python_target)
         return context
 
-    cdef void _cleanupTargetParserContext(self, xmlDoc* result):
+    cdef void _cleanupTargetParserContext(self, xmlDoc* result) noexcept:
         if self._c_ctxt.myDoc is not NULL:
             if self._c_ctxt.myDoc is not result and \
                     self._c_ctxt.myDoc._private is NULL:
@@ -157,15 +157,8 @@ cdef class _TargetParserContext(_SaxParserContext):
             if not self._c_ctxt.wellFormed and not recover:
                 _raiseParseError(self._c_ctxt, filename, self._error_log)
         except:
-            if python.IS_PYTHON2:
-                exc = sys.exc_info()
-                # Python 2 can't chain exceptions
-                try: self._python_target.close()
-                except: pass
-                raise exc[0], exc[1], exc[2]
-            else:
-                self._python_target.close()
-                raise
+            self._python_target.close()
+            raise
         return self._python_target.close()
 
     cdef xmlDoc* _handleParseResultDoc(self, _BaseParser parser,
@@ -181,14 +174,7 @@ cdef class _TargetParserContext(_SaxParserContext):
             if not self._c_ctxt.wellFormed and not recover:
                 _raiseParseError(self._c_ctxt, filename, self._error_log)
         except:
-            if python.IS_PYTHON2:
-                exc = sys.exc_info()
-                # Python 2 can't chain exceptions
-                try: self._python_target.close()
-                except: pass
-                raise exc[0], exc[1], exc[2]
-            else:
-                self._python_target.close()
-                raise
+            self._python_target.close()
+            raise
         parse_result = self._python_target.close()
         raise _TargetParserResult(parse_result)

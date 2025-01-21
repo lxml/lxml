@@ -11,7 +11,7 @@ cdef class NamespaceRegistryError(LxmlRegistryError):
 
 @cython.internal
 cdef class _NamespaceRegistry:
-    u"Dictionary-like namespace registry"
+    "Dictionary-like namespace registry"
     cdef object _ns_uri
     cdef bytes _ns_uri_utf
     cdef dict _entries
@@ -27,7 +27,7 @@ cdef class _NamespaceRegistry:
         self._entries = {}
 
     def update(self, class_dict_iterable):
-        u"""update(self, class_dict_iterable)
+        """update(self, class_dict_iterable)
 
         Forgivingly update the registry.
 
@@ -38,7 +38,7 @@ cdef class _NamespaceRegistry:
         or if the name starts with '_', it will be silently discarded.
         This allows registrations at the module or class level using
         vars(), globals() etc."""
-        if hasattr(class_dict_iterable, u'items'):
+        if hasattr(class_dict_iterable, 'items'):
             class_dict_iterable = class_dict_iterable.items()
         for name, item in class_dict_iterable:
             if (name is None or name[:1] != '_') and callable(item):
@@ -58,14 +58,14 @@ cdef class _NamespaceRegistry:
         cdef python.PyObject* dict_result
         dict_result = python.PyDict_GetItem(self._entries, name)
         if dict_result is NULL:
-            raise KeyError, u"Name not registered."
+            raise KeyError, "Name not registered."
         return <object>dict_result
 
     cdef object _getForString(self, char* name):
         cdef python.PyObject* dict_result
         dict_result = python.PyDict_GetItem(self._entries, name)
         if dict_result is NULL:
-            raise KeyError, u"Name not registered."
+            raise KeyError, "Name not registered."
         return <object>dict_result
 
     def __iter__(self):
@@ -104,21 +104,21 @@ cdef class _NamespaceRegistry:
 @cython.final
 @cython.internal
 cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
-    u"Dictionary-like registry for namespace implementation classes"
+    "Dictionary-like registry for namespace implementation classes"
     def __setitem__(self, name, item):
         if not isinstance(item, type) or not issubclass(item, ElementBase):
             raise NamespaceRegistryError, \
-                u"Registered element classes must be subtypes of ElementBase"
+                "Registered element classes must be subtypes of ElementBase"
         if name is not None:
             name = _utf8(name)
         self._entries[name] = item
 
     def __repr__(self):
-        return u"Namespace(%r)" % self._ns_uri
+        return "Namespace(%r)" % self._ns_uri
 
 
 cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
-    u"""ElementNamespaceClassLookup(self, fallback=None)
+    """ElementNamespaceClassLookup(self, fallback=None)
 
     Element class lookup scheme that searches the Element class in the
     Namespace registry.
@@ -145,7 +145,7 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
         self._lookup_function = _find_nselement_class
 
     def get_namespace(self, ns_uri):
-        u"""get_namespace(self, ns_uri)
+        """get_namespace(self, ns_uri)
 
         Retrieve the namespace object associated with the given URI.
         Pass None for the empty namespace.
@@ -205,7 +205,7 @@ cdef dict __FUNCTION_NAMESPACE_REGISTRIES
 __FUNCTION_NAMESPACE_REGISTRIES = {}
 
 def FunctionNamespace(ns_uri):
-    u"""FunctionNamespace(ns_uri)
+    """FunctionNamespace(ns_uri)
 
     Retrieve the function namespace object associated with the given
     URI.
@@ -238,14 +238,14 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
     def __setitem__(self, name, item):
         if not callable(item):
             raise NamespaceRegistryError, \
-                u"Registered functions must be callable."
+                "Registered functions must be callable."
         if not name:
             raise ValueError, \
-                u"extensions must have non empty names"
+                "extensions must have non empty names"
         self._entries[_utf8(name)] = item
 
     def __repr__(self):
-        return u"FunctionNamespace(%r)" % self._ns_uri
+        return "FunctionNamespace(%r)" % self._ns_uri
 
 @cython.final
 @cython.internal
@@ -254,7 +254,7 @@ cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
     cdef bytes _prefix_utf
 
     property prefix:
-        u"Namespace prefix for extension functions."
+        "Namespace prefix for extension functions."
         def __del__(self):
             self._prefix = None # no prefix configured
             self._prefix_utf = None
@@ -270,7 +270,7 @@ cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
             self._prefix = prefix
 
 cdef list _find_all_extension_prefixes():
-    u"Internal lookup function to find all function prefixes for XSLT/XPath."
+    "Internal lookup function to find all function prefixes for XSLT/XPath."
     cdef _XPathFunctionNamespaceRegistry registry
     cdef list ns_prefixes = []
     for registry in __FUNCTION_NAMESPACE_REGISTRIES.itervalues():

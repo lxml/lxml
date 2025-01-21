@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
+# coding: utf-8
 """
 Tests for the incremental XML serialisation API.
 """
-
-from __future__ import absolute_import
 
 import io
 import os
@@ -12,10 +9,13 @@ import sys
 import unittest
 import textwrap
 import tempfile
+from io import BytesIO
+
+from unittest import skipIf
 
 from lxml.etree import LxmlSyntaxError
 
-from .common_imports import etree, BytesIO, HelperTestCase, skipIf, _str
+from .common_imports import etree, HelperTestCase
 
 
 class _XmlFileTestCaseBase(HelperTestCase):
@@ -161,6 +161,13 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 pass
         self.assertXml('<test k="V"></test>')
 
+    def test_attribute_unicode(self):
+        with etree.xmlfile(self._file, encoding="utf-8") as xf:
+            with xf.element('älämänt', attrib={"Тест": "Атрибут"}):
+                el = etree.Element("älämänt", attrib={"Тест": "Атрибут"})
+                xf.write(el)
+        self.assertXml('<älämänt Тест="Атрибут"><älämänt Тест="Атрибут"/></älämänt>')
+
     def test_escaping(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
@@ -170,39 +177,39 @@ class _XmlFileTestCaseBase(HelperTestCase):
             '<test>Comments: &lt;!-- text --&gt;\nEntities: &amp;amp;</test>')
 
     def test_encoding(self):
-        with etree.xmlfile(self._file, encoding='utf16') as xf:
+        with etree.xmlfile(self._file, encoding='utf-16') as xf:
             with xf.element('test'):
                 xf.write('toast')
-        self.assertXml('<test>toast</test>', encoding='utf16')
+        self.assertXml('<test>toast</test>', encoding='utf-16')
 
     def test_buffering(self):
         with etree.xmlfile(self._file, buffered=False) as xf:
             with xf.element('test'):
-                self.assertXml("<test>")
+                self.assertXml("<test>", reparse=False)
                 xf.write('toast')
-                self.assertXml("<test>toast")
+                self.assertXml("<test>toast", reparse=False)
                 with xf.element('taste'):
-                    self.assertXml("<test>toast<taste>")
+                    self.assertXml("<test>toast<taste>", reparse=False)
                     xf.write('some', etree.Element("more"), "toast")
-                    self.assertXml("<test>toast<taste>some<more/>toast")
-                self.assertXml("<test>toast<taste>some<more/>toast</taste>")
+                    self.assertXml("<test>toast<taste>some<more/>toast", reparse=False)
+                self.assertXml("<test>toast<taste>some<more/>toast</taste>", reparse=False)
                 xf.write('end')
-                self.assertXml("<test>toast<taste>some<more/>toast</taste>end")
-            self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>")
+                self.assertXml("<test>toast<taste>some<more/>toast</taste>end", reparse=False)
+            self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>", reparse=False)
         self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>")
 
     def test_flush(self):
         with etree.xmlfile(self._file, buffered=True) as xf:
             with xf.element('test'):
-                self.assertXml("")
+                self.assertXml("", reparse=False)
                 xf.write('toast')
-                self.assertXml("")
+                self.assertXml("", reparse=False)
                 with xf.element('taste'):
-                    self.assertXml("")
+                    self.assertXml("", reparse=False)
                     xf.flush()
-                    self.assertXml("<test>toast<taste>")
-                self.assertXml("<test>toast<taste>")
-            self.assertXml("<test>toast<taste>")
+                    self.assertXml("<test>toast<taste>", reparse=False)
+                self.assertXml("<test>toast<taste>", reparse=False)
+            self.assertXml("<test>toast<taste>", reparse=False)
         self.assertXml("<test>toast<taste></taste></test>")
 
     def test_non_io_exception_continues_closing(self):
@@ -306,8 +313,26 @@ class _XmlFileTestCaseBase(HelperTestCase):
         if self._file is not None:
             self._file.close()
 
-    def assertXml(self, expected, encoding='utf8'):
-        self.assertEqual(self._read_file().decode(encoding), expected)
+    def assertXml(self, expected, encoding='utf8', reparse=True):
+        output = self._read_file()
+        self.assertEqual(output.decode(encoding), expected)
+
+        if not reparse:
+            return
+
+        def compare(el1, el2):
+            self.assertEqual(el1.tag, el2.tag)
+            self.assertEqual(el1.text, el2.text)
+            self.assertEqual(el1.tail, el2.tail)
+            self.assertEqual(el1.attrib, el2.attrib)
+
+            self.assertEqual(len(el1), len(el2))
+            for child1, child2 in zip(el1, el2):
+                compare(child1, child2)
+
+        root_out = etree.fromstring(output)
+        root_expected = etree.fromstring(expected)
+        compare(root_out, root_expected)
 
 
 class BytesIOXmlFileTestCase(_XmlFileTestCaseBase):
@@ -357,7 +382,7 @@ class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
 
 
 class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
-    class SimpleFileLike(object):
+    class SimpleFileLike:
         def __init__(self, target):
             self._target = target
             self.write = target.write
@@ -402,7 +427,7 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         class WriteError(Exception):
             pass
 
-        class Writer(object):
+        class Writer:
             def __init__(self, trigger):
                 self._trigger = trigger
                 self._failed = False
@@ -433,6 +458,9 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
 class HtmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):
         self._file = BytesIO()
+
+    def assertXml(self, expected, encoding='utf8', reparse=False):
+        super(HtmlFileTestCase, self).assertXml(expected, encoding, reparse=reparse)
 
     def test_void_elements(self):
         # http://www.w3.org/TR/html5/syntax.html#elements-0
@@ -530,10 +558,10 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
 
     def test_attribute_quoting_unicode(self):
         with etree.htmlfile(self._file) as xf:
-            with xf.element("tagname", attrib={"attr": _str('"misquöted\\u3344\\U00013344"')}):
+            with xf.element("tagname", attrib={"attr": '"misquöted\u3344\U00013344"'}):
                 xf.write("foo")
 
-        self.assertXml('<tagname attr="&quot;misqu&#xF6;ted&#x3344;&#x13344;&quot;">foo</tagname>')
+        self.assertXml('<tagname attr="&quot;misqu&#246;ted&#13124;&#78660;&quot;">foo</tagname>')
 
     def test_unescaped_script(self):
         with etree.htmlfile(self._file) as xf:
@@ -597,7 +625,6 @@ class AsyncXmlFileTestCase(HelperTestCase):
             except StopIteration as ex:
                 return ex.value
 
-    @skipIf(sys.version_info < (3, 5), "requires support for async-def (Py3.5+)")
     def test_async(self):
         code = textwrap.dedent("""\
         async def test_async_xmlfile(close=True, buffered=True):
@@ -660,12 +687,12 @@ class AsyncXmlFileTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([
-        unittest.makeSuite(BytesIOXmlFileTestCase),
-        unittest.makeSuite(TempXmlFileTestCase),
-        unittest.makeSuite(TempPathXmlFileTestCase),
-        unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
-        unittest.makeSuite(HtmlFileTestCase),
-        unittest.makeSuite(AsyncXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(BytesIOXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(TempXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(TempPathXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(SimpleFileLikeXmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(HtmlFileTestCase),
+        unittest.defaultTestLoader.loadTestsFromTestCase(AsyncXmlFileTestCase),
     ])
     return suite
 

@@ -615,6 +615,15 @@ The usage of validation phases is a unique feature of ISO-Schematron and can be
 a very powerful tool e.g. for establishing validation stages or to provide 
 different validators for different "validation audiences".
 
+Note: Some lxml distributions exclude the validation schema file due to licensing issues.
+Since lxml 5.0, the validation of the user provided schema can be disabled with
+``Schematron(..., validate_schema=False)``.
+It is enabled by default if available and disabled otherwise.  Previous versions of
+lxml always had it enabled and failed at import time if the file was not available.
+Thus, some distributions chose to remove the entire ISO-Schematron support.
+The module constant ``lxml.isoschematron.schematron_schema_valid_supported`` can be used
+since lxml 5.0 to detect whether schema file validation is available.
+
 (Pre-ISO-Schematron)
 --------------------
 

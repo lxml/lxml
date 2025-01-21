@@ -26,7 +26,7 @@ cdef object _XPATH_EVAL_ERRORS = (
     xmlerror.XML_XPATH_INVALID_CTXT_POSITION
 )
 
-cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
+cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf),
@@ -36,7 +36,7 @@ cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), _xcstr(ns_utf),
             _xpath_function_call)
 
-cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
+cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf) noexcept:
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
             <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), NULL)
@@ -78,7 +78,7 @@ cdef class _XPathContext(_BaseContext):
         xpath.xmlXPathRegisteredVariablesCleanup(self._xpathCtxt)
         self._cleanup_context()
 
-    cdef void registerExsltFunctions(self):
+    cdef void registerExsltFunctions(self) noexcept:
         if xslt.LIBXSLT_VERSION < 10125:
             # we'd only execute dummy functions anyway
             return
@@ -99,7 +99,7 @@ cdef class _XPathContext(_BaseContext):
 
 
 cdef void _registerExsltFunctionsForNamespaces(
-        void* _c_href, void* _ctxt, const_xmlChar* c_prefix):
+        void* _c_href, void* _ctxt, const_xmlChar* c_prefix) noexcept:
     c_href = <const_xmlChar*> _c_href
     ctxt = <xpath.xmlXPathContext*> _ctxt
 
@@ -147,22 +147,7 @@ cdef class _XPathEvaluatorBase:
         self._xpathCtxt = xpathCtxt
         self._context.set_context(xpathCtxt)
 
-    def evaluate(self, _eval_arg, **_variables):
-        u"""evaluate(self, _eval_arg, **_variables)
-
-        Evaluate an XPath expression.
-
-        Instead of calling this method, you can also call the evaluator object
-        itself.
-
-        Variables may be provided as keyword arguments.  Note that namespaces
-        are currently not supported for variables.
-
-        :deprecated: call the object, not its method.
-        """
-        return self(_eval_arg, **_variables)
-
-    cdef bint _checkAbsolutePath(self, char* path):
+    cdef bint _checkAbsolutePath(self, char* path) noexcept:
         cdef char c
         if path is NULL:
             return 0
@@ -180,11 +165,11 @@ cdef class _XPathEvaluatorBase:
                 result = python.PyThread_acquire_lock(
                     self._eval_lock, python.WAIT_LOCK)
             if result == 0:
-                raise XPathError, u"XPath evaluator locking failed"
+                raise XPathError, "XPath evaluator locking failed"
         return 0
 
     @cython.final
-    cdef void _unlock(self):
+    cdef void _unlock(self) noexcept:
         if config.ENABLE_THREADING and self._eval_lock != NULL:
             python.PyThread_release_lock(self._eval_lock)
 
@@ -196,7 +181,7 @@ cdef class _XPathEvaluatorBase:
             if message is not None:
                 return XPathSyntaxError(message, self._error_log)
         return XPathSyntaxError(
-            self._error_log._buildExceptionMessage(u"Error in xpath expression"),
+            self._error_log._buildExceptionMessage("Error in xpath expression"),
             self._error_log)
 
     cdef _build_eval_error(self):
@@ -209,7 +194,7 @@ cdef class _XPathEvaluatorBase:
             if message is not None:
                 return XPathEvalError(message, self._error_log)
         return XPathEvalError(
-            self._error_log._buildExceptionMessage(u"Error in xpath expression"),
+            self._error_log._buildExceptionMessage("Error in xpath expression"),
             self._error_log)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
@@ -234,7 +219,7 @@ cdef class _XPathEvaluatorBase:
 
 
 cdef class XPathElementEvaluator(_XPathEvaluatorBase):
-    u"""XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     Create an XPath evaluator for an element.
 
     Absolute XPath expressions (starting with '/') will be evaluated against
@@ -264,20 +249,20 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         self.set_context(xpathCtxt)
 
     def register_namespace(self, prefix, uri):
-        u"""Register a namespace with the XPath context.
+        """Register a namespace with the XPath context.
         """
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
         self._context.addNamespace(prefix, uri)
 
     def register_namespaces(self, namespaces):
-        u"""Register a prefix -> uri dict.
+        """Register a prefix -> uri dict.
         """
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
         for prefix, uri in namespaces.items():
             self._context.addNamespace(prefix, uri)
 
     def __call__(self, _path, **_variables):
-        u"""__call__(self, _path, **_variables)
+        """__call__(self, _path, **_variables)
 
         Evaluate an XPath expression on the document.
 
@@ -311,7 +296,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
 
 
 cdef class XPathDocumentEvaluator(XPathElementEvaluator):
-    u"""XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     Create an XPath evaluator for an ElementTree.
 
     Additional namespace declarations can be passed with the
@@ -328,7 +313,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             smart_strings=smart_strings)
 
     def __call__(self, _path, **_variables):
-        u"""__call__(self, _path, **_variables)
+        """__call__(self, _path, **_variables)
 
         Evaluate an XPath expression on the document.
 
@@ -366,7 +351,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
                    regexp=True, smart_strings=True):
-    u"""XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
 
     Creates an XPath evaluator for an ElementTree or an Element.
 
@@ -390,7 +375,7 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
 
 
 cdef class XPath(_XPathEvaluatorBase):
-    u"""XPath(self, path, namespaces=None, extensions=None, regexp=True, smart_strings=True)
+    """XPath(self, path, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     A compiled XPath expression that can be called on Elements and ElementTrees.
 
     Besides the XPath expression, you can pass prefix-namespace
@@ -421,7 +406,7 @@ cdef class XPath(_XPathEvaluatorBase):
             raise self._build_parse_error()
 
     def __call__(self, _etree_or_element, **_variables):
-        u"__call__(self, _etree_or_element, **_variables)"
+        "__call__(self, _etree_or_element, **_variables)"
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
         cdef _Element element
@@ -450,7 +435,7 @@ cdef class XPath(_XPathEvaluatorBase):
     def path(self):
         """The literal XPath expression.
         """
-        return self._path.decode(u'UTF-8')
+        return self._path.decode('UTF-8')
 
     def __dealloc__(self):
         if self._xpath is not NULL:
@@ -464,7 +449,7 @@ cdef object _replace_strings = re.compile(b'("[^"]*")|(\'[^\']*\')').sub
 cdef object _find_namespaces = re.compile(b'({[^}]+})').findall
 
 cdef class ETXPath(XPath):
-    u"""ETXPath(self, path, extensions=None, regexp=True, smart_strings=True)
+    """ETXPath(self, path, extensions=None, regexp=True, smart_strings=True)
     Special XPath class that supports the ElementTree {uri} notation for namespaces.
 
     Note that this class does not accept the ``namespace`` keyword

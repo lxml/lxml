@@ -3,170 +3,199 @@ name: Wheel build
 on:
   release:
     types: [created]
+  schedule:
+  #        ┌───────────── minute (0 - 59)
+  #        │  ┌───────────── hour (0 - 23)
+  #        │  │ ┌───────────── day of the month (1 - 31)
+  #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+  #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+  #        │  │ │ │ │
+  - cron: "42 3 * * 4"
+  push:
+    paths:
+      - .github/workflows/wheels.yml
+      - requirements.txt
+      - pyproject.toml
+      - MANIFEST.in
+      - Makefile
+      - setup*
+      - build*
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/wheels.yml
+      - requirements.txt
+      - pyproject.toml
+      - MANIFEST.in
+      - Makefile
+      - setup*
+      - build*
+  workflow_dispatch:
+
+permissions: {}
 
 jobs:
   sdist:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
-        python-version: 3.9
+        python-version: "3.x"
 
     - name: Install lib dependencies
-      run: sudo apt-get update -y -q && sudo apt-get install -y -q "libxml2=2.9.10*" "libxml2-dev=2.9.10*" libxslt1.1 libxslt1-dev
+      run: sudo apt-get update -y -q && sudo apt-get install -y -q "libxml2=2.9.14*" "libxml2-dev=2.9.14*" libxslt1.1 libxslt1-dev
 
     - name: Install Python dependencies
       run: python -m pip install -U pip setuptools && python -m pip install -U docutils pygments sphinx sphinx-rtd-theme -r requirements.txt
 
     - name: Build docs and sdist
       run: make html sdist
-      env: { STATIC_DEPS: false }
-
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: dist/*.tar.gz
+      env: { STATIC_DEPS: false; CFLAGS="-Og" }  # it's run-once, so build more quickly
 
     - name: Upload sdist
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: sdist
         path: dist/*.tar.gz
 
     - name: Upload website
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: website
         path: doc/html
 
-  Linux:
+  generate-wheels-matrix:
+    # Create a matrix of all architectures & versions to build.
+    # This enables the next step to run cibuildwheel in parallel.
+    # From https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
+    name: Generate wheels matrix
+    runs-on: ubuntu-22.04
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cibuildwheel
+        # Nb. keep cibuildwheel version pin consistent with job below
+        run: pipx install cibuildwheel==2.21.3
+      - id: set-matrix
+        run: |
+          MATRIX=$(
+            {
+              cibuildwheel --print-build-identifiers --platform linux \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-22.04"}' \
+              && cibuildwheel --print-build-identifiers --platform macos \
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform windows \
+              | jq -nRc '{"only": inputs, "os": "windows-2019"}'
+            } | jq -sc
+          )
+          echo "include=$MATRIX"
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
+
+  build_wheels:
+    name: Build for ${{ matrix.only }}
+    needs: generate-wheels-matrix
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
+
+    env:
+      LIBXML2_VERSION: 2.12.9
+      LIBXSLT_VERSION: 1.1.42
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Cache [libs]
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: |
+            libs/*.xz
+            libs/*.gz
+            libs/*.zip
+          key: libs-${{ runner.os }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.21.3
+        with:
+          only: ${{ matrix.only }}
+
+      - name: Build old Linux wheels
+        if: contains(matrix.only, '-manylinux_') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
+        uses: pypa/cibuildwheel@v2.21.3
+        env:
+          CIBW_MANYLINUX_i686_IMAGE: manylinux1
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
+        with:
+          only: ${{ matrix.only }}
+
+      - name: Build faster Linux wheels
+        # also build wheels with the most recent manylinux images and gcc
+        if: runner.os == 'Linux' && !contains(matrix.only, 'i686')
+        uses: pypa/cibuildwheel@v2.21.3
+        env:
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_S390X_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_PYPY_AARCH64_IMAGE: manylinux_2_28
+          CIBW_MUSLLINUX_X86_64_IMAGE: musllinux_1_2
+          CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_2
+          CIBW_MUSLLINUX_PPC64LE_IMAGE: musllinux_1_2
+          CIBW_MUSLLINUX_S390X_IMAGE: musllinux_1_2
+        with:
+          only: ${{ matrix.only }}
+
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          path: ./wheelhouse/*.whl
+          name: lxml-wheel-${{ matrix.only }}
+
+  upload_release_assets:
+    name: Upload Release Assets
+    needs: [ sdist, build_wheels ]
     runs-on: ubuntu-latest
 
-    strategy:
-      # Allows for matrix sub-jobs to fail without canceling the rest
-      fail-fast: false
-
-      matrix:
-        image:
-          - manylinux1_x86_64
-          - manylinux1_i686
-          #- manylinux2010_x86_64
-          #- manylinux2010_i686
-          - manylinux_2_24_x86_64
-          - manylinux_2_24_i686
-          - manylinux_2_24_aarch64
-          - musllinux_1_1_x86_64
-          - musllinux_1_1_aarch64
-          #- manylinux_2_24_ppc64le
-          #- manylinux_2_24_ppc64le
-          #- manylinux_2_24_s390x
-        pyversion: ["*"]
-
-        exclude:
-          - image: manylinux_2_24_aarch64
-            pyversion: "*"
-          - image: musllinux_1_1_aarch64
-            pyversion: "*"
-        include:
-          - image: manylinux2014_aarch64
-            pyversion: "cp36*"
-          - image: manylinux_2_24_aarch64
-            pyversion: "cp37*"
-          - image: manylinux_2_24_aarch64
-            pyversion: "cp38*"
-          - image: manylinux_2_24_aarch64
-            pyversion: "cp39*"
-          - image: manylinux_2_24_aarch64
-            pyversion: "cp310*"
-
-          - image: musllinux_1_1_aarch64
-            pyversion: "cp36*"
-          - image: musllinux_1_1_aarch64
-            pyversion: "cp37*"
-          - image: musllinux_1_1_aarch64
-            pyversion: "cp38*"
-          - image: musllinux_1_1_aarch64
-            pyversion: "cp39*"
-          - image: musllinux_1_1_aarch64
-            pyversion: "cp310*"
+    permissions:
+      contents: write
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: ./release_upload
+          merge-multiple: true
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
+      - name: List downloaded artifacts
+        run: ls -la ./release_upload
 
-    - name: Install dependencies
-      run: python -m pip install -r requirements.txt
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          path: ./release_upload/*.whl
+          name: all_wheels
 
-    - name: Build Linux wheels
-      run: make sdist wheel_${{ matrix.image }}
-      env: { STATIC_DEPS: true, PYTHON_BUILD_VERSION: "${{ matrix.pyversion }}" }
-
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: wheelhouse/*/*-m*linux*.whl  # manylinux / musllinux
-
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels-${{ matrix.image }}
-        path: wheelhouse/*/*-m*linux*.whl  # manylinux / musllinux
-        if-no-files-found: ignore
-
-  non-Linux:
-    strategy:
-      # Allows for matrix sub-jobs to fail without canceling the rest
-      fail-fast: false
-
-      matrix:
-        #os: [macos-10.15, windows-latest]
-        #os: [macos-10.15, macOS-M1]
-        os: [macos-10.15]
-        python_version: ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.7-v7.3.3", "pypy-3.8-v7.3.7"]
-
-    runs-on: ${{ matrix.os }}
-    env: { LIBXML2_VERSION: 2.9.14, LIBXSLT_VERSION: 1.1.35, MACOSX_DEPLOYMENT_TARGET: 10.15 }
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python_version }}
-
-    - name: Install MacOS dependencies
-      if: startsWith(matrix.os, 'mac')
-      run: |
-        brew install automake libtool
-        ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
-
-    - name: Install dependencies
-      run: python -m pip install setuptools wheel -r requirements.txt
-
-    - name: Build wheels
-      run: make sdist wheel
-      env: { STATIC_DEPS: true, RUN_TESTS: true }
-
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: dist/lxml-*.whl
-
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels-${{ matrix.os }}
-        path: dist/lxml-*.whl
-        if-no-files-found: ignore
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            ./release_upload/*.whl
+            ./release_upload/*.tar.gz

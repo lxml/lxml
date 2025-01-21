@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """
 Tests for the ElementPath implementation.
 """
 
-from __future__ import absolute_import
-
+import sys
 import unittest
 from copy import deepcopy
 from .common_imports import etree, HelperTestCase
@@ -271,10 +268,12 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("./tag")),
                          ['tag', 'tag'])
 
-        # FIXME: ET's Path module handles this case incorrectly; this gives
-        # a warning in 1.3, and the behaviour will be modified in 1.4.
         self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/tag")),
                          ['tag', 'tag'])
+        # This would be correct:
+        if False:
+            self.assertEqual(summarize_list(etree.ElementTree(elem).findall("/body")),
+                            ['body'])
 
         # duplicate section => 2x tag matches
         elem[1] = deepcopy(elem[2])
@@ -285,16 +284,49 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(summarize_list(elem.findall(".//tag[@class][@id]")),
                          ['tag', 'tag'])
 
+    def test_find_warning(self):
+        etree = self.etree
+        elem = etree.XML("""
+        <body>
+          <tag class='a'>text</tag>
+          <tag class='b' />
+          <section>
+            <tag class='b' id='inner'>subtext</tag>
+          </section>
+        </body>
+        """)
 
-#class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
-#    import xml.etree.ElementTree as etree
-#    import xml.etree.ElementPath as _elementpath
+        # FIXME: ET's Path module handles this case incorrectly; this gives
+        # a warning in 1.3, and the behaviour will be modified in the future.
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).findall, "/tag")
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).findtext, "/tag")
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).find, "/tag")
+        self.assertWarnsRegex(
+            FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
+            etree.ElementTree(elem).iterfind, "/tag")
+
+
+class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
+    import xml.etree.ElementTree as etree
+    import xml.etree.ElementPath as _elementpath
+
+    test_cache = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_cache)
+    test_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_tokenizer)
+
+    if sys.version_info < (3, 8):
+        test_xpath_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_xpath_tokenizer)
 
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(EtreeElementPathTestCase)])
-    #suite.addTests([unittest.makeSuite(ElementTreeElementPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementPathTestCase)])
     return suite
 
 

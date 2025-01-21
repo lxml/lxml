@@ -3,13 +3,13 @@
 from lxml.includes cimport xmlerror
 from lxml cimport cvarargs
 
-DEF GLOBAL_ERROR_LOG = u"_GlobalErrorLog"
-DEF XSLT_ERROR_LOG = u"_XSLTErrorLog"
+DEF GLOBAL_ERROR_LOG = "_GlobalErrorLog"
+DEF XSLT_ERROR_LOG = "_XSLTErrorLog"
 
 # module level API functions
 
 def clear_error_log():
-    u"""clear_error_log()
+    """clear_error_log()
 
     Clear the global error log.  Note that this log is already bound to a
     fixed size.
@@ -23,7 +23,7 @@ def clear_error_log():
 
 # setup for global log:
 
-cdef void _initThreadLogging():
+cdef void _initThreadLogging() noexcept:
     # Disable generic error lines from libxml2.
     _connectGenericErrorLog(None)
 
@@ -52,7 +52,7 @@ cdef class _LogEntry:
     cdef readonly int domain
     cdef readonly int type
     cdef readonly int level
-    cdef readonly int line
+    cdef readonly long line
     cdef readonly int column
     cdef basestring _message
     cdef basestring _filename
@@ -66,11 +66,11 @@ cdef class _LogEntry:
         tree.xmlFree(self._c_path)
 
     @cython.final
-    cdef _setError(self, xmlerror.xmlError* error):
+    cdef int _setError(self, const xmlerror.xmlError* error) except -1:
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
-        self.line     = error.line
+        self.line     = <long>error.line
         self.column   = error.int2
         self._c_message = NULL
         self._c_filename = NULL
@@ -78,7 +78,7 @@ cdef class _LogEntry:
         if (error.message is NULL or
                 error.message[0] == b'\0' or
                 error.message[0] == b'\n' and error.message[1] == b'\0'):
-            self._message = u"unknown error"
+            self._message = "unknown error"
         else:
             self._message = None
             self._c_message = <char*> tree.xmlStrdup(
@@ -86,7 +86,7 @@ cdef class _LogEntry:
             if not self._c_message:
                 raise MemoryError()
         if error.file is NULL:
-            self._filename = u'<string>'
+            self._filename = '<string>'
         else:
             self._filename = None
             self._c_filename = tree.xmlStrdup(<const_xmlChar*> error.file)
@@ -94,9 +94,12 @@ cdef class _LogEntry:
                 raise MemoryError()
         if error.node is not NULL:
             self._c_path = tree.xmlGetNodePath(<xmlNode*> error.node)
+            c_line = tree.xmlGetLineNo(<xmlNode*> error.node)
+            if c_line > limits.INT_MAX:
+                self.line = c_line
 
     @cython.final
-    cdef _setGeneric(self, int domain, int type, int level, int line,
+    cdef _setGeneric(self, int domain, int type, int level, long line,
                      message, filename):
         self.domain  = domain
         self.type    = type
@@ -108,7 +111,7 @@ cdef class _LogEntry:
         self._c_path = NULL
 
     def __repr__(self):
-        return u"%s:%d:%d:%s:%s:%s: %s" % (
+        return "%s:%d:%d:%s:%s:%s: %s" % (
             self.filename, self.line, self.column, self.level_name,
             self.domain_name, self.type_name, self.message)
 
@@ -116,7 +119,7 @@ cdef class _LogEntry:
     def domain_name(self):
         """The name of the error domain.  See lxml.etree.ErrorDomains
         """
-        return ErrorDomains._getName(self.domain, u"unknown")
+        return ErrorDomains._getName(self.domain, "unknown")
 
     @property
     def type_name(self):
@@ -126,13 +129,13 @@ cdef class _LogEntry:
             getName = RelaxNGErrorTypes._getName
         else:
             getName = ErrorTypes._getName
-        return getName(self.type, u"unknown")
+        return getName(self.type, "unknown")
 
     @property
     def level_name(self):
         """The name of the error level.  See lxml.etree.ErrorLevels
         """
-        return ErrorLevels._getName(self.level, u"unknown")
+        return ErrorLevels._getName(self.level, "unknown")
 
     @property
     def message(self):
@@ -144,7 +147,7 @@ cdef class _LogEntry:
         if self._c_message is NULL:
             return None
         size = cstring_h.strlen(self._c_message)
-        if size > 0 and self._c_message[size-1] == '\n':
+        if size > 0 and self._c_message[size-1] == b'\n':
             size -= 1  # strip EOL
         # cannot use funicode() here because the message may contain
         # byte encoded file paths etc.
@@ -155,7 +158,7 @@ cdef class _LogEntry:
                 self._message = self._c_message[:size].decode(
                     'ascii', 'backslashreplace')
             except UnicodeDecodeError:
-                self._message = u'<undecodable error message>'
+                self._message = '<undecodable error message>'
         if self._c_message:
             # clean up early
             tree.xmlFree(self._c_message)
@@ -192,13 +195,13 @@ cdef class _BaseErrorLog:
         return _BaseErrorLog(self._first_error, self.last_error)
 
     def __repr__(self):
-        return u''
+        return ''
 
     cpdef receive(self, _LogEntry entry):
         pass
 
     @cython.final
-    cdef void _receive(self, xmlerror.xmlError* error):
+    cdef int _receive(self, const xmlerror.xmlError* error) except -1:
         cdef bint is_error
         cdef _LogEntry entry
         cdef _BaseErrorLog global_log
@@ -216,8 +219,8 @@ cdef class _BaseErrorLog:
             self.last_error = entry
 
     @cython.final
-    cdef void _receiveGeneric(self, int domain, int type, int level, int line,
-                              message, filename):
+    cdef int _receiveGeneric(self, int domain, int type, int level, long line,
+                             message, filename) except -1:
         cdef bint is_error
         cdef _LogEntry entry
         cdef _BaseErrorLog global_log
@@ -272,7 +275,7 @@ cdef class _BaseErrorLog:
         return message
 
 cdef class _ListErrorLog(_BaseErrorLog):
-    u"Immutable base version of a list based error log."
+    "Immutable base version of a list based error log."
     cdef list _entries
     cdef int _offset
     def __init__(self, entries, first_error, last_error):
@@ -285,7 +288,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         self._entries = entries
 
     cpdef copy(self):
-        u"""Creates a shallow copy of this error log.  Reuses the list of
+        """Creates a shallow copy of this error log.  Reuses the list of
         entries.
         """
         cdef _ListErrorLog log = _ListErrorLog(
@@ -300,7 +303,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return iter(entries)
 
     def __repr__(self):
-        return u'\n'.join([repr(entry) for entry in self])
+        return '\n'.join([repr(entry) for entry in self])
 
     def __getitem__(self, index):
         if self._offset:
@@ -319,45 +322,45 @@ cdef class _ListErrorLog(_BaseErrorLog):
                 return True
         return False
 
-    def __nonzero__(self):
+    def __bool__(self):
         return len(self._entries) > self._offset
 
     def filter_domains(self, domains):
-        u"""Filter the errors by the given domains and return a new error log
+        """Filter the errors by the given domains and return a new error log
         containing the matches.
         """
         cdef _LogEntry entry
-        if isinstance(domains, (int, long)):
+        if isinstance(domains, int):
             domains = (domains,)
         filtered = [entry for entry in self if entry.domain in domains]
         return _ListErrorLog(filtered, None, None)
 
     def filter_types(self, types):
-        u"""filter_types(self, types)
+        """filter_types(self, types)
 
         Filter the errors by the given types and return a new error
         log containing the matches.
         """
         cdef _LogEntry entry
-        if isinstance(types, (int, long)):
+        if isinstance(types, int):
             types = (types,)
         filtered = [entry for entry in self if entry.type in types]
         return _ListErrorLog(filtered, None, None)
 
     def filter_levels(self, levels):
-        u"""filter_levels(self, levels)
+        """filter_levels(self, levels)
 
         Filter the errors by the given error levels and return a new
         error log containing the matches.
         """
         cdef _LogEntry entry
-        if isinstance(levels, (int, long)):
+        if isinstance(levels, int):
             levels = (levels,)
         filtered = [entry for entry in self if entry.level in levels]
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_level(self, level):
-        u"""filter_from_level(self, level)
+        """filter_from_level(self, level)
 
         Return a log with all messages of the requested level of worse.
         """
@@ -366,21 +369,21 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_fatals(self):
-        u"""filter_from_fatals(self)
+        """filter_from_fatals(self)
 
         Convenience method to get all fatal error messages.
         """
         return self.filter_from_level(ErrorLevels.FATAL)
     
     def filter_from_errors(self):
-        u"""filter_from_errors(self)
+        """filter_from_errors(self)
 
         Convenience method to get all error messages or worse.
         """
         return self.filter_from_level(ErrorLevels.ERROR)
     
     def filter_from_warnings(self):
-        u"""filter_from_warnings(self)
+        """filter_from_warnings(self)
 
         Convenience method to get all warnings or worse.
         """
@@ -465,7 +468,7 @@ cdef class _ErrorLog(_ListErrorLog):
         del self._entries[:]
 
     cpdef copy(self):
-        u"""Creates a shallow copy of this error log and the list of entries.
+        """Creates a shallow copy of this error log and the list of entries.
         """
         return _ListErrorLog(
             self._entries[self._offset:],
@@ -507,7 +510,7 @@ cdef class _RotatingErrorLog(_ErrorLog):
                 del self._entries[:offset]
 
 cdef class PyErrorLog(_BaseErrorLog):
-    u"""PyErrorLog(self, logger_name=None, logger=None)
+    """PyErrorLog(self, logger_name=None, logger=None)
     A global error log that connects to the Python stdlib logging package.
 
     The constructor accepts an optional logger name or a readily
@@ -546,12 +549,12 @@ cdef class PyErrorLog(_BaseErrorLog):
         self._log = logger.log
 
     cpdef copy(self):
-        u"""Dummy method that returns an empty error log.
+        """Dummy method that returns an empty error log.
         """
         return _ListErrorLog([], None, None)
 
     def log(self, log_entry, message, *args):
-        u"""log(self, log_entry, message, *args)
+        """log(self, log_entry, message, *args)
 
         Called by the .receive() method to log a _LogEntry instance to
         the Python logging system.  This handles the error level
@@ -568,7 +571,7 @@ cdef class PyErrorLog(_BaseErrorLog):
             )
 
     cpdef receive(self, _LogEntry log_entry):
-        u"""receive(self, log_entry)
+        """receive(self, log_entry)
 
         Receive a _LogEntry instance from the logging system.  Calls
         the .log() method with appropriate parameters::
@@ -587,7 +590,7 @@ cdef _BaseErrorLog __GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
 
 
 cdef _BaseErrorLog _getThreadErrorLog(name):
-    u"""Retrieve the current error log with name 'name' of this thread."""
+    """Retrieve the current error log with name 'name' of this thread."""
     cdef python.PyObject* thread_dict
     thread_dict = python.PyThreadState_GetDict()
     if thread_dict is NULL:
@@ -601,7 +604,7 @@ cdef _BaseErrorLog _getThreadErrorLog(name):
 
 
 cdef _setThreadErrorLog(name, _BaseErrorLog log):
-    u"""Set the global error log of this thread."""
+    """Set the global error log of this thread."""
     cdef python.PyObject* thread_dict
     thread_dict = python.PyThreadState_GetDict()
     if thread_dict is NULL:
@@ -613,12 +616,12 @@ cdef _setThreadErrorLog(name, _BaseErrorLog log):
 
 
 cdef __copyGlobalErrorLog():
-    u"Helper function for properties in exceptions."
+    "Helper function for properties in exceptions."
     return _getThreadErrorLog(GLOBAL_ERROR_LOG).copy()
 
 
 def use_global_python_log(PyErrorLog log not None):
-    u"""use_global_python_log(log)
+    """use_global_python_log(log)
 
     Replace the global error log by an etree.PyErrorLog that uses the
     standard Python logging package.
@@ -634,7 +637,7 @@ def use_global_python_log(PyErrorLog log not None):
 
 
 # local log functions: forward error to logger object
-cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
+cdef void _forwardError(void* c_log_handler, const xmlerror.xmlError* error) noexcept with gil:
     cdef _BaseErrorLog log_handler
     if c_log_handler is not NULL:
         log_handler = <_BaseErrorLog>c_log_handler
@@ -645,27 +648,27 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
     log_handler._receive(error)
 
 
-cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) nogil:
+cdef void _receiveError(void* c_log_handler, const xmlerror.xmlError* error) noexcept nogil:
     # no Python objects here, may be called without thread context !
     if __DEBUG:
         _forwardError(c_log_handler, error)
 
 
-cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
+cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef cvarargs.va_list args
     cvarargs.va_start(args, msg)
     _receiveGenericError(c_log_handler, xmlerror.XML_FROM_XSLT, msg, args)
     cvarargs.va_end(args)
 
-cdef void _receiveRelaxNGParseError(void* c_log_handler, char* msg, ...) nogil:
+cdef void _receiveRelaxNGParseError(void* c_log_handler, char* msg, ...) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef cvarargs.va_list args
     cvarargs.va_start(args, msg)
     _receiveGenericError(c_log_handler, xmlerror.XML_FROM_RELAXNGP, msg, args)
     cvarargs.va_end(args)
 
-cdef void _receiveRelaxNGValidationError(void* c_log_handler, char* msg, ...) nogil:
+cdef void _receiveRelaxNGValidationError(void* c_log_handler, char* msg, ...) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef cvarargs.va_list args
     cvarargs.va_start(args, msg)
@@ -673,11 +676,11 @@ cdef void _receiveRelaxNGValidationError(void* c_log_handler, char* msg, ...) no
     cvarargs.va_end(args)
 
 # dummy function: no log output at all
-cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
+cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) noexcept nogil:
     pass
 
 
-cdef void _connectGenericErrorLog(log, int c_domain=-1):
+cdef void _connectGenericErrorLog(log, int c_domain=-1) noexcept:
     cdef xmlerror.xmlGenericErrorFunc error_func = NULL
     c_log = <void*>log
     if c_domain == xmlerror.XML_FROM_XSLT:
@@ -694,7 +697,7 @@ cdef void _connectGenericErrorLog(log, int c_domain=-1):
 
 
 cdef void _receiveGenericError(void* c_log_handler, int c_domain,
-                               char* msg, cvarargs.va_list args) nogil:
+                               char* msg, cvarargs.va_list args) noexcept nogil:
     # no Python objects here, may be called without thread context !
     cdef xmlerror.xmlError c_error
     cdef char* c_text
@@ -716,32 +719,32 @@ cdef void _receiveGenericError(void* c_log_handler, int c_domain,
     c_name_pos = c_pos = msg
     format_count = 0
     while c_pos[0]:
-        if c_pos[0] == '%':
+        if c_pos[0] == b'%':
             c_pos += 1
-            if c_pos[0] == 's':  # "%s"
+            if c_pos[0] == b's':  # "%s"
                 format_count += 1
                 c_str = cvarargs.va_charptr(args)
                 if c_pos == msg + 1:
                     c_text = c_str  # msg == "%s..."
-                elif c_name_pos[0] == 'e':
+                elif c_name_pos[0] == b'e':
                     if cstring_h.strncmp(c_name_pos, 'element %s', 10) == 0:
                         c_element = c_str
-                elif c_name_pos[0] == 'f':
+                elif c_name_pos[0] == b'f':
                     if cstring_h.strncmp(c_name_pos, 'file %s', 7) == 0:
                         if cstring_h.strncmp('string://__STRING__XSLT',
                                              c_str, 23) == 0:
                             c_str = '<xslt>'
                         c_error.file = c_str
-            elif c_pos[0] == 'd':  # "%d"
+            elif c_pos[0] == b'd':  # "%d"
                 format_count += 1
                 c_int = cvarargs.va_int(args)
                 if cstring_h.strncmp(c_name_pos, 'line %d', 7) == 0:
                     c_error.line = c_int
-            elif c_pos[0] != '%':  # "%%" == "%"
+            elif c_pos[0] != b'%':  # "%%" == "%"
                 format_count += 1
                 break  # unexpected format or end of string => abort
-        elif c_pos[0] == ' ':
-            if c_pos[1] != '%':
+        elif c_pos[0] == b' ':
+            if c_pos[1] != b'%':
                 c_name_pos = c_pos + 1
         c_pos += 1
 
@@ -764,8 +767,11 @@ cdef void _receiveGenericError(void* c_log_handler, int c_domain,
         element_size = cstring_h.strlen(c_element)
         c_message = <char*>stdlib.malloc(
             (text_size + 12 + element_size + 1) * sizeof(char))
-        stdio.sprintf(c_message, "%s, element '%s'", c_text, c_element)
-        c_error.message = c_message
+        if c_message is NULL:
+            c_error.message = c_text
+        else:
+            stdio.sprintf(c_message, "%s, element '%s'", c_text, c_element)
+            c_error.message = c_message
 
     c_error.domain = c_domain
     c_error.code   = xmlerror.XML_ERR_OK    # what else?

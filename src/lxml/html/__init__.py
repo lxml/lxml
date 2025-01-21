@@ -31,7 +31,6 @@
 """The ``lxml.html`` tool set for HTML handling.
 """
 
-from __future__ import absolute_import
 
 __all__ = [
     'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
@@ -41,44 +40,22 @@ __all__ = [
 
 
 import copy
-import sys
 import re
-from functools import partial
 
-try:
-    from collections.abc import MutableMapping, MutableSet
-except ImportError:
-    from collections import MutableMapping, MutableSet
+from collections.abc import MutableMapping, MutableSet
+from functools import partial
+from urllib.parse import urljoin
 
 from .. import etree
 from . import defs
 from ._setmixin import SetMixin
 
-try:
-    from urlparse import urljoin
-except ImportError:
-    # Python 3
-    from urllib.parse import urljoin
-
-try:
-    unicode
-except NameError:
-    # Python 3
-    unicode = str
-try:
-    basestring
-except NameError:
-    # Python 3
-    basestring = (str, bytes)
-
 
 def __fix_docstring(s):
+    # TODO: remove and clean up doctests
     if not s:
         return s
-    if sys.version_info[0] >= 3:
-        sub = re.compile(r"^(\s*)u'", re.M).sub
-    else:
-        sub = re.compile(r"^(\s*)b'", re.M).sub
+    sub = re.compile(r"^(\s*)u'", re.M).sub
     return sub(r"\1'", s)
 
 
@@ -115,14 +92,14 @@ def _transform_result(typ, result):
     """
     if issubclass(typ, bytes):
         return tostring(result, encoding='utf-8')
-    elif issubclass(typ, unicode):
+    elif issubclass(typ, str):
         return tostring(result, encoding='unicode')
     else:
         return result
 
 
 def _nons(tag):
-    if isinstance(tag, basestring):
+    if isinstance(tag, str):
         if tag[0] == '{' and tag[1:len(XHTML_NAMESPACE)+1] == XHTML_NAMESPACE:
             return tag.split('}')[-1]
     return tag
@@ -186,7 +163,7 @@ class Classes(MutableSet):
         """
         if not value or re.search(r'\s', value):
             raise ValueError("Invalid class name: %r" % value)
-        super(Classes, self).remove(value)
+        super().remove(value)
 
     def __contains__(self, name):
         classes = self._get_class_value()
@@ -236,7 +213,7 @@ class Classes(MutableSet):
         return enabled
 
 
-class HtmlMixin(object):
+class HtmlMixin:
 
     def set(self, key, value=None):
         """set(self, key, value=None)
@@ -245,7 +222,7 @@ class HtmlMixin(object):
         creates a 'boolean' attribute without value, e.g. "<form novalidate></form>"
         for ``form.set('novalidate')``.
         """
-        super(HtmlMixin, self).set(key, value)
+        super().set(key, value)
 
     @property
     def classes(self):
@@ -360,7 +337,7 @@ class HtmlMixin(object):
         parent = self.getparent()
         assert parent is not None
         previous = self.getprevious()
-        if self.text and isinstance(self.tag, basestring):
+        if self.text and isinstance(self.tag, str):
             # not a Comment, etc.
             if previous is None:
                 parent.text = (parent.text or '') + self.text
@@ -641,7 +618,7 @@ class HtmlMixin(object):
                 el.set(attrib, new)
 
 
-class _MethodFunc(object):
+class _MethodFunc:
     """
     An object that represents a method on an element as a function;
     the function takes either an element or an HTML string.  It
@@ -655,7 +632,7 @@ class _MethodFunc(object):
         self.__doc__ = getattr(source_class, self.name).__doc__
     def __call__(self, doc, *args, **kw):
         result_type = type(doc)
-        if isinstance(doc, basestring):
+        if isinstance(doc, (str, bytes)):
             if 'copy' in kw:
                 raise TypeError(
                     "The keyword 'copy' can only be used with element inputs to %s, not a string input" % self.name)
@@ -748,9 +725,9 @@ class HtmlElementClassLookup(etree.CustomElementClassLookup):
 ################################################################################
 
 _looks_like_full_html_unicode = re.compile(
-    unicode(r'^\s*<(?:html|!doctype)'), re.I).match
+    r'^\s*<(?:html|!doctype)', re.I).match
 _looks_like_full_html_bytes = re.compile(
-    r'^\s*<(?:html|!doctype)'.encode('ascii'), re.I).match
+    br'^\s*<(?:html|!doctype)', re.I).match
 
 
 def document_fromstring(html, parser=None, ensure_head_body=False, **kw):
@@ -784,8 +761,8 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     if isinstance(html, bytes):
         if not _looks_like_full_html_bytes(html):
             # can't use %-formatting in early Py3 versions
-            html = ('<html><body>'.encode('ascii') + html +
-                    '</body></html>'.encode('ascii'))
+            html = (b'<html><body>' + html +
+                    b'</body></html>')
     else:
         if not _looks_like_full_html_unicode(html):
             html = '<html><body>%s</body></html>' % html
@@ -831,11 +808,11 @@ def fragment_fromstring(html, create_parent=False, base_url=None,
         base_url=base_url, **kw)
 
     if create_parent:
-        if not isinstance(create_parent, basestring):
+        if not isinstance(create_parent, str):
             create_parent = 'div'
         new_root = Element(create_parent)
         if elements:
-            if isinstance(elements[0], basestring):
+            if isinstance(elements[0], str):
                 new_root.text = elements[0]
                 del elements[0]
             new_root.extend(elements)
@@ -949,7 +926,7 @@ def _contains_block_level_tag(el):
 def _element_name(el):
     if isinstance(el, etree.CommentBase):
         return 'comment'
-    elif isinstance(el, basestring):
+    elif isinstance(el, str):
         return 'string'
     else:
         return _nons(el.tag)
@@ -1165,7 +1142,7 @@ class FieldsDict(MutableMapping):
             self.inputs.form._name())
 
 
-class InputGetter(object):
+class InputGetter:
 
     """
     An accessor that represents all the input fields in a form.
@@ -1254,7 +1231,7 @@ class InputGetter(object):
         return sum(1 for _ in self)
 
 
-class InputMixin(object):
+class InputMixin:
     """
     Mix-in for all input elements (input, select, and textarea)
     """
@@ -1359,7 +1336,7 @@ class SelectElement(InputMixin, HtmlElement):
     @value.setter
     def value(self, value):
         if self.multiple:
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 raise TypeError("You must pass in a sequence")
             values = self.value
             values.clear()
@@ -1663,7 +1640,7 @@ class InputElement(InputMixin, HtmlElement):
                 self.checked = False
             else:
                 self.checked = True
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     self.set('value', value)
         else:
             self.set('value', value)
@@ -1795,7 +1772,7 @@ def xhtml_to_html(xhtml):
 __str_replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type"[^>]*>').sub
 __bytes_replace_meta_content_type = re.compile(
-    r'<meta http-equiv="Content-Type"[^>]*>'.encode('ASCII')).sub
+    br'<meta http-equiv="Content-Type"[^>]*>').sub
 
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
@@ -1868,7 +1845,7 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
         if isinstance(html, str):
             html = __str_replace_meta_content_type('', html)
         else:
-            html = __bytes_replace_meta_content_type(bytes(), html)
+            html = __bytes_replace_meta_content_type(b'', html)
     return html
 
 
@@ -1907,7 +1884,7 @@ class HTMLParser(etree.HTMLParser):
     objects.
     """
     def __init__(self, **kwargs):
-        super(HTMLParser, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
 
@@ -1929,7 +1906,7 @@ class XHTMLParser(etree.XMLParser):
     For catalog support, see http://www.xmlsoft.org/catalog.html.
     """
     def __init__(self, **kwargs):
-        super(XHTMLParser, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
 

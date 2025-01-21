@@ -19,7 +19,7 @@ cdef class SchematronValidateError(SchematronError):
 # Schematron
 
 cdef class Schematron(_Validator):
-    u"""Schematron(self, etree=None, file=None)
+    """Schematron(self, etree=None, file=None)
     A Schematron validator.
 
     Pass a root Element or an ElementTree to turn it into a validator.
@@ -82,7 +82,7 @@ cdef class Schematron(_Validator):
         _Validator.__init__(self)
         if not config.ENABLE_SCHEMATRON:
             raise SchematronError, \
-                u"lxml.etree was compiled without Schematron support."
+                "lxml.etree was compiled without Schematron support."
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
@@ -99,7 +99,7 @@ cdef class Schematron(_Validator):
                 parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
                 _reset_document_loader(orig_loader)
         else:
-            raise SchematronParseError, u"No tree or file given"
+            raise SchematronParseError, "No tree or file given"
 
         if parser_ctxt is NULL:
             if self._c_schema_doc is not NULL:
@@ -117,7 +117,7 @@ cdef class Schematron(_Validator):
 
         if self._c_schema is NULL:
             raise SchematronParseError(
-                u"Document is not a valid Schematron schema",
+                "Document is not a valid Schematron schema",
                 self._error_log)
 
     def __dealloc__(self):
@@ -126,7 +126,7 @@ cdef class Schematron(_Validator):
             tree.xmlFreeDoc(self._c_schema_doc)
 
     def __call__(self, etree):
-        u"""__call__(self, etree)
+        """__call__(self, etree)
 
         Validate doc using Schematron.
 
@@ -148,8 +148,9 @@ cdef class Schematron(_Validator):
 
         try:
             self._error_log.clear()
+            # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             schematron.xmlSchematronSetValidStructuredErrors(
-                valid_ctxt, _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
                 ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
@@ -159,7 +160,7 @@ cdef class Schematron(_Validator):
 
         if ret == -1:
             raise SchematronValidateError(
-                u"Internal error in Schematron validation",
+                "Internal error in Schematron validation",
                 self._error_log)
         if ret == 0:
             return True

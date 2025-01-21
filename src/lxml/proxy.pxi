@@ -7,7 +7,7 @@
 @cython.linetrace(False)
 @cython.profile(False)
 cdef inline _Element getProxy(xmlNode* c_node):
-    u"""Get a proxy for a given node.
+    """Get a proxy for a given node.
     """
     #print "getProxy for:", <int>c_node
     if c_node is not NULL and c_node._private is not NULL:
@@ -28,10 +28,10 @@ cdef inline bint hasProxy(xmlNode* c_node):
 @cython.profile(False)
 cdef inline int _registerProxy(_Element proxy, _Document doc,
                                xmlNode* c_node) except -1:
-    u"""Register a proxy and type for the node it's proxying for.
+    """Register a proxy and type for the node it's proxying for.
     """
     #print "registering for:", <int>proxy._c_node
-    assert not hasProxy(c_node), u"double registering proxy!"
+    assert not hasProxy(c_node), "double registering proxy!"
     proxy._doc = doc
     proxy._c_node = c_node
     c_node._private = <void*>proxy
@@ -41,10 +41,10 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
 @cython.linetrace(False)
 @cython.profile(False)
 cdef inline int _unregisterProxy(_Element proxy) except -1:
-    u"""Unregister a proxy for the node it's proxying for.
+    """Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node = proxy._c_node
-    assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
+    assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
     c_node._private = NULL
     return 0
 
@@ -91,7 +91,7 @@ cdef xmlDoc* _plainFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node,
     c_doc.children = c_new_root
     return c_doc
 
-cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
+cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc) noexcept:
     # delete a temporary document
     cdef xmlNode* c_child
     cdef xmlNode* c_parent
@@ -112,7 +112,7 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
     tree.xmlFreeDoc(c_doc)
 
 cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
-    u"""Special element factory for cases where we need to create a fake
+    """Special element factory for cases where we need to create a fake
     root document, but still need to instantiate arbitrary nodes from
     it.  If we instantiate the fake root node, things will turn bad
     when it's destroyed.
@@ -130,8 +130,8 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
 
-cdef int attemptDeallocation(xmlNode* c_node):
-    u"""Attempt deallocation of c_node (or higher up in tree).
+cdef int attemptDeallocation(xmlNode* c_node) noexcept:
+    """Attempt deallocation of c_node (or higher up in tree).
     """
     cdef xmlNode* c_top
     # could be we actually aren't referring to the tree at all
@@ -146,8 +146,8 @@ cdef int attemptDeallocation(xmlNode* c_node):
         return 1
     return 0
 
-cdef xmlNode* getDeallocationTop(xmlNode* c_node):
-    u"""Return the top of the tree that can be deallocated, or NULL.
+cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
+    """Return the top of the tree that can be deallocated, or NULL.
     """
     cdef xmlNode* c_next
     #print "trying to do deallocating:", c_node.type
@@ -183,7 +183,7 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
         c_next = c_next.next
     return c_node
 
-cdef int canDeallocateChildNodes(xmlNode* c_parent):
+cdef int canDeallocateChildNodes(xmlNode* c_parent) noexcept:
     cdef xmlNode* c_node
     c_node = c_parent.children
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_parent, c_node, 1)
@@ -195,8 +195,8 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
 
-cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) nogil:
-    u"""Copy the namespaces of all ancestors of c_from_node to c_to_node.
+cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) noexcept nogil:
+    """Copy the namespaces of all ancestors of c_from_node to c_to_node.
     """
     cdef xmlNode* c_parent
     cdef xmlNs* c_ns
@@ -250,7 +250,7 @@ cdef inline int _appendToNsCache(_nscache* c_ns_cache,
 
 cdef int _stripRedundantNamespaceDeclarations(xmlNode* c_element, _nscache* c_ns_cache,
                                               xmlNs** c_del_ns_list) except -1:
-    u"""Removes namespace declarations from an element that are already
+    """Removes namespace declarations from an element that are already
     defined in its parents.  Does not free the xmlNs's, just prepends
     them to the c_del_ns_list.
     """
@@ -278,7 +278,7 @@ cdef int _stripRedundantNamespaceDeclarations(xmlNode* c_element, _nscache* c_ns
 
 
 cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
-                                          _nscache* c_ns_cache, xmlNs* c_del_ns_list):
+                                          _nscache* c_ns_cache, xmlNs* c_del_ns_list) noexcept:
     # Try to recover from exceptions with really bad timing.  We were in the middle
     # of ripping out xmlNS-es and likely ran out of memory.  Try to fix up the tree
     # by re-adding the original xmlNs declarations (which might still be used in some
@@ -297,7 +297,7 @@ cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
 
 cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                             xmlNode* c_element) except -1:
-    u"""Fix the xmlNs pointers of a node and its subtree that were moved.
+    """Fix the xmlNs pointers of a node and its subtree that were moved.
 
     Originally copied from libxml2's xmlReconciliateNs().  Expects
     libxml2 doc pointers of node to be correct already, but fixes
@@ -395,7 +395,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     return 0
 
 
-cdef void _setTreeDoc(xmlNode* c_node, xmlDoc* c_doc):
+cdef void _setTreeDoc(xmlNode* c_node, xmlDoc* c_doc) noexcept:
     """Adaptation of 'xmlSetTreeDoc()' that deep-fixes the document links iteratively.
     It avoids https://gitlab.gnome.org/GNOME/libxml2/issues/42
     """
@@ -413,7 +413,7 @@ cdef void _setTreeDoc(xmlNode* c_node, xmlDoc* c_doc):
     tree.END_FOR_EACH_FROM(c_node)
 
 
-cdef inline void _fixDocChildren(xmlNode* c_child, xmlDoc* c_doc):
+cdef inline void _fixDocChildren(xmlNode* c_child, xmlDoc* c_doc) noexcept:
     while c_child:
         c_child.doc = c_doc
         if c_child.children:
@@ -451,8 +451,8 @@ cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
     return 0
 
 
-cdef void fixElementDocument(xmlNode* c_element, _Document doc,
-                             size_t proxy_count):
+cdef int fixElementDocument(xmlNode* c_element, _Document doc,
+                             size_t proxy_count) except -1:
     cdef xmlNode* c_node = c_element
     cdef _Element proxy = None # init-to-None required due to fake-loop below
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
@@ -463,13 +463,13 @@ cdef void fixElementDocument(xmlNode* c_element, _Document doc,
                 proxy._doc = doc
             proxy_count -= 1
             if proxy_count == 0:
-                return
+                return 0
     tree.END_FOR_EACH_FROM(c_node)
 
 
 cdef void fixThreadDictNames(xmlNode* c_element,
                              tree.xmlDict* c_src_dict,
-                             tree.xmlDict* c_dict) nogil:
+                             tree.xmlDict* c_dict) noexcept nogil:
     # re-assign the names of tags and attributes
     #
     # this should only be called when the element is based on a
@@ -492,7 +492,7 @@ cdef void fixThreadDictNames(xmlNode* c_element,
 
 cdef inline void _fixThreadDictPtr(const_xmlChar** c_ptr,
                                    tree.xmlDict* c_src_dict,
-                                   tree.xmlDict* c_dict) nogil:
+                                   tree.xmlDict* c_dict) noexcept nogil:
     c_str = c_ptr[0]
     if c_str and c_src_dict and tree.xmlDictOwns(c_src_dict, c_str):
         # return value can be NULL on memory error, but we don't handle that here
@@ -503,7 +503,7 @@ cdef inline void _fixThreadDictPtr(const_xmlChar** c_ptr,
 
 cdef void fixThreadDictNamesForNode(xmlNode* c_element,
                                     tree.xmlDict* c_src_dict,
-                                    tree.xmlDict* c_dict) nogil:
+                                    tree.xmlDict* c_dict) noexcept nogil:
     cdef xmlNode* c_node = c_element
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
     if c_node.type in (tree.XML_ELEMENT_NODE, tree.XML_XINCLUDE_START):
@@ -523,7 +523,7 @@ cdef void fixThreadDictNamesForNode(xmlNode* c_element,
 
 cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
                                                  tree.xmlDict* c_src_dict,
-                                                 tree.xmlDict* c_dict) nogil:
+                                                 tree.xmlDict* c_dict) noexcept nogil:
     cdef xmlNode* c_child
     cdef xmlNode* c_node = <xmlNode*>c_attr
     while c_node is not NULL:
@@ -539,7 +539,7 @@ cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
 
 cdef inline void fixThreadDictContentForNode(xmlNode* c_node,
                                              tree.xmlDict* c_src_dict,
-                                             tree.xmlDict* c_dict) nogil:
+                                             tree.xmlDict* c_dict) noexcept nogil:
     if c_node.content is not NULL and \
            c_node.content is not <xmlChar*>&c_node.properties:
         if tree.xmlDictOwns(c_src_dict, c_node.content):
@@ -549,7 +549,7 @@ cdef inline void fixThreadDictContentForNode(xmlNode* c_node,
 
 cdef inline void fixThreadDictNsForNode(xmlNode* c_node,
                                         tree.xmlDict* c_src_dict,
-                                        tree.xmlDict* c_dict) nogil:
+                                        tree.xmlDict* c_dict) noexcept nogil:
     cdef xmlNs* c_ns = c_node.nsDef
     while c_ns is not NULL:
         _fixThreadDictPtr(&c_ns.href, c_src_dict, c_dict)
@@ -559,7 +559,7 @@ cdef inline void fixThreadDictNsForNode(xmlNode* c_node,
 
 cdef void fixThreadDictNamesForDtd(tree.xmlDtd* c_dtd,
                                    tree.xmlDict* c_src_dict,
-                                   tree.xmlDict* c_dict) nogil:
+                                   tree.xmlDict* c_dict) noexcept nogil:
     cdef xmlNode* c_node
     cdef tree.xmlElement* c_element
     cdef tree.xmlAttribute* c_attribute

@@ -1,6 +1,3 @@
-
-from __future__ import absolute_import
-
 import unittest
 
 import lxml.html
@@ -64,5 +61,5 @@ def test_suite():
 
     import lxml.cssselect
     suite.addTests(doctest.DocTestSuite(lxml.cssselect))
-    suite.addTests([unittest.makeSuite(CSSTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(CSSTestCase)])
     return suite

@@ -69,7 +69,7 @@ def build_web_server(app, port, host=None):
     return server
 
 
-class HTTPRequestCollector(object):
+class HTTPRequestCollector:
     def __init__(self, response_data, response_code=200, headers=()):
         self.requests = []
         self.response_code = response_code

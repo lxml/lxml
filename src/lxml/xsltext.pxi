@@ -1,10 +1,10 @@
 # XSLT extension elements
 
 cdef class XSLTExtension:
-    u"""Base class of an XSLT extension element.
+    """Base class of an XSLT extension element.
     """
     def execute(self, context, self_node, input_node, output_parent):
-        u"""execute(self, context, self_node, input_node, output_parent)
+        """execute(self, context, self_node, input_node, output_parent)
         Execute this extension element.
 
         Subclasses must override this method.  They may append
@@ -21,7 +21,7 @@ cdef class XSLTExtension:
 
     def apply_templates(self, _XSLTContext context not None, node, output_parent=None,
                         *, elements_only=False, remove_blank_text=False):
-        u"""apply_templates(self, context, node, output_parent=None, elements_only=False, remove_blank_text=False)
+        """apply_templates(self, context, node, output_parent=None, elements_only=False, remove_blank_text=False)
 
         Call this method to retrieve the result of applying templates
         to an element.
@@ -73,7 +73,7 @@ cdef class XSLTExtension:
 
     def process_children(self, _XSLTContext context not None, output_parent=None,
                          *, elements_only=False, remove_blank_text=False):
-        u"""process_children(self, context, output_parent=None, elements_only=False, remove_blank_text=False)
+        """process_children(self, context, output_parent=None, elements_only=False, remove_blank_text=False)
 
         Call this method to process the XSLT content of the extension
         element itself.
@@ -162,7 +162,7 @@ cdef _registerXSLTExtensions(xslt.xsltTransformContext* c_ctxt,
 cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
                                 xmlNode* c_context_node,
                                 xmlNode* c_inst_node,
-                                void* dummy) with gil:
+                                void* dummy) noexcept with gil:
     cdef _XSLTContext context
     cdef XSLTExtension extension
     cdef python.PyObject* dict_result
@@ -219,9 +219,9 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
                     _freeReadOnlyProxies(self_node)
         except Exception as e:
             try:
-                e = unicode(e).encode(u"UTF-8")
+                e = unicode(e).encode("UTF-8")
             except:
-                e = repr(e).encode(u"UTF-8")
+                e = repr(e).encode("UTF-8")
             message = python.PyBytes_FromFormat(
                 "Error executing extension element '%s': %s",
                 c_inst_node.name, _cstr(e))
