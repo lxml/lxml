@@ -1990,7 +1990,7 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
             raise ValueError(
                 "Unicode strings with encoding declaration are not supported. "
                 "Please use bytes input or XML fragments without declaration.")
-    elif not isinstance(text, bytes):
+    elif not isinstance(text, (bytes, memoryview)):
         raise ValueError, "can only parse strings"
     c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
