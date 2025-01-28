@@ -667,7 +667,7 @@ class _ETreeTestCaseBase(helper_base):
             ('alpha', 'Alpha'),
             ('beta', 'Beta'),
             ('gamma', 'Gamma'),
-            ], 
+            ],
             items)
 
     def test_attribute_items_ns(self):
@@ -824,6 +824,31 @@ class _ETreeTestCaseBase(helper_base):
         fromstring = self.etree.fromstring
 
         root = fromstring('<doc>This is a text.</doc>')
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_memoryview(self):
+        fromstring = self.etree.fromstring
+
+        root = fromstring(memoryview(b'<doc>This is a text.</doc>'))
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_char_array(self):
+        fromstring = self.etree.fromstring
+
+        import array
+
+        root = fromstring(array.array('B', b'<doc>This is a text.</doc>'))
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_uchar_array(self):
+        fromstring = self.etree.fromstring
+
+        import array
+
+        root = fromstring(array.array('b', b'<doc>This is a text.</doc>'))
         self.assertEqual(0, len(root))
         self.assertEqual('This is a text.', root.text)
 
@@ -1101,7 +1126,7 @@ class _ETreeTestCaseBase(helper_base):
         XML = self.etree.XML
 
         for i in range(10):
-            f = BytesIO() 
+            f = BytesIO()
             root = XML(b'<doc%d>This is a test.</doc%d>' % (i, i))
             tree = ElementTree(element=root)
             tree.write(f)
@@ -1123,7 +1148,7 @@ class _ETreeTestCaseBase(helper_base):
         SubElement(p, 'br').tail = "test"
 
         tree = ElementTree(element=html)
-        f = BytesIO() 
+        f = BytesIO()
         tree.write(f, method="html")
         data = f.getvalue().replace(b'\n',b'')
 
@@ -1146,7 +1171,7 @@ class _ETreeTestCaseBase(helper_base):
         c.text = "C"
 
         tree = ElementTree(element=a)
-        f = BytesIO() 
+        f = BytesIO()
         tree.write(f, method="text")
         data = f.getvalue()
 
@@ -2973,7 +2998,7 @@ class _ETreeTestCaseBase(helper_base):
 
     def test_parse_file_nonexistent(self):
         parse = self.etree.parse
-        self.assertRaises(IOError, parse, fileInTestDir('notthere.xml'))  
+        self.assertRaises(IOError, parse, fileInTestDir('notthere.xml'))
 
     def test_parse_error_none(self):
         parse = self.etree.parse

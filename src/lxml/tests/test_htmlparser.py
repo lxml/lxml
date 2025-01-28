@@ -243,6 +243,7 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(element[0][1].tag, "script")
         self.assertEqual(element[0][1].text, "too")
 
+    @needs_libxml(2, 10, 0)
     def test_module_HTML_cdata_ignored(self):
         # libxml2 discards CDATA "content" since HTML does not know them.
         import warnings

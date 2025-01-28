@@ -53,9 +53,9 @@ jobs:
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          - os: ubuntu-latest
-            python-version: "3.14-dev"
-            allowed_failure: true
+          #- os: ubuntu-latest
+          #  python-version: "3.14-dev"
+          #  allowed_failure: true
 
           - os: ubuntu-latest
             python-version: "3.9"
@@ -107,7 +107,7 @@ jobs:
             allowed_failure: true
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.13.4,
+              LIBXML2_VERSION: 2.13.5,
               LIBXSLT_VERSION: 1.1.42,
             }
             extra_hash: "-latestlibs"
@@ -133,14 +133,17 @@ jobs:
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
 
+          # Legacy jobs
+          # ===========
           - os: ubuntu-20.04
             python-version: "3.6"
             env: { STATIC_DEPS: true }  # only static
-
-          # Legacy jobs
-          # ===========
           - os: ubuntu-22.04
             python-version: "3.7"
+            env: { STATIC_DEPS: true }
+          - os: ubuntu-22.04
+            python-version: "3.7"
+            env: { STATIC_DEPS: false }
 
         exclude:
           - os: ubuntu-latest
@@ -221,7 +224,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: matrix.extra_hash == '-docs'
         with:
           name: website_html
@@ -229,7 +232,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: matrix.env.COVERAGE
         with:
           name: pycoverage_html
