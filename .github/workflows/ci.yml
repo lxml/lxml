@@ -53,9 +53,9 @@ jobs:
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          - os: ubuntu-latest
-            python-version: "3.14-dev"
-            allowed_failure: true
+          #- os: ubuntu-latest
+          #  python-version: "3.14-dev"
+          #  allowed_failure: true
 
           - os: ubuntu-latest
             python-version: "3.9"
@@ -107,7 +107,7 @@ jobs:
             allowed_failure: true
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.13.4,
+              LIBXML2_VERSION: 2.13.5,
               LIBXSLT_VERSION: 1.1.42,
             }
             extra_hash: "-latestlibs"
@@ -133,14 +133,17 @@ jobs:
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
 
+          # Legacy jobs
+          # ===========
           - os: ubuntu-20.04
             python-version: "3.6"
             env: { STATIC_DEPS: true }  # only static
-
-          # Legacy jobs
-          # ===========
-          - os: ubuntu-22.04
+          - os: ubuntu-20.04
             python-version: "3.7"
+            env: { STATIC_DEPS: true }
+          - os: ubuntu-20.04
+            python-version: "3.7"
+            env: { STATIC_DEPS: false }
 
         exclude:
           - os: ubuntu-latest
