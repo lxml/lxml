@@ -1106,8 +1106,7 @@ cdef class _BaseParser:
         finally:
             context.cleanup()
 
-    cdef xmlDoc* _parseDoc(self, char* c_text, int c_len,
-                           char* c_filename) except NULL:
+    cdef xmlDoc* _parseDoc(self, const char* c_text, int c_len, char* c_filename) except NULL:
         """Parse document, share dictionary if possible.
         """
         cdef _ParserContext context
@@ -1853,8 +1852,6 @@ cdef class HTMLPullParser(HTMLParser):
 
 cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     cdef char* c_filename
-    cdef char* c_text
-    cdef Py_ssize_t c_len
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     if not filename:
@@ -1862,35 +1859,55 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     else:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
-    if isinstance(text, unicode):
-        if python.PyUnicode_IS_READY(text):
-            # PEP-393 Unicode string
-            c_len = python.PyUnicode_GET_LENGTH(text) * python.PyUnicode_KIND(text)
-        else:
-            # old Py_UNICODE string
-            c_len = python.PyUnicode_GET_DATA_SIZE(text)
-        if c_len > limits.INT_MAX:
-            return (<_BaseParser>parser)._parseDocFromFilelike(
-                StringIO(text), filename, None)
-        return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
+    if isinstance(text, bytes):
+        return _parseDoc_bytes(<bytes> text, filename, c_filename, parser)
+    elif isinstance(text, unicode):
+        return _parseDoc_unicode(<unicode> text, filename, c_filename, parser)
     else:
-        c_len = python.PyBytes_GET_SIZE(text)
-        if c_len > limits.INT_MAX:
-            return (<_BaseParser>parser)._parseDocFromFilelike(
-                BytesIO(text), filename, None)
-        c_text = _cstr(text)
-        return (<_BaseParser>parser)._parseDoc(c_text, c_len, c_filename)
+        return _parseDoc_charbuffer(text, filename, c_filename, parser)
+
+
+cdef xmlDoc* _parseDoc_unicode(unicode text, filename, char* c_filename, _BaseParser parser) except NULL:
+    cdef Py_ssize_t c_len
+    if python.PyUnicode_IS_READY(text):
+        # PEP-393 Unicode string
+        c_len = python.PyUnicode_GET_LENGTH(text) * python.PyUnicode_KIND(text)
+    else:
+        # old Py_UNICODE string
+        c_len = python.PyUnicode_GET_DATA_SIZE(text)
+    if c_len > limits.INT_MAX:
+        return parser._parseDocFromFilelike(
+            StringIO(text), filename, None)
+    return parser._parseUnicodeDoc(text, c_filename)
+
+
+cdef xmlDoc* _parseDoc_bytes(bytes text, filename, char* c_filename, _BaseParser parser) except NULL:
+    cdef Py_ssize_t c_len = len(text)
+    if c_len > limits.INT_MAX:
+        return parser._parseDocFromFilelike(BytesIO(text), filename, None)
+    return parser._parseDoc(text, c_len, c_filename)
+
+
+cdef xmlDoc* _parseDoc_charbuffer(text, filename, char* c_filename, _BaseParser parser) except NULL:
+    cdef const unsigned char[::1] data = memoryview(text).cast('B')  # cast to 'unsigned char' buffer
+    cdef Py_ssize_t c_len = len(data)
+    if c_len > limits.INT_MAX:
+        return parser._parseDocFromFilelike(BytesIO(text), filename, None)
+    return parser._parseDoc(<const char*>&data[0], c_len, c_filename)
+
 
 cdef xmlDoc* _parseDocFromFile(filename8, _BaseParser parser) except NULL:
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     return (<_BaseParser>parser)._parseDocFromFile(_cstr(filename8))
 
+
 cdef xmlDoc* _parseDocFromFilelike(source, filename,
                                    _BaseParser parser) except NULL:
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     return (<_BaseParser>parser)._parseDocFromFilelike(source, filename, None)
+
 
 cdef xmlDoc* _newXMLDoc() except NULL:
     cdef xmlDoc* result
@@ -1990,8 +2007,6 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
             raise ValueError(
                 "Unicode strings with encoding declaration are not supported. "
                 "Please use bytes input or XML fragments without declaration.")
-    elif not isinstance(text, bytes):
-        raise ValueError, "can only parse strings"
     c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
 

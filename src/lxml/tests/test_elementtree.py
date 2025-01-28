@@ -827,6 +827,31 @@ class _ETreeTestCaseBase(helper_base):
         self.assertEqual(0, len(root))
         self.assertEqual('This is a text.', root.text)
 
+    def test_fromstring_memoryview(self):
+        fromstring = self.etree.fromstring
+
+        root = fromstring(memoryview(b'<doc>This is a text.</doc>'))
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_char_array(self):
+        fromstring = self.etree.fromstring
+
+        import array
+
+        root = fromstring(array.array('B', b'<doc>This is a text.</doc>'))
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_uchar_array(self):
+        fromstring = self.etree.fromstring
+
+        import array
+
+        root = fromstring(array.array('b', b'<doc>This is a text.</doc>'))
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
     required_versions_ET['test_fromstringlist'] = (1,3)
     def test_fromstringlist(self):
         fromstringlist = self.etree.fromstringlist
