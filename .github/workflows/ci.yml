@@ -133,14 +133,17 @@ jobs:
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
 
+          # Legacy jobs
+          # ===========
           - os: ubuntu-20.04
             python-version: "3.6"
             env: { STATIC_DEPS: true }  # only static
-
-          # Legacy jobs
-          # ===========
-          - os: ubuntu-22.04
+          - os: ubuntu-20.04
             python-version: "3.7"
+            env: { STATIC_DEPS: true }
+          - os: ubuntu-20.04
+            python-version: "3.7"
+            env: { STATIC_DEPS: false }
 
         exclude:
           - os: ubuntu-latest
