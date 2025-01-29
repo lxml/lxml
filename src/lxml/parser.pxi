@@ -981,10 +981,10 @@ cdef class _BaseParser:
         return 0
 
     cdef xmlparser.xmlParserCtxt* _newParserCtxt(self) except NULL:
-    """
-    This method calls into libxml to configure the libxml2-level parser context,
-    among other things.
-    """
+        """
+        This method calls into libxml to configure the libxml2-level parser context,
+        among other things.
+        """
         cdef xmlparser.xmlParserCtxt* c_ctxt
         if self._for_html:
             c_ctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
