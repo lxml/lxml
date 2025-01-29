@@ -573,6 +573,9 @@ cdef class _ParserContext(_ResolverContext):
         return context
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
+        """
+        Connects the libxml2-level context to the lxml-level context.
+        """
         self._c_ctxt = c_ctxt
         c_ctxt._private = <void*>self
 
@@ -588,6 +591,15 @@ cdef class _ParserContext(_ResolverContext):
                 self._c_ctxt.nsNr = 0
 
     cdef int prepare(self, bint set_document_loader=True) except -1:
+        """
+        This method resets the parser context for a new parse. It also connects the
+        error log to the libxml-level ctxt by passing in _receiveParserError in as a
+        callback. Note: the HTML parser always has the libxml2 ctxt->sax not set to
+        null, so this always works. The ctxt->sax is set up in the libxml2 funciton
+        htmlInitParserCtxt in HTMLparser.c, and the lxml error log is always connected.
+        Then libxml2's SAX's serror is set to be the place errors are sent when schannel
+        is set to ctxt->sax->serror in xmlCtxtErrMemory in libxml2's parserInternals.c.
+        """
         cdef int result
         if config.ENABLE_THREADING and self._lock is not NULL:
             with nogil:
@@ -642,6 +654,9 @@ cdef _initParserContext(_ParserContext context,
         context._initParserContext(c_ctxt)
 
 cdef void _forwardParserError(xmlparser.xmlParserCtxt* _parser_context, const xmlerror.xmlError* error) noexcept with gil:
+    """
+    Add an error created by libxml2 to the lxml-level error_log.
+    """
     (<_ParserContext>_parser_context._private)._error_log._receive(error)
 
 cdef void _receiveParserError(void* c_context, const xmlerror.xmlError* error) noexcept nogil:
@@ -687,6 +702,15 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
                                 xmlparser.xmlParserCtxt* c_ctxt,
                                 xmlDoc* result, filename,
                                 bint recover, bint free_doc) except NULL:
+    """
+    C-level xmlDoc* result is set to NULL if the parser cannot parse the document.
+    Keep in mind the libxml2-level wellFormed, which starts at 1, is set to 0 if the
+    parser may be able to parse the document, but there are errors that libxml2 has
+    to work through. lxml then uses this, along with some other logic, to determine
+    whether to set lxml-level well_formed to 0 and if that happens, set result to
+    NULL. Then, if result is NULL, raise a parse error. Some modifications to result
+    are made. Then the xmlDoc* result is returned.
+    """
     cdef bint well_formed
     if result is not NULL:
         __GLOBAL_PARSER_CONTEXT.initDocDict(result)
@@ -871,6 +895,13 @@ cdef class _BaseParser:
         self._events_to_collect = (event_types, tag)
 
     cdef _ParserContext _getParserContext(self):
+        """
+        This method creates a parser context if there isn't already one. If
+        creating a new parser context, this function configures it, creates a
+        libxml2-level parser context, connects the two, and makes some changes
+        to the libxml2 context. Then, it returns the parser context for the
+        parser.
+        """
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._parser_context is None:
             self._parser_context = self._createContext(self.target, None)
@@ -901,6 +932,9 @@ cdef class _BaseParser:
         return self._push_parser_context
 
     cdef _ParserContext _createContext(self, target, events_to_collect):
+        """
+        This method configures the lxml-level parser.
+        """
         cdef _SaxParserContext sax_context
         if target is not None:
             sax_context = _TargetParserContext(self)
@@ -947,6 +981,10 @@ cdef class _BaseParser:
         return 0
 
     cdef xmlparser.xmlParserCtxt* _newParserCtxt(self) except NULL:
+    """
+    This method calls into libxml to configure the libxml2-level parser context,
+    among other things.
+    """
         cdef xmlparser.xmlParserCtxt* c_ctxt
         if self._for_html:
             c_ctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
