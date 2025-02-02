@@ -24,7 +24,7 @@ class ETreeDtdTestCase(HelperTestCase):
 
         dtd = etree.DTD(fileInTestDir("test.dtd"))
         self.assertTrue(dtd.validate(root))
-    
+
     def test_dtd_file_pathlike(self):
         parse = etree.parse
         tree = parse(fileInTestDir("test.xml"))
@@ -32,6 +32,14 @@ class ETreeDtdTestCase(HelperTestCase):
 
         dtd = etree.DTD(SimpleFSPath(fileInTestDir("test.dtd")))
         self.assertTrue(dtd.validate(root))
+
+    def test_dtd_external_id(self):
+        # Only test that the 'external_id' option passes.
+        # Don't fail if catalogues aren't available.
+        try:
+            etree.DTD(external_id="-//W3C//DTD HTML 4.01//EN")
+        except etree.DTDParseError:
+            pass
 
     def test_dtd_stringio(self):
         root = etree.XML(b"<b/>")
