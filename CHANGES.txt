@@ -2,16 +2,8 @@
 lxml changelog
 ==============
 
-Latest development
+5.3.1 (2025-02-??)
 ==================
-
-Features added
---------------
-
-* GH#437: ``lxml.html.builder`` was missing several HTML5 tag names.
-  Patch by Nick Tarleton.
-
-* GH#438: Wheels include the ``arm7l`` target.
 
 Bugs fixed
 ----------
