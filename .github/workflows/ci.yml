@@ -135,7 +135,7 @@ jobs:
 
           # Legacy jobs
           # ===========
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             python-version: "3.6"
             env: { STATIC_DEPS: true }  # only static
           - os: ubuntu-22.04
