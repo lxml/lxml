@@ -18,11 +18,19 @@ Features added
   ``catalog``, ``docbook``, ``ftp``, ``html``, ``http``, ``iconv``, ``icu``,
   ``lzma``, ``regexp``, ``schematron``, ``xmlschema``, ``xpath``, ``zlib``.
 
+
+5.3.1 (2025-02-05)
+==================
+
 Bugs fixed
 ----------
 
 * GH#440: Some tests were adapted for libxml2 2.14.0.
   Patch by Nick Wellnhofer.
+
+* LP#2097175: ``DTD(external_id="…")`` erroneously required a byte string as ID value.
+
+* GH#450: ``iterparse()`` internally triggered the `DeprecationWarning`` added in lxml 5.3.0 when parsing HTML.
 
 Other changes
 -------------
