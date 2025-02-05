@@ -78,7 +78,7 @@ jobs:
 
           # Old library setup with minimum version requirements
           - os: ubuntu-latest
-            python-version: "3.10"
+            python-version: "3.12"
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.9.2,
@@ -86,7 +86,7 @@ jobs:
             }
             extra_hash: "-oldlibs29"
           - os: ubuntu-latest
-            python-version: "3.10"
+            python-version: "3.12"
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.10.3,
@@ -94,7 +94,7 @@ jobs:
             }
             extra_hash: "-oldlibs210"
           - os: ubuntu-latest
-            python-version: "3.10"
+            python-version: "3.12"
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.11.7,
@@ -103,8 +103,8 @@ jobs:
             extra_hash: "-oldlibs211"
 
           - os: ubuntu-latest
-            python-version: "3.10"
-            allowed_failure: true
+            python-version: "3.12"
+            #allowed_failure: true
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.13.5,
