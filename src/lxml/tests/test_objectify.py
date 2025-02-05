@@ -2746,7 +2746,7 @@ class ObjectifyTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    if not @IS_PYPY:
+    if not IS_PYPY:
         suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ObjectifyTestCase)])
         suite.addTests(doctest.DocTestSuite(objectify))
         suite.addTests([make_doctest('objectify.txt')])
