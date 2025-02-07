@@ -209,9 +209,9 @@ setup(
     name = "lxml",
     version = lxml_version,
     author="lxml dev team",
-    author_email="lxml-dev@lxml.de",
+    author_email="lxml@lxml.de",
     maintainer="lxml dev team",
-    maintainer_email="lxml-dev@lxml.de",
+    maintainer_email="lxml@lxml.de",
     license="BSD-3-Clause",
     url="https://lxml.de/",
     # Commented out because this causes distutils to emit warnings
