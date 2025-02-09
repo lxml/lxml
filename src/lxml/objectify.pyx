@@ -18,6 +18,7 @@ from lxml.includes cimport tree
 cimport lxml.includes.etreepublic as cetree
 cimport libc.string as cstring_h   # not to be confused with stdlib 'string'
 from libc.string cimport const_char
+from libc cimport limits
 
 __all__ = ['BoolElement', 'DataElement', 'E', 'Element', 'ElementMaker',
            'FloatElement', 'IntElement', 'NoneElement',
