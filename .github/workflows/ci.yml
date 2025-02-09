@@ -39,9 +39,8 @@ jobs:
       matrix:
         # Tests [amd64]
         #
-        os: [ubuntu-latest, macos-latest, windows-2019]
+        os: [ubuntu-22.04, macos-latest, windows-2019]
         python-version:
-          - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
@@ -144,11 +143,7 @@ jobs:
 
         exclude:
           - os: ubuntu-latest
-            python-version: "3.6"
-          - os: ubuntu-latest
             python-version: "3.7"
-          - os: macos-latest
-            python-version: "3.6"
           - os: macos-latest
             python-version: "3.7"
 
