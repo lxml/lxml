@@ -41,7 +41,6 @@ jobs:
         #
         os: [ubuntu-22.04, macos-latest, windows-2019]
         python-version:
-          - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
@@ -134,10 +133,6 @@ jobs:
           #  allowed_failure: true   # Unicode parsing fails in Py3
 
         exclude:
-          - os: ubuntu-latest
-            python-version: "3.6"
-          - os: macos-latest
-            python-version: "3.6"
           - os: macos-latest
             python-version: "3.7"
 
