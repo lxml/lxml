@@ -695,7 +695,10 @@ cdef xmlChar **_convert_ns_prefixes(tree.xmlDict* c_dict, ns_prefixes) except NU
     try:
         for prefix in ns_prefixes:
              prefix_utf = _utf8(prefix)
-             c_prefix = tree.xmlDictExists(c_dict, _xcstr(prefix_utf), len(prefix_utf))
+             c_prefix_len = len(prefix_utf)
+             if c_prefix_len > limits.INT_MAX:
+                raise ValueError("Prefix too long")
+             c_prefix = tree.xmlDictExists(c_dict, _xcstr(prefix_utf), <int> c_prefix_len)
              if c_prefix:
                  # unknown prefixes do not need to get serialised
                  c_ns_prefixes[i] = <xmlChar*>c_prefix

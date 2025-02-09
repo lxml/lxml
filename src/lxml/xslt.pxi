@@ -664,9 +664,16 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
                     v = (<XPath>value)._path
                 else:
                     v = _utf8(value)
-                params[i] = <const_char*>tree.xmlDictLookup(c_dict, _xcstr(k), len(k))
+
+                c_len = len(k)
+                if c_len > limits.INT_MAX:
+                    raise ValueError("Parameter name too long")
+                params[i] = <const_char*> tree.xmlDictLookup(c_dict, _xcstr(k), <int> c_len)
                 i += 1
-                params[i] = <const_char*>tree.xmlDictLookup(c_dict, _xcstr(v), len(v))
+                c_len = len(v)
+                if c_len > limits.INT_MAX:
+                    raise ValueError("Parameter value too long")
+                params[i] = <const_char*> tree.xmlDictLookup(c_dict, _xcstr(v), <int> c_len)
                 i += 1
     except:
         python.lxml_free(params)
