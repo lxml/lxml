@@ -17,7 +17,7 @@ lxml
      for processing XML and HTML
      in the Python language.
 
-.. 
+..
    1  Introduction
    2  Documentation
    3  Download
@@ -160,8 +160,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 5.1.0`_, released 2024-01-05
-(`changes for 5.1.0`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 5.3.0`_, released 2024-08-10
+(`changes for 5.3.0`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -229,6 +229,8 @@ Old Versions
 ------------
 
 See the websites of lxml
+`5.2 <https://lxml.de/5.2/>`_,
+`5.1 <https://lxml.de/5.1/>`_,
 `5.0 <https://lxml.de/5.0/>`_,
 `4.9 <https://lxml.de/4.9/>`_,
 `4.8 <https://lxml.de/4.8/>`_,
@@ -258,40 +260,44 @@ See the websites of lxml
 ..
    and the `latest in-development version <https://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-5.1.0.pdf
+.. _`PDF documentation`: lxmldoc-5.3.0.pdf
+
+* `lxml 5.3.0`_, released 2024-08-10 (`changes for 5.3.0`_)
+
+* `lxml 5.2.2`_, released 2024-05-12 (`changes for 5.2.2`_)
+
+* `lxml 5.2.1`_, released 2024-04-02 (`changes for 5.2.1`_)
+
+* `lxml 5.2.0`_, released 2024-03-30 (`changes for 5.2.0`_)
+
+* `lxml 5.1.1`_, released 2024-03-28 (`changes for 5.1.1`_)
 
 * `lxml 5.1.0`_, released 2024-01-05 (`changes for 5.1.0`_)
+
+* `lxml 5.0.2`_, released 2024-03-28 (`changes for 5.0.2`_)
 
 * `lxml 5.0.1`_, released 2024-01-05 (`changes for 5.0.1`_)
 
 * `lxml 5.0.0`_, released 2023-12-29 (`changes for 5.0.0`_)
 
-* `lxml 4.9.4`_, released 2023-12-19 (`changes for 4.9.4`_)
+* `older releases <https://lxml.de/5.0/#old-versions>`_
 
-* `lxml 4.9.3`_, released 2023-07-05 (`changes for 4.9.3`_)
-
-* `lxml 4.9.2`_, released 2022-12-13 (`changes for 4.9.2`_)
-
-* `lxml 4.9.1`_, released 2022-07-01 (`changes for 4.9.1`_)
-
-* `lxml 4.9.0`_, released 2022-06-01 (`changes for 4.9.0`_)
-
-* `older releases <https://lxml.de/4.9/#old-versions>`_
-
+.. _`lxml 5.3.0`: /files/lxml-5.3.0.tgz
+.. _`lxml 5.2.2`: /files/lxml-5.2.2.tgz
+.. _`lxml 5.2.1`: /files/lxml-5.2.1.tgz
+.. _`lxml 5.2.0`: /files/lxml-5.2.0.tgz
+.. _`lxml 5.1.1`: /files/lxml-5.1.1.tgz
 .. _`lxml 5.1.0`: /files/lxml-5.1.0.tgz
+.. _`lxml 5.0.2`: /files/lxml-5.0.2.tgz
 .. _`lxml 5.0.1`: /files/lxml-5.0.1.tgz
 .. _`lxml 5.0.0`: /files/lxml-5.0.0.zip
-.. _`lxml 4.9.4`: /files/lxml-4.9.4.tgz
-.. _`lxml 4.9.3`: /files/lxml-4.9.3.tgz
-.. _`lxml 4.9.2`: /files/lxml-4.9.2.tgz
-.. _`lxml 4.9.1`: /files/lxml-4.9.1.tgz
-.. _`lxml 4.9.0`: /files/lxml-4.9.0.tgz
 
+.. _`changes for 5.3.0`: /changes-5.3.0.html
+.. _`changes for 5.2.2`: /changes-5.2.2.html
+.. _`changes for 5.2.1`: /changes-5.2.1.html
+.. _`changes for 5.2.0`: /changes-5.2.0.html
+.. _`changes for 5.1.1`: /changes-5.1.1.html
 .. _`changes for 5.1.0`: /changes-5.1.0.html
+.. _`changes for 5.0.2`: /changes-5.0.2.html
 .. _`changes for 5.0.1`: /changes-5.0.1.html
 .. _`changes for 5.0.0`: /changes-5.0.0.html
-.. _`changes for 4.9.4`: /changes-4.9.4.html
-.. _`changes for 4.9.3`: /changes-4.9.3.html
-.. _`changes for 4.9.2`: /changes-4.9.2.html
-.. _`changes for 4.9.1`: /changes-4.9.1.html
-.. _`changes for 4.9.0`: /changes-4.9.0.html

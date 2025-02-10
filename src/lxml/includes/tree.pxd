@@ -6,8 +6,55 @@ cdef extern from "lxml-version.h":
     cdef char* LXML_VERSION_STRING
 
 cdef extern from "libxml/xmlversion.h":
-    cdef const_char* xmlParserVersion
-    cdef int LIBXML_VERSION
+    """
+    static const char* const _lxml_lib_features[] = {
+#ifdef LIBXML_HTML_ENABLED
+        "html",
+#endif
+#ifdef LIBXML_FTP_ENABLED
+        "ftp",
+#endif
+#ifdef LIBXML_HTTP_ENABLED
+        "http",
+#endif
+#ifdef LIBXML_CATALOG_ENABLED
+        "catalog",
+#endif
+#ifdef LIBXML_DOCB_ENABLED
+        "docbook",
+#endif
+#ifdef LIBXML_XPATH_ENABLED
+        "xpath",
+#endif
+#ifdef LIBXML_ICONV_ENABLED
+        "iconv",
+#endif
+#ifdef LIBXML_ICU_ENABLED
+        "icu",
+#endif
+#ifdef LIBXML_REGEXP_ENABLED
+        "regexp",
+#endif
+#ifdef LIBXML_SCHEMAS_ENABLED
+        "xmlschema",
+#endif
+#ifdef LIBXML_SCHEMATRON_ENABLED
+        "schematron",
+#endif
+#ifdef LIBXML_ZLIB_ENABLED
+        "zlib",
+#endif
+#ifdef LIBXML_LZMA_ENABLED
+        "lzma",
+#endif
+        0
+    };
+    """
+    const char* xmlParserVersion
+    int LIBXML_VERSION
+
+    const char* const* _LXML_LIB_FEATURES "_lxml_lib_features"
+
 
 cdef extern from "libxml/xmlstring.h" nogil:
     ctypedef unsigned char xmlChar
@@ -141,7 +188,7 @@ cdef extern from "libxml/tree.h" nogil:
         XML_ATTRIBUTE_NMTOKENS=    8
         XML_ATTRIBUTE_ENUMERATION= 9
         XML_ATTRIBUTE_NOTATION=    10
-    
+
     ctypedef enum xmlAttributeDefault:
         XML_ATTRIBUTE_NONE=     1
         XML_ATTRIBUTE_REQUIRED= 2
@@ -288,7 +335,7 @@ cdef extern from "libxml/tree.h" nogil:
         xmlDtd* intSubset
         xmlDtd* extSubset
         int properties
-        
+
     ctypedef struct xmlAttr:
         void* _private
         xmlElementType type
@@ -307,7 +354,7 @@ cdef extern from "libxml/tree.h" nogil:
         const_xmlChar* name
         xmlAttr* attr
         xmlDoc* doc
-        
+
     ctypedef struct xmlBuffer
 
     ctypedef struct xmlBuf   # new in libxml2 2.9
@@ -318,14 +365,14 @@ cdef extern from "libxml/tree.h" nogil:
         int error
 
     const_xmlChar* XML_XML_NAMESPACE
-        
+
     cdef void xmlFreeDoc(xmlDoc* cur)
     cdef void xmlFreeDtd(xmlDtd* cur)
     cdef void xmlFreeNode(xmlNode* cur)
     cdef void xmlFreeNsList(xmlNs* ns)
     cdef void xmlFreeNs(xmlNs* ns)
     cdef void xmlFree(void* buf)
-    
+
     cdef xmlNode* xmlNewNode(xmlNs* ns, const_xmlChar* name)
     cdef xmlNode* xmlNewDocText(xmlDoc* doc, const_xmlChar* content)
     cdef xmlNode* xmlNewDocComment(xmlDoc* doc, const_xmlChar* content)
@@ -437,7 +484,7 @@ cdef extern from "libxml/xmlIO.h":
     cdef xmlOutputBuffer* xmlOutputBufferCreateIO(
         xmlOutputWriteCallback iowrite,
         xmlOutputCloseCallback ioclose,
-        void * ioctx, 
+        void * ioctx,
         xmlCharEncodingHandler* encoder) nogil
     cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
         stdio.FILE* file, xmlCharEncodingHandler* encoder) nogil
@@ -471,7 +518,7 @@ cdef extern from "libxml/globals.h" nogil:
     cdef int xmlThrDefKeepBlanksDefaultValue(int onoff)
     cdef int xmlThrDefLineNumbersDefaultValue(int onoff)
     cdef int xmlThrDefIndentTreeOutput(int onoff)
-    
+
 cdef extern from "libxml/xmlmemory.h" nogil:
     cdef void* xmlMalloc(size_t size)
     cdef int xmlMemBlocks()

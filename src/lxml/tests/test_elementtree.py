@@ -10,6 +10,7 @@ import copy
 import io
 import operator
 import os
+import pyexpat
 import re
 import sys
 import textwrap
@@ -19,8 +20,8 @@ from functools import wraps, partial
 from itertools import islice
 
 from .common_imports import (
-    BytesIO, etree, HelperTestCase,
-    ElementTree, ET_VERSION,
+    BytesIO, etree, HelperTestCase as helper_base,
+    ElementTree, ET_VERSION, IS_PYPY,
     filter_by_version, fileInTestDir, canonicalize, tmpfile,
 )
 
@@ -50,10 +51,9 @@ def et_exclude_pyversion(*version):
     return wrap
 
 
-class _ETreeTestCaseBase(HelperTestCase):
+class _ETreeTestCaseBase(helper_base):
     etree = None
     required_versions_ET = {}
-    required_versions_cET = {}
 
     def XMLParser(self, **kwargs):
         try:
@@ -62,12 +62,6 @@ class _ETreeTestCaseBase(HelperTestCase):
             assert 'ElementTree' in self.etree.__name__
             XMLParser = self.etree.TreeBuilder
         return XMLParser(**kwargs)
-
-    try:
-        HelperTestCase.assertRegex
-    except AttributeError:
-        def assertRegex(self, *args, **kwargs):
-            return self.assertRegex(*args, **kwargs)
 
     @et_needs_pyversion(3, 6)
     def test_interface(self):
@@ -673,7 +667,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             ('alpha', 'Alpha'),
             ('beta', 'Beta'),
             ('gamma', 'Gamma'),
-            ], 
+            ],
             items)
 
     def test_attribute_items_ns(self):
@@ -830,6 +824,31 @@ class _ETreeTestCaseBase(HelperTestCase):
         fromstring = self.etree.fromstring
 
         root = fromstring('<doc>This is a text.</doc>')
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_memoryview(self):
+        fromstring = self.etree.fromstring
+
+        root = fromstring(memoryview(b'<doc>This is a text.</doc>'))
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_char_array(self):
+        fromstring = self.etree.fromstring
+
+        import array
+
+        root = fromstring(array.array('B', b'<doc>This is a text.</doc>'))
+        self.assertEqual(0, len(root))
+        self.assertEqual('This is a text.', root.text)
+
+    def test_fromstring_uchar_array(self):
+        fromstring = self.etree.fromstring
+
+        import array
+
+        root = fromstring(array.array('b', b'<doc>This is a text.</doc>'))
         self.assertEqual(0, len(root))
         self.assertEqual('This is a text.', root.text)
 
@@ -1107,7 +1126,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         XML = self.etree.XML
 
         for i in range(10):
-            f = BytesIO() 
+            f = BytesIO()
             root = XML(b'<doc%d>This is a test.</doc%d>' % (i, i))
             tree = ElementTree(element=root)
             tree.write(f)
@@ -1129,7 +1148,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         SubElement(p, 'br').tail = "test"
 
         tree = ElementTree(element=html)
-        f = BytesIO() 
+        f = BytesIO()
         tree.write(f, method="html")
         data = f.getvalue().replace(b'\n',b'')
 
@@ -1152,7 +1171,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         c.text = "C"
 
         tree = ElementTree(element=a)
-        f = BytesIO() 
+        f = BytesIO()
         tree.write(f, method="text")
         data = f.getvalue()
 
@@ -2979,7 +2998,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
     def test_parse_file_nonexistent(self):
         parse = self.etree.parse
-        self.assertRaises(IOError, parse, fileInTestDir('notthere.xml'))  
+        self.assertRaises(IOError, parse, fileInTestDir('notthere.xml'))
 
     def test_parse_error_none(self):
         parse = self.etree.parse
@@ -4383,29 +4402,44 @@ class _XMLPullParserTest(unittest.TestCase):
         self.assertEqual([(action, elem.tag) for action, elem in events],
                          expected)
 
-    def test_simple_xml(self):
-        for chunk_size in (None, 1, 5):
-            #with self.subTest(chunk_size=chunk_size):
-                parser = self.etree.XMLPullParser()
-                self.assert_event_tags(parser, [])
-                self._feed(parser, "<!-- comment -->\n", chunk_size)
-                self.assert_event_tags(parser, [])
-                self._feed(parser,
-                           "<root>\n  <element key='value'>text</element",
-                           chunk_size)
-                self.assert_event_tags(parser, [])
-                self._feed(parser, ">\n", chunk_size)
-                self.assert_event_tags(parser, [('end', 'element')])
-                self._feed(parser, "<element>text</element>tail\n", chunk_size)
-                self._feed(parser, "<empty-element/>\n", chunk_size)
-                self.assert_event_tags(parser, [
-                    ('end', 'element'),
-                    ('end', 'empty-element'),
-                    ])
-                self._feed(parser, "</root>\n", chunk_size)
-                self.assert_event_tags(parser, [('end', 'root')])
-                root = self._close_and_return_root(parser)
-                self.assertEqual(root.tag, 'root')
+    def test_simple_xml(self, chunk_size=None):
+        parser = self.etree.XMLPullParser()
+        self.assert_event_tags(parser, [])
+        self._feed(parser, "<!-- comment -->\n", chunk_size)
+        self.assert_event_tags(parser, [])
+        self._feed(parser,
+                   "<root>\n  <element key='value'>text</element",
+                   chunk_size)
+        self.assert_event_tags(parser, [])
+        self._feed(parser, ">\n", chunk_size)
+        self._feed(parser, "<element>text</element>tail\n", chunk_size)
+        self._feed(parser, "<empty-element/>\n", chunk_size)
+        self._feed(parser, "</root>\n", chunk_size)
+        self.assert_event_tags(parser, [
+            ('end', 'element'),
+            ('end', 'element'),
+            ('end', 'empty-element'),
+            ('end', 'root'),
+            ])
+        root = self._close_and_return_root(parser)
+        self.assertEqual(root.tag, 'root')
+
+    def test_simple_xml_chunk_1(self):
+        if self.etree is not etree and pyexpat.version_info >= (2, 6, 0):
+            raise unittest.SkipTest(
+                "Feeding the parser by too small chunks defers parsing"
+            )
+        self.test_simple_xml(chunk_size=1)
+
+    def test_simple_xml_chunk_5(self):
+        if self.etree is not etree and pyexpat.version_info >= (2, 6, 0):
+            raise unittest.SkipTest(
+                "Feeding the parser by too small chunks defers parsing"
+            )
+        self.test_simple_xml(chunk_size=5)
+
+    def test_simple_xml_chunk_22(self):
+        self.test_simple_xml(chunk_size=22)
 
     def test_feed_while_iterating(self):
         parser = self.etree.XMLPullParser()

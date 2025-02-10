@@ -731,7 +731,7 @@ def test_suite():
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeETXPathClassTestCase)])
     suite.addTests([doctest.DocTestSuite()])
     suite.addTests(
-        [make_doctest('../../../doc/xpathxslt.txt')])
+        [make_doctest('xpathxslt.txt')])
     return suite
 
 if __name__ == '__main__':

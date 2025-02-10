@@ -202,7 +202,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeNamespaceClassesTestCase)])
     suite.addTests(
-        [make_doctest('../../../doc/element_classes.txt')])
+        [make_doctest('element_classes.txt')])
     return suite
 
 if __name__ == '__main__':

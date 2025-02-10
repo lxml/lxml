@@ -2,7 +2,137 @@
 lxml changelog
 ==============
 
-5.1.1 (2024-??-??)
+Latest development
+==================
+
+Features added
+--------------
+
+* GH#437: ``lxml.html.builder`` was missing several HTML5 tag names.
+  Patch by Nick Tarleton.
+
+* GH#438: Wheels include the ``arm7l`` target.
+
+* The set of (compile time) supported libxml2 feature names is available as
+  ``etree.LIBXML_FEATURES``.  This currently includes
+  ``catalog``, ``docbook``, ``ftp``, ``html``, ``http``, ``iconv``, ``icu``,
+  ``lzma``, ``regexp``, ``schematron``, ``xmlschema``, ``xpath``, ``zlib``.
+
+
+5.3.1 (2025-02-09)
+==================
+
+Bugs fixed
+----------
+
+* GH#440: Some tests were adapted for libxml2 2.14.0.
+  Patch by Nick Wellnhofer.
+
+* LP#2097175: ``DTD(external_id="…")`` erroneously required a byte string as ID value.
+
+* GH#450: ``iterparse()`` internally triggered the `DeprecationWarning`` added in lxml 5.3.0 when parsing HTML.
+
+Other changes
+-------------
+
+* GH#442: Binary wheels for macOS no longer use the linker flag ``-flat_namespace``.
+
+
+5.3.0 (2024-08-10)
+==================
+
+Features added
+--------------
+
+* GH#421: Nested ``CDATA`` sections are no longer rejected but split on output
+  to represent ``]]>`` correctly.
+  Patch by Gertjan Klein.
+
+Bugs fixed
+----------
+
+* LP#2060160: Attribute values serialised differently in ``xmlfile.element()`` and ``xmlfile.write()``.
+
+* LP#2058177: The ISO-Schematron implementation could fail on unknown prefixes.
+  Patch by David Lakin.
+
+Other changes
+-------------
+
+* LP#2067707: The ``strip_cdata`` option in ``HTMLParser()`` turned out to be useless and is now deprecated.
+
+* Binary wheels use the library versions libxml2 2.12.9 and libxslt 1.1.42.
+
+* Windows binary wheels use the library versions libxml2 2.11.8 and libxslt 1.1.39.
+
+* Built with Cython 3.0.11.
+
+
+5.2.2 (2024-05-12)
+==================
+
+Bugs fixed
+----------
+
+* GH#417: The ``test_feed_parser`` test could fail if ``lxml_html_clean`` was not installed.
+  It is now skipped in that case.
+
+* LP#2059910: The minimum CPU architecture for the Linux x86 binary wheels was set back to
+  "core2", without SSE 4.2.
+
+* If libxml2 uses iconv, the compile time version is available as `etree.ICONV_COMPILED_VERSION`.
+
+
+5.2.1 (2024-04-02)
+==================
+
+Bugs fixed
+----------
+
+* LP#2059910: The minimum CPU architecture for the Linux x86 binary wheels was set back to
+  "core2", but with SSE 4.2 enabled.
+
+* LP#2059977: ``Element.iterfind("//absolute_path")`` failed with a ``SyntaxError``
+  where it should have issued a warning.
+
+* GH#416: The documentation build was using the non-standard ``which`` command.
+  Patch by Michał Górny.
+
+
+5.2.0 (2024-03-30)
+==================
+
+Other changes
+-------------
+
+* LP#1958539: The ``lxml.html.clean`` implementation suffered from several (only if used)
+  security issues in the past and was now extracted into a separate library:
+
+  https://github.com/fedora-python/lxml_html_clean
+
+  Projects that use lxml without "lxml.html.clean" will not notice any difference,
+  except that they won't have potentially vulnerable code installed.
+  The module is available as an "extra" setuptools dependency "lxml[html_clean]",
+  so that Projects that need "lxml.html.clean" will need to switch their requirements
+  from "lxml" to "lxml[html_clean]", or install the new library themselves.
+
+* The minimum CPU architecture for the Linux x86 binary wheels was upgraded to
+  "sandybridge" (launched 2011), and glibc 2.28 / gcc 12 (manylinux_2_28) wheels were added.
+
+* Built with Cython 3.0.10.
+
+
+5.1.2 (2024-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#2059977: ``Element.iterfind("//absolute_path")`` failed with a ``SyntaxError``
+  where it should have issued a warning.
+
+
+5.1.1 (2024-03-28)
 ==================
 
 Bugs fixed
@@ -10,12 +140,20 @@ Bugs fixed
 
 * LP#2048920: ``iterlinks()`` in ``lxml.html`` rejected ``bytes`` input in 5.1.0.
 
+* High source line numbers from the parser are no longer truncated
+  (up to a C ``long``) when using libxml2 2.11 or later.
+
 Other changes
 -------------
 
-* Binary wheels use the library versions libxml2 2.12.3 and libxslt 1.1.39.
+* GH#407: A compatibility test was adapted to recent expat versions.
+  Patch by Miro Hrončok.
 
-* Built with Cython 3.0.8.
+* Binary wheels use the library versions libxml2 2.12.6 and libxslt 1.1.39.
+
+* Windows binary wheels use the library versions libxml2 2.11.7 and libxslt 1.1.39.
+
+* Built with Cython 3.0.9.
 
 
 5.1.0 (2024-01-05)
@@ -42,13 +180,18 @@ Other changes
   Patch by Primož Godec.
 
 
-5.0.2 (2024-??-??)
+5.0.2 (2024-03-28)
 ==================
 
 Other changes
 -------------
 
-* Binary wheels use the library versions libxml2 2.12.5 and libxslt 1.1.39.
+* GH#407: A compatibility test was adapted to recent expat versions.
+  Patch by Miro Hrončok.
+
+* Binary wheels use the library versions libxml2 2.12.6 and libxslt 1.1.39.
+
+* Built with Cython 3.0.9.
 
 
 5.0.1 (2024-01-05)

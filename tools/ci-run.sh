@@ -16,7 +16,9 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   sudo apt-get update -y -q
   sudo apt-get install -y -q ccache gcc-$GCC_VERSION || exit 1
   if [ -n "${STATIC_DEPS##true}" ]; then
-    sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev
+    # Ubuntu 22.04 has libxml2 2.9.13, Ubuntu 24.04 has 2.9.14
+    sudo apt-get install -y -q "libxml2=2.9.14*" "libxml2-dev=2.9.14*" libxslt1.1 libxslt1-dev  \
+    ||  sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev
   fi
   sudo /usr/sbin/update-ccache-symlinks
   echo "/usr/lib/ccache" >> $GITHUB_PATH # export ccache to path
@@ -79,6 +81,7 @@ if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ]; then
   python -m pip install -U beautifulsoup4==4.9.3 cssselect==1.1.0 html5lib==1.1 rnc2rng==2.6.5 ${EXTRA_DEPS} || exit 1
 else
   python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
+  python -m pip install --no-deps lxml_html_clean || exit 1
 fi
 if [[ "$COVERAGE" == "true" ]]; then
   python -m pip install "coverage<5" || exit 1
@@ -93,8 +96,6 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
 
-ccache -s || true
-
 # Run tests
 echo "Running the tests ..."
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
@@ -102,13 +103,5 @@ GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
       PYTHONUNBUFFERED=x \
       make test || exit 1
-
-if [[ "$COVERAGE" != "true" ]]; then
-  echo "Building a clean wheel ..."
-  GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
-        CFLAGS="$EXTRA_CFLAGS -O3 -g1 -mtune=generic -fPIC -flto" \
-        LDFLAGS="-flto $EXTRA_LDFLAGS" \
-        make clean wheel || exit 1
-fi
 
 ccache -s || true

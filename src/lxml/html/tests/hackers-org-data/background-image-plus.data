@@ -1,8 +1,0 @@
-Description: I built a quick XSS fuzzer to detect any erroneous characters that are allowed after the open parenthesis but before the JavaScript directive in IE and Netscape 8.1 in secure site mode. These are in decimal but you can include hex and add padding of course. (Any of the following chars can be used: 1-32, 34, 39, 160, 8192-8.13, 12288, 65279)
-    http://ha.ckers.org/xss.html#XSS_DIV_background-image_plus
-Options: -safe_attrs_only
-Notes: As you see, the CSS gets corrupted, but I don't really care that much.
-
-<DIV STYLE="background-image: url(&#1;javascript:alert('XSS'))">text</div>
-----------
-<div style="background-image: url(">text</div>

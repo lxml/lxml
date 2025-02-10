@@ -16,9 +16,12 @@ __all__ = [
     'ElementBase', 'ElementClassLookup', 'ElementDefaultClassLookup',
     'ElementNamespaceClassLookup', 'ElementTree', 'Entity', 'EntityBase',
     'Error', 'ErrorDomains', 'ErrorLevels', 'ErrorTypes', 'Extension',
-    'FallbackElementClassLookup', 'FunctionNamespace', 'HTML',
-    'HTMLParser', 'LIBXML_COMPILED_VERSION', 'LIBXML_VERSION',
-    'LIBXSLT_COMPILED_VERSION', 'LIBXSLT_VERSION', 'LXML_VERSION',
+    'FallbackElementClassLookup', 'FunctionNamespace', 'HTML', 'HTMLParser',
+    'ICONV_COMPILED_VERSION',
+    'LIBXML_COMPILED_VERSION', 'LIBXML_VERSION',
+    'LIBXML_FEATURES',
+    'LIBXSLT_COMPILED_VERSION', 'LIBXSLT_VERSION',
+    'LXML_VERSION',
     'LxmlError', 'LxmlRegistryError', 'LxmlSyntaxError',
     'NamespaceRegistryError', 'PI', 'PIBase', 'ParseError',
     'ParserBasedElementClassLookup', 'ParserError', 'ProcessingInstruction',
@@ -234,7 +237,7 @@ cdef class C14NError(LxmlError):
     """
 
 # version information
-cdef __unpackDottedVersion(version):
+cdef tuple __unpackDottedVersion(version):
     version_list = []
     l = (version.decode("ascii").replace('-', '.').split('.') + [0]*4)[:4]
     for item in l:
@@ -257,11 +260,11 @@ cdef __unpackDottedVersion(version):
         version_list.append(item)
     return tuple(version_list)
 
-cdef __unpackIntVersion(int c_version):
+cdef tuple __unpackIntVersion(int c_version, int base=100):
     return (
-        ((c_version // (100*100)) % 100),
-        ((c_version // 100)       % 100),
-        (c_version                % 100)
+        ((c_version // (base*base)) % base),
+        ((c_version // base)        % base),
+        (c_version                  % base)
         )
 
 cdef int _LIBXML_VERSION_INT
@@ -277,6 +280,37 @@ LIBXML_COMPILED_VERSION = __unpackIntVersion(tree.LIBXML_VERSION)
 LXML_VERSION = __unpackDottedVersion(tree.LXML_VERSION_STRING)
 
 __version__ = tree.LXML_VERSION_STRING.decode("ascii")
+
+cdef extern from *:
+    """
+    #ifdef ZLIB_VERNUM
+      #define __lxml_zlib_version (ZLIB_VERNUM >> 4)
+    #else
+      #define __lxml_zlib_version 0
+    #endif
+    #ifdef _LIBICONV_VERSION
+      #define __lxml_iconv_version (_LIBICONV_VERSION << 8)
+    #else
+      #define __lxml_iconv_version 0
+    #endif
+    """
+    # zlib isn't included automatically by libxml2's headers
+    #long ZLIB_HEX_VERSION "__lxml_zlib_version"
+    long LIBICONV_HEX_VERSION "__lxml_iconv_version"
+
+#ZLIB_COMPILED_VERSION = __unpackIntVersion(ZLIB_HEX_VERSION, base=0x10)
+ICONV_COMPILED_VERSION = __unpackIntVersion(LIBICONV_HEX_VERSION, base=0x100)[:2]
+
+
+cdef set _copy_lib_features():
+    features = set()
+    feature = tree._LXML_LIB_FEATURES
+    while feature[0]:
+        features.add(feature[0].decode('ASCII'))
+        feature += 1
+    return features
+
+LIBXML_FEATURES = _copy_lib_features()
 
 
 # class for temporary storage of Python references,
@@ -1194,7 +1228,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """__bool__(self)"""
         import warnings
         warnings.warn(
-            "The behavior of this method will change in future versions. "
+            "Truth-testing of elements was a source of confusion and will always "
+            "return True in future versions. "
             "Use specific 'len(elem)' or 'elem is not None' test instead.",
             FutureWarning
             )
@@ -1616,11 +1651,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return CSSSelector(expr, translator=translator)(self)
 
 
-cdef extern from "includes/etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef object NEW_ELEMENT "PY_NEW" (object t)
-
-
 @cython.linetrace(False)
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
@@ -1630,12 +1660,15 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     if c_node is NULL:
         return None
 
-    element_class = LOOKUP_ELEMENT_CLASS(
+    element_class = <type> LOOKUP_ELEMENT_CLASS(
         ELEMENT_CLASS_LOOKUP_STATE, doc, c_node)
+    if type(element_class) is not type:
+        if not isinstance(element_class, type):
+            raise TypeError(f"Element class is not a type, got {type(element_class)}")
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
         return getProxy(c_node)
-    result = NEW_ELEMENT(element_class)
+    result = element_class.__new__(element_class)
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
         result._c_node = NULL
@@ -2308,6 +2341,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         root = self.getroot()
         if _isString(path):
             if path[:1] == "/":
+                path = "." + path
                 from warnings import warn
                 warn(
                     "This search incorrectly ignores the root element, and will be "
@@ -3158,10 +3192,7 @@ cdef class CDATA:
     """
     cdef bytes _utf8_data
     def __cinit__(self, data):
-        _utf8_data = _utf8(data)
-        if b']]>' in _utf8_data:
-            raise ValueError, "']]>' not allowed inside CDATA"
-        self._utf8_data = _utf8_data
+        self._utf8_data = _utf8(data)
 
 
 def Entity(name):

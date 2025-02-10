@@ -246,7 +246,7 @@ this feature.
 
 .. sourcecode:: pycon
 
-  >>> broken_html = "<html><head><title>test<body><h1>page title</h3>"
+  >>> broken_html = "<html><head><title>test</title><body><h1>page title</h3>"
 
   >>> parser = etree.HTMLParser()
   >>> html_root   = etree.fromstring(broken_html, parser)

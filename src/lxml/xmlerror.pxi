@@ -52,7 +52,7 @@ cdef class _LogEntry:
     cdef readonly int domain
     cdef readonly int type
     cdef readonly int level
-    cdef readonly int line
+    cdef readonly long line
     cdef readonly int column
     cdef basestring _message
     cdef basestring _filename
@@ -70,7 +70,7 @@ cdef class _LogEntry:
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
-        self.line     = error.line
+        self.line     = <long>error.line
         self.column   = error.int2
         self._c_message = NULL
         self._c_filename = NULL
@@ -94,9 +94,12 @@ cdef class _LogEntry:
                 raise MemoryError()
         if error.node is not NULL:
             self._c_path = tree.xmlGetNodePath(<xmlNode*> error.node)
+            c_line = tree.xmlGetLineNo(<xmlNode*> error.node)
+            if c_line > limits.INT_MAX:
+                self.line = c_line
 
     @cython.final
-    cdef _setGeneric(self, int domain, int type, int level, int line,
+    cdef _setGeneric(self, int domain, int type, int level, long line,
                      message, filename):
         self.domain  = domain
         self.type    = type
@@ -216,7 +219,7 @@ cdef class _BaseErrorLog:
             self.last_error = entry
 
     @cython.final
-    cdef int _receiveGeneric(self, int domain, int type, int level, int line,
+    cdef int _receiveGeneric(self, int domain, int type, int level, long line,
                              message, filename) except -1:
         cdef bint is_error
         cdef _LogEntry entry

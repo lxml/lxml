@@ -2075,9 +2075,9 @@ def test_suite():
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ETreeXSLTExtElementTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(Py3XSLTTestCase)])
     suite.addTests(
-        [make_doctest('../../../doc/extensions.txt')])
+        [make_doctest('extensions.txt')])
     suite.addTests(
-        [make_doctest('../../../doc/xpathxslt.txt')])
+        [make_doctest('xpathxslt.txt')])
     return suite
 
 if __name__ == '__main__':

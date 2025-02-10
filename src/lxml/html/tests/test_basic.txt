@@ -3,7 +3,6 @@ lxml.html adds a find_class method to elements::
     >>> from lxml.etree import Comment
     >>> from lxml.html import document_fromstring, fragment_fromstring, tostring
     >>> from lxml.html import fragments_fromstring, fromstring
-    >>> from lxml.html.clean import clean, clean_html
     >>> from lxml.html import usedoctest
     >>> try: unicode = unicode
     ... except NameError: unicode = str

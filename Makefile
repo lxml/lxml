@@ -1,5 +1,5 @@
 PYTHON?=python3
-TESTFLAGS=-p -v
+TESTFLAGS=-p -vv
 TESTOPTS=
 SETUPFLAGS=
 LXMLVERSION:=$(shell $(PYTHON) -c 'import re; print(re.findall(r"__version__\s*=\s*\"([^\"]+)\"", open("src/lxml/__init__.py").read())[0])' )
@@ -8,8 +8,8 @@ PYTHON_WITH_CYTHON?=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/d
 CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
 PYTHON_BUILD_VERSION ?= *
-MANYLINUX_LIBXML2_VERSION=2.12.5
-MANYLINUX_LIBXSLT_VERSION=1.1.39
+MANYLINUX_LIBXML2_VERSION=2.12.9
+MANYLINUX_LIBXSLT_VERSION=1.1.42
 MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
 MANYLINUX_LDFLAGS=-flto
 
@@ -47,7 +47,7 @@ dist/lxml-$(LXMLVERSION).tar.gz:
 sdist: dist/lxml-$(LXMLVERSION).tar.gz
 
 build:
-	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
+	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON) --warnings
 
 require-cython:
 	@[ -n "$(PYTHON_WITH_CYTHON)" ] || { \
@@ -76,10 +76,10 @@ wheel_%: dist/lxml-$(LXMLVERSION).tar.gz
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
 wheel:
-	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON) --warnings
 
 wheel_static:
-	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON) --static-deps
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON) --warnings --static-deps
 
 test_build: build
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
@@ -117,7 +117,7 @@ ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
 apidoc: apidocclean inplace
-	@[ -x "`which sphinx-apidoc`" ] \
+	@[ -x "`command -v sphinx-apidoc`" ] \
 		&& (echo "Generating API docs ..." && \
 			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
 				"*includes" "*tests" "*pyclasslookup.py" "*usedoctest.py" "*html/_html5builder.py" \
@@ -125,7 +125,7 @@ apidoc: apidocclean inplace
 		|| (echo "not generating Sphinx autodoc API rst files")
 
 apihtml: apidoc inplace
-	@[ -x "`which sphinx-build`" ] \
+	@[ -x "`command -v sphinx-build`" ] \
 		&& (echo "Generating API docs ..." && \
 			make -C doc/api html) \
 		|| (echo "not generating Sphinx autodoc API documentation")
@@ -140,7 +140,7 @@ s5:
 
 apipdf: apidoc inplace
 	rm -fr doc/api/_build
-	@[ -x "`which sphinx-build`" ] \
+	@[ -x "`command -v sphinx-build`" ] \
 		&& (echo "Generating API PDF docs ..." && \
 			make -C doc/api latexpdf) \
 		|| (echo "not generating Sphinx autodoc API PDF documentation")

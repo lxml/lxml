@@ -177,7 +177,7 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 
 #ifdef __GNUC__
 /* Test for GCC > 2.95 */
-#if __GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)) 
+#if __GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95))
 #define unlikely_condition(x) __builtin_expect((x), 0)
 #else /* __GNUC__ > 2 ... */
 #define unlikely_condition(x) (x)
@@ -189,10 +189,6 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #ifndef Py_TYPE
   #define Py_TYPE(ob)   (((PyObject*)(ob))->ob_type)
 #endif
-
-#define PY_NEW(T) \
-     (((PyTypeObject*)(T))->tp_new( \
-             (PyTypeObject*)(T), __pyx_empty_tuple, NULL))
 
 #define _fqtypename(o)  ((Py_TYPE(o))->tp_name)
 
@@ -268,7 +264,7 @@ static void* lxml_unpack_xmldoc_capsule(PyObject* capsule, int* is_owned) {
  * 'inclusive' is 1).  The _ELEMENT_ variants will only stop on nodes
  * that match _isElement(), the normal variant will stop on every node
  * except text nodes.
- * 
+ *
  * To traverse the node and all of its children and siblings in Pyrex, call
  *    cdef xmlNode* some_node
  *    BEGIN_FOR_EACH_ELEMENT_FROM(some_node.parent, some_node, 1)

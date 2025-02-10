@@ -6,10 +6,13 @@ except ImportError:
     # Python 3
     from email import message_from_file as Message
 import unittest
-from lxml.tests.common_imports import doctest
 from lxml.doctestcompare import LHTMLOutputChecker
 
-from lxml.html.clean import clean, Cleaner
+try:
+    from lxml.html.clean import clean, Cleaner
+    html_clean_available = True
+except ImportError:
+    html_clean_available = False
 
 feed_dirs = [
     os.path.join(os.path.dirname(__file__), 'feedparser-data'),
@@ -80,6 +83,11 @@ class FeedTestCase(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
+
+    if not html_clean_available:
+        print("Skipping tests in feedparser_data - external lxml_html_clean package is not installed")
+        return suite
+
     for dir in feed_dirs:
         for fn in os.listdir(dir):
             fn = os.path.join(dir, fn)

@@ -12,6 +12,12 @@ from .common_imports import etree, HelperTestCase, BytesIO, _bytes
 from .dummy_http_server import webserver, HTTPRequestCollector
 
 
+def needs_http(test_method, _skip_when_called=unittest.skip("needs HTTP support in libxml2")):
+    if "http" in etree.LIBXML_FEATURES:
+        return test_method
+    return _skip_when_called(test_method)
+
+
 class HttpIOTestCase(HelperTestCase):
     etree = etree
 
@@ -23,11 +29,13 @@ class HttpIOTestCase(HelperTestCase):
         self.assertEqual([('/TEST', [])], handler.requests)
         return tree
 
+    @needs_http
     def test_http_client(self):
         tree = self._parse_from_http(b'<root><a/></root>')
         self.assertEqual('root', tree.getroot().tag)
         self.assertEqual('a', tree.getroot()[0].tag)
 
+    @needs_http
     def test_http_client_404(self):
         try:
             self._parse_from_http(b'<root/>', code=404)
@@ -36,6 +44,7 @@ class HttpIOTestCase(HelperTestCase):
         else:
             self.assertTrue(False, "expected IOError")
 
+    @needs_http
     def test_http_client_gzip(self):
         f = BytesIO()
         gz = gzip.GzipFile(fileobj=f, mode='w', filename='test.xml')
@@ -49,6 +58,7 @@ class HttpIOTestCase(HelperTestCase):
         self.assertEqual('root', tree.getroot().tag)
         self.assertEqual('a', tree.getroot()[0].tag)
 
+    @needs_http
     def test_parser_input_mix(self):
         data = b'<root><a/></root>'
         handler = HTTPRequestCollector(data)
@@ -72,6 +82,7 @@ class HttpIOTestCase(HelperTestCase):
         root = self.etree.fromstring(data)
         self.assertEqual('a', root[0].tag)
 
+    @needs_http
     def test_network_dtd(self):
         data = [_bytes(textwrap.dedent(s)) for s in [
             # XML file

@@ -1,5 +1,5 @@
 import unittest, sys
-from lxml.tests.common_imports import make_doctest, HelperTestCase
+from ...tests.common_imports import make_doctest, HelperTestCase
 
 try:
     import lxml.html.soupparser
@@ -119,7 +119,7 @@ def test_suite():
     suite = unittest.TestSuite()
     if BS_INSTALLED:
         suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(SoupParserTestCase)])
-        #suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])  # FIXME: Py2-only ?
+        #suite.addTests([make_doctest('elementsoup.txt')])  # FIXME: Py2-only ?
     return suite
 
 

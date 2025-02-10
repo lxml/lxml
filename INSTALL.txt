@@ -69,7 +69,7 @@ build dependencies of the provided lxml package, e.g.
 
 ::
 
-    sudo apt-get build-dep python3-lxml
+    sudo apt-get install build-dep python3-lxml
 
 
 Installation
@@ -133,8 +133,13 @@ both libraries automatically in their latest version, e.g.
 MacOS-X
 .......
 
-On MacOS-X, use the following to build the source distribution,
-and make sure you have a working Internet connection, as this will
+On MacOS-X, we provide binary wheels ("universal2" for Python 3.9+),
+so just use::
+
+  sudo pip3 install lxml
+
+To build the source distribution, use the following and
+make sure you have a working Internet connection, as this will
 download libxml2 and libxslt in order to build them::
 
   STATIC_DEPS=true sudo pip install lxml
