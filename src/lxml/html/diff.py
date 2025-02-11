@@ -5,6 +5,7 @@ import difflib
 from lxml import etree
 from lxml.html import fragment_fromstring
 import re
+from collections import namedtuple
 
 __all__ = ['html_annotate', 'htmldiff']
 
@@ -229,22 +230,39 @@ def expand_tokens(tokens, equal=False):
 def merge_insert(ins_chunks, doc):
     """ doc is the already-handled document (as a list of text chunks);
     here we add <ins>ins_chunks</ins> to the end of that.  """
-    # Though we don't throw away unbalanced_start or unbalanced_end
-    # (we assume there is accompanying markup later or earlier in the
-    # document), we only put <ins> around the balanced portion.
-    unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks)
-    doc.extend(unbalanced_start)
+
+    ins_chunks = list(ins_chunks)
+    unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks, with_idx=True)
+    unbalanced_tags = unbalanced_start + unbalanced_end
+
     if doc and not doc[-1].endswith(' '):
         # Fix up the case where the word before the insert didn't end with 
         # a space
         doc[-1] += ' '
     doc.append('<ins>')
-    if balanced and balanced[-1].endswith(' '):
-        # We move space outside of </ins>
-        balanced[-1] = balanced[-1][:-1]
-    doc.extend(balanced)
-    doc.append('</ins> ')
-    doc.extend(unbalanced_end)
+
+    for idx, chunk in enumerate(ins_chunks):
+        if (idx, chunk) in unbalanced_tags:
+            leading_space = '' if chunk.endswith(' ') else ' '
+            trailing_space = '' if chunk.startswith(' ') else ' '
+            if doc[-1].strip() == '<ins>':
+                doc[-1:] = [chunk, ('%s<ins>' % leading_space)]
+            else:
+                doc.extend([
+                    ('</ins>%s' % trailing_space),
+                    chunk,
+                    ('%s<ins>' % leading_space)
+                ])
+        elif (idx, chunk) in balanced:
+            doc.append(chunk)
+
+
+    if doc[-1].strip() == '<ins>':
+        doc.pop()
+    else:
+        if doc[-1].endswith(' '):
+            doc[-1] = doc[-1][:-1]
+        doc.append('</ins> ')
 
 # These are sentinels to represent the start and end of a <del>
 # segment, until we do the cleanup phase to turn them into proper
@@ -305,7 +323,9 @@ def cleanup_delete(chunks):
         chunks = doc
     return chunks
 
-def split_unbalanced(chunks):
+IndexedChunk = namedtuple('IndexedChunk', ('idx', 'chunk'))
+
+def split_unbalanced(chunks, with_idx=False):
     """Return (unbalanced_start, balanced, unbalanced_end), where each is
     a list of text and tag chunks.
 
@@ -317,31 +337,32 @@ def split_unbalanced(chunks):
     end = []
     tag_stack = []
     balanced = []
-    for chunk in chunks:
+    for idx, chunk in enumerate(chunks):
+        chunk_to_add = IndexedChunk(idx, chunk) if with_idx else chunk
         if not chunk.startswith('<'):
-            balanced.append(chunk)
+            balanced.append(chunk_to_add)
             continue
         endtag = chunk[1] == '/'
         name = chunk.split()[0].strip('<>/')
         if name in empty_tags:
-            balanced.append(chunk)
+            balanced.append(chunk_to_add)
             continue
         if endtag:
             if tag_stack and tag_stack[-1][0] == name:
-                balanced.append(chunk)
+                balanced.append(chunk_to_add)
                 name, pos, tag = tag_stack.pop()
                 balanced[pos] = tag
             elif tag_stack:
                 start.extend([tag for name, pos, tag in tag_stack])
                 tag_stack = []
-                end.append(chunk)
+                end.append(chunk_to_add)
             else:
-                end.append(chunk)
+                end.append(chunk_to_add)
         else:
-            tag_stack.append((name, len(balanced), chunk))
+            tag_stack.append((name, len(balanced), chunk_to_add))
             balanced.append(None)
     start.extend(
-        [chunk for name, pos, chunk in tag_stack])
+        [chunk_to_add for name, pos, chunk_to_add in tag_stack])
     balanced = [chunk for chunk in balanced if chunk is not None]
     return start, balanced, end
 
@@ -597,7 +618,7 @@ def fixup_chunks(chunks):
 
             elif chunk[0] == 'href':
                 href = chunk[1]
-                cur_word = href_token(href, pre_tags=tag_accum, trailing_whitespace=" ")
+                cur_word = href_token(href, pre_tags=tag_accum)
                 tag_accum = []
                 result.append(cur_word)
             continue
