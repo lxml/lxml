@@ -135,6 +135,11 @@ files to the include path like::
 
 where the file is in ``/usr/include/libxml2/libxml/xmlversion.h``
 
+For static builds, if you get an error saying "recompile with -fPIC", do so with
+``env CFLAGS="-fPIC"``, such as::
+
+  env CFLAGS="-fPIC" python3 setup.py build_ext -i --with-cython --static-deps
+
 To use lxml.etree in-place, you can place lxml's ``src`` directory
 on your Python module search path (PYTHONPATH) and then import
 ``lxml.etree`` to play with it::
@@ -145,6 +150,12 @@ on your Python module search path (PYTHONPATH) and then import
   Type "help", "copyright", "credits" or "license" for more information.
   >>> from lxml import etree
   >>>
+
+For non-static builds, you may have to set ``LD_LIBRARY_PATH`` to where the
+shared object files for libxml2 and libxslt are, such as ``/usr/local/lib``. For
+example::
+
+  PYTHONPATH=src LD_LIBRARY_PATH=/usr/local/lib python3
 
 To make sure everything gets recompiled cleanly after changes, you can
 run ``make clean`` or delete the file ``src/lxml/etree.c``.
