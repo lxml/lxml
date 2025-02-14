@@ -282,10 +282,11 @@ def seems_to_have_libxml2():
 
 def print_libxml_error():
     print('*********************************************************************************')
-    print('Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?')
+    print("Could not find function xmlXPathInit in library libxml2. Is libxml2 installed?")
+    print("Is your C compiler installed and configured correctly?")
+    )
     if sys.platform in ('darwin',):
         print('Perhaps try: xcode-select --install')
-    print('Otherwise, is your C compiler installed and configured correctly?')
     print('*********************************************************************************')
 
 
