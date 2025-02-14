@@ -285,6 +285,7 @@ def print_libxml_error():
     print('Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?')
     if sys.platform in ('darwin',):
         print('Perhaps try: xcode-select --install')
+    print('Otherwise, is your C compiler installed and configured correctly?')
     print('*********************************************************************************')
 
 
