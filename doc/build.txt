@@ -135,10 +135,11 @@ files to the include path like::
 
 where the file is in ``/usr/include/libxml2/libxml/xmlversion.h``
 
-For static builds, if you get an error saying "recompile with -fPIC", do so with
-``env CFLAGS="-fPIC"``, such as::
+For static builds, if you get an error saying "recompile with -fPIC",
+do so by adding it to your `CFLAGS` environment variable:
+``env CFLAGS="$CFLAGS -fPIC"``, such as::
 
-  env CFLAGS="-fPIC" python3 setup.py build_ext -i --with-cython --static-deps
+  env CFLAGS="$CFLAGS -fPIC" python3 setup.py build_ext -i --with-cython --static-deps
 
 To use lxml.etree in-place, you can place lxml's ``src`` directory
 on your Python module search path (PYTHONPATH) and then import
