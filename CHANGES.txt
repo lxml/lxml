@@ -8,6 +8,8 @@ Latest development
 Features added
 --------------
 
+* GH#448: Parsing from ``memoryview`` and other buffers is supported to allow zero-copy parsing.
+
 * GH#437: ``lxml.html.builder`` was missing several HTML5 tag names.
   Patch by Nick Tarleton.
 
@@ -17,6 +19,17 @@ Features added
   ``etree.LIBXML_FEATURES``.  This currently includes
   ``catalog``, ``docbook``, ``ftp``, ``html``, ``http``, ``iconv``, ``icu``,
   ``lzma``, ``regexp``, ``schematron``, ``xmlschema``, ``xpath``, ``zlib``.
+
+Bugs fixed
+----------
+
+* User (API, not data) provided tag names longer than ``INT_MAX`` could be
+  mishandled or truncated.
+
+Other changes
+-------------
+
+* Windows binary wheels use the library versions libxml2 2.11.9, libxslt 1.1.39 and libiconv 1.17.
 
 
 5.3.1 (2025-02-09)
