@@ -6,54 +6,8 @@ cdef extern from "lxml-version.h":
     cdef char* LXML_VERSION_STRING
 
 cdef extern from "libxml/xmlversion.h":
-    """
-    static const char* const _lxml_lib_features[] = {
-#ifdef LIBXML_HTML_ENABLED
-        "html",
-#endif
-#ifdef LIBXML_FTP_ENABLED
-        "ftp",
-#endif
-#ifdef LIBXML_HTTP_ENABLED
-        "http",
-#endif
-#ifdef LIBXML_CATALOG_ENABLED
-        "catalog",
-#endif
-#ifdef LIBXML_DOCB_ENABLED
-        "docbook",
-#endif
-#ifdef LIBXML_XPATH_ENABLED
-        "xpath",
-#endif
-#ifdef LIBXML_ICONV_ENABLED
-        "iconv",
-#endif
-#ifdef LIBXML_ICU_ENABLED
-        "icu",
-#endif
-#ifdef LIBXML_REGEXP_ENABLED
-        "regexp",
-#endif
-#ifdef LIBXML_SCHEMAS_ENABLED
-        "xmlschema",
-#endif
-#ifdef LIBXML_SCHEMATRON_ENABLED
-        "schematron",
-#endif
-#ifdef LIBXML_ZLIB_ENABLED
-        "zlib",
-#endif
-#ifdef LIBXML_LZMA_ENABLED
-        "lzma",
-#endif
-        0
-    };
-    """
     const char* xmlParserVersion
     int LIBXML_VERSION
-
-    const char* const* _LXML_LIB_FEATURES "_lxml_lib_features"
 
 
 cdef extern from "libxml/xmlstring.h" nogil:

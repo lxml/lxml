@@ -62,6 +62,12 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_libxml_features(self):
         self.assertIsInstance(etree.LIBXML_FEATURES, set)
         self.assertTrue(etree.LIBXML_FEATURES)
+        self.assertIn("xpath", etree.LIBXML_FEATURES)
+
+    def test_libxml_compiled_features(self):
+        self.assertIsInstance(etree.LIBXML_COMPILED_FEATURES, set)
+        self.assertTrue(etree.LIBXML_COMPILED_FEATURES)
+        self.assertIn("xpath", etree.LIBXML_COMPILED_FEATURES)
 
     def test_c_api(self):
         if hasattr(self.etree, '__pyx_capi__'):
