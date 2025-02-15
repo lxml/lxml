@@ -3098,24 +3098,26 @@ cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name) noexcept:
 class Element(ABC):
     """Element(_tag, attrib=None, nsmap=None, **_extra)
 
-    Element class. An instance of this class is an object implementing the
+    Element factory, as a class.
+    
+    An instance of this class is an object implementing the
     Element interface.
 
-        >>> element = Element("test")
-        >>> type(element)
-        <class 'lxml.etree._Element'>
-        >>> isinstance(element, Element)
-        True
-        >>> issubclass(_Element, Element)
-        True
+    >>> element = Element("test")
+    >>> type(element)
+    <class 'lxml.etree._Element'>
+    >>> isinstance(element, Element)
+    True
+    >>> issubclass(_Element, Element)
+    True
 
     Also look at the `_Element.makeelement()` and
     `_BaseParser.makeelement()` methods, which provide a faster way to
     create an Element within a specific document or parser context.
     """
     def __new__(cls, _tag, attrib=None, nsmap=None, **_extra):
-        return _makeElement(_tag, NULL, None, None, None, None,
-                               attrib, nsmap, _extra)
+          return _makeElement(_tag, NULL, None, None, None, None,
+                              attrib, nsmap, _extra)
 
 # Register _Element as a virtual subclass of Element
 Element.register(_Element)
