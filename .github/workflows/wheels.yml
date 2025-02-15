@@ -76,20 +76,21 @@ jobs:
     # This enables the next step to run cibuildwheel in parallel.
     # From https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
     name: Generate wheels matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@v4
       - name: Install cibuildwheel
         # Nb. keep cibuildwheel version pin consistent with job below
-        run: pipx install cibuildwheel==2.21.3
+        run: pipx install cibuildwheel==2.22.0
       - id: set-matrix
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-22.04"}' \
+              | sed -e '/aarch64/s|ubuntu-22.04|ubuntu-22.04-arm|' \
               && cibuildwheel --print-build-identifiers --platform macos \
               | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               && cibuildwheel --print-build-identifiers --platform windows \
