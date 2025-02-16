@@ -315,9 +315,6 @@ cdef extern from "libxml/xmlversion.h":
 #ifdef LIBXML_CATALOG_ENABLED
         "catalog",
 #endif
-#ifdef LIBXML_DOCB_ENABLED
-        "docbook",
-#endif
 #ifdef LIBXML_XPATH_ENABLED
         "xpath",
 #endif
@@ -370,7 +367,7 @@ LIBXML_FEATURES = {
         (xmlparser.XML_WITH_FTP, "ftp"),  # XML_WITH_FTP = 9
         (xmlparser.XML_WITH_HTTP, "http"),  # XML_WITH_HTTP = 10
         #XML_WITH_VALID = 11
-        #XML_WITH_HTML = 12
+        (xmlparser.XML_WITH_HTML, "html"),  # XML_WITH_HTML = 12
         #XML_WITH_LEGACY = 13
         #XML_WITH_C14N = 14
         (xmlparser.XML_WITH_CATALOG, "catalog"),  # XML_WITH_CATALOG = 15
