@@ -106,8 +106,8 @@ jobs:
             #allowed_failure: true
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.13.5,
-              LIBXSLT_VERSION: 1.1.42,
+              LIBXML2_VERSION: "",
+              LIBXSLT_VERSION: "",
             }
             extra_hash: "-latestlibs"
 
@@ -161,7 +161,7 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.12.9
+      LIBXML2_VERSION: 2.13.5
       LIBXSLT_VERSION: 1.1.42
       COVERAGE: false
       GCC_VERSION: 9
