@@ -22,7 +22,7 @@ import textwrap
 import zlib
 import gzip
 
-from .common_imports import etree, HelperTestCase
+from .common_imports import etree, HelperTestCase, needs_feature
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url, tmpfile
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
@@ -5558,6 +5558,7 @@ class ETreeWriteTestCase(HelperTestCase):
         self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                         data)
 
+    @needs_feature("zlib")
     def test_write_file_gzip_parse(self):
         tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
@@ -5566,6 +5567,7 @@ class ETreeWriteTestCase(HelperTestCase):
         self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           data)
 
+    @needs_feature("zlib")
     def test_write_file_gzipfile_parse(self):
         tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:

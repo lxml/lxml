@@ -739,7 +739,7 @@ cdef class _XSLTResultTree(_ElementTree):
                 raise XSLTSaveError("No document to serialise")
         c_compression = compression or 0
         xslt.LXML_GET_XSLT_ENCODING(c_encoding, self._xslt._c_style)
-        writer = _create_output_buffer(file, <const_char*>c_encoding, compression, &c_buffer, close=False)
+        writer = _create_output_buffer(file, <const_char*>c_encoding, c_compression, &c_buffer, close=False)
         if writer is None:
             with nogil:
                 r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)

@@ -392,6 +392,8 @@ LIBXML_FEATURES = {
     ] if xmlparser.xmlHasFeature(feature_id)
 }
 
+cdef bint HAS_ZLIB_COMPRESSION = xmlparser.xmlHasFeature(xmlparser.XML_WITH_ZLIB)
+
 
 # class for temporary storage of Python references,
 # used e.g. for XPath results

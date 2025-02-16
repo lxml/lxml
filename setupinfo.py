@@ -76,7 +76,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 libxml2_version=OPTION_LIBXML2_VERSION,
                 libxslt_version=OPTION_LIBXSLT_VERSION,
                 zlib_version=OPTION_ZLIB_VERSION,
-                multicore=OPTION_MULTICORE)
+                with_zlib=OPTION_WITH_ZLIB,
+                multicore=OPTION_MULTICORE,
+            )
 
     modules = EXT_MODULES + COMPILED_MODULES
     if OPTION_WITHOUT_OBJECTIFY:
@@ -562,6 +564,7 @@ OPTION_WITH_CYTHON_GDB = has_option('cython-gdb')
 OPTION_WITH_REFNANNY = has_option('with-refnanny')
 OPTION_WITH_COVERAGE = has_option('with-coverage')
 OPTION_WITH_CLINES = has_option('with-clines')
+OPTION_WITH_ZLIB = not has_option('without-zlib')
 if OPTION_WITHOUT_CYTHON:
     CYTHON_INSTALLED = False
 OPTION_STATIC = staticbuild or has_option('static')
