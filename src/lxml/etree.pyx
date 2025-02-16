@@ -3099,7 +3099,7 @@ class Element(ABC):
     """Element(_tag, attrib=None, nsmap=None, **_extra)
 
     Element factory, as a class.
-    
+
     An instance of this class is an object implementing the
     Element interface.
 
@@ -3234,30 +3234,30 @@ def SubElement(_Element _parent not None, _tag,
 
 
 class ElementTree(ABC):
-  def __new__(cls, _Element element=None, *, file=None, _BaseParser parser=None):
-    """ElementTree(element=None, file=None, parser=None)
+    def __new__(cls, _Element element=None, *, file=None, _BaseParser parser=None):
+        """ElementTree(element=None, file=None, parser=None)
 
-    ElementTree wrapper class.
-    """
-    cdef xmlNode* c_next
-    cdef xmlNode* c_node
-    cdef xmlNode* c_node_copy
-    cdef xmlDoc*  c_doc
-    cdef _ElementTree etree
-    cdef _Document doc
+        ElementTree wrapper class.
+        """
+        cdef xmlNode* c_next
+        cdef xmlNode* c_node
+        cdef xmlNode* c_node_copy
+        cdef xmlDoc*  c_doc
+        cdef _ElementTree etree
+        cdef _Document doc
 
-    if element is not None:
-        doc  = element._doc
-    elif file is not None:
-        try:
-            doc = _parseDocument(file, parser, None)
-        except _TargetParserResult as result_container:
-            return result_container.result
-    else:
-        c_doc = _newXMLDoc()
-        doc = _documentFactory(c_doc, parser)
+        if element is not None:
+            doc  = element._doc
+        elif file is not None:
+            try:
+                doc = _parseDocument(file, parser, None)
+            except _TargetParserResult as result_container:
+                return result_container.result
+        else:
+            c_doc = _newXMLDoc()
+            doc = _documentFactory(c_doc, parser)
 
-    return _elementTreeFactory(doc, element)
+        return _elementTreeFactory(doc, element)
 
 # Register _ElementTree as a virtual subclass of ElementTree
 ElementTree.register(_ElementTree)
