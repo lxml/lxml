@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-Latest development
+6.0.0 (2025-??-??)
 ==================
 
 Features added
@@ -15,21 +15,37 @@ Features added
 
 * GH#438: Wheels include the ``arm7l`` target.
 
-* The set of (compile time) supported libxml2 feature names is available as
-  ``etree.LIBXML_FEATURES``.  This currently includes
-  ``catalog``, ``docbook``, ``ftp``, ``html``, ``http``, ``iconv``, ``icu``,
+* The set of compile time / runtime supported libxml2 feature names is available as
+  ``etree.LIBXML_COMPILED_FEATURES`` and ``etree.LIBXML_FEATURES``.
+  This currently includes
+  ``catalog``, ``ftp``, ``html``, ``http``, ``iconv``, ``icu``,
   ``lzma``, ``regexp``, ``schematron``, ``xmlschema``, ``xpath``, ``zlib``.
 
 Bugs fixed
 ----------
 
-* User (API, not data) provided tag names longer than ``INT_MAX`` could be
-  mishandled or truncated.
+* Tag names provided by code (API, not data) that are longer than ``INT_MAX``
+  could be truncated or mishandled in other ways.
 
 Other changes
 -------------
 
+* Parsing directly from zlib or lzma compressed data is now considered an optional
+  feature in lxml.  It may get removed from libxml2 at some point for security reasons
+  (compression bombs) and is therefore no longer guaranteed to be available in lxml.
+
+  As of this release, zlib support is still normally available in the binary wheels
+  but may get disabled or removed in later (x.y.0) releases.  To test the availability,
+  use ``"zlib" in etree.LIBXML_FEATURES``.
+
+* Binary wheels use the library versions libxml2 2.13.5 and libxslt 1.1.42.
+  Note that this disables direct HTTP (and FTP) support for parsing from URLs.
+  Use Python URL request tools instead (which usually also support HTTPS).
+
 * Windows binary wheels use the library versions libxml2 2.11.9, libxslt 1.1.39 and libiconv 1.17.
+
+* The debug methods ``MemDebug.dump()`` and ``MemDebug.show()`` were removed completely.
+  libxml2 2.13.0 discarded this feature.
 
 
 5.3.1 (2025-02-09)
