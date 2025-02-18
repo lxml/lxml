@@ -41,7 +41,6 @@ jobs:
         #
         os: [ubuntu-22.04, macos-latest, windows-2019]
         python-version:
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"  # quotes to avoid being interpreted as the number 3.1
@@ -145,19 +144,14 @@ jobs:
 
           # Legacy jobs
           # ===========
-          - os: ubuntu-22.04
-            python-version: "3.7"
-            env: { STATIC_DEPS: true }
-          - os: ubuntu-22.04
-            python-version: "3.7"
-            env: { STATIC_DEPS: false }
+          #- os: ubuntu-22.04
+          #  python-version: "3.7"
+          #  env: { STATIC_DEPS: true }
+          #- os: ubuntu-22.04
+          #  python-version: "3.7"
+          #  env: { STATIC_DEPS: false }
 
         exclude:
-          - os: ubuntu-latest
-            python-version: "3.7"
-          - os: macos-latest
-            python-version: "3.7"
-
           # Windows sub-jobs
           # ==============
           - os: windows-2019

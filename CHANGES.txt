@@ -30,6 +30,8 @@ Bugs fixed
 Other changes
 -------------
 
+* Support for Python < 3.8 was removed.
+
 * Parsing directly from zlib or lzma compressed data is now considered an optional
   feature in lxml.  It may get removed from libxml2 at some point for security reasons
   (compression bombs) and is therefore no longer guaranteed to be available in lxml.
