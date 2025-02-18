@@ -545,7 +545,7 @@ def option_value(name, deprecated_for=None):
     env_val = os.getenv(env_name)
     if env_val and deprecated_for:
         print_deprecated_option(env_name, deprecated_for.upper().replace('-', '_'))
-    return env_val
+    return env_val or None
 
 
 def print_deprecated_option(name, new_name):
