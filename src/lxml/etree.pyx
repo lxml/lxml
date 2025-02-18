@@ -62,8 +62,6 @@ from libc cimport limits, stdio, stdlib
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 from libc.string cimport const_char
 
-from abc import ABC
-
 cdef object os_path_abspath
 from os.path import abspath as os_path_abspath
 
@@ -3094,6 +3092,7 @@ cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name) noexcept:
 
 # module-level API for ElementTree
 
+from abc import ABC
 
 class Element(ABC):
     """Element(_tag, attrib=None, nsmap=None, **_extra)
@@ -3262,7 +3261,8 @@ class ElementTree(ABC):
 # Register _ElementTree as a virtual subclass of ElementTree
 ElementTree.register(_ElementTree)
 
-
+# Remove "ABC" helper from module dict again
+del ABC
 def HTML(text, _BaseParser parser=None, *, base_url=None):
     """HTML(text, parser=None, base_url=None)
 
