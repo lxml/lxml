@@ -3,7 +3,6 @@ Test cases related to XSLT processing
 """
 
 
-import io
 import copy
 import gzip
 import os.path
@@ -21,7 +20,7 @@ from .common_imports import (
 
 class ETreeXSLTTestCase(HelperTestCase):
     """XSLT tests etree"""
-        
+
     def test_xslt(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -177,7 +176,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                     res[0] = f.read().decode("UTF-16")
             finally:
                 os.unlink(f.name)
-    
+
     def test_xslt_write_output_file_pathlike(self):
         with self._xslt_setup() as res:
             f = NamedTemporaryFile(delete=False)
@@ -436,7 +435,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>Bar</foo><foo>Baz</foo>
 ''',
                           str(res))
-        
+
     def test_xslt_parameter_xpath(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -474,7 +473,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>B</foo>
 ''',
                           str(res))
-        
+
     def test_xslt_default_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -500,7 +499,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>Default</foo>
 ''',
                           str(res))
-        
+
     def test_xslt_html_output(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -543,12 +542,12 @@ class ETreeXSLTTestCase(HelperTestCase):
         result = style(source)
 
         etree.tostring(result.getroot())
-        
+
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
         result = style(source)
-        
+
         etree.tostring(result.getroot())
 
     def test_xslt_repeat_transform(self):
@@ -645,7 +644,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEqual(
             b'<doc><foo>Bar</foo><foo>Baz</foo></doc>',
             etree.tostring(result.getroot()))
-        
+
     def test_multiple_elementrees(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -930,7 +929,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         result = xslt(root[0])
         root[:] = result.getroot()[:]
         del root # segfaulted before
-        
+
     def test_xslt_pi(self):
         tree = self.parse('''\
 <?xml version="1.0"?>

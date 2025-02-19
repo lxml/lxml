@@ -217,7 +217,7 @@ cdef class _SaxParserContext(_ParserContext):
         finally:
             self._parser = None  # clear circular reference ASAP
         if self._matcher is not None:
-            self._matcher.cacheTags(self._doc, True) # force entry in libxml2 dict
+            self._matcher.cacheTags(self._doc, force_into_dict=True)
         return 0
 
     cdef int pushEvent(self, event, xmlNode* c_node) except -1:

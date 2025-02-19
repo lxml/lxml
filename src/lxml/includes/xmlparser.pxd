@@ -32,11 +32,11 @@ cdef extern from "libxml/parser.h" nogil:
 
     ctypedef void (*commentSAXFunc)(void* ctx, const_xmlChar* value) noexcept
 
-    ctypedef void (*processingInstructionSAXFunc)(void* ctx, 
+    ctypedef void (*processingInstructionSAXFunc)(void* ctx,
                                                   const_xmlChar* target,
                                                   const_xmlChar* data) noexcept
 
-    ctypedef void (*internalSubsetSAXFunc)(void* ctx, 
+    ctypedef void (*internalSubsetSAXFunc)(void* ctx,
                                             const_xmlChar* name,
                                             const_xmlChar* externalID,
                                             const_xmlChar* systemID) noexcept
@@ -99,11 +99,48 @@ cdef extern from "libxml/xmlIO.h" nogil:
 
 cdef extern from "libxml/parser.h" nogil:
 
+    ctypedef enum xmlFeature:
+        XML_WITH_THREAD = 1
+        XML_WITH_TREE = 2
+        XML_WITH_OUTPUT = 3
+        XML_WITH_PUSH = 4
+        XML_WITH_READER = 5
+        XML_WITH_PATTERN = 6
+        XML_WITH_WRITER = 7
+        XML_WITH_SAX1 = 8
+        XML_WITH_FTP = 9
+        XML_WITH_HTTP = 10
+        XML_WITH_VALID = 11
+        XML_WITH_HTML = 12
+        XML_WITH_LEGACY = 13
+        XML_WITH_C14N = 14
+        XML_WITH_CATALOG = 15
+        XML_WITH_XPATH = 16
+        XML_WITH_XPTR = 17
+        XML_WITH_XINCLUDE = 18
+        XML_WITH_ICONV = 19
+        XML_WITH_ISO8859X = 20
+        XML_WITH_UNICODE = 21
+        XML_WITH_REGEXP = 22
+        XML_WITH_AUTOMATA = 23
+        XML_WITH_EXPR = 24
+        XML_WITH_SCHEMAS = 25
+        XML_WITH_SCHEMATRON = 26
+        XML_WITH_MODULES = 27
+        XML_WITH_DEBUG = 28
+        XML_WITH_DEBUG_MEM = 29
+        XML_WITH_DEBUG_RUN = 30
+        XML_WITH_ZLIB = 31
+        XML_WITH_ICU = 32
+        XML_WITH_LZMA = 33
+
+    cdef bint xmlHasFeature(xmlFeature feature)
+
     cdef xmlDict* xmlDictCreate()
     cdef xmlDict* xmlDictCreateSub(xmlDict* subdict)
     cdef void xmlDictFree(xmlDict* sub)
     cdef int xmlDictReference(xmlDict* dict)
-    
+
     cdef int XML_COMPLETE_ATTRS  # SAX option for adding DTD default attributes
     cdef int XML_SKIP_IDS        # SAX option for not building an XML ID dict
 
@@ -207,9 +244,9 @@ cdef extern from "libxml/parser.h" nogil:
     cdef xmlDoc* xmlCtxtReadFile(xmlParserCtxt* ctxt,
                                  char* filename, char* encoding,
                                  int options)
-    cdef xmlDoc* xmlCtxtReadIO(xmlParserCtxt* ctxt, 
-                               xmlInputReadCallback ioread, 
-                               xmlInputCloseCallback ioclose, 
+    cdef xmlDoc* xmlCtxtReadIO(xmlParserCtxt* ctxt,
+                               xmlInputReadCallback ioread,
+                               xmlInputCloseCallback ioclose,
                                void* ioctx,
                                char* URL, char* encoding,
                                int options)
@@ -257,9 +294,9 @@ cdef extern from "libxml/parser.h" nogil:
 
 cdef extern from "libxml/parserInternals.h" nogil:
     cdef xmlParserInput* xmlNewInputStream(xmlParserCtxt* ctxt)
-    cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt, 
+    cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt,
                                                  char* buffer)
-    cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt, 
+    cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt,
                                              char* filename)
     cdef void xmlFreeInputStream(xmlParserInput* input)
     cdef int xmlSwitchEncoding(xmlParserCtxt* ctxt, int enc)

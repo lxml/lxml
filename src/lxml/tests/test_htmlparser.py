@@ -243,6 +243,7 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(element[0][1].tag, "script")
         self.assertEqual(element[0][1].text, "too")
 
+    @needs_libxml(2, 10, 0)
     def test_module_HTML_cdata_ignored(self):
         # libxml2 discards CDATA "content" since HTML does not know them.
         import warnings
@@ -440,6 +441,46 @@ class HtmlParserTestCase(HelperTestCase):
             [('start', root), ('start', root[0]), ('start', root[0][0]),
                 ('start', root[1]), ('start', root[1][0])],
             events)
+
+    def test_html_iterparse_cdata(self):
+        import warnings
+
+        iterparse = self.etree.iterparse
+        f = BytesIO(b'<html><body><![CDATA[ foo ]]></body></html>')
+
+        with warnings.catch_warnings(record=True) as warned_novalue:
+            warnings.simplefilter("always")
+            iterator = iterparse(f, html=True, events=('start', ))
+        self.assertFalse(warned_novalue)
+
+        events = list(iterator)
+        root = iterator.root
+        self.assertNotEqual(None, root)
+        self.assertEqual(('start', root), events[0])
+
+        f.seek(0)
+        with warnings.catch_warnings(record=True) as warned_true:
+            warnings.simplefilter("always")
+            iterator = iterparse(
+                f, html=True, events=('start', ), strip_cdata=True)
+        self.assertFalse(warned_true)
+
+        events = list(iterator)
+        root = iterator.root
+        self.assertNotEqual(None, root)
+        self.assertEqual(('start', root), events[0])
+
+        f.seek(0)
+        with warnings.catch_warnings(record=True) as warned_false:
+            warnings.simplefilter("always")
+            iterator = iterparse(
+                f, html=True, events=('start', ), strip_cdata=False)
+        self.assertFalse(warned_false)
+
+        events = list(iterator)
+        root = iterator.root
+        self.assertNotEqual(None, root)
+        self.assertEqual(('start', root), events[0])
 
     def test_html_feed_parser(self):
         parser = self.etree.HTMLParser()

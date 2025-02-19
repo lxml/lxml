@@ -12,10 +12,10 @@ from .common_imports import etree, HelperTestCase, BytesIO, _bytes
 from .dummy_http_server import webserver, HTTPRequestCollector
 
 
-def needs_http(test_method):
+def needs_http(test_method, _skip_when_called=unittest.skip("needs HTTP support in libxml2")):
     if "http" in etree.LIBXML_FEATURES:
         return test_method
-    return unittest.skip("needs HTTP support in libxml2")(test_method)
+    return _skip_when_called(test_method)
 
 
 class HttpIOTestCase(HelperTestCase):

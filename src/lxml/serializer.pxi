@@ -519,6 +519,7 @@ cdef class _FilelikeWriter:
     cdef object _close_filelike
     cdef _ExceptionContext _exc_context
     cdef _ErrorLog error_log
+
     def __cinit__(self, filelike, exc_context=None, compression=None, close=False):
         if compression is not None and compression > 0:
             filelike = GzipFile(
@@ -659,6 +660,12 @@ cdef _FilelikeWriter _create_output_buffer(
             f"unknown encoding: '{c_enc.decode('UTF-8') if c_enc is not NULL else u''}'")
     try:
         f = _getFSPathOrObject(f)
+
+        if c_compression and not HAS_ZLIB_COMPRESSION and _isString(f):
+            # Let "_FilelikeWriter" fall back to Python's GzipFile.
+            f = open(f, mode="wb")
+            close = True
+
         if _isString(f):
             filename8 = _encodeFilename(f)
             if b'%' in filename8 and (
@@ -695,7 +702,10 @@ cdef xmlChar **_convert_ns_prefixes(tree.xmlDict* c_dict, ns_prefixes) except NU
     try:
         for prefix in ns_prefixes:
              prefix_utf = _utf8(prefix)
-             c_prefix = tree.xmlDictExists(c_dict, _xcstr(prefix_utf), len(prefix_utf))
+             c_prefix_len = len(prefix_utf)
+             if c_prefix_len > limits.INT_MAX:
+                raise ValueError("Prefix too long")
+             c_prefix = tree.xmlDictExists(c_dict, _xcstr(prefix_utf), <int> c_prefix_len)
              if c_prefix:
                  # unknown prefixes do not need to get serialised
                  c_ns_prefixes[i] = <xmlChar*>c_prefix
@@ -725,6 +735,13 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
             if inclusive_ns_prefixes else NULL)
 
         f = _getFSPathOrObject(f)
+
+        close = False
+        if compression and not HAS_ZLIB_COMPRESSION and _isString(f):
+            # Let "_FilelikeWriter" fall back to Python's GzipFile.
+            f = open(f, mode="wb")
+            close = True
+
         if _isString(f):
             filename8 = _encodeFilename(f)
             c_filename = _cstr(filename8)
@@ -733,7 +750,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                     c_doc, NULL, exclusive, c_inclusive_ns_prefixes,
                     with_comments, c_filename, compression)
         elif hasattr(f, 'write'):
-            writer   = _FilelikeWriter(f, compression=compression)
+            writer   = _FilelikeWriter(f, compression=compression, close=close)
             c_buffer = writer._createOutputBuffer(NULL)
             try:
                 with writer.error_log:

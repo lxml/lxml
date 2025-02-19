@@ -45,7 +45,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
     - name: Set up Python
-      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
       with:
         python-version: "3.x"
 
@@ -60,13 +60,13 @@ jobs:
       env: { STATIC_DEPS: false; CFLAGS="-Og" }  # it's run-once, so build more quickly
 
     - name: Upload sdist
-      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
       with:
         name: sdist
         path: dist/*.tar.gz
 
     - name: Upload website
-      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
       with:
         name: website
         path: doc/html
@@ -76,20 +76,21 @@ jobs:
     # This enables the next step to run cibuildwheel in parallel.
     # From https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
     name: Generate wheels matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@v4
       - name: Install cibuildwheel
         # Nb. keep cibuildwheel version pin consistent with job below
-        run: pipx install cibuildwheel==2.21.3
+        run: pipx install cibuildwheel==2.22.0
       - id: set-matrix
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-22.04"}' \
+              | sed -e '/aarch64/s|ubuntu-22.04|ubuntu-22.04-arm|' \
               && cibuildwheel --print-build-identifiers --platform macos \
               | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               && cibuildwheel --print-build-identifiers --platform windows \
@@ -110,7 +111,7 @@ jobs:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
 
     env:
-      LIBXML2_VERSION: 2.12.9
+      LIBXML2_VERSION: 2.13.5
       LIBXSLT_VERSION: 1.1.42
 
     steps:
@@ -118,7 +119,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cache [libs]
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: |
             libs/*.xz
@@ -133,13 +134,13 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.3
+        uses: pypa/cibuildwheel@v2.22.0
         with:
           only: ${{ matrix.only }}
 
       - name: Build old Linux wheels
         if: contains(matrix.only, '-manylinux_') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
-        uses: pypa/cibuildwheel@v2.21.3
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_MANYLINUX_i686_IMAGE: manylinux1
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
@@ -149,7 +150,7 @@ jobs:
       - name: Build faster Linux wheels
         # also build wheels with the most recent manylinux images and gcc
         if: runner.os == 'Linux' && !contains(matrix.only, 'i686')
-        uses: pypa/cibuildwheel@v2.21.3
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
@@ -164,7 +165,8 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
-      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      - name: Upload wheels
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           path: ./wheelhouse/*.whl
           name: lxml-wheel-${{ matrix.only }}
@@ -187,7 +189,8 @@ jobs:
       - name: List downloaded artifacts
         run: ls -la ./release_upload
 
-      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      - name: Upload wheels
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           path: ./release_upload/*.whl
           name: all_wheels

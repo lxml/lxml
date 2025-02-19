@@ -8,10 +8,14 @@ import random
 import unittest
 
 from .common_imports import (
-    etree, HelperTestCase, fileInTestDir, doctest, make_doctest, _bytes, _str, BytesIO
+    etree, HelperTestCase, fileInTestDir, doctest, make_doctest, IS_PYPY, _str, BytesIO
 )
 
 from lxml import objectify
+
+def no_pypy(cls):
+    return None if IS_PYPY else cls
+
 
 PYTYPE_NAMESPACE = "http://codespeak.net/lxml/objectify/pytype"
 XML_SCHEMA_NS = "http://www.w3.org/2001/XMLSchema"
@@ -64,11 +68,12 @@ xml_str = '''\
   </obj:c1>
 </obj:root>'''
 
+@no_pypy
 class ObjectifyTestCase(HelperTestCase):
     """Test cases for lxml.objectify
     """
     etree = etree
-    
+
     def XML(self, xml):
         return self.etree.XML(xml, self.parser)
 
@@ -116,7 +121,7 @@ class ObjectifyTestCase(HelperTestCase):
                  "myxsd": XML_SCHEMA_NS}
         elt = objectify.Element("test", nsmap=nsmap)
         self.assertEqual(elt.nsmap, nsmap)
-        
+
     def test_element_nsmap_custom(self):
         nsmap = {"my": "someNS",
                  "myother": "someOtherNS",
@@ -125,8 +130,8 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertTrue(PYTYPE_NAMESPACE in elt.nsmap.values())
         for prefix, ns in nsmap.items():
             self.assertTrue(prefix in elt.nsmap)
-            self.assertEqual(nsmap[prefix], elt.nsmap[prefix]) 
-        
+            self.assertEqual(nsmap[prefix], elt.nsmap[prefix])
+
     def test_sub_element_nsmap_default(self):
         root = objectify.Element("root")
         root.sub = objectify.Element("test")
@@ -145,7 +150,7 @@ class ObjectifyTestCase(HelperTestCase):
                  "myxsd": XML_SCHEMA_NS}
         root.sub = objectify.Element("test", nsmap=nsmap)
         self.assertEqual(root.sub.nsmap, DEFAULT_NSMAP)
-        
+
     def test_sub_element_nsmap_custom(self):
         root = objectify.Element("root")
         nsmap = {"my": "someNS",
@@ -155,8 +160,8 @@ class ObjectifyTestCase(HelperTestCase):
         expected = nsmap.copy()
         del expected["myxsd"]
         expected.update(DEFAULT_NSMAP)
-        self.assertEqual(root.sub.nsmap, expected) 
-        
+        self.assertEqual(root.sub.nsmap, expected)
+
     def test_data_element_nsmap_default(self):
         value = objectify.DataElement("test this")
         self.assertEqual(value.nsmap, DEFAULT_NSMAP)
@@ -172,7 +177,7 @@ class ObjectifyTestCase(HelperTestCase):
                  "myxsd": XML_SCHEMA_NS}
         value = objectify.DataElement("test this", nsmap=nsmap)
         self.assertEqual(value.nsmap, nsmap)
-        
+
     def test_data_element_nsmap_custom(self):
         nsmap = {"my": "someNS",
                  "myother": "someOtherNS",
@@ -181,8 +186,8 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertTrue(PYTYPE_NAMESPACE in value.nsmap.values())
         for prefix, ns in nsmap.items():
             self.assertTrue(prefix in value.nsmap)
-            self.assertEqual(nsmap[prefix], value.nsmap[prefix]) 
-        
+            self.assertEqual(nsmap[prefix], value.nsmap[prefix])
+
     def test_sub_data_element_nsmap_default(self):
         root = objectify.Element("root")
         root.value = objectify.DataElement("test this")
@@ -201,7 +206,7 @@ class ObjectifyTestCase(HelperTestCase):
                  "myxsd": XML_SCHEMA_NS}
         root.value = objectify.DataElement("test this", nsmap=nsmap)
         self.assertEqual(root.value.nsmap, DEFAULT_NSMAP)
-        
+
     def test_sub_data_element_nsmap_custom(self):
         root = objectify.Element("root")
         nsmap = {"my": "someNS",
@@ -233,7 +238,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual(value.get("cat"), "meeow")
         self.assertEqual(value.get("dog"), "grrr")
         self.assertEqual(value.get("bird"), "tchilp")
-        
+
     def test_data_element_data_element_arg(self):
         # Check that DataElement preserves all attributes ObjectifiedDataElement
         # arguments
@@ -315,7 +320,7 @@ class ObjectifyTestCase(HelperTestCase):
     def test_data_element_invalid_xsi(self):
         self.assertRaises(ValueError, objectify.DataElement, 3.1415,
                           _xsi="xsd:int")
-        
+
     def test_data_element_data_element_arg_invalid_pytype(self):
         arg = objectify.DataElement(3.1415)
         self.assertRaises(ValueError, objectify.DataElement, arg,
@@ -332,7 +337,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertTrue(isinstance(value, objectify.ObjectifiedElement))
         for attr in arg.attrib:
             self.assertEqual(value.get(attr), arg.get(attr))
-        
+
     def test_root(self):
         root = self.Element("test")
         self.assertTrue(isinstance(root, objectify.ObjectifiedElement))
@@ -383,23 +388,23 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_setattr(self):
         for val in [
-            2, 2**32, 1.2, "Won't get fooled again", 
+            2, 2**32, 1.2, "Won't get fooled again",
             _str("W\xf6n't get f\xf6\xf6led \xe4g\xe4in", 'ISO-8859-1'), True,
-            False, None]: 
+            False, None]:
             root = self.Element('root')
             attrname = 'val'
             setattr(root, attrname, val)
             result = getattr(root, attrname)
             self.assertEqual(val, result)
             self.assertEqual(type(val), type(result.pyval))
- 
+
     def test_setattr_nonunicode(self):
         root = self.Element('root')
         attrname = 'val'
         val = bytes("W\xf6n't get f\xf6\xf6led \xe4g\xe4in", 'ISO-8859-1')
         self.assertRaises(ValueError, setattr, root, attrname, val)
-        self.assertRaises(AttributeError, getattr, root, attrname) 
- 
+        self.assertRaises(AttributeError, getattr, root, attrname)
+
     def test_addattr(self):
         root = self.XML(xml_str)
         self.assertEqual(1, len(root.c1))
@@ -924,7 +929,7 @@ class ObjectifyTestCase(HelperTestCase):
         s = "toast"
         self.assertEqual("test" + s, root.s + s)
         self.assertEqual(s + "test", s + root.s)
-            
+
     def test_type_str_mod(self):
         s = "%d %f %s %r"
         el = objectify.DataElement(s)
@@ -955,7 +960,7 @@ class ObjectifyTestCase(HelperTestCase):
         v = "1"
         el = objectify.DataElement(v)
         self.assertEqual(int(el), 1)
-            
+
     def test_type_str_as_float(self):
         v = "1"
         el = objectify.DataElement(v)
@@ -965,7 +970,7 @@ class ObjectifyTestCase(HelperTestCase):
         v = "1"
         el = objectify.DataElement(v)
         self.assertEqual(complex(el), 1)
-            
+
     def test_type_str_mod_data_elements(self):
         s = "%d %f %s %r"
         el = objectify.DataElement(s)
@@ -1098,7 +1103,7 @@ class ObjectifyTestCase(HelperTestCase):
         # test precision preservation for FloatElement instantiation
         s = "2.305064300557"
         self.assertEqual(objectify.FloatElement(s), float(s))
-  
+
     def test_type_float_precision_consistency(self):
         # test consistent FloatElement values for the different instantiation
         # possibilities
@@ -1137,7 +1142,7 @@ class ObjectifyTestCase(HelperTestCase):
             self.assertTrue(isinstance(value, objclass),
                          "DataElement(%s, _xsi='%s') returns %s, expected %s"
                          % (pyval, xsi, type(value), objclass))
-        
+
     def test_data_element_xsitypes_xsdprefixed(self):
         for xsi, objclass in xsitype2objclass.items():
             # 1 is a valid value for all ObjectifiedDataElement classes
@@ -1146,7 +1151,7 @@ class ObjectifyTestCase(HelperTestCase):
             self.assertTrue(isinstance(value, objclass),
                          "DataElement(%s, _xsi='%s') returns %s, expected %s"
                          % (pyval, xsi, type(value), objclass))
-        
+
     def test_data_element_xsitypes_prefixed(self):
         for xsi, objclass in xsitype2objclass.items():
             # 1 is a valid value for all ObjectifiedDataElement classes
@@ -1172,7 +1177,7 @@ class ObjectifyTestCase(HelperTestCase):
                      % (pyval, pytype, type(value), objclass))
         self.assertEqual(value.text, None)
         self.assertEqual(value.pyval, None)
-            
+
     def test_data_element_pytype_none_compat(self):
         # pre-2.0 lxml called NoneElement "none"
         pyval = 1
@@ -1214,7 +1219,7 @@ class ObjectifyTestCase(HelperTestCase):
 
           <f xsi:type="float">5</f>
           <f xsi:type="double">5</f>
-        
+
           <s xsi:type="string">5</s>
           <s xsi:type="normalizedString">5</s>
           <s xsi:type="token">5</s>
@@ -1234,7 +1239,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l xsi:type="unsignedLong">5</l>
           <l xsi:type="unsignedInt">5</l>
           <l xsi:type="positiveInteger">5</l>
-          
+
           <i xsi:type="int">5</i>
           <i xsi:type="short">5</i>
           <i xsi:type="byte">5</i>
@@ -1255,7 +1260,7 @@ class ObjectifyTestCase(HelperTestCase):
         for f in root.f:
             self.assertTrue(isinstance(f, objectify.FloatElement))
             self.assertEqual(5, f)
-            
+
         for s in root.s:
             self.assertTrue(isinstance(s, objectify.StringElement))
             self.assertEqual("5", s)
@@ -1267,7 +1272,7 @@ class ObjectifyTestCase(HelperTestCase):
         for l in root.l:
             self.assertTrue(isinstance(l, objectify.IntElement))
             self.assertEqual(5, i)
-            
+
         self.assertTrue(isinstance(root.n, objectify.NoneElement))
         self.assertEqual(None, root.n)
 
@@ -1283,7 +1288,7 @@ class ObjectifyTestCase(HelperTestCase):
 
           <f xsi:type="xsd:float">5</f>
           <f xsi:type="xsd:double">5</f>
-        
+
           <s xsi:type="xsd:string">5</s>
           <s xsi:type="xsd:normalizedString">5</s>
           <s xsi:type="xsd:token">5</s>
@@ -1303,7 +1308,7 @@ class ObjectifyTestCase(HelperTestCase):
           <l xsi:type="xsd:unsignedLong">5</l>
           <l xsi:type="xsd:unsignedInt">5</l>
           <l xsi:type="xsd:positiveInteger">5</l>
-          
+
           <i xsi:type="xsd:int">5</i>
           <i xsi:type="xsd:short">5</i>
           <i xsi:type="xsd:byte">5</i>
@@ -1324,7 +1329,7 @@ class ObjectifyTestCase(HelperTestCase):
         for f in root.f:
             self.assertTrue(isinstance(f, objectify.FloatElement))
             self.assertEqual(5, f)
-            
+
         for s in root.s:
             self.assertTrue(isinstance(s, objectify.StringElement))
             self.assertEqual("5", s)
@@ -1336,10 +1341,10 @@ class ObjectifyTestCase(HelperTestCase):
         for l in root.l:
             self.assertTrue(isinstance(l, objectify.IntElement))
             self.assertEqual(5, l)
-            
+
         self.assertTrue(isinstance(root.n, objectify.NoneElement))
         self.assertEqual(None, root.n)
-        
+
     def test_type_str_sequence(self):
         XML = self.XML
         root = XML(b'<root><b>why</b><b>try</b></root>')
@@ -1366,7 +1371,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("", root.b[3])
         self.assertEqual(root.b[3], "")
         self.assertEqual(root.b[2], root.b[3])
-        
+
         root.b = "test"
         self.assertTrue(root.b)
         root.b = ""
@@ -1393,7 +1398,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertTrue(root.b)
         root.b = 0
         self.assertFalse(root.b)
-        
+
     # float + long share the NumberElement implementation with int
 
     def test_type_bool_cmp(self):
@@ -1447,7 +1452,7 @@ class ObjectifyTestCase(HelperTestCase):
             'xsd:string')
 
     def test_dataelement_xsi_nsmap(self):
-        el = objectify.DataElement(1, _xsi="string", 
+        el = objectify.DataElement(1, _xsi="string",
                                    nsmap={'schema': XML_SCHEMA_NS})
         self.assertEqual(
             el.get(XML_SCHEMA_INSTANCE_TYPE_ATTR),
@@ -1496,7 +1501,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("int",   child_types[11])
         self.assertEqual("int",   child_types[12])
         self.assertEqual(None,    child_types[13])
-        
+
         self.assertEqual("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
     def test_pytype_annotation_empty(self):
@@ -1558,7 +1563,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("float", child_types[11])
         self.assertEqual("int",   child_types[12])
         self.assertEqual(TREE_PYTYPE,  child_types[13])
-        
+
         self.assertEqual("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
     def test_pytype_xsitype_annotation(self):
@@ -1584,7 +1589,7 @@ class ObjectifyTestCase(HelperTestCase):
         ''')
         objectify.annotate(root, ignore_old=False, ignore_xsi=False,
                            annotate_xsi=1, annotate_pytype=1)
-        
+
         # check py annotations
         child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
                         for c in root.iterchildren() ]
@@ -1602,7 +1607,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("float",   child_types[11])
         self.assertEqual("int",     child_types[12])
         self.assertEqual(TREE_PYTYPE,  child_types[13])
-        
+
         self.assertEqual("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
         child_xsitypes = [ c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR)
@@ -1707,7 +1712,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("int",   child_types[11])
         self.assertEqual("int",   child_types[12])
         self.assertEqual(None,    child_types[13])
-        
+
         self.assertEqual("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
     def test_pyannotate_empty(self):
@@ -1769,9 +1774,9 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("float", child_types[11])
         self.assertEqual("int",   child_types[12])
         self.assertEqual(TREE_PYTYPE, child_types[13])
-        
+
         self.assertEqual("true", root.n.get(XML_SCHEMA_NIL_ATTR))
-        
+
     def test_xsiannotate_ignore_old(self):
         XML = self.XML
         root = XML('''\
@@ -1891,7 +1896,7 @@ class ObjectifyTestCase(HelperTestCase):
         for c in root.iterchildren():
             self.assertNotEqual(None, c.get(objectify.PYTYPE_ATTRIBUTE))
             # these have no equivalent in xsi:type
-            if (c.get(objectify.PYTYPE_ATTRIBUTE) not in [TREE_PYTYPE, 
+            if (c.get(objectify.PYTYPE_ATTRIBUTE) not in [TREE_PYTYPE,
                 "NoneType"]):
                 self.assertNotEqual(
                     None, c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR))
@@ -1937,7 +1942,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual("int",   child_types[11])
         self.assertEqual("int",   child_types[12])
         self.assertEqual(None,    child_types[13])
-        
+
         self.assertEqual("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
         for c in root.getiterator():
@@ -2605,19 +2610,19 @@ class ObjectifyTestCase(HelperTestCase):
         root = objectify.XML(b"<root/>", base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
- 
+
     def test_XML_set_base_url_docinfo(self):
         root = objectify.XML(b"<root/>", base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
         docinfo.URL = "https://secret/url"
         self.assertEqual(docinfo.URL, "https://secret/url")
- 
+
     def test_parse_stringio_base_url(self):
         tree = objectify.parse(BytesIO(b"<root/>"), base_url="http://no/such/url")
         docinfo = tree.docinfo
         self.assertEqual(docinfo.URL, "http://no/such/url")
- 
+
     def test_parse_base_url_docinfo(self):
         tree = objectify.parse(fileInTestDir('include/test_xinclude.xml'),
                                base_url="http://no/such/url")
@@ -2634,7 +2639,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual(
             root.get('{http://www.w3.org/XML/1998/namespace}base'),
             "https://secret/url")
- 
+
     def test_xml_base_attribute(self):
         root = objectify.XML(b"<root/>", base_url="http://no/such/url")
         self.assertEqual(root.base, "http://no/such/url")
@@ -2741,10 +2746,12 @@ class ObjectifyTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ObjectifyTestCase)])
-    suite.addTests(doctest.DocTestSuite(objectify))
-    suite.addTests([make_doctest('objectify.txt')])
+    if not IS_PYPY:
+        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ObjectifyTestCase)])
+        suite.addTests(doctest.DocTestSuite(objectify))
+        suite.addTests([make_doctest('objectify.txt')])
     return suite
+
 
 if __name__ == '__main__':
     print('to test use test.py %s' % __file__)

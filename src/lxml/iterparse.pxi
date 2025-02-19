@@ -42,7 +42,8 @@ cdef class iterparse:
      - remove_blank_text: discard blank text nodes
      - remove_comments: discard comments
      - remove_pis: discard processing instructions
-     - strip_cdata: replace CDATA sections by normal text content (default: True)
+     - strip_cdata: replace CDATA sections by normal text content (default: 
+       True for XML, ignored otherwise)
      - compact: safe memory for short text content (default: True)
      - resolve_entities: replace entities by their text value (default: True)
      - huge_tree: disable security restrictions and support very deep trees
@@ -97,7 +98,6 @@ cdef class iterparse:
                 remove_blank_text=remove_blank_text,
                 remove_comments=remove_comments,
                 remove_pis=remove_pis,
-                strip_cdata=strip_cdata,
                 no_network=no_network,
                 target=None,  # TODO
                 schema=schema,
