@@ -574,7 +574,7 @@ cdef class _ParserContext(_ResolverContext):
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         """
-        Connects the libxml2-level context to the lxml-level context.
+        Connects the libxml2-level context to the lxml-level parser context.
         """
         self._c_ctxt = c_ctxt
         c_ctxt._private = <void*>self
@@ -591,15 +591,6 @@ cdef class _ParserContext(_ResolverContext):
                 self._c_ctxt.nsNr = 0
 
     cdef int prepare(self, bint set_document_loader=True) except -1:
-        """
-        This method resets the parser context for a new parse. It also connects the
-        error log to the libxml-level ctxt by passing in _receiveParserError in as a
-        callback. Note: the HTML parser always has the libxml2 ctxt->sax not set to
-        null, so this always works. The ctxt->sax is set up in the libxml2 funciton
-        htmlInitParserCtxt in HTMLparser.c, and the lxml error log is always connected.
-        Then libxml2's SAX's serror is set to be the place errors are sent when schannel
-        is set to ctxt->sax->serror in xmlCtxtErrMemory in libxml2's parserInternals.c.
-        """
         cdef int result
         if config.ENABLE_THREADING and self._lock is not NULL:
             with nogil:
@@ -609,6 +600,12 @@ cdef class _ParserContext(_ResolverContext):
                 raise ParserError, "parser locking failed"
         self._error_log.clear()
         self._doc = None
+        # Connect the lxml error log with libxml2's error handling. In the case of parsing
+        # HTML, ctxt->sax is not set to null, so this always works. The libxml2 function
+        # that does this is htmlInitParserCtxt in HTMLparser.c. For HTML (and possibly XML
+        # too), libxml2's SAX's serror is set to be the place where errors are sent when
+        # schannel is set to ctxt->sax->serror in xmlCtxtErrMemory in libxml2's
+        # parserInternals.c.
         # Need a cast here because older libxml2 releases do not use 'const' in the functype.
         self._c_ctxt.sax.serror = <xmlerror.xmlStructuredErrorFunc> _receiveParserError
         self._orig_loader = _register_document_loader() if set_document_loader else NULL
@@ -702,15 +699,8 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
                                 xmlparser.xmlParserCtxt* c_ctxt,
                                 xmlDoc* result, filename,
                                 bint recover, bint free_doc) except NULL:
-    """
-    C-level xmlDoc* result is set to NULL if the parser cannot parse the document.
-    Keep in mind the libxml2-level wellFormed, which starts at 1, is set to 0 if the
-    parser may be able to parse the document, but there are errors that libxml2 has
-    to work through. lxml then uses this, along with some other logic, to determine
-    whether to set lxml-level well_formed to 0 and if that happens, set result to
-    NULL. Then, if result is NULL, raise a parse error. Some modifications to result
-    are made. Then the xmlDoc* result is returned.
-    """
+    # The C-level argument xmlDoc* result is passed in as NULL if the parser was not able
+    # to parse the document.
     cdef bint well_formed
     if result is not NULL:
         __GLOBAL_PARSER_CONTEXT.initDocDict(result)
@@ -722,6 +712,13 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
         c_ctxt.myDoc = NULL
 
     if result is not NULL:
+        # In libxml2 logic that has already run, the libxml2-level wellFormed (camel
+        # case), which starts at 1, is set to 0 if the parser MAY be able to parse the
+        # document despite errors that libxml2 has to work through. So, here in this
+        # if/elif/else block, lxml-level well_formed (snake case) follows the same
+        # pattern; lxml decides whether to set well_formed from 1 to 0, in part based on
+        # that libxml2 wellFormed. However, lxml chooses to customise its version of the
+        # variable using additional criteria in this if/elif/else block.
         if (context._validator is not None and
                 not context._validator.isvalid()):
             well_formed = 0  # actually not 'valid', but anyway ...
@@ -895,13 +892,6 @@ cdef class _BaseParser:
         self._events_to_collect = (event_types, tag)
 
     cdef _ParserContext _getParserContext(self):
-        """
-        This method creates a parser context if there isn't already one. If
-        creating a new parser context, this function configures it, creates a
-        libxml2-level parser context, connects the two, and makes some changes
-        to the libxml2 context. Then, it returns the parser context for the
-        parser.
-        """
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._parser_context is None:
             self._parser_context = self._createContext(self.target, None)
@@ -933,7 +923,7 @@ cdef class _BaseParser:
 
     cdef _ParserContext _createContext(self, target, events_to_collect):
         """
-        This method configures the lxml-level parser.
+        This method creates and configures the lxml-level parser.
         """
         cdef _SaxParserContext sax_context
         if target is not None:
@@ -982,8 +972,7 @@ cdef class _BaseParser:
 
     cdef xmlparser.xmlParserCtxt* _newParserCtxt(self) except NULL:
         """
-        This method calls into libxml to configure the libxml2-level parser context,
-        among other things.
+        Create and initialise a libxml2-level parser context.
         """
         cdef xmlparser.xmlParserCtxt* c_ctxt
         if self._for_html:
