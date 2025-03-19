@@ -69,9 +69,6 @@ cdef class Schematron(_Validator):
     """
     cdef schematron.xmlSchematron* _c_schema
     cdef xmlDoc* _c_schema_doc
-    def __cinit__(self):
-        self._c_schema = NULL
-        self._c_schema_doc = NULL
 
     def __init__(self, etree=None, *, file=None):
         cdef _Document doc
