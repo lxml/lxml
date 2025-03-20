@@ -112,6 +112,8 @@ Or to get the content of an element without the tags, use text_content()::
     ... <div>This is <a href="foo">a <b>bold</b> link</a></div>''')
     >>> el.text_content()
     'This is a bold link'
+    >>> type(el.text_content()) is str  or  type(el.text_content())
+    True
 
 Or drop an element (leaving its content) or the entire tree, like::
 

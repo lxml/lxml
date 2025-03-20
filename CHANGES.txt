@@ -27,6 +27,10 @@ Bugs fixed
 * Tag names provided by code (API, not data) that are longer than ``INT_MAX``
   could be truncated or mishandled in other ways.
 
+* ``.text_content()`` on ``lxml.html`` elements accidentally returned a "smart string"
+  without additional information.  It now returns a plain string.
+  Proposed by Tomi Belan.
+
 Other changes
 -------------
 

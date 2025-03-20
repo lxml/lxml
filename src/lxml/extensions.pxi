@@ -42,12 +42,9 @@ cdef class _BaseContext:
     cdef _ExceptionContext _exc
     cdef _ErrorLog _error_log
 
-    def __cinit__(self):
-        self._xpathCtxt = NULL
-
     def __init__(self, namespaces, extensions, error_log, enable_regexp,
                  build_smart_strings):
-        cdef _ExsltRegExp _regexp 
+        cdef _ExsltRegExp _regexp
         cdef dict new_extensions
         cdef list ns
         self._utf_refs = {}
@@ -213,11 +210,11 @@ cdef class _BaseContext:
                 xpath.xmlXPathRegisterNs(self._xpathCtxt,
                                          _xcstr(prefix_utf), NULL)
             del self._global_namespaces[:]
-    
+
     cdef void _unregisterNamespace(self, prefix_utf) noexcept:
         xpath.xmlXPathRegisterNs(self._xpathCtxt,
                                  _xcstr(prefix_utf), NULL)
-    
+
     # extension functions
 
     cdef int _addLocalExtensionFunction(self, ns_utf, name_utf, function) except -1:
