@@ -160,13 +160,6 @@ class BenchMark(benchbase.TreeBenchMark):
 
     @nochange
     @children
-    def bench_has_children(self, children):
-        for child in children:
-            if child and child and child and child and child:
-                pass
-
-    @nochange
-    @children
     def bench_len(self, children):
         for child in children:
             map(len, repeat(child, 20))

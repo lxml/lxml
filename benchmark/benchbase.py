@@ -1,17 +1,6 @@
 import sys, re, string, copy, gc
-from itertools import *
+import itertools
 import time
-
-try:
-    izip
-except NameError:
-    izip = zip  # Py3
-
-def exec_(code, glob):
-    if sys.version_info[0] >= 3:
-        exec(code, glob)
-    else:
-        exec("exec code in glob")
 
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
@@ -106,7 +95,7 @@ def nochange(function):
 class SkippedTest(Exception):
     pass
 
-class TreeBenchMark(object):
+class TreeBenchMark:
     atoz = string.ascii_lowercase
     repeat100  = range(100)
     repeat500  = range(500)
@@ -198,7 +187,7 @@ class TreeBenchMark(object):
             }
 
         # create function object
-        exec_("\n".join(output), namespace)
+        exec("\n".join(output), namespace)
         return namespace["element_factory"]
 
     def _all_trees(self):
@@ -250,7 +239,7 @@ class TreeBenchMark(object):
         children = [root]
         for i in range(6 + TREE_FACTOR):
             children = [ SubElement(c, "{cdefg}a%05d" % (i%8), attributes)
-                         for i,c in enumerate(chain(children, children, children)) ]
+                         for i,c in enumerate(itertools.chain(children, children, children)) ]
         for child in children:
             child.text = text
             child.tail = text
@@ -373,11 +362,10 @@ def printSetupTimes(benchmark_suites):
     print('')
 
 def runBench(suite, method_name, method_call, tree_set, tn, an,
-             serial, children, no_change):
+             serial, children, no_change, timer=time.perf_counter):
     if method_call is None:
         raise SkippedTest
 
-    current_time = time.time
     call_repeat = range(10)
 
     tree_builders = [ suite.tree_builder(tree, tn, an, serial, children)
@@ -396,9 +384,9 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
         for i in call_repeat:
             if rebuild_trees:
                 args = [ build() for build in tree_builders ]
-            t_one_call = current_time()
+            t_one_call = timer()
             method_call(*args)
-            t_one_call = current_time() - t_one_call
+            t_one_call = timer() - t_one_call
             if t < 0:
                 t = t_one_call
             else:
@@ -413,8 +401,8 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
 
 
 def runBenchmarks(benchmark_suites, benchmarks):
-    for bench_calls in izip(*benchmarks):
-        for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
+    for bench_calls in zip(*benchmarks):
+        for lib, (bench, benchmark_setup) in enumerate(zip(benchmark_suites, bench_calls)):
             bench_name = benchmark_setup[0]
             tree_set_name = build_treeset_name(*benchmark_setup[-6:-1])
             sys.stdout.write("%-3s: %-28s (%-10s) " % (
@@ -487,22 +475,6 @@ def main(benchmark_class):
                 etree.ElementDefaultClassLookup())
 
     if len(sys.argv) > 1:
-        if '-a' in sys.argv or '-c' in sys.argv:
-            # 'all' or 'C-implementations' ?
-            try:
-                sys.argv.remove('-c')
-            except ValueError:
-                pass
-            try:
-                import cElementTree as cET
-                _etrees.append(cET)
-            except ImportError:
-                try:
-                    import xml.etree.cElementTree as cET
-                    _etrees.append(cET)
-                except ImportError:
-                    pass
-
         try:
             # 'all' ?
             sys.argv.remove('-a')
@@ -510,14 +482,10 @@ def main(benchmark_class):
             pass
         else:
             try:
-                from elementtree import ElementTree as ET
+                from xml.etree import ElementTree as ET
                 _etrees.append(ET)
             except ImportError:
-                try:
-                    from xml.etree import ElementTree as ET
-                    _etrees.append(ET)
-                except ImportError:
-                    pass
+                pass
 
     if not _etrees:
         print("No library to test. Exiting.")
@@ -527,8 +495,7 @@ def main(benchmark_class):
 
     print("Preparing test suites and trees ...")
     selected = set( sys.argv[1:] )
-    benchmark_suites, benchmarks = \
-                      buildSuites(benchmark_class, _etrees, selected)
+    benchmark_suites, benchmarks = buildSuites(benchmark_class, _etrees, selected)
 
     print("Running benchmark on", ', '.join(b.lib_name
                                             for b in benchmark_suites))
@@ -537,9 +504,8 @@ def main(benchmark_class):
     printSetupTimes(benchmark_suites)
 
     if callgrind_zero:
-        cmd = open("callgrind.cmd", 'w')
-        cmd.write('+Instrumentation\n')
-        cmd.write('Zero\n')
-        cmd.close()
+        with open("callgrind.cmd", 'w') as cmd:
+            cmd.write('+Instrumentation\n')
+            cmd.write('Zero\n')
 
     runBenchmarks(benchmark_suites, benchmarks)
