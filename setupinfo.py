@@ -76,7 +76,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 libxml2_version=OPTION_LIBXML2_VERSION,
                 libxslt_version=OPTION_LIBXSLT_VERSION,
                 zlib_version=OPTION_ZLIB_VERSION,
-                multicore=OPTION_MULTICORE)
+                with_zlib=OPTION_WITH_ZLIB,
+                multicore=OPTION_MULTICORE,
+            )
 
     modules = EXT_MODULES + COMPILED_MODULES
     if OPTION_WITHOUT_OBJECTIFY:
@@ -282,7 +284,8 @@ def seems_to_have_libxml2():
 
 def print_libxml_error():
     print('*********************************************************************************')
-    print('Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?')
+    print("Could not find function xmlXPathInit in library libxml2. Is libxml2 installed?")
+    print("Is your C compiler installed and configured correctly?")
     if sys.platform in ('darwin',):
         print('Perhaps try: xcode-select --install')
     print('*********************************************************************************')
@@ -542,7 +545,7 @@ def option_value(name, deprecated_for=None):
     env_val = os.getenv(env_name)
     if env_val and deprecated_for:
         print_deprecated_option(env_name, deprecated_for.upper().replace('-', '_'))
-    return env_val
+    return env_val or None
 
 
 def print_deprecated_option(name, new_name):
@@ -561,6 +564,7 @@ OPTION_WITH_CYTHON_GDB = has_option('cython-gdb')
 OPTION_WITH_REFNANNY = has_option('with-refnanny')
 OPTION_WITH_COVERAGE = has_option('with-coverage')
 OPTION_WITH_CLINES = has_option('with-clines')
+OPTION_WITH_ZLIB = not has_option('without-zlib')
 if OPTION_WITHOUT_CYTHON:
     CYTHON_INSTALLED = False
 OPTION_STATIC = staticbuild or has_option('static')

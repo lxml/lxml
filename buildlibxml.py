@@ -447,18 +447,24 @@ def build_libxml2xslt(download_dir, build_dir,
                       libxslt_version=None,
                       libiconv_version=None,
                       zlib_version=None,
-                      multicore=None):
+                      multicore=None,
+                      with_zlib=True):
     safe_mkdir(download_dir)
     safe_mkdir(build_dir)
-    zlib_dir = unpack_tarball(download_zlib(download_dir, zlib_version), build_dir)
+
+    zlib_dir = None
+    if with_zlib:
+        zlib_dir = unpack_tarball(download_zlib(download_dir, zlib_version), build_dir)
+
     libiconv_dir = unpack_tarball(download_libiconv(download_dir, libiconv_version), build_dir)
     libxml2_dir  = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
     libxslt_dir  = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
+
     prefix = os.path.join(os.path.abspath(build_dir), 'libxml2')
     lib_dir = os.path.join(prefix, 'lib')
     safe_mkdir(prefix)
 
-    lib_names = ['libxml2', 'libexslt', 'libxslt', 'iconv', 'libz']
+    lib_names = ['libxml2', 'libexslt', 'libxslt', 'iconv'] + (['libz'] if with_zlib else [])
     existing_libs = {
         lib: os.path.join(lib_dir, filename)
         for lib in lib_names
@@ -489,12 +495,13 @@ def build_libxml2xslt(download_dir, build_dir,
                      ]
 
     # build zlib
-    zlib_configure_cmd = [
-        './configure',
-        '--prefix=%s' % prefix,
-    ]
-    if not has_current_lib("libz", zlib_dir):
-        cmmi(zlib_configure_cmd, zlib_dir, multicore, **call_setup)
+    if with_zlib:
+        zlib_configure_cmd = [
+            './configure',
+            '--prefix=%s' % prefix,
+        ]
+        if not has_current_lib("libz", zlib_dir):
+            cmmi(zlib_configure_cmd, zlib_dir, multicore, **call_setup)
 
     # build libiconv
     if not has_current_lib("iconv", libiconv_dir):
@@ -504,7 +511,7 @@ def build_libxml2xslt(download_dir, build_dir,
     libxml2_configure_cmd = configure_cmd + [
         '--without-python',
         '--with-iconv=%s' % prefix,
-        '--with-zlib=%s' % prefix,
+        ('--with-zlib=%s' % prefix) if with_zlib else '--without-zlib',
     ]
 
     if not libxml2_version:

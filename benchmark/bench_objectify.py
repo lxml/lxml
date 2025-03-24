@@ -17,7 +17,7 @@ class BenchMark(benchbase.TreeBenchMark):
         self.objectify = objectify
         parser = etree.XMLParser(remove_blank_text=True)
         lookup = objectify.ObjectifyElementClassLookup()
-        parser.setElementClassLookup(lookup)
+        parser.set_element_class_lookup(lookup)
         super(BenchMark, self).__init__(etree, parser)
 
     @nochange

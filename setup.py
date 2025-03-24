@@ -7,14 +7,11 @@ import os.path
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
 
-if sys.version_info[:2] < (3, 6):
-    print("This lxml version requires Python 3.6 or later.")
+if sys.version_info[:2] < (3, 8):
+    print("This lxml version requires Python 3.8 or later.")
     sys.exit(1)
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 # make sure Cython finds include files in the project directory and not outside
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -44,73 +41,62 @@ branch_link = """
 After an official release of a new stable series, bug fixes may become
 available at
 https://github.com/lxml/lxml/tree/lxml-%(branch_version)s .
-Running ``easy_install lxml==%(branch_version)sbugfix`` will install
-the unreleased branch state from
-https://github.com/lxml/lxml/tarball/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
-as soon as a maintenance branch has been established.  Note that this
-requires Cython to be installed at an appropriate version for the build.
+Note that a local source build requires Cython to be installed
+in an appropriate version for the build.
 
 """
 
 if versioninfo.is_pre_release():
     branch_link = ""
 
+with open("requirements.txt", "r") as f:
+    deps = [line.strip() for line in f if ':' in line]
 
-extra_options = {}
-if 'setuptools' in sys.modules:
-    extra_options['zip_safe'] = False
-    extra_options['python_requires'] = (
-        # NOTE: keep in sync with Trove classifier list below.
-        '>=3.6')
+extra_options = {
+    'python_requires': '>=3.6',  # NOTE: keep in sync with Trove classifier list below.
 
-    try:
-        import pkg_resources
-    except ImportError:
-        pass
-    else:
-        f = open("requirements.txt", "r")
-        try:
-            deps = [str(req) for req in pkg_resources.parse_requirements(f)]
-        finally:
-            f.close()
-        extra_options['extras_require'] = {
-            'source': deps,
-            'cssselect': 'cssselect>=0.7',
-            'html5': 'html5lib',
-            'htmlsoup': 'BeautifulSoup4',
-            'html_clean': 'lxml_html_clean',
-        }
+    'extras_require': {
+        'source': deps,
+        'cssselect': 'cssselect>=0.7',
+        'html5': 'html5lib',
+        'htmlsoup': 'BeautifulSoup4',
+        'html_clean': 'lxml_html_clean',
+    },
 
-extra_options.update(setupinfo.extra_setup_args())
+    'zip_safe': False,
 
-extra_options['package_data'] = {
-    'lxml': [
-        'etree.h',
-        'etree_api.h',
-        'lxml.etree.h',
-        'lxml.etree_api.h',
-        # Include Cython source files for better traceback output.
-        '*.pyx',
-        '*.pxi',
-    ],
-    'lxml.includes': [
-        '*.pxd', '*.h'
+    'package_data': {
+        'lxml': [
+            'etree.h',
+            'etree_api.h',
+            'lxml.etree.h',
+            'lxml.etree_api.h',
+            # Include Cython source files for better traceback output.
+            '*.pyx',
+            '*.pxi',
         ],
-    'lxml.isoschematron':  [
-        'resources/rng/iso-schematron.rng',
-        'resources/xsl/*.xsl',
-        'resources/xsl/iso-schematron-xslt1/*.xsl',
-        'resources/xsl/iso-schematron-xslt1/readme.txt'
+        'lxml.includes': [
+            '*.pxd',
+            '*.h',
         ],
-    }
+        'lxml.isoschematron': [
+            'resources/rng/iso-schematron.rng',
+            'resources/xsl/*.xsl',
+            'resources/xsl/iso-schematron-xslt1/*.xsl',
+            'resources/xsl/iso-schematron-xslt1/readme.txt',
+        ],
+    },
 
-extra_options['package_dir'] = {
+    'package_dir': {
         '': 'src'
-    }
+    },
 
-extra_options['packages'] = [
+    'packages': [
         'lxml', 'lxml.includes', 'lxml.html', 'lxml.isoschematron'
-    ]
+    ],
+
+    **setupinfo.extra_setup_args(),
+}
 
 
 def setup_extra_options():
@@ -256,13 +242,12 @@ an appropriate version of Cython installed.
         'Programming Language :: Cython',
         # NOTE: keep in sync with 'python_requires' list above.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Programming Language :: C',
         'Operating System :: OS Independent',
         'Topic :: Text Processing :: Markup :: HTML',

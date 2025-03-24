@@ -32,7 +32,7 @@ Try something like
 
 ::
 
-   sudo port install py27-lxml
+   sudo port install py39-lxml
 
 To install a newer version or to install lxml on other systems,
 see below.
@@ -41,6 +41,7 @@ see below.
 Requirements
 ------------
 
+You need Python 3.8+ for lxml 6.0 and later.
 You need Python 3.6+ for lxml 5.0 and later.
 lxml versions before 5.0 support Python 2.7 and 3.6+.
 
