@@ -235,3 +235,34 @@ jobs:
           name: pycoverage_html
           path: coverage*
           if-no-files-found: ignore
+
+  benchmarks:
+    runs-on: ubuntu-latest
+    env:
+      CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
+      STATIC_DEPS: true
+      LIBXML2_VERSION: 2.13.5
+      LIBXSLT_VERSION: 1.1.42
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: |
+            3.12
+            3.14-dev
+
+      - name: Run Benchmarks
+        run: |
+          # Run benchmarks in all Python versions.
+          for PYTHON in  python3.14  python3.12  ; do
+              ${PYTHON} -m pip install setuptools "Cython>=3.1.0a1"
+              # Compare against arbitrary 6.0-pre baseline revision (compatible with Cython 3.1) and current master.
+              ${PYTHON} benchmark/run_benchmarks.py  0eb4f0029497957e58a9f15280b3529bdb18d117  origin/master  HEAD
+          done

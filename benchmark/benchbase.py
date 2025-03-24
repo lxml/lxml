@@ -4,6 +4,7 @@ import time
 
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
+DEFAULT_REPEAT = 17
 
 _TEXT  = "some ASCII text" * TREE_FACTOR
 _UTEXT = u"some klingon: \uF8D2" * TREE_FACTOR
@@ -361,8 +362,9 @@ def printSetupTimes(benchmark_suites):
             print("     T%d: %s" % (i+1, ' '.join("%6.4f" % t for t in tree_times)))
     print('')
 
+
 def runBench(suite, method_name, method_call, tree_set, tn, an,
-             serial, children, no_change, timer=time.perf_counter):
+             serial, children, no_change, timer=time.perf_counter, repeat=DEFAULT_REPEAT):
     if method_call is None:
         raise SkippedTest
 
@@ -377,21 +379,19 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
     method_call(*args) # run once to skip setup overhead
 
     times = []
-    for i in range(3):
+    for _ in range(repeat):
         gc.collect()
         gc.disable()
-        t = -1
-        for i in call_repeat:
+        t_min = 2.0 ** 20  # Larger than any benchmark's run time.
+        for _ in call_repeat:
             if rebuild_trees:
                 args = [ build() for build in tree_builders ]
             t_one_call = timer()
             method_call(*args)
             t_one_call = timer() - t_one_call
-            if t < 0:
-                t = t_one_call
-            else:
-                t = min(t, t_one_call)
-        times.append(1000.0 * t)
+            if t_one_call < t_min:
+                t_min = t_one_call
+        times.append(1000.0 * t_min)
         gc.enable()
         if rebuild_trees:
             args = ()
@@ -400,7 +400,7 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
     return times
 
 
-def runBenchmarks(benchmark_suites, benchmarks):
+def runBenchmarks(benchmark_suites, benchmarks, repeat=DEFAULT_REPEAT):
     for bench_calls in zip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(zip(benchmark_suites, bench_calls)):
             bench_name = benchmark_setup[0]
@@ -410,7 +410,7 @@ def runBenchmarks(benchmark_suites, benchmarks):
             sys.stdout.flush()
 
             try:
-                result = runBench(bench, *benchmark_setup)
+                result = runBench(bench, *benchmark_setup, repeat=repeat)
             except SkippedTest:
                 print("skipped")
             except KeyboardInterrupt:
@@ -421,11 +421,13 @@ def runBenchmarks(benchmark_suites, benchmarks):
                 print("failed: %s: %s" % (exc_type.__name__, exc_value))
                 exc_type = exc_value = None
             else:
-                print("%9.4f msec/pass, best of (%s)" % (
-                      min(result), ' '.join("%9.4f" % t for t in result)))
+                result.sort()
+                t_min, t_median, t_max = result[0], result[len(result) // 2], result[-1]
+                print(f"{min(result):9.4f} msec/pass, best of ({t_min:9.4f}, {t_median:9.4f}, {t_max:9.4f})")
 
         if len(benchmark_suites) > 1:
             print('')  # empty line between different benchmarks
+
 
 ############################################################
 # Main program
@@ -508,4 +510,4 @@ def main(benchmark_class):
             cmd.write('+Instrumentation\n')
             cmd.write('Zero\n')
 
-    runBenchmarks(benchmark_suites, benchmarks)
+    runBenchmarks(benchmark_suites, benchmarks, repeat=DEFAULT_REPEAT)
