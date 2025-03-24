@@ -257,22 +257,17 @@ def report_revision_timings(rev_timings):
             )
 
     for (lib, revision_name), diffs in differences.items():
-        diffs = [diff for diff in diffs if diff[0] >= 1.0]
-        if not diffs:
-            continue
         diffs.sort(reverse=True)
-        cutoff_diff = diffs[0][0] // 3
+        cutoff_diff = max(1.0, diffs[0][0] // 5)
         for i, diff in enumerate(diffs):
             if diff[0] < cutoff_diff:
                 diffs = diffs[:i]
                 break
-        diff_str = '\n'.join(
-            f"    {benchmark_module} / {benchmark_name:<25} ({params:>10})  {diff:+8.2f}"
-            for _, diff, benchmark_module, benchmark_name, params in diffs
-        )
-        logging.info(f"Largest differences for {lib} / {revision_name}:\n{diff_str}")
 
-
+        if diffs:
+            logging.info(f"Largest differences for {lib} / {revision_name}:")
+            for _, diff, benchmark_module, benchmark_name, params in diffs:
+                logging.info(f"    {benchmark_module} / {benchmark_name:<25} ({params:>10})  {diff:+8.2f}")
 
 
 def parse_args(args):
