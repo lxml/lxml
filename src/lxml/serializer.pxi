@@ -1573,6 +1573,15 @@ cdef class _IncrementalFileWriter:
                 else:
                     tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(bstring), NULL)
 
+            elif isinstance(content, CDATA):
+                if self._status != WRITER_IN_ELEMENT:
+                    if self._status > WRITER_IN_ELEMENT:
+                        raise LxmlSyntaxError("not in an element")
+
+                _writeNodeToBuffer(self._c_out, _createTextNode(NULL, content),
+                                   self._c_encoding, NULL, c_method,
+                                   False, False, False, False, False)
+
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("cannot append trailing element to complete XML document")
@@ -1585,7 +1594,7 @@ cdef class _IncrementalFileWriter:
 
             elif content is not None:
                 raise TypeError(
-                    f"got invalid input value of type {type(content)}, expected string or Element")
+                    f"got invalid input value of type {type(content)}, expected string, CDATA or Element")
             self._handle_error(self._c_out.error)
         if not self._buffered:
             tree.xmlOutputBufferFlush(self._c_out)
