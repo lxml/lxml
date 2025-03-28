@@ -170,9 +170,10 @@ class BenchMark(benchbase.TreeBenchMark):
         for child in children:
             SubElement(child, '{test}test')
 
-    def bench_append_elements(self, root):
+    @children
+    def bench_append_elements(self, children):
         Element = self.etree.Element
-        for child in root:
+        for child in children:
             el = Element('{test}test')
             child.append(el)
 

@@ -476,6 +476,50 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
         tree.xmlOutputBufferWrite(buf, cur - base, base)
 
 
+cdef void _write_cdata_section(tree.xmlOutputBuffer* buf, const unsigned char* c_data, const unsigned char* c_end):
+    tree.xmlOutputBufferWrite(buf, 9, "<![CDATA[")
+    while c_end - c_data > limits.INT_MAX:
+        tree.xmlOutputBufferWrite(buf, limits.INT_MAX, c_data)
+        c_data += limits.INT_MAX
+    tree.xmlOutputBufferWrite(buf, c_end - c_data, c_data)
+    tree.xmlOutputBufferWrite(buf, 3, "]]>")
+
+
+cdef _write_cdata_string(tree.xmlOutputBuffer* buf, bytes bstring):
+    cdef const unsigned char* c_data = bstring
+    cdef const unsigned char* c_end = c_data + len(bstring)
+    cdef const unsigned char* c_pos = c_data
+    cdef bint nothing_written = True
+
+    while True:
+        c_pos = <const unsigned char*> cstring_h.memchr(c_pos, b']', c_end - c_pos)
+        if not c_pos:
+            break
+        c_pos += 1
+        next_char = c_pos[0]
+        c_pos += 1
+        if next_char != b']':
+            continue
+        # Found ']]', c_pos points to next character.
+        while c_pos[0] == b']':
+            c_pos += 1
+        if c_pos[0] != b'>':
+            if c_pos == c_end:
+                break
+            # c_pos[0] is neither ']' nor '>', continue with next character.
+            c_pos += 1
+            continue
+
+        # Write section up to ']]' and start next block at trailing '>'.
+        _write_cdata_section(buf, c_data, c_pos)
+        nothing_written = False
+        c_data = c_pos
+        c_pos += 1
+
+    if nothing_written or c_data < c_end:
+        _write_cdata_section(buf, c_data, c_end)
+
+
 ############################################################
 # output to file-like objects
 
@@ -1574,14 +1618,9 @@ cdef class _IncrementalFileWriter:
                     tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(bstring), NULL)
 
             elif isinstance(content, CDATA):
-                if self._status != WRITER_IN_ELEMENT:
-                    if self._status > WRITER_IN_ELEMENT:
-                        raise LxmlSyntaxError("not in an element")
-
-                bstring = (<CDATA>content)._utf8_data
-                tree.xmlOutputBufferWrite(self._c_out, 9, "<![CDATA[")
-                tree.xmlOutputBufferWrite(self._c_out, len(bstring), _cstr(bstring))
-                tree.xmlOutputBufferWrite(self._c_out, 3, "]]>")
+                if self._status > WRITER_IN_ELEMENT:
+                    raise LxmlSyntaxError("not in an element")
+                _write_cdata_string(self._c_out, (<CDATA>content)._utf8_data)
 
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
@@ -1596,7 +1635,9 @@ cdef class _IncrementalFileWriter:
             elif content is not None:
                 raise TypeError(
                     f"got invalid input value of type {type(content)}, expected string, CDATA or Element")
+
             self._handle_error(self._c_out.error)
+
         if not self._buffered:
             tree.xmlOutputBufferFlush(self._c_out)
             self._handle_error(self._c_out.error)

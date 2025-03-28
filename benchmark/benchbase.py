@@ -1,10 +1,12 @@
 import sys, re, string, copy, gc
 import itertools
 import time
+from contextlib import contextmanager
+from functools import partial
 
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
-DEFAULT_REPEAT = 17
+DEFAULT_REPEAT = 9
 
 _TEXT  = "some ASCII text" * TREE_FACTOR
 _UTEXT = u"some klingon: \uF8D2" * TREE_FACTOR
@@ -363,40 +365,78 @@ def printSetupTimes(benchmark_suites):
     print('')
 
 
+def autorange(bench_func, min_runtime=0.2, max_number=None, timer=time.perf_counter):
+    i = 1
+    while True:
+        for j in 1, 2, 5:
+            number = i * j
+            if max_number is not None and number >= max_number:
+                return max_number
+            time_taken = bench_func(number)
+            if time_taken >= min_runtime:
+                return number
+        i *= 10
+
+
+@contextmanager
+def nogc():
+    gc.collect()
+    gc.disable()
+    try:
+        yield
+    finally:
+        gc.enable()
+
+
 def runBench(suite, method_name, method_call, tree_set, tn, an,
              serial, children, no_change, timer=time.perf_counter, repeat=DEFAULT_REPEAT):
     if method_call is None:
         raise SkippedTest
 
-    call_repeat = range(10)
-
+    rebuild_trees = not no_change and not serial
     tree_builders = [ suite.tree_builder(tree, tn, an, serial, children)
                       for tree in tree_set ]
 
-    rebuild_trees = not no_change and not serial
+    def new_trees(count=range(len(tree_builders)), trees=[None] * len(tree_builders)):
+        for i in count:
+            trees[i] = tree_builders[i]()
+        return tuple(trees)
 
-    args = tuple([ build() for build in tree_builders ])
-    method_call(*args) # run once to skip setup overhead
+    if rebuild_trees:
+        def time_benchmark(loops):
+            t_all_calls = 0.0
+            for _ in range(loops):
+                run_benchmark = partial(method_call, *new_trees())
+                t_one_call = timer()
+                run_benchmark()
+                t_one_call = timer() - t_one_call
+                t_all_calls += t_one_call
+            return t_all_calls
+    else:
+        def time_benchmark(loops, run_benchmark=partial(method_call, *new_trees())):
+            _loops = range(loops)
+            t_one_call = timer()
+            for _ in _loops:
+                run_benchmark()
+            t_all_calls = timer() - t_one_call
+            return t_all_calls
+
+    time_benchmark(1)  # run once for tree warm-up
+
+    with nogc():
+        # Adjust "min_runtime" to avoid long tree rebuild times for short benchmarks.
+        inner_loops = autorange(
+            time_benchmark,
+            min_runtime=0.1 if rebuild_trees else 0.2,
+            max_number=200 if rebuild_trees else None,
+        )
 
     times = []
     for _ in range(repeat):
+        with nogc():
+            t_one_call = time_benchmark(inner_loops) / inner_loops
+            times.append(1000.0 * t_one_call)  # msec
         gc.collect()
-        gc.disable()
-        t_min = 2.0 ** 20  # Larger than any benchmark's run time.
-        for _ in call_repeat:
-            if rebuild_trees:
-                args = [ build() for build in tree_builders ]
-            t_one_call = timer()
-            method_call(*args)
-            t_one_call = timer() - t_one_call
-            if t_one_call < t_min:
-                t_min = t_one_call
-        times.append(1000.0 * t_min)
-        gc.enable()
-        if rebuild_trees:
-            args = ()
-    args = ()
-    gc.collect()
     return times
 
 
@@ -423,7 +463,7 @@ def runBenchmarks(benchmark_suites, benchmarks, repeat=DEFAULT_REPEAT):
             else:
                 result.sort()
                 t_min, t_median, t_max = result[0], result[len(result) // 2], result[-1]
-                print(f"{min(result):9.4f} msec/pass, best of ({t_min:9.4f}, {t_median:9.4f}, {t_max:9.4f})")
+                print(f"{t_min:9.4f} msec/pass, best of ({t_min:9.4f}, {t_median:9.4f}, {t_max:9.4f})")
 
         if len(benchmark_suites) > 1:
             print('')  # empty line between different benchmarks
