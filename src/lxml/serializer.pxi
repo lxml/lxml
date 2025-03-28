@@ -1578,9 +1578,10 @@ cdef class _IncrementalFileWriter:
                     if self._status > WRITER_IN_ELEMENT:
                         raise LxmlSyntaxError("not in an element")
 
-                _writeNodeToBuffer(self._c_out, _createTextNode(NULL, content),
-                                   self._c_encoding, NULL, c_method,
-                                   False, False, False, False, False)
+                bstring = (<CDATA>content)._utf8_data
+                tree.xmlOutputBufferWrite(self._c_out, 9, "<![CDATA[")
+                tree.xmlOutputBufferWrite(self._c_out, len(bstring), _cstr(bstring))
+                tree.xmlOutputBufferWrite(self._c_out, 3, "]]>")
 
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
