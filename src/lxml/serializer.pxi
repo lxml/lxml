@@ -476,7 +476,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
         tree.xmlOutputBufferWrite(buf, cur - base, base)
 
 
-cdef void _write_cdata_section(tree.xmlOutputBuffer* buf, const unsigned char* c_data, const unsigned char* c_end):
+cdef void _write_cdata_section(tree.xmlOutputBuffer* buf, const char* c_data, const char* c_end):
     tree.xmlOutputBufferWrite(buf, 9, "<![CDATA[")
     while c_end - c_data > limits.INT_MAX:
         tree.xmlOutputBufferWrite(buf, limits.INT_MAX, c_data)
@@ -486,13 +486,13 @@ cdef void _write_cdata_section(tree.xmlOutputBuffer* buf, const unsigned char* c
 
 
 cdef _write_cdata_string(tree.xmlOutputBuffer* buf, bytes bstring):
-    cdef const unsigned char* c_data = bstring
-    cdef const unsigned char* c_end = c_data + len(bstring)
-    cdef const unsigned char* c_pos = c_data
+    cdef const char* c_data = bstring
+    cdef const char* c_end = c_data + len(bstring)
+    cdef const char* c_pos = c_data
     cdef bint nothing_written = True
 
     while True:
-        c_pos = <const unsigned char*> cstring_h.memchr(c_pos, b']', c_end - c_pos)
+        c_pos = <const char*> cstring_h.memchr(c_pos, b']', c_end - c_pos)
         if not c_pos:
             break
         c_pos += 1
