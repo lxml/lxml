@@ -1634,7 +1634,7 @@ cdef class _IncrementalFileWriter:
 
             elif content is not None:
                 raise TypeError(
-                    f"got invalid input value of type {type(content)}, expected string or Element")
+                    f"got invalid input value of type {type(content)}, expected string, CDATA or Element")
 
             self._handle_error(self._c_out.error)
 

@@ -13,7 +13,7 @@ from io import BytesIO
 
 from unittest import skipIf
 
-from lxml.etree import LxmlSyntaxError
+from lxml.etree import CDATA, LxmlSyntaxError
 
 from .common_imports import etree, HelperTestCase
 
@@ -32,6 +32,12 @@ class _XmlFileTestCaseBase(HelperTestCase):
             with xf.element('test'):
                 xf.write('toast')
         self.assertXml('<test>toast</test>')
+
+    def test_element_write_cdata(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                xf.write(CDATA('toast & jam'))
+        self.assertXml('<test><![CDATA[toast & jam]]></test>')
 
     def test_element_write_empty(self):
         with etree.xmlfile(self._file) as xf:
@@ -62,6 +68,20 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 xf.write('noc')
         self.assertXml('<test>con<toast>tent<taste>inside</taste>'
                        'tnet</toast>noc</test>')
+
+    def test_element_nested_with_cdata(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                xf.write(CDATA('con'))
+                with xf.element('toast'):
+                    xf.write(CDATA('tent'))
+                    with xf.element('taste'):
+                        xf.write(CDATA('inside'))
+                    xf.write(CDATA('tnet'))
+                xf.write(CDATA('noc'))
+        self.assertXml(
+            '<test><![CDATA[con]]><toast><![CDATA[tent]]><taste><![CDATA[inside]]></taste>'
+            '<![CDATA[tnet]]></toast><![CDATA[noc]]></test>')
 
     def test_write_Element(self):
         with etree.xmlfile(self._file) as xf:
@@ -176,6 +196,13 @@ class _XmlFileTestCaseBase(HelperTestCase):
         self.assertXml(
             '<test>Comments: &lt;!-- text --&gt;\nEntities: &amp;amp;</test>')
 
+    def test_cdata_escaping(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                xf.write(CDATA('Ensure ]]> is escaped using separate CDATA nodes'))
+        self.assertXml(
+            '<test><![CDATA[Ensure ]]]]><![CDATA[> is escaped using separate CDATA nodes]]></test>')
+
     def test_encoding(self):
         with etree.xmlfile(self._file, encoding='utf-16') as xf:
             with xf.element('test'):
@@ -252,12 +279,32 @@ class _XmlFileTestCaseBase(HelperTestCase):
         else:
             self.assertTrue(False)
 
+    def test_failure_preceding_cdata(self):
+        try:
+            with etree.xmlfile(self._file) as xf:
+                xf.write(CDATA('toast & jam'))
+        except etree.LxmlSyntaxError:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
     def test_failure_trailing_text(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
                 pass
             try:
                 xf.write('toast')
+            except etree.LxmlSyntaxError:
+                self.assertTrue(True)
+            else:
+                self.assertTrue(False)
+
+    def test_failure_trailing_cdata(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                pass
+            try:
+                xf.write(CDATA('toast & jam'))
             except etree.LxmlSyntaxError:
                 self.assertTrue(True)
             else:
