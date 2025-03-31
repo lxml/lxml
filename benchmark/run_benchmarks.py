@@ -236,7 +236,7 @@ def report_revision_timings(rev_timings):
                 break
         else:
             raise RuntimeError(f"Timing is below nanoseconds: {t:f}")
-        return f"{t / scale :.3f} {unit}"
+        return f"{t / scale :+.3f} {unit}"
 
     timings_by_benchmark = collections.defaultdict(list)
     setup_times = []

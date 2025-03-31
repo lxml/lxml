@@ -91,6 +91,22 @@ def nochange(function):
     function.NO_CHANGE = True
     return function
 
+def anytree(function):
+    "Decorator for benchmarks that do not depend on the concrete tree"
+    function.ANY_TREE = True
+    return function
+
+def widetree(function):
+    "Decorator for benchmarks that use only tree 2"
+    function.TREES = "2"
+    return function
+
+def widesubtree(function):
+    "Decorator for benchmarks that use only tree 1"
+    function.TREES = "1"
+    return function
+
+
 ############################################################
 # benchmark baseclass
 ############################################################
@@ -274,15 +290,27 @@ class TreeBenchMark:
         for name in dir(self):
             if not name.startswith('bench_'):
                 continue
+
             method = getattr(self, name)
+
+            serialized = getattr(method, 'STRING',    False)
+            children   = getattr(method, 'CHILDREN',  False)
+            no_change  = getattr(method, 'NO_CHANGE', False)
+            any_tree   = getattr(method, 'ANY_TREE',  False)
+            tree_sets  = getattr(method, 'TREES',     None)
+
             if hasattr(method, 'LIBS') and self.lib_name not in method.LIBS:
                 method_call = None
             else:
                 method_call = method
-            if method.__doc__:
+
+            if tree_sets:
+                tree_sets = tree_sets.split()
+            elif method.__doc__:
                 tree_sets = method.__doc__.split()
             else:
                 tree_sets = ()
+
             if tree_sets:
                 tree_tuples = [list(map(int, tree_set.split(',')))
                                for tree_set in tree_sets]
@@ -294,11 +322,11 @@ class TreeBenchMark:
                         arg_count = method.__code__.co_argcount - 1
                     except AttributeError:
                         arg_count = 1
-                tree_tuples = self._permutations(all_trees, arg_count)
 
-            serialized = getattr(method, 'STRING',   False)
-            children   = getattr(method, 'CHILDREN', False)
-            no_change  = getattr(method, 'NO_CHANGE', False)
+                if any_tree:
+                    tree_tuples = [all_trees[-arg_count:]]
+                else:
+                    tree_tuples = self._permutations(all_trees, arg_count)
 
             for tree_tuple in tree_tuples:
                 for tn in sorted(getattr(method, 'TEXT', (0,))):
