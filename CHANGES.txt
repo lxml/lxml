@@ -13,6 +13,9 @@ Features added
 * GH#437: ``lxml.html.builder`` was missing several HTML5 tag names.
   Patch by Nick Tarleton.
 
+* GH#458: ``CDATA`` can now be written into the incremental ``xmlfile()`` writer.
+  Original patch by Lane Shaw.
+
 * GH#438: Wheels include the ``arm7l`` target.
 
 * The set of compile time / runtime supported libxml2 feature names is available as
