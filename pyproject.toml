@@ -4,9 +4,15 @@ requires = ["Cython>=3.1.0a1", "setuptools", "wheel"]
 [tool.cibuildwheel]
 build-verbosity = 1
 environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.13.5", LIBXSLT_VERSION = "1.1.42"}
+enable = "pypy"
+       # "cpython-prerelease"
+       # "cpython-freethreading"
 skip = [
     "cp36-*",
+    "pp36-",
     "cp37-*",
+    "pp37-*",
+    "pp38-*",
     "pp*-manylinux_i686",
     "*-musllinux_i686",
     # Py3.8 wheel for macos is not universal: https://bugs.launchpad.net/lxml/+bug/2055404

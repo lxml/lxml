@@ -53,7 +53,6 @@ cdef class _ParserDictionaryContext:
     cdef list _implied_parser_contexts
 
     def __cinit__(self):
-        self._c_dict = NULL
         self._implied_parser_contexts = []
 
     def __dealloc__(self):
@@ -295,9 +294,7 @@ cdef class _FileReaderContext:
         self._filelike = filelike
         self._close_file_after_read = close_file
         self._encoding = encoding
-        if url is None:
-            self._c_url = NULL
-        else:
+        if url is not None:
             url = _encodeFilename(url)
             self._c_url = _cstr(url)
         self._url = url
@@ -419,8 +416,6 @@ cdef class _FileReaderContext:
 cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) noexcept with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
-cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) noexcept nogil:
-    return stdio.fread(c_buffer, 1,  c_size, <stdio.FILE*>ctxt)
 
 ############################################################
 ## support for custom document loaders
@@ -542,11 +537,8 @@ cdef class _ParserContext(_ResolverContext):
     cdef bint _collect_ids
 
     def __cinit__(self):
-        self._c_ctxt = NULL
         self._collect_ids = True
-        if not config.ENABLE_THREADING:
-            self._lock = NULL
-        else:
+        if config.ENABLE_THREADING:
             self._lock = python.PyThread_allocate_lock()
         self._error_log = _ErrorLog()
 
