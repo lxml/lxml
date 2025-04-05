@@ -166,8 +166,8 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.13.5
-      LIBXSLT_VERSION: 1.1.42
+      LIBXML2_VERSION: 2.13.7
+      LIBXSLT_VERSION: 1.1.43
       COVERAGE: false
       GCC_VERSION: 9
       USE_CCACHE: 1
@@ -241,8 +241,8 @@ jobs:
     env:
       CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
       STATIC_DEPS: true
-      LIBXML2_VERSION: 2.13.5
-      LIBXSLT_VERSION: 1.1.42
+      LIBXML2_VERSION: 2.13.7
+      LIBXSLT_VERSION: 1.1.43
 
     steps:
       - name: Checkout repo
