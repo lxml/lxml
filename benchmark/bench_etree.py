@@ -137,7 +137,7 @@ class BenchMark(benchbase.TreeBenchMark):
         for el in root2:
             root1.append(el)
 
-    @widetree
+    @anytree
     def bench_insert_from_document(self, root1, root2):
         pos = len(root1)//2
         for el in root2:
