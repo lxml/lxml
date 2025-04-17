@@ -29,7 +29,7 @@ class XPathBenchMark(benchbase.TreeBenchMark):
     def bench_xpath_element(self, root):
         xpath = self.etree.XPathElementEvaluator(root)
         for child in root:
-            xpath.evaluate("./*[1]")
+            xpath("./*[1]")
 
     @nochange
     @onlylib('lxe')

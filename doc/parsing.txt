@@ -107,7 +107,17 @@ efficient) to pass a filename:
   >>> tree = etree.parse("doc/test.xml")
 
 lxml can parse from a local file, an HTTP URL or an FTP URL.  It also
-auto-detects and reads gzip-compressed XML files (.gz).
+auto-detects and reads gzip-compressed XML files (.gz, zlib).
+
+As of lxml 6.0, however, HTTP, FTP and zlib support have become optional features
+that can be enabled and disabled at compile time in libxml2.
+This was changed because both HTTP and FTP are considered insecure protocols and
+automatic decompression without user interaction allows for compression bombs,
+i.e. very large parser input resulting from highly compressed input data.
+Test for e.g. ``"zlib" in getattr(etree, 'LIBXML_FEATURES', ["zlib"])`` to see
+if a feature is available in a given lxml installation.
+Otherwise, you can resort at runtime to other (usually slower) Python tools for
+passing decompressed input into lxml or reading from the network.
 
 If you want to parse from a string (bytes or text) and still provide a base URL
 for the document (e.g. to support relative paths in an XInclude), you can pass

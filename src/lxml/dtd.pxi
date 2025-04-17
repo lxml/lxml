@@ -293,9 +293,10 @@ cdef class DTD(_Validator):
             else:
                 raise DTDParseError, "file must be a filename, file-like or path-like object"
         elif external_id is not None:
+            external_id_utf = _utf8(external_id)
             with self._error_log:
                 orig_loader = _register_document_loader()
-                self._c_dtd = xmlparser.xmlParseDTD(<const_xmlChar*>external_id, NULL)
+                self._c_dtd = xmlparser.xmlParseDTD(<const_xmlChar*>external_id_utf, NULL)
                 _reset_document_loader(orig_loader)
         else:
             raise DTDParseError, "either filename or external ID required"

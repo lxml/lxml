@@ -22,7 +22,7 @@ import textwrap
 import zlib
 import gzip
 
-from .common_imports import etree, HelperTestCase
+from .common_imports import etree, HelperTestCase, needs_feature
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url, tmpfile
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
@@ -59,9 +59,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertTrue(etree.__version__.startswith(
             str(etree.LXML_VERSION[0])))
 
+    def _print_libxml2_features(self, features_set, when):
+        features = ', '.join(sorted(features_set))
+        print(
+f"""
+    List of libxml2 features {when}: {features}
+""", end='')
+
     def test_libxml_features(self):
         self.assertIsInstance(etree.LIBXML_FEATURES, set)
         self.assertTrue(etree.LIBXML_FEATURES)
+        self.assertIn("xpath", etree.LIBXML_FEATURES)
+        self._print_libxml2_features(etree.LIBXML_FEATURES, "at runtime")
+
+    def test_libxml_compiled_features(self):
+        self.assertIsInstance(etree.LIBXML_COMPILED_FEATURES, set)
+        self.assertTrue(etree.LIBXML_COMPILED_FEATURES)
+        self.assertIn("xpath", etree.LIBXML_COMPILED_FEATURES)
+        self._print_libxml2_features(etree.LIBXML_COMPILED_FEATURES, "in build  ")
 
     def test_c_api(self):
         if hasattr(self.etree, '__pyx_capi__'):
@@ -5543,6 +5558,7 @@ class ETreeWriteTestCase(HelperTestCase):
         self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                         data)
 
+    @needs_feature("zlib")
     def test_write_file_gzip_parse(self):
         tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:
@@ -5551,6 +5567,7 @@ class ETreeWriteTestCase(HelperTestCase):
         self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           data)
 
+    @needs_feature("zlib")
     def test_write_file_gzipfile_parse(self):
         tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
         with tmpfile() as filename:

@@ -1,41 +1,33 @@
 [build-system]
-requires = ["Cython>=3.0.11", "setuptools", "wheel"]
+requires = ["Cython>=3.1.0a1", "setuptools", "wheel"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.12.9", LIBXSLT_VERSION = "1.1.42"}
+environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.13.7", LIBXSLT_VERSION = "1.1.43"}
+enable = "pypy"
+       # "cpython-prerelease"
+       # "cpython-freethreading"
 skip = [
+    "cp36-*",
+    "pp36-",
+    "cp37-*",
+    "pp37-*",
+    "pp38-*",
     "pp*-manylinux_i686",
     "*-musllinux_i686",
     # Py3.8 wheel for macos is not universal: https://bugs.launchpad.net/lxml/+bug/2055404
     "cp38-macosx_universal2",
     # Reduce job load and HTTP hit rate on library servers.
-    "cp36-manylinux_aarch64",
-    "cp37-manylinux_aarch64",
     "cp38-manylinux_aarch64",
-    "cp36-musllinux_aarch64",
-    "cp37-musllinux_aarch64",
     "cp38-musllinux_aarch64",
-    "cp36-manylinux_armv7l",
-    "cp37-manylinux_armv7l",
     "cp38-manylinux_armv7l",
-    "cp36-musllinux_armv7l",
-    "cp37-musllinux_armv7l",
     "cp38-musllinux_armv7l",
-    "cp36-manylinux_ppc64le",
-    "cp37-manylinux_ppc64le",
     "cp38-manylinux_ppc64le",
     "cp39-manylinux_ppc64le",
-    "cp36-musllinux_ppc64le",
-    "cp37-musllinux_ppc64le",
     "cp38-musllinux_ppc64le",
     "cp39-musllinux_ppc64le",
-    "cp36-manylinux_s390x",
-    "cp37-manylinux_s390x",
     "cp38-manylinux_s390x",
     "cp39-manylinux_s390x",
-    "cp36-musllinux_s390x",
-    "cp37-musllinux_s390x",
     "cp38-musllinux_s390x",
     "cp39-musllinux_s390x",
 ]
@@ -52,8 +44,8 @@ NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
 LDFLAGS = "-fPIC -flto"
 STATIC_DEPS = "true"
-LIBXML2_VERSION = "2.12.9"
-LIBXSLT_VERSION = "1.1.42"
+LIBXML2_VERSION = "2.13.7"
+LIBXSLT_VERSION = "1.1.43"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"

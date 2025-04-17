@@ -300,15 +300,99 @@ cdef extern from *:
 ICONV_COMPILED_VERSION = __unpackIntVersion(LIBICONV_HEX_VERSION, base=0x100)[:2]
 
 
+cdef extern from "libxml/xmlversion.h":
+    """
+    static const char* const _lxml_lib_features[] = {
+#ifdef LIBXML_HTML_ENABLED
+        "html",
+#endif
+#ifdef LIBXML_FTP_ENABLED
+        "ftp",
+#endif
+#ifdef LIBXML_HTTP_ENABLED
+        "http",
+#endif
+#ifdef LIBXML_CATALOG_ENABLED
+        "catalog",
+#endif
+#ifdef LIBXML_XPATH_ENABLED
+        "xpath",
+#endif
+#ifdef LIBXML_ICONV_ENABLED
+        "iconv",
+#endif
+#ifdef LIBXML_ICU_ENABLED
+        "icu",
+#endif
+#ifdef LIBXML_REGEXP_ENABLED
+        "regexp",
+#endif
+#ifdef LIBXML_SCHEMAS_ENABLED
+        "xmlschema",
+#endif
+#ifdef LIBXML_SCHEMATRON_ENABLED
+        "schematron",
+#endif
+#ifdef LIBXML_ZLIB_ENABLED
+        "zlib",
+#endif
+#ifdef LIBXML_LZMA_ENABLED
+        "lzma",
+#endif
+        0
+    };
+    """
+    const char* const* _LXML_LIB_FEATURES "_lxml_lib_features"
+
+
 cdef set _copy_lib_features():
     features = set()
-    feature = tree._LXML_LIB_FEATURES
+    feature = _LXML_LIB_FEATURES
     while feature[0]:
         features.add(feature[0].decode('ASCII'))
         feature += 1
     return features
 
-LIBXML_FEATURES = _copy_lib_features()
+LIBXML_COMPILED_FEATURES = _copy_lib_features()
+LIBXML_FEATURES = {
+    feature_name for feature_id, feature_name in [
+        #XML_WITH_THREAD = 1
+        #XML_WITH_TREE = 2
+        #XML_WITH_OUTPUT = 3
+        #XML_WITH_PUSH = 4
+        #XML_WITH_READER = 5
+        #XML_WITH_PATTERN = 6
+        #XML_WITH_WRITER = 7
+        #XML_WITH_SAX1 = 8
+        (xmlparser.XML_WITH_FTP, "ftp"),  # XML_WITH_FTP = 9
+        (xmlparser.XML_WITH_HTTP, "http"),  # XML_WITH_HTTP = 10
+        #XML_WITH_VALID = 11
+        (xmlparser.XML_WITH_HTML, "html"),  # XML_WITH_HTML = 12
+        #XML_WITH_LEGACY = 13
+        #XML_WITH_C14N = 14
+        (xmlparser.XML_WITH_CATALOG, "catalog"),  # XML_WITH_CATALOG = 15
+        (xmlparser.XML_WITH_XPATH, "xpath"),  # XML_WITH_XPATH = 16
+        #XML_WITH_XPTR = 17
+        #XML_WITH_XINCLUDE = 18
+        (xmlparser.XML_WITH_ICONV, "iconv"),  # XML_WITH_ICONV = 19
+        #XML_WITH_ISO8859X = 20
+        #XML_WITH_UNICODE = 21
+        (xmlparser.XML_WITH_REGEXP, "regexp"),  # XML_WITH_REGEXP = 22
+        #XML_WITH_AUTOMATA = 23
+        #XML_WITH_EXPR = 24
+        (xmlparser.XML_WITH_SCHEMAS, "xmlschema"),  # XML_WITH_SCHEMAS = 25
+        (xmlparser.XML_WITH_SCHEMATRON, "schematron"),  # XML_WITH_SCHEMATRON = 26
+        #XML_WITH_MODULES = 27
+        #XML_WITH_DEBUG = 28
+        #XML_WITH_DEBUG_MEM = 29
+        #XML_WITH_DEBUG_RUN = 30  # unused
+        (xmlparser.XML_WITH_ZLIB, "zlib"),  # XML_WITH_ZLIB = 31
+        (xmlparser.XML_WITH_ICU, "icu"),  # XML_WITH_ICU = 32
+        (xmlparser.XML_WITH_LZMA, "lzma"),  # XML_WITH_LZMA = 33
+    ] if xmlparser.xmlHasFeature(feature_id)
+}
+
+cdef bint HAS_ZLIB_COMPRESSION = xmlparser.xmlHasFeature(xmlparser.XML_WITH_ZLIB)
 
 
 # class for temporary storage of Python references,

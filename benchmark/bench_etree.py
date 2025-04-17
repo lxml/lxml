@@ -4,7 +4,8 @@ from itertools import *
 
 import benchbase
 from benchbase import (with_attributes, with_text, onlylib,
-                       serialized, children, nochange)
+                       serialized, children, nochange,
+                       anytree, widetree, widesubtree)
 
 TEXT  = "some ASCII text"
 UTEXT = u"some klingon: \uF8D2"
@@ -14,26 +15,31 @@ UTEXT = u"some klingon: \uF8D2"
 ############################################################
 
 class BenchMark(benchbase.TreeBenchMark):
+    @anytree
     @nochange
     def bench_iter_children(self, root):
         for child in root:
             pass
 
+    @anytree
     @nochange
     def bench_iter_children_reversed(self, root):
         for child in reversed(root):
             pass
 
+    @anytree
     @nochange
     def bench_first_child(self, root):
         for i in self.repeat1000:
             child = root[0]
 
+    @anytree
     @nochange
     def bench_last_child(self, root):
         for i in self.repeat1000:
             child = root[-1]
 
+    @widetree
     @nochange
     def bench_middle_child(self, root):
         pos = len(root) // 2
@@ -125,11 +131,13 @@ class BenchMark(benchbase.TreeBenchMark):
         for event, element in self.etree.iterparse(f):
             element.clear()
 
+    @anytree
     def bench_append_from_document(self, root1, root2):
         # == "1,2 2,3 1,3 3,1 3,2 2,1" # trees 1 and 2, or 2 and 3, or ...
         for el in root2:
             root1.append(el)
 
+    @anytree
     def bench_insert_from_document(self, root1, root2):
         pos = len(root1)//2
         for el in root2:
@@ -143,12 +151,14 @@ class BenchMark(benchbase.TreeBenchMark):
             del root[0]
             root.append(el)
 
+    @widetree
     def bench_reorder(self, root):
         for i in range(1,len(root)//2):
             el = root[0]
             del root[0]
             root[-i:-i] = [ el ]
 
+    @widetree
     def bench_reorder_slice(self, root):
         for i in range(1,len(root)//2):
             els = root[0:1]
@@ -158,31 +168,29 @@ class BenchMark(benchbase.TreeBenchMark):
     def bench_clear(self, root):
         root.clear()
 
-    @nochange
-    @children
-    def bench_has_children(self, children):
-        for child in children:
-            if child and child and child and child and child:
-                pass
-
+    @widetree
     @nochange
     @children
     def bench_len(self, children):
         for child in children:
             map(len, repeat(child, 20))
 
+    @widetree
     @children
     def bench_create_subelements(self, children):
         SubElement = self.etree.SubElement
         for child in children:
             SubElement(child, '{test}test')
 
-    def bench_append_elements(self, root):
+    @widetree
+    @children
+    def bench_append_elements(self, children):
         Element = self.etree.Element
-        for child in root:
+        for child in children:
             el = Element('{test}test')
             child.append(el)
 
+    @widetree
     @nochange
     @children
     def bench_makeelement(self, children):
@@ -190,6 +198,7 @@ class BenchMark(benchbase.TreeBenchMark):
         for child in children:
             child.makeelement('{test}test', empty_attrib)
 
+    @widetree
     @nochange
     @children
     def bench_create_elements(self, children):
@@ -197,6 +206,7 @@ class BenchMark(benchbase.TreeBenchMark):
         for child in children:
             Element('{test}test')
 
+    @widetree
     @children
     def bench_replace_children_element(self, children):
         Element = self.etree.Element
@@ -204,25 +214,30 @@ class BenchMark(benchbase.TreeBenchMark):
             el = Element('{test}test')
             child[:] = [el]
 
+    @widetree
     @children
     def bench_replace_children(self, children):
         els = [ self.etree.Element("newchild") ]
         for child in children:
             child[:] = els
 
+    @widetree
     def bench_remove_children(self, root):
         for child in root:
             root.remove(child)
 
+    @widetree
     def bench_remove_children_reversed(self, root):
         for child in reversed(root):
             root.remove(child)
 
+    @widetree
     @children
     def bench_set_attributes(self, children):
         for child in children:
             child.set('a', 'bla')
 
+    @widetree
     @with_attributes(True)
     @children
     @nochange
@@ -231,6 +246,7 @@ class BenchMark(benchbase.TreeBenchMark):
             child.get('bla1')
             child.get('{attr}test1')
 
+    @widetree
     @children
     def bench_setget_attributes(self, children):
         for child in children:
@@ -238,26 +254,31 @@ class BenchMark(benchbase.TreeBenchMark):
         for child in children:
             child.get('a')
 
+    @widetree
     @nochange
     def bench_root_getchildren(self, root):
         root.getchildren()
 
+    @widetree
     @nochange
     def bench_root_list_children(self, root):
         list(root)
 
+    @widesubtree
     @nochange
     @children
     def bench_getchildren(self, children):
         for child in children:
             child.getchildren()
 
+    @widesubtree
     @nochange
     @children
     def bench_get_children_slice(self, children):
         for child in children:
             child[:]
 
+    @widesubtree
     @nochange
     @children
     def bench_get_children_slice_2x(self, children):
@@ -279,12 +300,14 @@ class BenchMark(benchbase.TreeBenchMark):
     def bench_deepcopy_all(self, root):
         copy.deepcopy(root)
 
+    @widetree
     @nochange
     @children
     def bench_tag(self, children):
         for child in children:
             child.tag
 
+    @widetree
     @nochange
     @children
     def bench_tag_repeat(self, children):
@@ -292,6 +315,7 @@ class BenchMark(benchbase.TreeBenchMark):
             for i in self.repeat100:
                 child.tag
 
+    @widetree
     @nochange
     @with_text(utext=True, text=True, no_text=True)
     @children
@@ -299,6 +323,7 @@ class BenchMark(benchbase.TreeBenchMark):
         for child in children:
             child.text
 
+    @widetree
     @nochange
     @with_text(utext=True, text=True, no_text=True)
     @children
@@ -307,30 +332,35 @@ class BenchMark(benchbase.TreeBenchMark):
             for i in self.repeat500:
                 child.text
 
+    @widetree
     @children
     def bench_set_text(self, children):
         text = TEXT
         for child in children:
             child.text = text
 
+    @widetree
     @children
     def bench_set_utext(self, children):
         text = UTEXT
         for child in children:
             child.text = text
 
+    @widetree
     @nochange
     @onlylib('lxe')
     def bench_index(self, root):
         for child in root:
             root.index(child)
 
+    @widetree
     @nochange
     @onlylib('lxe')
     def bench_index_slice(self, root):
         for child in root[5:100]:
             root.index(child, 5, 100)
 
+    @widetree
     @nochange
     @onlylib('lxe')
     def bench_index_slice_neg(self, root):
