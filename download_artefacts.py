@@ -14,8 +14,6 @@ logger = logging.getLogger()
 
 PARALLEL_DOWNLOADS = 6
 GITHUB_API_URL = "https://api.github.com/repos/lxml/lxml"
-APPVEYOR_PACKAGE_URL = "https://ci.appveyor.com/api/projects/scoder/lxml"
-APPVEYOR_BUILDJOBS_URL = "https://ci.appveyor.com/api/buildjobs"
 
 
 def find_github_files(version, api_url=GITHUB_API_URL):
@@ -24,32 +22,6 @@ def find_github_files(version, api_url=GITHUB_API_URL):
 
     for asset in release.get('assets', ()):
         yield asset['browser_download_url']
-
-
-def find_appveyor_files(version, base_package_url=APPVEYOR_PACKAGE_URL, base_job_url=APPVEYOR_BUILDJOBS_URL):
-    url = f"{base_package_url}/history?recordsNumber=20"
-    with urlopen(url) as p:
-        builds = json.load(p)["builds"]
-
-    tag = f"lxml-{version}"
-    for build in builds:
-        if build['isTag'] and build['tag'] == tag:
-            build_id = build['buildId']
-            break
-    else:
-        logger.warning(f"No appveyor build found for tag '{tag}'")
-        return
-
-    build_url = f"{base_package_url}/builds/{build_id}"
-    with urlopen(build_url) as p:
-        jobs = json.load(p)["build"]["jobs"]
-
-    for job in jobs:
-        artifacts_url = f"{base_job_url}/{job['jobId']}/artifacts/"
-
-        with urlopen(artifacts_url) as p:
-            for artifact in json.load(p):
-                yield urljoin(artifacts_url, artifact['fileName'])
 
 
 def read_url(url, decode=True, accept=None, as_json=False):
@@ -156,7 +128,6 @@ def main(*args):
     start_time = datetime.datetime.now().replace(microsecond=0)
     urls = roundrobin(*map(dedup, [
         find_github_files(version),
-        find_appveyor_files(version),
     ]))
     count = sum(1 for _ in enumerate(download(urls, dest_dir)))
     duration = datetime.datetime.now().replace(microsecond=0) - start_time
