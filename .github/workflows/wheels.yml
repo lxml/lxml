@@ -45,7 +45,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
     - name: Set up Python
-      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: "3.x"
 
@@ -134,13 +134,13 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.1
+        uses: pypa/cibuildwheel@v2.23.2
         with:
           only: ${{ matrix.only }}
 
       - name: Build old Linux wheels
         if: contains(matrix.only, '-manylinux_') && startsWith(matrix.only, 'cp36-') && (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64'))
-        uses: pypa/cibuildwheel@v2.23.1
+        uses: pypa/cibuildwheel@v2.23.2
         env:
           CIBW_MANYLINUX_i686_IMAGE: manylinux1
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
@@ -150,7 +150,7 @@ jobs:
       - name: Build faster Linux wheels
         # also build wheels with the most recent manylinux images and gcc
         if: runner.os == 'Linux' && !contains(matrix.only, 'i686')
-        uses: pypa/cibuildwheel@v2.23.1
+        uses: pypa/cibuildwheel@v2.23.2
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
