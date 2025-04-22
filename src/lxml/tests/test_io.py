@@ -3,6 +3,7 @@ IO test cases that apply to both etree and ElementTree
 """
 
 
+import pathlib
 import unittest
 import tempfile, gzip, os, os.path, gc, shutil
 
@@ -341,12 +342,12 @@ class ETreeIOTestCase(_IOTestCaseBase):
         data = b'<a>' + b'<b/>' * 200 + b'</a>'
         parser = XMLParser(decompress=True)
 
-        with tempfile.NamedTemporaryFile(suffix=".xml.gz", mode='wb') as gzfile:
-            with gzip.GzipFile(fileobj=gzfile, mode='w') as outfile:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            gzfile = pathlib.Path(temp_dir) / "input.xml.gz"
+            with gzip.GzipFile(gzfile, mode='wb') as outfile:
                 outfile.write(data)
-            gzfile.flush()
 
-            root = parse(gzfile.name, parser=parser)
+            root = parse(str(gzfile), parser=parser)
 
         self.assertEqual(tostring(root), data)
 
@@ -357,13 +358,13 @@ class ETreeIOTestCase(_IOTestCaseBase):
 
         data = b'<a>' + b'<b/>' * 200 + b'</a>'
 
-        with tempfile.NamedTemporaryFile(suffix=".xml.gz", mode='wb') as gzfile:
-            with gzip.GzipFile(fileobj=gzfile, mode='w') as outfile:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            gzfile = pathlib.Path(temp_dir) / "input.xml.gz"
+            with gzip.GzipFile(gzfile, mode='wb') as outfile:
                 outfile.write(data)
-            gzfile.flush()
 
             try:
-                root = parse(gzfile.name)
+                root = parse(str(gzfile))
             except self.etree.XMLSyntaxError:
                 pass  # self.assertGreaterEqual(self.etree.LIBXML_VERSION, (2, 15))
             else:
