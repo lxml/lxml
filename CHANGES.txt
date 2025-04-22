@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+5.3.3 (2025-0?-??)
+==================
+
+Bugs fixed
+----------
+
+* Binary wheels use libxml2 2.13.8 and libxslt 1.1.43.
+  (Binary wheels for Windows continue to use a patched libxml2 2.11.9 and libxslt 1.1.39.)
+
+
 5.3.2 (2025-04-05)
 ==================
 
