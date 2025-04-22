@@ -226,13 +226,25 @@ def benchmark_revision(revision, benchmarks, profiler=None, c_macros=None, deps_
 
 
 def report_revision_timings(rev_timings):
+    units = {"nsec": 1e-9, "usec": 1e-6, "msec": 1e-3, "sec": 1.0}
+    scales = [(scale, unit) for unit, scale in reversed(units.items())]  # biggest first
+
+    def format_time(t):
+        pos_t = abs(t)
+        for scale, unit in scales:
+            if pos_t >= scale:
+                break
+        else:
+            raise RuntimeError(f"Timing is below nanoseconds: {t:f}")
+        return f"{t / scale :+.3f} {unit}"
+
     timings_by_benchmark = collections.defaultdict(list)
     setup_times = []
     for revision_name, bm_timings in rev_timings.items():
         for benchmark_module, (output, timings) in bm_timings.items():
             setup_times.append((benchmark_module, revision_name, output))
-            for benchmark_name, params, lib, best_time, result in timings:
-                timings_by_benchmark[(benchmark_module, benchmark_name, params)].append((lib, revision_name, best_time, result))
+            for benchmark_name, params, lib, best_time, result_text in timings:
+                timings_by_benchmark[(benchmark_module, benchmark_name, params)].append((lib, revision_name, best_time, result_text))
 
     setup_times.sort()
     for timings in timings_by_benchmark.values():
@@ -246,28 +258,32 @@ def report_revision_timings(rev_timings):
     for (benchmark_module, benchmark_name, params), timings in timings_by_benchmark.items():
         logging.info(f"### Benchmark {benchmark_module} / {benchmark_name} ({params}):")
         base_line = timings[0][2]
-        for lib, revision_name, bm_time, result in timings:
+        for lib, revision_name, bm_time, result_text in timings:
             diff_str = ""
             if base_line != bm_time:
-                diff = bm_time * 100 / base_line - 100
-                differences[(lib, revision_name)].append((abs(diff), diff, benchmark_module, benchmark_name, params))
-                diff_str = f"  {diff:+8.2f} %"
+                pdiff = bm_time * 100 / base_line - 100
+                differences[(lib, revision_name)].append((abs(pdiff), pdiff, bm_time - base_line, benchmark_module, benchmark_name, params))
+                diff_str = f"  {pdiff:+8.2f} %"
             logging.info(
-                f"    {lib:3} / {revision_name[:25]:25} = {bm_time:8.4f} {result}{diff_str}"
+                f"    {lib:3} / {revision_name[:25]:25} = {bm_time:8.4f} {result_text}{diff_str}"
             )
 
     for (lib, revision_name), diffs in differences.items():
         diffs.sort(reverse=True)
-        cutoff_diff = max(1.0, diffs[0][0] // 5)
-        for i, diff in enumerate(diffs):
-            if diff[0] < cutoff_diff:
-                diffs = diffs[:i]
-                break
+        diffs_by_sign = {True: [], False: []}
+        for diff in diffs:
+            diffs_by_sign[diff[1] < 0].append(diff)
 
-        if diffs:
-            logging.info(f"Largest differences for {lib} / {revision_name}:")
-            for _, diff, benchmark_module, benchmark_name, params in diffs:
-                logging.info(f"    {benchmark_module} / {benchmark_name:<25} ({params:>10})  {diff:+8.2f}")
+        for is_win, diffs in diffs_by_sign.items():
+            if not diffs or diffs[0][0] < 1.0:
+                continue
+
+            logging.info(f"Largest {'gains' if is_win else 'losses'} for {revision_name}:")
+            cutoff = max(1.0, diffs[0][0] // 4)
+            for absdiff, pdiff, tdiff, benchmark_module, benchmark_name, params in diffs:
+                if absdiff < cutoff:
+                    break
+                logging.info(f"    {benchmark_module} / {benchmark_name:<25} ({params:>10})  {pdiff:+8.2f} %  /  {format_time(tdiff / 1000.0):>8}")
 
 
 def parse_args(args):

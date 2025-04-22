@@ -33,7 +33,9 @@ TESTED VERSION: {etree.__version__}
     Python:           {tuple(sys.version_info)!r}
     lxml.etree:       {etree.LXML_VERSION!r}
     libxml used:      {etree.LIBXML_VERSION!r}
+           features:  {' '.join(sorted(etree.LIBXML_FEATURES))}
     libxml compiled:  {etree.LIBXML_COMPILED_VERSION!r}
+           features:  {' '.join(sorted(etree.LIBXML_COMPILED_FEATURES))}
     libxslt used:     {etree.LIBXSLT_VERSION!r}
     libxslt compiled: {etree.LIBXSLT_COMPILED_VERSION!r}
     iconv compiled:   {etree.ICONV_COMPILED_VERSION!r}
@@ -59,24 +61,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertTrue(etree.__version__.startswith(
             str(etree.LXML_VERSION[0])))
 
-    def _print_libxml2_features(self, features_set, when):
-        features = ', '.join(sorted(features_set))
-        print(
-f"""
-    List of libxml2 features {when}: {features}
-""", end='')
-
     def test_libxml_features(self):
         self.assertIsInstance(etree.LIBXML_FEATURES, set)
         self.assertTrue(etree.LIBXML_FEATURES)
         self.assertIn("xpath", etree.LIBXML_FEATURES)
-        self._print_libxml2_features(etree.LIBXML_FEATURES, "at runtime")
 
     def test_libxml_compiled_features(self):
         self.assertIsInstance(etree.LIBXML_COMPILED_FEATURES, set)
         self.assertTrue(etree.LIBXML_COMPILED_FEATURES)
         self.assertIn("xpath", etree.LIBXML_COMPILED_FEATURES)
-        self._print_libxml2_features(etree.LIBXML_COMPILED_FEATURES, "in build  ")
 
     def test_c_api(self):
         if hasattr(self.etree, '__pyx_capi__'):

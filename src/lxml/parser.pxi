@@ -416,8 +416,6 @@ cdef class _FileReaderContext:
 cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) noexcept with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
-cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) noexcept nogil:
-    return stdio.fread(c_buffer, 1,  c_size, <stdio.FILE*>ctxt)
 
 ############################################################
 ## support for custom document loaders
@@ -1540,10 +1538,15 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     xmlparser.XML_PARSE_NONET   |
     xmlparser.XML_PARSE_COMPACT |
     xmlparser.XML_PARSE_BIG_LINES
-    )
+)
 
 cdef class XMLParser(_FeedParser):
-    """XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, schema: XMLSchema =None, huge_tree=False, remove_blank_text=False, resolve_entities=True, remove_comments=False, remove_pis=False, strip_cdata=True, collect_ids=True, target=None, compact=True)
+    """XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, \
+                 load_dtd=False, no_network=True, decompress=False, ns_clean=False, \
+                 recover=False, schema: XMLSchema =None, huge_tree=False, \
+                 remove_blank_text=False, resolve_entities=True, \
+                 remove_comments=False, remove_pis=False, strip_cdata=True, \
+                 collect_ids=True, target=None, compact=True)
 
     The XML parser.
 
@@ -1565,6 +1568,8 @@ cdef class XMLParser(_FeedParser):
     - dtd_validation     - validate against a DTD referenced by the document
     - load_dtd           - use DTD for parsing
     - no_network         - prevent network access for related files (default: True)
+    - decompress         - automatically decompress gzip input
+                           (default: False, changed in lxml 6.0, disabling only affects libxml2 2.15+)
     - ns_clean           - clean up redundant namespace declarations
     - recover            - try hard to parse through broken XML
     - remove_blank_text  - discard blank text nodes that appear ignorable
@@ -1572,9 +1577,10 @@ cdef class XMLParser(_FeedParser):
     - remove_pis         - discard processing instructions
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - save memory for short text content (default: True)
-    - collect_ids        - use a hash table of XML IDs for fast access (default: True, always True with DTD validation)
+    - collect_ids        - use a hash table of XML IDs for fast access
+                           (default: True, always True with DTD validation)
     - huge_tree          - disable security restrictions and support very deep trees
-                           and very long text content (only affects libxml2 2.7+)
+                           and very long text content
 
     Other keyword arguments:
 
@@ -1591,7 +1597,7 @@ cdef class XMLParser(_FeedParser):
     apply to the default parser.
     """
     def __init__(self, *, encoding=None, attribute_defaults=False,
-                 dtd_validation=False, load_dtd=False, no_network=True,
+                 dtd_validation=False, load_dtd=False, no_network=True, decompress=False,
                  ns_clean=False, recover=False, XMLSchema schema=None,
                  huge_tree=False, remove_blank_text=False, resolve_entities='internal',
                  remove_comments=False, remove_pis=False, strip_cdata=True,
@@ -1663,7 +1669,7 @@ cdef class XMLPullParser(XMLParser):
 
 cdef class ETCompatXMLParser(XMLParser):
     """ETCompatXMLParser(self, encoding=None, attribute_defaults=False, \
-                 dtd_validation=False, load_dtd=False, no_network=True, \
+                 dtd_validation=False, load_dtd=False, no_network=True, decompress=False, \
                  ns_clean=False, recover=False, schema=None, \
                  huge_tree=False, remove_blank_text=False, resolve_entities=True, \
                  remove_comments=True, remove_pis=True, strip_cdata=True, \
@@ -1677,7 +1683,7 @@ cdef class ETCompatXMLParser(XMLParser):
     and thus ignores comments and processing instructions.
     """
     def __init__(self, *, encoding=None, attribute_defaults=False,
-                 dtd_validation=False, load_dtd=False, no_network=True,
+                 dtd_validation=False, load_dtd=False, no_network=True, decompress=False,
                  ns_clean=False, recover=False, schema=None,
                  huge_tree=False, remove_blank_text=False, resolve_entities=True,
                  remove_comments=True, remove_pis=True, strip_cdata=True,
@@ -1687,6 +1693,7 @@ cdef class ETCompatXMLParser(XMLParser):
                            dtd_validation=dtd_validation,
                            load_dtd=load_dtd,
                            no_network=no_network,
+                           decompress=decompress,
                            ns_clean=ns_clean,
                            recover=recover,
                            remove_blank_text=remove_blank_text,
@@ -1698,7 +1705,8 @@ cdef class ETCompatXMLParser(XMLParser):
                            strip_cdata=strip_cdata,
                            target=target,
                            encoding=encoding,
-                           schema=schema)
+                           schema=schema,
+                           )
 
 # ET 1.2 compatible name
 XMLTreeBuilder = ETCompatXMLParser
@@ -1745,7 +1753,7 @@ cdef object _UNUSED = object()
 cdef class HTMLParser(_FeedParser):
     """HTMLParser(self, encoding=None, remove_blank_text=False, \
                    remove_comments=False, remove_pis=False, \
-                   no_network=True, target=None, schema: XMLSchema =None, \
+                   no_network=True, decompress=False, target=None, schema: XMLSchema =None, \
                    recover=True, compact=True, collect_ids=True, huge_tree=False)
 
     The HTML parser.
@@ -1759,6 +1767,8 @@ cdef class HTMLParser(_FeedParser):
 
     - recover            - try hard to parse through broken HTML (default: True)
     - no_network         - prevent network access for related files (default: True)
+    - decompress         - automatically decompress gzip input
+                           (default: False, changed in lxml 6.0, disabling only affects libxml2 2.15+)
     - remove_blank_text  - discard empty text nodes that are ignorable (i.e. not actual text content)
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
@@ -1766,7 +1776,7 @@ cdef class HTMLParser(_FeedParser):
     - default_doctype    - add a default doctype even if it is not found in the HTML (default: True)
     - collect_ids        - use a hash table of XML IDs for fast access (default: True)
     - huge_tree          - disable security restrictions and support very deep trees
-                           and very long text content (only affects libxml2 2.7+)
+                           and very long text content
 
     Other keyword arguments:
 
@@ -1779,7 +1789,7 @@ cdef class HTMLParser(_FeedParser):
     """
     def __init__(self, *, encoding=None, remove_blank_text=False,
                  remove_comments=False, remove_pis=False, strip_cdata=_UNUSED,
-                 no_network=True, target=None, XMLSchema schema=None,
+                 no_network=True, decompress=False, target=None, XMLSchema schema=None,
                  recover=True, compact=True, default_doctype=True,
                  collect_ids=True, huge_tree=False):
         cdef int parse_options

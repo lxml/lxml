@@ -13,7 +13,17 @@ Features added
 * GH#437: ``lxml.html.builder`` was missing several HTML5 tag names.
   Patch by Nick Tarleton.
 
+* GH#458: ``CDATA`` can now be written into the incremental ``xmlfile()`` writer.
+  Original patch by Lane Shaw.
+
 * GH#438: Wheels include the ``arm7l`` target.
+
+* A new parser option ``decompress=False`` was added that controls the automatic
+  input decompression when using libxml2 2.15.0 or later.  Disabling this option
+  by default will effectively prevent decompression bombs when handling untrusted
+  input.  Code that depends on automatic decompression must enable this option.
+  Note that libxml2 2.15.0 was not released yet, so this option currently has no
+  effect but can already be used.
 
 * The set of compile time / runtime supported libxml2 feature names is available as
   ``etree.LIBXML_COMPILED_FEATURES`` and ``etree.LIBXML_FEATURES``.
@@ -36,7 +46,7 @@ Other changes
 
 * Support for Python < 3.8 was removed.
 
-* Parsing directly from zlib or lzma compressed data is now considered an optional
+* Parsing directly from zlib (or lzma) compressed data is now considered an optional
   feature in lxml.  It may get removed from libxml2 at some point for security reasons
   (compression bombs) and is therefore no longer guaranteed to be available in lxml.
 
@@ -44,16 +54,41 @@ Other changes
   but may get disabled or removed in later (x.y.0) releases.  To test the availability,
   use ``"zlib" in etree.LIBXML_FEATURES``.
 
-* Binary wheels use the library versions libxml2 2.13.5 and libxslt 1.1.42.
-  Note that this disables direct HTTP (and FTP) support for parsing from URLs.
+* Binary wheels use the library versions libxml2 2.14.2 and libxslt 1.1.43.
+  Note that this disables direct HTTP and FTP support for parsing from URLs.
   Use Python URL request tools instead (which usually also support HTTPS).
+  To test the availability, use ``"http" in etree.LIBXML_FEATURES``.
 
 * Windows binary wheels use the library versions libxml2 2.11.9, libxslt 1.1.39 and libiconv 1.17.
 
-* Built using Cython 3.1.0a1.
+* Built using Cython 3.1.0b1.
 
 * The debug methods ``MemDebug.dump()`` and ``MemDebug.show()`` were removed completely.
   libxml2 2.13.0 discarded this feature.
+
+
+5.4.0 (2025-04-22)
+==================
+
+Bugs fixed
+----------
+
+* Binary wheels use libxml2 2.13.8 and libxslt 1.1.43 to resolve several CVEs.
+  (Binary wheels for Windows continue to use a patched libxml2 2.11.9 and libxslt 1.1.39.)
+
+
+5.3.2 (2025-04-05)
+==================
+
+This release resolves CVE-2025-24928 as described in
+https://gitlab.gnome.org/GNOME/libxml2/-/issues/847
+
+Bugs fixed
+----------
+
+* Binary wheels use libxml2 2.12.10 and libxslt 1.1.42.
+
+* Binary wheels for Windows use a patched libxml2 2.11.9 and libxslt 1.1.39.
 
 
 5.3.1 (2025-02-09)
