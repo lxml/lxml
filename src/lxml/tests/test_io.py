@@ -9,7 +9,8 @@ import tempfile, gzip, os, os.path, gc, shutil
 from .common_imports import (
     etree, ElementTree, _str, _bytes,
     SillyFileLike, LargeFileLike, HelperTestCase,
-    read_file, write_to_file, BytesIO, tmpfile
+    read_file, write_to_file, BytesIO, tmpfile,
+    needs_feature,
 )
 
 
@@ -17,7 +18,7 @@ class _IOTestCaseBase(HelperTestCase):
     """(c)ElementTree compatibility for IO functions/methods
     """
     etree = None
-    
+
     def setUp(self):
         """Setting up a minimal tree
         """
@@ -330,6 +331,45 @@ class _IOTestCaseBase(HelperTestCase):
 
 class ETreeIOTestCase(_IOTestCaseBase):
     etree = etree
+
+    @needs_feature('zlib')
+    def test_parse_gzip_file_decompress(self):
+        XMLParser = self.etree.XMLParser
+        parse = self.etree.parse
+        tostring = self.etree.tostring
+
+        data = b'<a>' + b'<b/>' * 200 + b'</a>'
+        parser = XMLParser(decompress=True)
+
+        with tempfile.NamedTemporaryFile(suffix=".xml.gz", mode='wb') as gzfile:
+            with gzip.GzipFile(fileobj=gzfile, mode='w') as outfile:
+                outfile.write(data)
+            gzfile.flush()
+
+            root = parse(gzfile.name, parser=parser)
+
+        self.assertEqual(tostring(root), data)
+
+    @needs_feature('zlib')
+    def test_parse_gzip_file_default_no_unzip(self):
+        parse = self.etree.parse
+        tostring = self.etree.tostring
+
+        data = b'<a>' + b'<b/>' * 200 + b'</a>'
+
+        with tempfile.NamedTemporaryFile(suffix=".xml.gz", mode='wb') as gzfile:
+            with gzip.GzipFile(fileobj=gzfile, mode='w') as outfile:
+                outfile.write(data)
+            gzfile.flush()
+
+            try:
+                root = parse(gzfile.name)
+            except self.etree.XMLSyntaxError:
+                pass  # self.assertGreaterEqual(self.etree.LIBXML_VERSION, (2, 15))
+            else:
+                pass  # self.assertLess(self.etree.LIBXML_VERSION, (2, 15))
+                output = tostring(root)
+                self.assertEqual(output, data)
 
     def test_write_compressed_text(self):
         Element = self.etree.Element
