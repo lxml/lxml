@@ -503,6 +503,8 @@ def build_libxml2xslt(download_dir, build_dir,
     # build libxml2
     libxml2_configure_cmd = configure_cmd + [
         '--without-python',
+        '--with-http',
+        '--with-ftp',
         '--with-iconv=%s' % prefix,
         '--with-zlib=%s' % prefix,
     ]
