@@ -712,13 +712,9 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
         c_ctxt.myDoc = NULL
 
     if result is not NULL:
-        # In libxml2 logic that has already run, the libxml2-level wellFormed (camel
-        # case), which starts at 1, is set to 0 if the parser MAY be able to parse the
-        # document despite errors that libxml2 has to work through. So, here in this
-        # if/elif/else block, lxml-level well_formed (snake case) follows the same
-        # pattern; lxml decides whether to set well_formed from 1 to 0, in part based on
-        # that libxml2 wellFormed. However, lxml chooses to customise its version of the
-        # variable using additional criteria in this if/elif/else block.
+        # "wellFormed" in libxml2 is 0 if the parser found fatal errors. It still returns a
+        # parse result document if 'recover=True'. Here, we determine if we can present
+        # the document to the user or consider it incorrect or broken enough to raise an error.
         if (context._validator is not None and
                 not context._validator.isvalid()):
             well_formed = 0  # actually not 'valid', but anyway ...
