@@ -3,7 +3,7 @@ requires = ["Cython>=3.1.0a1", "setuptools", "wheel"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.13.7", LIBXSLT_VERSION = "1.1.43"}
+environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.13.8", LIBXSLT_VERSION = "1.1.43"}
 enable = "pypy"
        # "cpython-prerelease"
        # "cpython-freethreading"
@@ -44,7 +44,7 @@ NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
 LDFLAGS = "-fPIC -flto"
 STATIC_DEPS = "true"
-LIBXML2_VERSION = "2.13.7"
+LIBXML2_VERSION = "2.13.8"
 LIBXSLT_VERSION = "1.1.43"
 
 [[tool.cibuildwheel.overrides]]

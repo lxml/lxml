@@ -54,7 +54,7 @@ Other changes
   but may get disabled or removed in later (x.y.0) releases.  To test the availability,
   use ``"zlib" in etree.LIBXML_FEATURES``.
 
-* Binary wheels use the library versions libxml2 2.13.7 and libxslt 1.1.43.
+* Binary wheels use the library versions libxml2 2.13.8 and libxslt 1.1.43.
   Note that this disables direct HTTP (and FTP) support for parsing from URLs.
   Use Python URL request tools instead (which usually also support HTTPS).
   To test the availability, use ``"http" in etree.LIBXML_FEATURES``.
@@ -65,6 +65,16 @@ Other changes
 
 * The debug methods ``MemDebug.dump()`` and ``MemDebug.show()`` were removed completely.
   libxml2 2.13.0 discarded this feature.
+
+
+5.4.0 (2025-04-22)
+==================
+
+Bugs fixed
+----------
+
+* Binary wheels use libxml2 2.13.8 and libxslt 1.1.43 to resolve several CVEs.
+  (Binary wheels for Windows continue to use a patched libxml2 2.11.9 and libxslt 1.1.39.)
 
 
 5.3.2 (2025-04-05)
