@@ -73,8 +73,9 @@ Other changes
 Bugs fixed
 ----------
 
-* Binary wheels use libxml2 2.13.8 and libxslt 1.1.43 to resolve several CVEs.
+* LP#2107279: Binary wheels use libxml2 2.13.8 and libxslt 1.1.43 to resolve several CVEs.
   (Binary wheels for Windows continue to use a patched libxml2 2.11.9 and libxslt 1.1.39.)
+  Issue found by Anatoly Katyushin.
 
 
 5.3.2 (2025-04-05)
