@@ -3176,18 +3176,34 @@ cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name) noexcept:
 
 # module-level API for ElementTree
 
-def Element(_tag, attrib=None, nsmap=None, **_extra):
+from abc import ABC
+
+class Element(ABC):
     """Element(_tag, attrib=None, nsmap=None, **_extra)
 
-    Element factory.  This function returns an object implementing the
+    Element factory, as a class.
+
+    An instance of this class is an object implementing the
     Element interface.
+
+    >>> element = Element("test")
+    >>> type(element)
+    <class 'lxml.etree._Element'>
+    >>> isinstance(element, Element)
+    True
+    >>> issubclass(_Element, Element)
+    True
 
     Also look at the `_Element.makeelement()` and
     `_BaseParser.makeelement()` methods, which provide a faster way to
     create an Element within a specific document or parser context.
     """
-    return _makeElement(_tag, NULL, None, None, None, None,
-                        attrib, nsmap, _extra)
+    def __new__(cls, _tag, attrib=None, nsmap=None, **_extra):
+          return _makeElement(_tag, NULL, None, None, None, None,
+                              attrib, nsmap, _extra)
+
+# Register _Element as a virtual subclass of Element
+Element.register(_Element)
 
 
 def Comment(text=None):
@@ -3300,32 +3316,37 @@ def SubElement(_Element _parent not None, _tag,
     return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
 
 
-def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
-    """ElementTree(element=None, file=None, parser=None)
+class ElementTree(ABC):
+    def __new__(cls, _Element element=None, *, file=None, _BaseParser parser=None):
+        """ElementTree(element=None, file=None, parser=None)
 
-    ElementTree wrapper class.
-    """
-    cdef xmlNode* c_next
-    cdef xmlNode* c_node
-    cdef xmlNode* c_node_copy
-    cdef xmlDoc*  c_doc
-    cdef _ElementTree etree
-    cdef _Document doc
+        ElementTree wrapper class.
+        """
+        cdef xmlNode* c_next
+        cdef xmlNode* c_node
+        cdef xmlNode* c_node_copy
+        cdef xmlDoc*  c_doc
+        cdef _ElementTree etree
+        cdef _Document doc
 
-    if element is not None:
-        doc  = element._doc
-    elif file is not None:
-        try:
-            doc = _parseDocument(file, parser, None)
-        except _TargetParserResult as result_container:
-            return result_container.result
-    else:
-        c_doc = _newXMLDoc()
-        doc = _documentFactory(c_doc, parser)
+        if element is not None:
+            doc  = element._doc
+        elif file is not None:
+            try:
+                doc = _parseDocument(file, parser, None)
+            except _TargetParserResult as result_container:
+                return result_container.result
+        else:
+            c_doc = _newXMLDoc()
+            doc = _documentFactory(c_doc, parser)
 
-    return _elementTreeFactory(doc, element)
+        return _elementTreeFactory(doc, element)
 
+# Register _ElementTree as a virtual subclass of ElementTree
+ElementTree.register(_ElementTree)
 
+# Remove "ABC" helper from module dict again
+del ABC
 def HTML(text, _BaseParser parser=None, *, base_url=None):
     """HTML(text, parser=None, base_url=None)
 
