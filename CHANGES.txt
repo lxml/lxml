@@ -8,6 +8,8 @@ lxml changelog
 Features added
 --------------
 
+* GH#405: The factories ``Element`` and ``ElementTree`` can now be used in type hints.
+
 * GH#448: Parsing from ``memoryview`` and other buffers is supported to allow zero-copy parsing.
 
 * GH#437: ``lxml.html.builder`` was missing several HTML5 tag names.
