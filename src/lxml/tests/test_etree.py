@@ -1830,6 +1830,30 @@ class ETreeOnlyTestCase(HelperTestCase):
         else:
             self.assertFalse("entity error not found in parser error log")
 
+    def test_entity_parse_xxe(self):
+        fromstring = self.etree.fromstring
+        tostring = self.etree.tostring
+        xml = textwrap.dedent("""\
+        <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE msg [
+                <!ENTITY % a '
+                    <!ENTITY &#x25; file SYSTEM "{FILE}">
+                    <!ENTITY &#x25; b "<!ENTITY c &#x27;&#x25;file;&#x27;>">
+                '>
+                %a;
+                %b;
+        ]>
+        <msg>&c;</msg>
+        """).format(FILE=fileUrlInTestDir("test-string.xml")).encode('UTF-8')
+
+        try:
+            root = fromstring(xml)
+        except self.etree.XMLSyntaxError:
+            # This is the normal outcome - we should never access the external file.
+            pass
+        else:
+            self.assertNotIn("Søk på nettet", tostring(root, encoding="unicode"))
+
     def test_entity_restructure(self):
         xml = b'''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
             <root>
