@@ -38,11 +38,11 @@ print("Building lxml version %s." % lxml_version)
 OPTION_RUN_TESTS = setupinfo.has_option('run-tests')
 
 branch_link = """
-After an official release of a new stable series, bug fixes may become
-available at
+After an official release of a new stable series, bug fixes may become available at
 https://github.com/lxml/lxml/tree/lxml-%(branch_version)s .
-Note that a local source build requires Cython to be installed
-in an appropriate version for the build.
+Running ``pip install https://github.com/lxml/lxml/archive/refs/heads/lxml-%(branch_version)s.tar.gz``
+will install the unreleased branch state as soon as a maintenance branch has been established.
+Note that this requires Cython to be installed at an appropriate version for the build.
 
 """
 
@@ -226,11 +226,7 @@ https://launchpad.net/lxml
 In case you want to use the current in-development version of lxml,
 you can get it from the github repository at
 https://github.com/lxml/lxml .  Note that this requires Cython to
-build the sources, see the build instructions on the project home
-page.  To the same end, running ``easy_install lxml==dev`` will
-install lxml from
-https://github.com/lxml/lxml/tarball/master#egg=lxml-dev if you have
-an appropriate version of Cython installed.
+build the sources, see the build instructions on the project home page.
 
 """ + branch_link) % {"branch_version": versioninfo.branch_version()}) +
                       versioninfo.changes()),
