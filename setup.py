@@ -53,7 +53,7 @@ with open("requirements.txt", "r") as f:
     deps = [line.strip() for line in f if ':' in line]
 
 extra_options = {
-    'python_requires': '>=3.6',  # NOTE: keep in sync with Trove classifier list below.
+    'python_requires': '>=3.8',  # NOTE: keep in sync with Trove classifier list below.
 
     'extras_require': {
         'source': deps,
