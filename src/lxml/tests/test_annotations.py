@@ -45,7 +45,8 @@ class TypingTestCase(HelperTestCase):
         # Test that all generic types can be subscripted.
         # Based on PEP 560.
         func = container_function_with_subscripted_types()
-        inspect.get_annotations(func, eval_str=True)
+        if sys.version_info >= (3, 10):
+            inspect.get_annotations(func, eval_str=True)
 
         # Subscripting etree.Element should fail with the error:
         # TypeError: 'type' _ElementTree is not subscriptable
