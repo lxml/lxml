@@ -2,6 +2,10 @@
 Test typing annotations.
 """
 
+from __future__ import annotations
+
+import inspect
+import sys
 import unittest
 
 from .common_imports import etree
@@ -21,12 +25,16 @@ def container_function_with_subscripted_types():
     ):
         pass
 
+    return function_with_subscripted_types
+
 
 def container_function_with_subscripted_private_element_tree():
     def function_with_subscripted_private_element_tree(
         _element_tree: etree._ElementTree[etree.Element],
     ):
         pass
+
+    return function_with_subscripted_private_element_tree
 
 
 class TypingTestCase(HelperTestCase):
@@ -36,13 +44,16 @@ class TypingTestCase(HelperTestCase):
     def test_subscripted_generic(self):
         # Test that all generic types can be subscripted.
         # Based on PEP 560.
-        container_function_with_subscripted_types()
+        func = container_function_with_subscripted_types()
+        inspect.get_annotations(func, eval_str=True)
 
         # Subscripting etree.Element should fail with the error:
-        # TypeError: 'type' Element is not subscriptable
+        # TypeError: 'type' _ElementTree is not subscriptable
         # Make sure that the test works and it is indeed failing.
-        with self.assertRaises(TypeError):
-            container_function_with_subscripted_private_element_tree()
+        if sys.version_info >= (3, 10):
+            with self.assertRaises(TypeError):
+                func = container_function_with_subscripted_private_element_tree()
+                inspect.get_annotations(func, eval_str=True)
 
 
 def test_suite():
