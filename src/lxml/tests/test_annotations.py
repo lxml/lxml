@@ -2,9 +2,8 @@
 Test typing annotations.
 """
 
-from __future__ import annotations
-
 import inspect
+import typing
 import sys
 import unittest
 
@@ -46,15 +45,37 @@ class TypingTestCase(HelperTestCase):
         # Based on PEP 560.
         func = container_function_with_subscripted_types()
         if sys.version_info >= (3, 10):
-            inspect.get_annotations(func, eval_str=True)
+            # inspect.get_annotations was added in python 3.10.
+            ann = inspect.get_annotations(func, eval_str=True)
+
+            et_ann = ann["element_tree"]
+            assert typing.get_origin(et_ann) == etree.ElementTree
+            assert typing.get_args(et_ann) == (etree.Element,)
+
+            xml_ann = ann["xml_parser"]
+            assert typing.get_origin(xml_ann) == etree.XMLParser
+            assert typing.get_args(xml_ann) == (etree.Element,)
+
+            html_ann = ann["html_parser"]
+            assert typing.get_origin(html_ann) == etree.HTMLParser
+            assert typing.get_args(html_ann) == (etree.Element,)
+
+            maker_ann = ann["element_maker"]
+            assert typing.get_origin(maker_ann) == builder.ElementMaker
+            assert typing.get_args(maker_ann) == (etree.Element,)
+
+            handler_ann = ann["element_tree_content_handler"]
+            assert typing.get_origin(handler_ann) == sax.ElementTreeContentHandler
+            assert typing.get_args(handler_ann) == (etree.Element,)
 
         # Subscripting etree.Element should fail with the error:
         # TypeError: 'type' _ElementTree is not subscriptable
         # Make sure that the test works and it is indeed failing.
-        if sys.version_info >= (3, 10):
-            with self.assertRaises(TypeError):
-                func = container_function_with_subscripted_private_element_tree()
-                inspect.get_annotations(func, eval_str=True)
+        with self.assertRaises(TypeError):
+            # TypeError should be raised here for python < 3.14:
+            func = container_function_with_subscripted_private_element_tree()
+            # TypeError should be raised here for python >= 3.14:
+            inspect.get_annotations(func, eval_str=True)
 
 
 def test_suite():

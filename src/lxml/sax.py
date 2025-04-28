@@ -154,6 +154,10 @@ class ElementTreeContentHandler(ContentHandler):
 
     # Allow subscripting sax.ElementTreeContentHandler in type annotions (PEP 560)
     def __class_getitem__(cls, item):
+        import sys
+        if sys.version_info >= (3, 9):
+            from types import GenericAlias
+            return GenericAlias(cls, item)
         return f"{cls.__name__}[{item.__name__}]"
 
 

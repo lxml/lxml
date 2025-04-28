@@ -3315,8 +3315,11 @@ def SubElement(_Element _parent not None, _tag,
     """
     return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
 
+from typing import Generic, TypeVar
 
-class ElementTree(ABC):
+T = TypeVar("T")
+
+class ElementTree(ABC, Generic[T]):
     def __new__(cls, _Element element=None, *, file=None, _BaseParser parser=None):
         """ElementTree(element=None, file=None, parser=None)
 
@@ -3342,15 +3345,12 @@ class ElementTree(ABC):
 
         return _elementTreeFactory(doc, element)
 
-    # Allow subscripting ElementTree in type annotions (PEP 560)
-    def __class_getitem__(cls, item):
-        return f"{cls.__name__}[{item.__name__}]"
-
 # Register _ElementTree as a virtual subclass of ElementTree
 ElementTree.register(_ElementTree)
 
-# Remove "ABC" helper from module dict again
-del ABC
+# Remove "ABC" and typing helpers from module dict
+del ABC, Generic, TypeVar, T
+
 def HTML(text, _BaseParser parser=None, *, base_url=None):
     """HTML(text, parser=None, base_url=None)
 
