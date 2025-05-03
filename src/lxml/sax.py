@@ -18,6 +18,13 @@ from lxml import etree
 from lxml.etree import ElementTree, SubElement
 from lxml.etree import Comment, ProcessingInstruction
 
+try:
+    from types import GenericAlias as _GenericAlias
+except ImportError:
+    # Python 3.8 - we only need this as return value from "__class_getitem__"
+    def _GenericAlias(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
 
 class SaxError(etree.LxmlError):
     """General SAX error.
@@ -154,11 +161,7 @@ class ElementTreeContentHandler(ContentHandler):
 
     # Allow subscripting sax.ElementTreeContentHandler in type annotions (PEP 560)
     def __class_getitem__(cls, item):
-        import sys
-        if sys.version_info >= (3, 9):
-            from types import GenericAlias
-            return GenericAlias(cls, item)
-        return f"{cls.__name__}[{item.__name__}]"
+        return _GenericAlias(cls, item)
 
 
 class ElementTreeProducer:

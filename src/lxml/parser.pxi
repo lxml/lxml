@@ -3,6 +3,14 @@
 from lxml.includes cimport xmlparser
 from lxml.includes cimport htmlparser
 
+cdef object _GenericAlias
+try:
+    from types import GenericAlias as _GenericAlias
+except ImportError:
+    # Python 3.8 - we only need this as return value from "__class_getitem__"
+    def _GenericAlias(cls, item):
+        return f"{cls.__name__}[{item.__name__}]"
+
 
 class ParseError(LxmlSyntaxError):
     """Syntax error while parsing an XML document.
@@ -1662,11 +1670,7 @@ cdef class XMLParser(_FeedParser):
 
     # Allow subscripting XMLParser in type annotions (PEP 560)
     def __class_getitem__(cls, item):
-        import sys
-        if sys.version_info >= (3, 9):
-            from types import GenericAlias
-            return GenericAlias(cls, item)
-        return f"{cls.__name__}[{item.__name__}]"
+        return _GenericAlias(cls, item)
 
 
 cdef class XMLPullParser(XMLParser):
@@ -1849,11 +1853,7 @@ cdef class HTMLParser(_FeedParser):
 
     # Allow subscripting HTMLParser in type annotions (PEP 560)
     def __class_getitem__(cls, item):
-        import sys
-        if sys.version_info >= (3, 9):
-            from types import GenericAlias
-            return GenericAlias(cls, item)
-        return f"{cls.__name__}[{item.__name__}]"
+        return _GenericAlias(cls, item)
 
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
