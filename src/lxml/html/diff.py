@@ -1,27 +1,26 @@
 # cython: language_level=3
 
+try:
+    import cython
+except ImportError:
+    class fake_cython:
+        compiled = False
+        def cfunc(self, func): return func
+        def declare(self, _, value): return value
+        def __getattr__(self, type_name): return "object"
+
+    cython = fake_cython()
 
 import difflib
+import re
+from html import escape as html_escape
+
 from lxml import etree
 from lxml.html import fragment_fromstring
-import re
+from . import defs
 
 __all__ = ['html_annotate', 'htmldiff']
 
-try:
-    from html import escape as html_escape
-except ImportError:
-    from cgi import escape as html_escape
-try:
-    _unicode = unicode
-except NameError:
-    # Python 3
-    _unicode = str
-try:
-    basestring
-except NameError:
-    # Python 3
-    basestring = str
 
 ############################################################
 ## Annotation
@@ -29,7 +28,7 @@ except NameError:
 
 def default_markup(text, version):
     return '<span title="%s">%s</span>' % (
-        html_escape(_unicode(version), 1), text)
+        html_escape(version, quote=True), text)
 
 def html_annotate(doclist, markup=default_markup):
     """
@@ -71,15 +70,15 @@ def html_annotate(doclist, markup=default_markup):
     result = markup_serialize_tokens(cur_tokens, markup)
     return ''.join(result).strip()
 
-def tokenize_annotated(doc, annotation): 
+def tokenize_annotated(doc, annotation):
     """Tokenize a document and add an annotation attribute to each token
     """
     tokens = tokenize(doc, include_hrefs=False)
-    for tok in tokens: 
+    for tok in tokens:
         tok.annotation = annotation
     return tokens
 
-def html_annotate_merge_annotations(tokens_old, tokens_new): 
+def html_annotate_merge_annotations(tokens_old, tokens_new):
     """Merge the annotations from tokens_old into tokens_new, when the
     tokens in the new document already existed in the old document.
     """
@@ -87,52 +86,50 @@ def html_annotate_merge_annotations(tokens_old, tokens_new):
     commands = s.get_opcodes()
 
     for command, i1, i2, j1, j2 in commands:
-        if command == 'equal': 
+        if command == 'equal':
             eq_old = tokens_old[i1:i2]
             eq_new = tokens_new[j1:j2]
             copy_annotations(eq_old, eq_new)
 
-def copy_annotations(src, dest): 
+def copy_annotations(src, dest):
     """
     Copy annotations from the tokens listed in src to the tokens in dest
     """
     assert len(src) == len(dest)
-    for src_tok, dest_tok in zip(src, dest): 
+    for src_tok, dest_tok in zip(src, dest):
         dest_tok.annotation = src_tok.annotation
 
 def compress_tokens(tokens):
     """
-    Combine adjacent tokens when there is no HTML between the tokens, 
+    Combine adjacent tokens when there is no HTML between the tokens,
     and they share an annotation
     """
-    result = [tokens[0]] 
-    for tok in tokens[1:]: 
-        if (not result[-1].post_tags and 
-            not tok.pre_tags and 
-            result[-1].annotation == tok.annotation): 
+    result = [tokens[0]]
+    for tok in tokens[1:]:
+        if (not tok.pre_tags and
+                not result[-1].post_tags and
+                result[-1].annotation == tok.annotation):
             compress_merge_back(result, tok)
-        else: 
+        else:
             result.append(tok)
     return result
 
-def compress_merge_back(tokens, tok): 
+@cython.cfunc
+def compress_merge_back(tokens: list, tok):
     """ Merge tok into the last element of tokens (modifying the list of
     tokens in-place).  """
     last = tokens[-1]
-    if type(last) is not token or type(tok) is not token: 
+    if type(last) is not token or type(tok) is not token:
         tokens.append(tok)
     else:
-        text = _unicode(last)
-        if last.trailing_whitespace:
-            text += last.trailing_whitespace
-        text += tok
+        text = last + last.trailing_whitespace + tok
         merged = token(text,
                        pre_tags=last.pre_tags,
                        post_tags=tok.post_tags,
                        trailing_whitespace=tok.trailing_whitespace)
         merged.annotation = last.annotation
         tokens[-1] = merged
-    
+
 def markup_serialize_tokens(tokens, markup_func):
     """
     Serialize the list of tokens into a list of text chunks, calling
@@ -141,9 +138,7 @@ def markup_serialize_tokens(tokens, markup_func):
     for token in tokens:
         yield from token.pre_tags
         html = token.html()
-        html = markup_func(html, token.annotation)
-        if token.trailing_whitespace:
-            html += token.trailing_whitespace
+        html = markup_func(html, token.annotation) + token.trailing_whitespace
         yield html
         yield from token.post_tags
 
@@ -160,7 +155,7 @@ def htmldiff(old_html, new_html):
     (i.e., no <html> tag).
 
     Returns HTML with <ins> and <del> tags added around the
-    appropriate text.  
+    appropriate text.
 
     Markup is generally ignored, with the markup from new_html
     preserved, and possibly some markup from old_html (though it is
@@ -168,12 +163,13 @@ def htmldiff(old_html, new_html):
     words in the HTML are diffed.  The exception is <img> tags, which
     are treated like words, and the href attribute of <a> tags, which
     are noted inside the tag itself when there are changes.
-    """ 
+    """
     old_html_tokens = tokenize(old_html)
     new_html_tokens = tokenize(new_html)
     result = htmldiff_tokens(old_html_tokens, new_html_tokens)
     result = ''.join(result).strip()
     return fixup_ins_del_tags(result)
+
 
 def htmldiff_tokens(html1_tokens, html2_tokens):
     """ Does a diff on the tokens themselves, returning a list of text
@@ -181,7 +177,7 @@ def htmldiff_tokens(html1_tokens, html2_tokens):
     """
     # There are several passes as we do the differences.  The tokens
     # isolate the portion of the content we care to diff; difflib does
-    # all the actual hard work at that point.  
+    # all the actual hard work at that point.
     #
     # Then we must create a valid document from pieces of both the old
     # document and the new document.  We generally prefer to take
@@ -205,6 +201,7 @@ def htmldiff_tokens(html1_tokens, html2_tokens):
         if command == 'delete' or command == 'replace':
             del_tokens = expand_tokens(html1_tokens[i1:i2])
             merge_delete(del_tokens, result)
+
     # If deletes were inserted directly as <del> then we'd have an
     # invalid document at this point.  Instead we put in special
     # markers, and when the complete diffed document has been created
@@ -213,6 +210,7 @@ def htmldiff_tokens(html1_tokens, html2_tokens):
 
     return result
 
+
 def expand_tokens(tokens, equal=False):
     """Given a list of tokens, return a generator of the chunks of
     text for the data in the tokens.
@@ -220,10 +218,7 @@ def expand_tokens(tokens, equal=False):
     for token in tokens:
         yield from token.pre_tags
         if not equal or not token.hide_when_equal:
-            if token.trailing_whitespace:
-                yield token.html() + token.trailing_whitespace
-            else:
-                yield token.html()
+            yield token.html() + token.trailing_whitespace
         yield from token.post_tags
 
 def merge_insert(ins_chunks, doc):
@@ -433,7 +428,7 @@ def locate_unbalanced_end(unbalanced_end, pre_delete, post_delete):
             # Found a tag that doesn't match
             break
 
-class token(_unicode):
+class token(str):
     """ Represents a diffable token, generally a word that is displayed to
     the user.  Opening tags are attached to this token when they are
     adjacent (pre_tags) and closing tags that follow the word
@@ -451,28 +446,20 @@ class token(_unicode):
     hide_when_equal = False
 
     def __new__(cls, text, pre_tags=None, post_tags=None, trailing_whitespace=""):
-        obj = _unicode.__new__(cls, text)
+        obj = str.__new__(cls, text)
 
-        if pre_tags is not None:
-            obj.pre_tags = pre_tags
-        else:
-            obj.pre_tags = []
-
-        if post_tags is not None:
-            obj.post_tags = post_tags
-        else:
-            obj.post_tags = []
-
+        obj.pre_tags = pre_tags if pre_tags is not None else []
+        obj.post_tags = post_tags if post_tags is not None else []
         obj.trailing_whitespace = trailing_whitespace
 
         return obj
 
     def __repr__(self):
-        return 'token(%s, %r, %r, %r)' % (_unicode.__repr__(self), self.pre_tags,
-                                          self.post_tags, self.trailing_whitespace)
+        return 'token(%s, %r, %r, %r)' % (
+            str.__repr__(self), self.pre_tags, self.post_tags, self.trailing_whitespace)
 
     def html(self):
-        return _unicode(self)
+        return str(self)
 
 class tag_token(token):
 
@@ -480,11 +467,11 @@ class tag_token(token):
     the <img> tag, which takes up visible space just like a word but
     is only represented in a document by a tag.  """
 
-    def __new__(cls, tag, data, html_repr, pre_tags=None, 
+    def __new__(cls, tag, data, html_repr, pre_tags=None,
                 post_tags=None, trailing_whitespace=""):
-        obj = token.__new__(cls, "%s: %s" % (type, data), 
-                            pre_tags=pre_tags, 
-                            post_tags=post_tags, 
+        obj = token.__new__(cls, f"{type}: {data}",
+                            pre_tags=pre_tags,
+                            post_tags=post_tags,
                             trailing_whitespace=trailing_whitespace)
         obj.tag = tag
         obj.data = data
@@ -493,11 +480,11 @@ class tag_token(token):
 
     def __repr__(self):
         return 'tag_token(%s, %s, html_repr=%s, post_tags=%r, pre_tags=%r, trailing_whitespace=%r)' % (
-            self.tag, 
-            self.data, 
-            self.html_repr, 
-            self.pre_tags, 
-            self.post_tags, 
+            self.tag,
+            self.data,
+            self.html_repr,
+            self.pre_tags,
+            self.post_tags,
             self.trailing_whitespace)
     def html(self):
         return self.html_repr
@@ -511,6 +498,7 @@ class href_token(token):
 
     def html(self):
         return ' Link: %s' % self
+
 
 def tokenize(html, include_hrefs=True):
     """
@@ -536,6 +524,7 @@ def tokenize(html, include_hrefs=True):
     # Finally re-joining them into token objects:
     return fixup_chunks(chunks)
 
+
 def parse_html(html, cleanup=True):
     """
     Parses an HTML fragment, returning an lxml element.  Note that the HTML will be
@@ -549,25 +538,24 @@ def parse_html(html, cleanup=True):
         html = cleanup_html(html)
     return fragment_fromstring(html, create_parent=True)
 
-_body_re = re.compile(r'<body.*?>', re.I|re.S)
-_end_body_re = re.compile(r'</body.*?>', re.I|re.S)
-_ins_del_re = re.compile(r'</?(ins|del).*?>', re.I|re.S)
+
+_search_body = re.compile(r'<body.*?>', re.I|re.S).search
+_search_end_body = re.compile(r'</body.*?>', re.I|re.S).search
+_replace_ins_del = re.compile(r'</?(ins|del).*?>', re.I|re.S).sub
 
 def cleanup_html(html):
     """ This 'cleans' the HTML, meaning that any page structure is removed
     (only the contents of <body> are used, if there is any <body).
     Also <ins> and <del> tags are removed.  """
-    match = _body_re.search(html)
+    match = _search_body(html)
     if match:
         html = html[match.end():]
-    match = _end_body_re.search(html)
+    match = _search_end_body(html)
     if match:
         html = html[:match.start()]
-    html = _ins_del_re.sub('', html)
+    html = _replace_ins_del('', html)
     return html
-    
 
-end_whitespace_re = re.compile(r'[ \t\n\r]$')
 
 def split_trailing_whitespace(word):
     """
@@ -631,11 +619,9 @@ def fixup_chunks(chunks):
 
 
 # All the tags in HTML that don't require end tags:
-empty_tags = (
-    'param', 'img', 'area', 'br', 'basefont', 'input',
-    'base', 'meta', 'link', 'col')
+empty_tags = cython.declare(frozenset, defs.empty_tags)
 
-block_level_tags = (
+block_level_tags = cython.declare(frozenset, frozenset([
     'address',
     'blockquote',
     'center',
@@ -660,9 +646,9 @@ block_level_tags = (
     'pre',
     'table',
     'ul',
-    )
+]))
 
-block_level_container_tags = (
+block_level_container_tags = cython.declare(frozenset, frozenset([
     'dd',
     'dt',
     'frameset',
@@ -673,7 +659,7 @@ block_level_container_tags = (
     'th',
     'thead',
     'tr',
-    )
+]))
 
 
 def flatten_el(el, include_hrefs, skip_tag=False):
@@ -703,7 +689,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
         for word in end_words:
             yield html_escape(word)
 
-split_words_re = re.compile(r'\S+(?:\s+|$)', re.U)
+_find_words = re.compile(r'\S+(?:\s+|$)', re.U).findall
 
 def split_words(text):
     """ Splits some text into words. Includes trailing whitespace
@@ -711,27 +697,27 @@ def split_words(text):
     if not text or not text.strip():
         return []
 
-    words = split_words_re.findall(text)
+    words = _find_words(text)
     return words
 
-start_whitespace_re = re.compile(r'^[ \t\n\r]')
+_has_start_whitespace = re.compile(r'^[ \t\n\r]').match
 
 def start_tag(el):
     """
     The text representation of the start tag for a tag.
     """
-    return '<%s%s>' % (
-        el.tag, ''.join([' %s="%s"' % (name, html_escape(value, True))
-                         for name, value in el.attrib.items()]))
+    attributes = ''.join([
+        f' {name}="{html_escape(value, True)}"'
+        for name, value in el.attrib.items()
+    ])
+    return f'<{el.tag}{attributes}>'
 
 def end_tag(el):
     """ The text representation of an end tag for a tag.  Includes
     trailing whitespace when appropriate.  """
-    if el.tail and start_whitespace_re.search(el.tail):
-        extra = ' '
-    else:
-        extra = ''
-    return '</%s>%s' % (el.tag, extra)
+    tail = el.tail
+    extra = ' ' if tail and _has_start_whitespace(tail) else ''
+    return f'</{el.tag}>{extra}'
 
 def is_word(tok):
     return not tok.startswith('<')
@@ -753,13 +739,13 @@ def fixup_ins_del_tags(html):
 
 def serialize_html_fragment(el, skip_outer=False):
     """ Serialize a single lxml element as HTML.  The serialized form
-    includes the elements tail.  
+    includes the elements tail.
 
     If skip_outer is true, then don't serialize the outermost tag
     """
-    assert not isinstance(el, basestring), (
-        "You should pass in an element, not a string like %r" % el)
-    html = etree.tostring(el, method="html", encoding=_unicode)
+    assert not isinstance(el, str), (
+        f"You should pass in an element, not a string like {el!r}")
+    html = etree.tostring(el, method="html", encoding='unicode')
     if skip_outer:
         # Get rid of the extra starting tag:
         html = html[html.find('>')+1:]
@@ -821,7 +807,7 @@ def _move_el_inside_block(el, tag):
         text_tag.text = el.text
         el.text = None
         el.insert(0, text_tag)
-            
+
 def _merge_element_contents(el):
     """
     Removes an element, but merges its contents into its place, e.g.,
@@ -863,7 +849,7 @@ class InsensitiveSequenceMatcher(difflib.SequenceMatcher):
     """
 
     threshold = 2
-    
+
     def get_matching_blocks(self):
         size = min(len(self.b), len(self.b))
         threshold = min(self.threshold, size / 4)
@@ -875,4 +861,3 @@ class InsensitiveSequenceMatcher(difflib.SequenceMatcher):
 if __name__ == '__main__':
     from lxml.html import _diffcommand
     _diffcommand.main()
-    
