@@ -370,6 +370,7 @@ def define_macros():
     if OPTION_WITH_COVERAGE:
         macros.append(('CYTHON_TRACE_NOGIL', '1'))
         # coverage.py does not support Cython together with sys.monitoring.
+        # See https://github.com/nedbat/coveragepy/issues/1790
         macros.append(('CYTHON_USE_SYS_MONITORING', '0'))
     if OPTION_BUILD_LIBXML2XSLT:
         macros.append(('LIBXML_STATIC', None))
