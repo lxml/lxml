@@ -369,6 +369,8 @@ def define_macros():
         macros.append(('LXML_UNICODE_STRINGS', '1'))
     if OPTION_WITH_COVERAGE:
         macros.append(('CYTHON_TRACE_NOGIL', '1'))
+        # coverage.py does not support Cython together with sys.monitoring.
+        macros.append(('CYTHON_USE_SYS_MONITORING', '0'))
     if OPTION_BUILD_LIBXML2XSLT:
         macros.append(('LIBXML_STATIC', None))
         macros.append(('LIBXSLT_STATIC', None))
