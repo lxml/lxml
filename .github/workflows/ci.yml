@@ -125,15 +125,15 @@ jobs:
           # ================
           # Pypy
           - os: ubuntu-latest
-            python-version: pypy-3.8
-            env: { STATIC_DEPS: false }
-            allowed_failure: true
-          - os: ubuntu-latest
             python-version: pypy-3.9
             env: { STATIC_DEPS: false }
             allowed_failure: true
           - os: ubuntu-latest
             python-version: pypy-3.10
+            env: { STATIC_DEPS: false }
+            allowed_failure: true
+          - os: ubuntu-latest
+            python-version: pypy-3.11
             env: { STATIC_DEPS: false }
             allowed_failure: true
 
