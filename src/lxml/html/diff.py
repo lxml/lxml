@@ -730,6 +730,10 @@ block_level_container_tags = cython.declare(frozenset, frozenset([
     'tr',
 ]))
 
+any_block_level_tag = cython.declare(tuple, tuple(sorted(
+    block_level_tags | block_level_container_tags))
+)
+
 
 def flatten_el(el, include_hrefs, skip_tag=False):
     """ Takes an lxml element el, and generates all the text chunks for
@@ -837,11 +841,8 @@ def _fixup_ins_del_tags(doc):
 def _contains_block_level_tag(el):
     """True if the element contains any block-level elements, like <p>, <td>, etc.
     """
-    if el.tag in block_level_tags or el.tag in block_level_container_tags:
+    for el in el.iter(*any_block_level_tag):
         return True
-    for child in el:
-        if _contains_block_level_tag(child):
-            return True
     return False
 
 def _move_el_inside_block(el, tag):
@@ -855,9 +856,10 @@ def _move_el_inside_block(el, tag):
         children_tag = etree.Element(tag)
         children_tag.text = el.text
         el.text = None
-        children_tag.extend(list(el))
+        children_tag.extend(iter(el))
         el[:] = [children_tag]
         return
+
     for child in list(el):
         if _contains_block_level_tag(child):
             _move_el_inside_block(child, tag)
@@ -865,7 +867,7 @@ def _move_el_inside_block(el, tag):
                 tail_tag = etree.Element(tag)
                 tail_tag.text = child.tail
                 child.tail = None
-                el.insert(el.index(child)+1, tail_tag)
+                child.addnext(tail_tag)
         else:
             child_tag = etree.Element(tag)
             el.replace(child, child_tag)
