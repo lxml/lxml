@@ -12,6 +12,9 @@ except ImportError:
     cython = fake_cython()
 
 import difflib
+import itertools
+import functools
+import operator
 import re
 from html import escape as html_escape
 
@@ -20,6 +23,8 @@ from lxml.html import fragment_fromstring
 from . import defs
 
 __all__ = ['html_annotate', 'htmldiff']
+
+group_by_first_item = functools.partial(itertools.groupby, key=operator.itemgetter(0))
 
 
 ############################################################
@@ -167,7 +172,11 @@ def htmldiff(old_html, new_html):
     old_html_tokens = tokenize(old_html)
     new_html_tokens = tokenize(new_html)
     result = htmldiff_tokens(old_html_tokens, new_html_tokens)
-    result = ''.join(result).strip()
+    try:
+        result = ''.join(result).strip()
+    except (ValueError, TypeError) as exc:
+        print(exc)
+        result = ''
     return fixup_ins_del_tags(result)
 
 
@@ -201,12 +210,13 @@ def htmldiff_tokens(html1_tokens, html2_tokens):
         if command == 'delete' or command == 'replace':
             del_tokens = expand_tokens(html1_tokens[i1:i2])
             merge_delete(del_tokens, result)
+        #print(command, result)
 
     # If deletes were inserted directly as <del> then we'd have an
     # invalid document at this point.  Instead we put in special
     # markers, and when the complete diffed document has been created
     # we try to move the deletes around and resolve any problems.
-    result = cleanup_delete(result)
+    cleanup_delete(result)
 
     return result
 
@@ -221,25 +231,57 @@ def expand_tokens(tokens, equal=False):
             yield token.html() + token.trailing_whitespace
         yield from token.post_tags
 
-def merge_insert(ins_chunks, doc):
+
+def merge_insert(ins_chunks, doc: list):
     """ doc is the already-handled document (as a list of text chunks);
     here we add <ins>ins_chunks</ins> to the end of that.  """
-    # Though we don't throw away unbalanced_start or unbalanced_end
+    # Though we don't throw away unbalanced start/end tags
     # (we assume there is accompanying markup later or earlier in the
     # document), we only put <ins> around the balanced portion.
-    unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks)
-    doc.extend(unbalanced_start)
-    if doc and not doc[-1].endswith(' '):
-        # Fix up the case where the word before the insert didn't end with 
-        # a space
-        doc[-1] += ' '
-    doc.append('<ins>')
-    if balanced and balanced[-1].endswith(' '):
-        # We move space outside of </ins>
-        balanced[-1] = balanced[-1][:-1]
-    doc.extend(balanced)
-    doc.append('</ins> ')
-    doc.extend(unbalanced_end)
+    for balanced, chunks in group_by_first_item(mark_unbalanced(ins_chunks)):
+        chunks = [chunk for _, chunk in chunks]
+        if balanced == 'b':
+            if doc and not doc[-1].endswith(' '):
+                # Fix up the case where the word before the insert didn't end with a space.
+                doc[-1] += ' '
+            doc.append('<ins>')
+            doc.extend(chunks)
+            if doc[-1].endswith(' '):
+                # We move space outside of </ins>.
+                doc[-1] = doc[-1][:-1]
+            doc.append('</ins> ')
+        else:
+            # unmatched start or end
+            doc.extend(chunks)
+
+    #print("INS", doc)
+
+
+@cython.cfunc
+def tag_name_of_chunk(chunk: str) -> str:
+    i: cython.Py_ssize_t
+    ch: cython.Py_UCS4
+
+    if chunk[0] != '<':
+        return ""
+
+    start_pos = 1
+    for i, ch in enumerate(chunk):
+        if ch == '/':
+            start_pos = 2
+        elif ch == '>':
+            return chunk[start_pos:i]
+        elif ch.isspace():
+            return chunk[start_pos:i]
+
+    return chunk[start_pos:]
+
+if not cython.compiled:
+    # Avoid performance regression in Python due to string iteration.
+    def tag_name_of_chunk(chunk: str) -> str:
+        return chunk.split(None, 1)[0].strip('<>/')
+
+
 
 # These are sentinels to represent the start and end of a <del>
 # segment, until we do the cleanup phase to turn them into proper
@@ -249,19 +291,21 @@ class DEL_START:
 class DEL_END:
     pass
 
-class NoDeletes(Exception):
-    """ Raised when the document no longer contains any pending deletes
-    (DEL_START/DEL_END) """
 
 def merge_delete(del_chunks, doc):
     """ Adds the text chunks in del_chunks to the document doc (another
     list of text chunks) with marker to show it is a delete.
     cleanup_delete later resolves these markers into <del> tags."""
+
+    #del_chunks = list(del_chunks)
+    #print("DEL", del_chunks, doc)
+
     doc.append(DEL_START)
     doc.extend(del_chunks)
     doc.append(DEL_END)
 
-def cleanup_delete(chunks):
+
+def cleanup_delete(chunks: list):
     """ Cleans up any DEL_START/DEL_END markers in the document, replacing
     them with <del></del>.  To do this while keeping the document
     valid, it may need to drop some tags (either start or end tags).
@@ -270,163 +314,188 @@ def cleanup_delete(chunks):
     similar location where it was originally located (e.g., moving a
     delete into preceding <div> tag, if the del looks like (DEL_START,
     'Text</div>', DEL_END)"""
+    chunk_count = len(chunks)
+
+    i: cython.Py_ssize_t
+    del_start: cython.Py_ssize_t
+    del_end: cython.Py_ssize_t
+    shift_start_right: cython.Py_ssize_t
+    shift_end_left: cython.Py_ssize_t
+    start_pos: cython.Py_ssize_t
+    chunk: str
+
+    #print("CHUNKS VH", chunks)
+
+    start_pos = 0
     while 1:
         # Find a pending DEL_START/DEL_END, splitting the document
         # into stuff-preceding-DEL_START, stuff-inside, and
         # stuff-following-DEL_END
         try:
-            pre_delete, delete, post_delete = split_delete(chunks)
-        except NoDeletes:
+            del_start = chunks.index(DEL_START, start_pos)
+        except ValueError:
             # Nothing found, we've cleaned up the entire doc
+            #print("CHUNKS NH", chunks)
             break
-        # The stuff-inside-DEL_START/END may not be well balanced
-        # markup.  First we figure out what unbalanced portions there are:
-        unbalanced_start, balanced, unbalanced_end = split_unbalanced(delete)
-        # Then we move the span forward and/or backward based on these
-        # unbalanced portions:
-        locate_unbalanced_start(unbalanced_start, pre_delete, post_delete)
-        locate_unbalanced_end(unbalanced_end, pre_delete, post_delete)
-        doc = pre_delete
-        if doc and not doc[-1].endswith(' '):
-            # Fix up case where the word before us didn't have a trailing space
-            doc[-1] += ' '
-        doc.append('<del>')
-        if balanced and balanced[-1].endswith(' '):
-            # We move space outside of </del>
-            balanced[-1] = balanced[-1][:-1]
-        doc.extend(balanced)
-        doc.append('</del> ')
-        doc.extend(post_delete)
-        chunks = doc
-    return chunks
+        else:
+            del_end = chunks.index(DEL_END, del_start + 1)
 
-def split_unbalanced(chunks):
-    """Return (unbalanced_start, balanced, unbalanced_end), where each is
-    a list of text and tag chunks.
+        shift_end_left = shift_start_right = 0
+        deleted_chunks = mark_unbalanced(chunks[del_start+1:del_end])
 
-    unbalanced_start is a list of all the tags that are opened, but
-    not closed in this span.  Similarly, unbalanced_end is a list of
-    tags that are closed but were not opened.  Extracting these might
-    mean some reordering of the chunks."""
-    start = []
-    end = []
+        # For unbalanced start tags at the beginning, find matching (non-deleted)
+        # end tags after the current DEL_END and move the start tag outside.
+        #print("DEL-M", deleted_chunks)
+        for balanced, marked_chunks in group_by_first_item(deleted_chunks):
+            if balanced != 'us':
+                break
+            for _, unbalanced_chunk in marked_chunks:
+                unbalanced_start_name = tag_name_of_chunk(unbalanced_chunk)
+                for i in range(del_end+1, chunk_count):
+                    if chunks[i] is DEL_START:
+                        break
+                    chunk = chunks[i]
+                    if chunk[0] != '<' or chunk[1] == '/':
+                        # Reached a word or closing tag.
+                        break
+                    name = tag_name_of_chunk(chunk)
+                    if name == 'ins':
+                        # Cannot move into an insert.
+                        break
+                    assert name != 'del', f"Unexpected delete tag: {chunk!r}"
+                    if name != unbalanced_start_name:
+                        # Avoid mixing in other start tags.
+                        break
+                    # Exclude start tag to balance the end tag.
+                    shift_start_right += 1
+            #print("START", chunks[del_start - shift_start_right : del_start + shift_start_right])
+
+        # For unbalanced end tags at the end, find matching (non-deleted)
+        # start tags before the currend DEL_START and move the end tag outside.
+        for balanced, marked_chunks in group_by_first_item(reversed(deleted_chunks)):
+            if balanced != 'ue':
+                break
+            for _, unbalanced_chunk in marked_chunks:
+                unbalanced_end_name = tag_name_of_chunk(unbalanced_chunk)
+                for i in range(del_start - 1, -1, -1):
+                    if chunks[i] is DEL_END:
+                        break
+                    chunk = chunks[i]
+                    if chunk[0] == '<' and chunk[1] != '/':
+                        # Reached an opening tag, can we go further?  Maybe not...
+                        break
+                    name = tag_name_of_chunk(chunk)
+                    if name == 'ins' or name == 'del':
+                        # Cannot move into an insert or delete.
+                        break
+                    if name != unbalanced_end_name:
+                        # Avoid mixing in other start tags.
+                        break
+                    # Exclude end tag to balance the start tag.
+                    shift_end_left += 1
+            #print("END", chunks[del_end - shift_end_left: del_end + shift_end_left])
+
+        #print("PreM", del_start, del_end, shift_start_right, shift_end_left, chunks)
+        """
+        chunks[del_start - shift_end_left : del_end + shift_start_right + 1] = [
+            *chunks[del_start + 1: del_start + shift_start_right + 1],
+            '<del>',
+            *chunks[del_start + shift_start_right + 1 : del_end - shift_end_left],
+            '</del> ',
+            *chunks[del_end - shift_end_left + 1: del_end - 1],
+        ]
+
+        new_del_end = del_end - 2 * shift_end_left
+        assert chunks[new_del_end] == '</del> '
+        del_end = new_del_end
+
+        if new_del_start > 0 and not chunks[new_del_start - 1].endswith(' '):
+            # Fix up case where the word before us didn't have a trailing space.
+            chunks[new_del_start - 1] += ' '
+        if new_del_end > 0 and chunks[new_del_end - 1].endswith(' '):
+            # Move space outside of </del>.
+            chunks[new_del_end - 1] = chunks[new_del_end - 1][:-1]
+        """
+        pos = del_start - shift_end_left
+        for i in range(del_start + 1, del_start + shift_start_right + 1):
+            chunks[pos] = chunks[i]
+            pos += 1
+        if pos and not chunks[pos - 1].endswith(' '):
+            # Fix up case where the word before us didn't have a trailing space.
+            chunks[pos - 1] += ' '
+        chunks[pos] = '<del>'
+        pos += 1
+        for i in range(del_start + shift_start_right + 1, del_end - shift_end_left):
+            chunks[pos] = chunks[i]
+            pos += 1
+        if chunks[pos - 1].endswith(' '):
+            # Move space outside of </del>.
+            chunks[pos - 1] = chunks[pos - 1][:-1]
+        chunks[pos] = '</del> '
+        pos += 1
+        start_pos = pos
+        for i in range(del_end - shift_end_left + 1, del_end - 1):
+            chunks[pos] = chunks[i]
+            pos += 1
+        del chunks[pos : del_end + shift_start_right + 1]
+
+        #print("PostM", del_start, del_end, chunks)
+
+
+@cython.cfunc
+def mark_unbalanced(chunks) -> list:
     tag_stack = []
-    balanced = []
+    marked = []
+
+    chunk: str
+    parents: list
+
     for chunk in chunks:
         if not chunk.startswith('<'):
-            balanced.append(chunk)
+            marked.append(('b', chunk))
             continue
-        endtag = chunk[1] == '/'
-        name = chunk.split()[0].strip('<>/')
+
+        name = tag_name_of_chunk(chunk)
         if name in empty_tags:
-            balanced.append(chunk)
+            marked.append(('b', chunk))
             continue
-        if endtag:
-            if tag_stack and tag_stack[-1][0] == name:
-                balanced.append(chunk)
-                name, pos, tag = tag_stack.pop()
-                balanced[pos] = tag
-            elif tag_stack:
-                start.extend([tag for name, pos, tag in tag_stack])
-                tag_stack = []
-                end.append(chunk)
-            else:
-                end.append(chunk)
+
+        if chunk[1] == '/':
+            # closing tag found, unwind tag stack
+            while tag_stack:
+                start_name, start_chunk, parents = tag_stack.pop()
+                if start_name == name:
+                    # balanced tag closing, keep rest of stack intact
+                    parents.append(('b', start_chunk))
+                    parents.extend(marked)
+                    parents.append(('b', chunk))
+                    marked = parents
+                    chunk = None
+                    break
+                else:
+                    # unmatched start tag
+                    parents.append(('us', start_chunk))
+                    parents.extend(marked)
+                    marked = parents
+
+            if chunk is not None:
+                # unmatched end tag left after clearing the stack
+                marked.append(('ue', chunk))
         else:
-            tag_stack.append((name, len(balanced), chunk))
-            balanced.append(None)
-    start.extend(
-        [chunk for name, pos, chunk in tag_stack])
-    balanced = [chunk for chunk in balanced if chunk is not None]
-    return start, balanced, end
+            # new start tag found
+            tag_stack.append((name, chunk, marked))
+            marked = []
 
-def split_delete(chunks):
-    """ Returns (stuff_before_DEL_START, stuff_inside_DEL_START_END,
-    stuff_after_DEL_END).  Returns the first case found (there may be
-    more DEL_STARTs in stuff_after_DEL_END).  Raises NoDeletes if
-    there's no DEL_START found. """
-    try:
-        pos = chunks.index(DEL_START)
-    except ValueError:
-        raise NoDeletes
-    pos2 = chunks.index(DEL_END)
-    return chunks[:pos], chunks[pos+1:pos2], chunks[pos2+1:]
+    # add any unbalanced start tags
+    while tag_stack:
+        _, start_chunk, parents = tag_stack.pop()
+        parents.append(('us', start_chunk))
+        parents.extend(marked)
+        marked = parents
 
-def locate_unbalanced_start(unbalanced_start, pre_delete, post_delete):
-    """ pre_delete and post_delete implicitly point to a place in the
-    document (where the two were split).  This moves that point (by
-    popping items from one and pushing them onto the other).  It moves
-    the point to try to find a place where unbalanced_start applies.
+    #print("MARKED", marked)
+    return marked
 
-    As an example::
-
-        >>> unbalanced_start = ['<div>']
-        >>> doc = ['<p>', 'Text', '</p>', '<div>', 'More Text', '</div>']
-        >>> pre, post = doc[:3], doc[3:]
-        >>> pre, post
-        (['<p>', 'Text', '</p>'], ['<div>', 'More Text', '</div>'])
-        >>> locate_unbalanced_start(unbalanced_start, pre, post)
-        >>> pre, post
-        (['<p>', 'Text', '</p>', '<div>'], ['More Text', '</div>'])
-
-    As you can see, we moved the point so that the dangling <div> that
-    we found will be effectively replaced by the div in the original
-    document.  If this doesn't work out, we just throw away
-    unbalanced_start without doing anything.
-    """
-    while 1:
-        if not unbalanced_start:
-            # We have totally succeeded in finding the position
-            break
-        finding = unbalanced_start[0]
-        finding_name = finding.split()[0].strip('<>')
-        if not post_delete:
-            break
-        next = post_delete[0]
-        if next is DEL_START or not next.startswith('<'):
-            # Reached a word, we can't move the delete text forward
-            break
-        if next[1] == '/':
-            # Reached a closing tag, can we go further?  Maybe not...
-            break
-        name = next.split()[0].strip('<>')
-        if name == 'ins':
-            # Can't move into an insert
-            break
-        assert name != 'del', (
-            "Unexpected delete tag: %r" % next)
-        if name == finding_name:
-            unbalanced_start.pop(0)
-            pre_delete.append(post_delete.pop(0))
-        else:
-            # Found a tag that doesn't match
-            break
-
-def locate_unbalanced_end(unbalanced_end, pre_delete, post_delete):
-    """ like locate_unbalanced_start, except handling end tags and
-    possibly moving the point earlier in the document.  """
-    while 1:
-        if not unbalanced_end:
-            # Success
-            break
-        finding = unbalanced_end[-1]
-        finding_name = finding.split()[0].strip('<>/')
-        if not pre_delete:
-            break
-        next = pre_delete[-1]
-        if next is DEL_END or not next.startswith('</'):
-            # A word or a start tag
-            break
-        name = next.split()[0].strip('<>/')
-        if name == 'ins' or name == 'del':
-            # Can't move into an insert or delete
-            break
-        if name == finding_name:
-            unbalanced_end.pop()
-            post_delete.insert(0, pre_delete.pop())
-        else:
-            # Found a tag that doesn't match
-            break
 
 class token(str):
     """ Represents a diffable token, generally a word that is displayed to
