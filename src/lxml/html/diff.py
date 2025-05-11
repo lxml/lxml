@@ -827,13 +827,12 @@ def serialize_html_fragment(el, skip_outer=False):
 def _fixup_ins_del_tags(doc):
     """fixup_ins_del_tags that works on an lxml document in-place
     """
-    for tag in ['ins', 'del']:
-        for el in doc.xpath('descendant-or-self::%s' % tag):
-            if not _contains_block_level_tag(el):
-                continue
-            _move_el_inside_block(el, tag=tag)
-            el.drop_tag()
-            #_merge_element_contents(el)
+    for el in list(doc.iter('ins', 'del')):
+        if not _contains_block_level_tag(el):
+            continue
+        _move_el_inside_block(el, tag=el.tag)
+        el.drop_tag()
+        #_merge_element_contents(el)
 
 def _contains_block_level_tag(el):
     """True if the element contains any block-level elements, like <p>, <td>, etc.
