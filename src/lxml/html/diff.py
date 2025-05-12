@@ -11,7 +11,14 @@ except ImportError:
 
     cython = fake_cython()
 
-import difflib
+try:
+    from . import _difflib as difflib
+    import inspect
+    if inspect.isfunction(difflib.get_close_matches):
+        raise ImportError(
+            "Embedded difflib is not compiled to a fast binary, using the stdlib instead.")
+except ImportError:
+    import difflib
 import itertools
 import functools
 import operator
