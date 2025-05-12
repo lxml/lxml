@@ -301,7 +301,7 @@ class DEL_END:
     pass
 
 
-def merge_delete(del_chunks, doc):
+def merge_delete(del_chunks, doc: list):
     """ Adds the text chunks in del_chunks to the document doc (another
     list of text chunks) with marker to show it is a delete.
     cleanup_delete later resolves these markers into <del> tags."""
@@ -360,55 +360,53 @@ def cleanup_delete(chunks: list):
         # For unbalanced start tags at the beginning, find matching (non-deleted)
         # end tags after the current DEL_END and move the start tag outside.
         #print("DEL-M", deleted_chunks)
-        for balanced, marked_chunks in group_by_first_item(deleted_chunks):
+        for balanced, del_chunk in deleted_chunks:
             if balanced != 'us':
                 break
-            for _, unbalanced_chunk in marked_chunks:
-                unbalanced_start += 1
-                unbalanced_start_name = tag_name_of_chunk(unbalanced_chunk)
-                for i in range(del_end+1, chunk_count):
-                    if chunks[i] is DEL_START:
-                        break
-                    chunk = chunks[i]
-                    if chunk[0] != '<' or chunk[1] == '/':
-                        # Reached a word or closing tag.
-                        break
-                    name = tag_name_of_chunk(chunk)
-                    if name == 'ins':
-                        # Cannot move into an insert.
-                        break
-                    assert name != 'del', f"Unexpected delete tag: {chunk!r}"
-                    if name != unbalanced_start_name:
-                        # Avoid mixing in other start tags.
-                        break
-                    # Exclude start tag to balance the end tag.
-                    shift_start_right += 1
+            unbalanced_start += 1
+            unbalanced_start_name = tag_name_of_chunk(del_chunk)
+            for i in range(del_end+1, chunk_count):
+                if chunks[i] is DEL_START:
+                    break
+                chunk = chunks[i]
+                if chunk[0] != '<' or chunk[1] == '/':
+                    # Reached a word or closing tag.
+                    break
+                name = tag_name_of_chunk(chunk)
+                if name == 'ins':
+                    # Cannot move into an insert.
+                    break
+                assert name != 'del', f"Unexpected delete tag: {chunk!r}"
+                if name != unbalanced_start_name:
+                    # Avoid mixing in other start tags.
+                    break
+                # Exclude start tag to balance the end tag.
+                shift_start_right += 1
             #print("START", chunks[del_start - shift_start_right : del_start + shift_start_right])
 
         # For unbalanced end tags at the end, find matching (non-deleted)
         # start tags before the currend DEL_START and move the end tag outside.
-        for balanced, marked_chunks in group_by_first_item(reversed(deleted_chunks)):
+        for balanced, del_chunk in reversed(deleted_chunks):
             if balanced != 'ue':
                 break
-            for _, unbalanced_chunk in marked_chunks:
-                unbalanced_end += 1
-                unbalanced_end_name = tag_name_of_chunk(unbalanced_chunk)
-                for i in range(del_start - 1, -1, -1):
-                    if chunks[i] is DEL_END:
-                        break
-                    chunk = chunks[i]
-                    if chunk[0] == '<' and chunk[1] != '/':
-                        # Reached an opening tag, can we go further?  Maybe not...
-                        break
-                    name = tag_name_of_chunk(chunk)
-                    if name == 'ins' or name == 'del':
-                        # Cannot move into an insert or delete.
-                        break
-                    if name != unbalanced_end_name:
-                        # Avoid mixing in other start tags.
-                        break
-                    # Exclude end tag to balance the start tag.
-                    shift_end_left += 1
+            unbalanced_end += 1
+            unbalanced_end_name = tag_name_of_chunk(del_chunk)
+            for i in range(del_start - 1, -1, -1):
+                if chunks[i] is DEL_END:
+                    break
+                chunk = chunks[i]
+                if chunk[0] == '<' and chunk[1] != '/':
+                    # Reached an opening tag, can we go further?  Maybe not...
+                    break
+                name = tag_name_of_chunk(chunk)
+                if name == 'ins' or name == 'del':
+                    # Cannot move into an insert or delete.
+                    break
+                if name != unbalanced_end_name:
+                    # Avoid mixing in other start tags.
+                    break
+                # Exclude end tag to balance the start tag.
+                shift_end_left += 1
             #print("END", chunks[del_end - shift_end_left: del_end + shift_end_left])
 
         #print("PreM", del_start, del_end, shift_start_right, shift_end_left, chunks)
