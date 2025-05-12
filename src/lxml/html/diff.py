@@ -241,6 +241,12 @@ def merge_insert(ins_chunks, doc: list):
     # Though we don't throw away unbalanced start/end tags
     # (we assume there is accompanying markup later or earlier in the
     # document), we only put <ins> around the balanced portion.
+
+    # Legacy note: We make a choice here. Originally, we merged all sequences of
+    # unbalanced tags together into separate start and end tag groups. Now, we look at
+    # each sequence separately, leading to more fine-grained diffs but different
+    # tag structure than before.
+
     item: tuple
     for balanced, marked_chunks in group_by_first_item(mark_unbalanced(ins_chunks)):
         chunks = [item[1] for item in marked_chunks]
