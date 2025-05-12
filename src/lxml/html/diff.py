@@ -414,7 +414,7 @@ def cleanup_delete(chunks: list):
             '<del>',
             *chunks[del_start + unbalanced_start + 1 : del_end - unbalanced_end],
             '</del> ',
-            *chunks[del_end - shift_end_left + 1: del_end - 1],
+            *chunks[del_end - shift_end_left: del_end],
         ]
 
         new_del_end = del_end - 2 * shift_end_left
@@ -448,7 +448,7 @@ def cleanup_delete(chunks: list):
         chunks[pos] = '</del> '
         pos += 1
         # Move re-balanced end tags after the '</del>'.
-        for i in range(del_end - shift_end_left + 1, del_end - 1):
+        for i in range(del_end - shift_end_left, del_end):
             chunks[pos] = chunks[i]
             pos += 1
         # Adjust the length of the processed part in 'chunks'.
