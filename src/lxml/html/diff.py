@@ -210,13 +210,16 @@ def htmldiff_tokens(html1_tokens, html2_tokens):
         if command == 'delete' or command == 'replace':
             del_tokens = expand_tokens(html1_tokens[i1:i2])
             merge_delete(del_tokens, result)
-        #print(command, result)
+
+    #print("MERGED", result)
 
     # If deletes were inserted directly as <del> then we'd have an
     # invalid document at this point.  Instead we put in special
     # markers, and when the complete diffed document has been created
     # we try to move the deletes around and resolve any problems.
     cleanup_delete(result)
+
+    #print("CLEANED", result)
 
     return result
 
@@ -313,7 +316,8 @@ def cleanup_delete(chunks: list):
     It may also move the del into adjacent tags to try to move it to a
     similar location where it was originally located (e.g., moving a
     delete into preceding <div> tag, if the del looks like (DEL_START,
-    'Text</div>', DEL_END)"""
+    'Text</div>', DEL_END)
+    """
     chunk_count = len(chunks)
 
     i: cython.Py_ssize_t
@@ -321,6 +325,9 @@ def cleanup_delete(chunks: list):
     del_end: cython.Py_ssize_t
     shift_start_right: cython.Py_ssize_t
     shift_end_left: cython.Py_ssize_t
+    unbalanced_start: cython.Py_ssize_t
+    unbalanced_end: cython.Py_ssize_t
+    pos: cython.Py_ssize_t
     start_pos: cython.Py_ssize_t
     chunk: str
 
@@ -341,6 +348,7 @@ def cleanup_delete(chunks: list):
             del_end = chunks.index(DEL_END, del_start + 1)
 
         shift_end_left = shift_start_right = 0
+        unbalanced_start = unbalanced_end = 0
         deleted_chunks = mark_unbalanced(chunks[del_start+1:del_end])
 
         # For unbalanced start tags at the beginning, find matching (non-deleted)
@@ -350,6 +358,7 @@ def cleanup_delete(chunks: list):
             if balanced != 'us':
                 break
             for _, unbalanced_chunk in marked_chunks:
+                unbalanced_start += 1
                 unbalanced_start_name = tag_name_of_chunk(unbalanced_chunk)
                 for i in range(del_end+1, chunk_count):
                     if chunks[i] is DEL_START:
@@ -376,6 +385,7 @@ def cleanup_delete(chunks: list):
             if balanced != 'ue':
                 break
             for _, unbalanced_chunk in marked_chunks:
+                unbalanced_end += 1
                 unbalanced_end_name = tag_name_of_chunk(unbalanced_chunk)
                 for i in range(del_start - 1, -1, -1):
                     if chunks[i] is DEL_END:
@@ -397,10 +407,12 @@ def cleanup_delete(chunks: list):
 
         #print("PreM", del_start, del_end, shift_start_right, shift_end_left, chunks)
         """
+        # This is what we do below in loops, spelled out using slicing and list copying:
+
         chunks[del_start - shift_end_left : del_end + shift_start_right + 1] = [
             *chunks[del_start + 1: del_start + shift_start_right + 1],
             '<del>',
-            *chunks[del_start + shift_start_right + 1 : del_end - shift_end_left],
+            *chunks[del_start + unbalanced_start + 1 : del_end - unbalanced_end],
             '</del> ',
             *chunks[del_end - shift_end_left + 1: del_end - 1],
         ]
@@ -417,27 +429,31 @@ def cleanup_delete(chunks: list):
             chunks[new_del_end - 1] = chunks[new_del_end - 1][:-1]
         """
         pos = del_start - shift_end_left
+        # Move re-balanced start tags before the '<del>'.
         for i in range(del_start + 1, del_start + shift_start_right + 1):
             chunks[pos] = chunks[i]
             pos += 1
         if pos and not chunks[pos - 1].endswith(' '):
-            # Fix up case where the word before us didn't have a trailing space.
+            # Fix up the case where the word before '<del>' didn't have a trailing space.
             chunks[pos - 1] += ' '
         chunks[pos] = '<del>'
         pos += 1
-        for i in range(del_start + shift_start_right + 1, del_end - shift_end_left):
+        # Copy only the balanced deleted content between '<del>' and '</del>'.
+        for i in range(del_start + unbalanced_start + 1, del_end - unbalanced_end):
             chunks[pos] = chunks[i]
             pos += 1
         if chunks[pos - 1].endswith(' '):
-            # Move space outside of </del>.
+            # Move trailing space outside of </del>.
             chunks[pos - 1] = chunks[pos - 1][:-1]
         chunks[pos] = '</del> '
         pos += 1
-        start_pos = pos
+        # Move re-balanced end tags after the '</del>'.
         for i in range(del_end - shift_end_left + 1, del_end - 1):
             chunks[pos] = chunks[i]
             pos += 1
+        # Adjust the length of the processed part in 'chunks'.
         del chunks[pos : del_end + shift_start_right + 1]
+        start_pos = pos
 
         #print("PostM", del_start, del_end, chunks)
 
