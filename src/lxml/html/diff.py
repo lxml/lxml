@@ -238,8 +238,9 @@ def merge_insert(ins_chunks, doc: list):
     # Though we don't throw away unbalanced start/end tags
     # (we assume there is accompanying markup later or earlier in the
     # document), we only put <ins> around the balanced portion.
-    for balanced, chunks in group_by_first_item(mark_unbalanced(ins_chunks)):
-        chunks = [chunk for _, chunk in chunks]
+    item: tuple
+    for balanced, marked_chunks in group_by_first_item(mark_unbalanced(ins_chunks)):
+        chunks = [item[1] for item in marked_chunks]
         if balanced == 'b':
             if doc and not doc[-1].endswith(' '):
                 # Fix up the case where the word before the insert didn't end with a space.
@@ -280,7 +281,6 @@ if not cython.compiled:
     # Avoid performance regression in Python due to string iteration.
     def tag_name_of_chunk(chunk: str) -> str:
         return chunk.split(None, 1)[0].strip('<>/')
-
 
 
 # These are sentinels to represent the start and end of a <del>
