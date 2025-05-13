@@ -36,12 +36,17 @@ Features added
 Bugs fixed
 ----------
 
+* GH#353: Predicates in ``.find*()`` could mishandle tag indices if a default namespace is provided.
+  Original patch by Luise K.
+
 * Tag names provided by code (API, not data) that are longer than ``INT_MAX``
   could be truncated or mishandled in other ways.
 
 * ``.text_content()`` on ``lxml.html`` elements accidentally returned a "smart string"
   without additional information.  It now returns a plain string.
-  Proposed by Tomi Belan.
+
+* LP#2109931: When building lxml with coverage reporting, it now disables the ``sys.monitoring``
+  support due to the lack of support in https://github.com/nedbat/coveragepy/issues/1790
 
 Other changes
 -------------
