@@ -23,7 +23,6 @@ import itertools
 import functools
 import operator
 import re
-from html import escape as html_escape
 
 from lxml import etree
 from lxml.html import fragment_fromstring
@@ -38,9 +37,38 @@ group_by_first_item = functools.partial(itertools.groupby, key=operator.itemgett
 ## Annotation
 ############################################################
 
+@cython.cfunc
+def html_escape(text: str, _escapes: tuple = ('&amp;', '&lt;', '&gt;', '&quot;', '&#x27;')) -> str:
+    # Not so slow compiled version of 'html.escape()'.
+    # Most of the time, we replace little to nothing, so use a fast decision what needs to be done.
+    ch: cython.Py_UCS4
+    replace: cython.char[5] = [False] * 5
+    for ch in text:
+        if ch == '&':
+            replace[0] = True
+        elif ch == '<':
+            replace[1] = True
+        elif ch == '>':
+            replace[2] = True
+        elif ch == '"':
+            replace[3] = True
+        elif ch == "'":
+            replace[4] = True
+
+    for i in range(5):
+        if replace[i]:
+            text = text.replace('&<>"\''[i], _escapes[i])
+
+    return text
+
+
+if not cython.compiled:
+    from html import escape as html_escape
+
+
 def default_markup(text, version):
     return '<span title="%s">%s</span>' % (
-        html_escape(version, quote=True), text)
+        html_escape(version), text)
 
 def html_annotate(doclist, markup=default_markup):
     """
@@ -807,7 +835,7 @@ def start_tag(el):
     The text representation of the start tag for a tag.
     """
     attributes = ''.join([
-        f' {name}="{html_escape(value, True)}"'
+        f' {name}="{html_escape(value)}"'
         for name, value in el.attrib.items()
     ])
     return f'<{el.tag}{attributes}>'
