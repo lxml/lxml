@@ -203,7 +203,7 @@ class ThreadingTestCase(HelperTestCase):
       <xsl:template match="*">
         <root class="abc">
           <xsl:copy-of select="@class" />
-          <xsl:attribute name="class">xyz</xsl:attribute> 
+          <xsl:attribute name="class">xyz</xsl:attribute>
         </root>
       </xsl:template>
     </xsl:stylesheet>'''))
@@ -503,10 +503,10 @@ class ThreadPipelineTestCase(HelperTestCase):
     def _build_pipeline(self, item_count, *classes, **kwargs):
         in_queue = Queue(item_count)
         start = last = classes[0](in_queue, item_count, **kwargs)
-        start.setDaemon(True)
+        start.daemon = True
         for worker_class in classes[1:]:
             last = worker_class(last.out_queue, item_count, **kwargs)
-            last.setDaemon(True)
+            last.daemon = True
             last.start()
         return in_queue, start, last
 
