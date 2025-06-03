@@ -44,16 +44,11 @@ def html_escape(text: str, _escapes: tuple = ('&amp;', '&lt;', '&gt;', '&quot;',
     ch: cython.Py_UCS4
     replace: cython.char[5] = [False] * 5
     for ch in text:
-        if ch == '&':
-            replace[0] = True
-        elif ch == '<':
-            replace[1] = True
-        elif ch == '>':
-            replace[2] = True
-        elif ch == '"':
-            replace[3] = True
-        elif ch == "'":
-            replace[4] = True
+        replace[0] |= ch == '&'
+        replace[1] |= ch == '<'
+        replace[2] |= ch == '>'
+        replace[3] |= ch == '"'
+        replace[4] |= ch == "'"
 
     for i in range(5):
         if replace[i]:
