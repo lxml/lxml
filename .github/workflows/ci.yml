@@ -39,7 +39,7 @@ jobs:
       matrix:
         # Tests [amd64]
         #
-        os: [ubuntu-22.04, macos-latest, windows-2019]
+        os: [ubuntu-22.04, macos-latest, windows-2022]
         python-version:
           - "3.8"
           - "3.9"
@@ -154,7 +154,7 @@ jobs:
         exclude:
           # Windows sub-jobs
           # ==============
-          - os: windows-2019
+          - os: windows-2022
             env: { STATIC_DEPS: false }  # always static
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
