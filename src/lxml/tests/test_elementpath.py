@@ -24,6 +24,8 @@ class EtreeElementPathTestCase(HelperTestCase):
     etree = etree
     from lxml import _elementpath
 
+    _empty_namespaces = None
+
     def test_cache(self):
         self._elementpath._cache.clear()
         el = self.etree.XML(b'<a><b><c/><c/></b></a>')
@@ -41,6 +43,8 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(2, len(self._elementpath._cache))
 
     def _assert_tokens(self, tokens, path, namespaces=None):
+        if namespaces is None:
+            namespaces = self._empty_namespaces
         self.assertEqual(tokens, list(self._elementpath.xpath_tokenizer(path, namespaces)))
 
     def test_tokenizer(self):
@@ -83,11 +87,33 @@ class EtreeElementPathTestCase(HelperTestCase):
             'a[. = "abc"]',
         )
 
+    def test_tokenizer_index(self):
+        assert_tokens = self._assert_tokens
+        assert_tokens(
+            [('/', ''), ('', 'a'), ('/', ''), ('', 'b'), ('/', ''), ('', 'c'), ('[', ''), ('', '1'), (']', '')],
+            '/a/b/c[1]',
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('/', ''), ('', '{nsnone}c'), ('[', ''), ('', '1'), (']', '')],
+            '/a/b/c[1]',
+            namespaces={None:'nsnone'},
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('[', ''), ('', '2'), (']', ''), ('/', ''), ('', '{nsnone}c'), ('[', ''), ('', '1'), (']', '')],
+            '/a/b[2]/c[1]',
+            namespaces={None:'nsnone'},
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('[', ''), ('', '100'), (']', '')],
+            '/a/b[100]',
+            namespaces={None:'nsnone'}
+        )
+
     def test_xpath_tokenizer(self):
         # Test the XPath tokenizer.  Copied from CPython's "test_xml_etree.py"
         ElementPath = self._elementpath
 
-        def check(p, expected, namespaces=None):
+        def check(p, expected, namespaces=self._empty_namespaces):
             self.assertEqual([op or tag
                               for op, tag in ElementPath.xpath_tokenizer(p, namespaces)],
                              expected)
@@ -141,6 +167,20 @@ class EtreeElementPathTestCase(HelperTestCase):
         check("@{ns}attr", ['@', '{ns}attr'],
               {'': 'http://www.w3.org/2001/XMLSchema',
                'ns': 'http://www.w3.org/2001/XMLSchema'})
+
+        if self.etree is etree:
+            check("/doc/section[2]",
+                ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
+                {"":"http://www.w3.org/2001/XMLSchema"}
+            )
+            check("/doc/section[2]",
+                ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
+                {None:"http://www.w3.org/2001/XMLSchema"}
+            )
+            check("/ns:doc/ns:section[2]",
+                ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
+                {"ns":"http://www.w3.org/2001/XMLSchema"}
+            )
 
     def test_find(self):
         """
@@ -318,15 +358,23 @@ class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
 
     test_cache = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_cache)
     test_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_tokenizer)
+    test_tokenizer_index = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_tokenizer_index)
 
-    if sys.version_info < (3, 8):
-        test_xpath_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_xpath_tokenizer)
+
+class EtreeElementPathEmptyNamespacesTestCase(EtreeElementPathTestCase):
+    _empty_namespaces = {}  # empty dict as opposed to None
+
+
+class EtreeElementPathNonEmptyNamespacesTestCase(EtreeElementPathTestCase):
+    _empty_namespaces = {'unrelated_prefix': 'unrelated_namespace'}  # non-empty but unused dict
 
 
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathEmptyNamespacesTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathNonEmptyNamespacesTestCase)])
     return suite
 
 

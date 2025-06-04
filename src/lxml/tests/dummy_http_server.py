@@ -28,8 +28,8 @@ def webserver(app, port=0, host=None):
 
     import threading
     thread = threading.Thread(target=server.serve_forever,
-                              kwargs={'poll_interval': 0.5})
-    thread.setDaemon(True)
+                              kwargs={'poll_interval': 0.5},
+                              daemon=True)
     thread.start()
     try:
         yield 'http://%s:%s/' % (host, port)  # yield control to 'with' body

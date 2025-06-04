@@ -39,7 +39,7 @@ jobs:
       matrix:
         # Tests [amd64]
         #
-        os: [ubuntu-22.04, macos-latest, windows-2019]
+        os: [ubuntu-22.04, macos-latest, windows-2022]
         python-version:
           - "3.8"
           - "3.9"
@@ -154,7 +154,7 @@ jobs:
         exclude:
           # Windows sub-jobs
           # ==============
-          - os: windows-2019
+          - os: windows-2022
             env: { STATIC_DEPS: false }  # always static
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
@@ -198,8 +198,7 @@ jobs:
         with:
           max-size: 100M
           create-symlink: true
-          verbose: 1
-          key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}
+          key: ${{ runner.os }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
 
       - name: Cache [libs]
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
@@ -251,6 +250,14 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        with:
+          max-size: 100M
+          create-symlink: true
+          key: ${{ runner.os }}-benchmarks-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+
       - name: Setup Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
@@ -262,7 +269,7 @@ jobs:
         run: |
           # Run benchmarks in all Python versions.
           for PYTHON in  python3.14  python3.12  ; do
-              ${PYTHON} -m pip install setuptools "Cython>=3.1.0"
+              ${PYTHON} -m pip install setuptools "Cython>=3.1.1"
               # Compare against arbitrary 6.0-pre baseline revision (compatible with Cython 3.1) and current master.
               ${PYTHON} benchmark/run_benchmarks.py  0eb4f0029497957e58a9f15280b3529bdb18d117  origin/master  HEAD
           done
