@@ -28,6 +28,18 @@ Class HtmlDiff:
     For producing HTML side by side comparison with change highlights.
 """
 
+try:
+    import cython
+except ImportError:
+    class fake_cython:
+        compiled = False
+        def cfunc(self, func): return func
+        def declare(self, _, value): return value
+        def __getattr__(self, type_name): return "object"
+
+    cython = fake_cython()
+
+
 __all__ = ['get_close_matches', 'ndiff', 'restore', 'SequenceMatcher',
            'Differ','IS_CHARACTER_JUNK', 'IS_LINE_JUNK', 'context_diff',
            'unified_diff', 'diff_bytes', 'HtmlDiff', 'Match']
@@ -616,6 +628,7 @@ class SequenceMatcher:
         1.0
         """
 
+        matches: cython.Py_ssize_t
         matches = sum(triple[-1] for triple in self.get_matching_blocks())
         return _calculate_ratio(matches, len(self.a) + len(self.b))
 
@@ -637,7 +650,7 @@ class SequenceMatcher:
         # avail[x] is the number of times x appears in 'b' less the
         # number of times we've seen it in 'a' so far ... kinda
         avail = {}
-        matches = 0
+        matches: cython.Py_ssize_t = 0
         for elt in self.a:
             if elt in avail:
                 numb = avail[elt]

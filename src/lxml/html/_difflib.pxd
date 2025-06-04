@@ -19,7 +19,7 @@ cdef class SequenceMatcher:
                    besti=Py_ssize_t, bestj=Py_ssize_t, bestsize=Py_ssize_t,
                    ahi=Py_ssize_t, bhi=Py_ssize_t,
                    i=Py_ssize_t, j=Py_ssize_t, k=Py_ssize_t)
-    cpdef find_longest_match(self, Py_ssize_t alo=*, ahi_=*, Py_ssize_t blo=*, bhi_=*)
+    cdef find_longest_match(self, Py_ssize_t alo=*, ahi_=*, Py_ssize_t blo=*, bhi_=*)
 
     @cython.locals(
         la=Py_ssize_t, lb=Py_ssize_t, alo=Py_ssize_t, blo=Py_ssize_t,
@@ -27,16 +27,17 @@ cdef class SequenceMatcher:
         i1=Py_ssize_t, j1=Py_ssize_t, k1=Py_ssize_t,
         i2=Py_ssize_t, j2=Py_ssize_t, k2=Py_ssize_t,
     )
-    cpdef get_matching_blocks(self)
+    cdef list get_matching_blocks(self)
 
     @cython.locals(
         i=Py_ssize_t, j=Py_ssize_t,
         ai=Py_ssize_t, bj=Py_ssize_t, size=Py_ssize_t,
     )
-    cpdef get_opcodes(self)
+    @cython.final
+    cdef list get_opcodes(self)
 
-    @cython.locals(matches=Py_ssize_t)
-    cpdef quick_ratio(self)
+    @cython.final
+    cdef double quick_ratio(self)
 
-    @cython.locals(la=Py_ssize_t, lb=Py_ssize_t)
-    cpdef real_quick_ratio(self)
+    @cython.final
+    cdef double real_quick_ratio(self)

@@ -6,6 +6,7 @@ except ImportError:
     class fake_cython:
         compiled = False
         def cfunc(self, func): return func
+        def cclass(self, func): return func
         def declare(self, _, value): return value
         def __getattr__(self, type_name): return "object"
 
@@ -17,8 +18,12 @@ try:
     if inspect.isfunction(difflib.get_close_matches):
         raise ImportError(
             "Embedded difflib is not compiled to a fast binary, using the stdlib instead.")
+    from cython.cimports.lxml.html._difflib import SequenceMatcher
 except ImportError:
     import difflib
+    if not cython.compiled:
+        from difflib import SequenceMatcher
+
 import itertools
 import functools
 import operator
@@ -935,7 +940,10 @@ def _merge_element_contents(el):
             previous.tail = (previous.tail or '') + text
     parent[index:index+1] = el.getchildren()
 
-class InsensitiveSequenceMatcher(difflib.SequenceMatcher):
+
+@cython.final
+@cython.cclass
+class InsensitiveSequenceMatcher(SequenceMatcher):
     """
     Acts like SequenceMatcher, but tries not to find very small equal
     blocks amidst large spans of changes
@@ -943,13 +951,16 @@ class InsensitiveSequenceMatcher(difflib.SequenceMatcher):
 
     threshold = 2
 
-    def get_matching_blocks(self):
-        size = min(len(self.b), len(self.b))
-        threshold = min(self.threshold, size / 4)
-        actual = difflib.SequenceMatcher.get_matching_blocks(self)
+    @cython.cfunc
+    def get_matching_blocks(self) -> list:
+        size: cython.Py_ssize_t = min(len(self.b), len(self.b))
+        threshold: cython.Py_ssize_t = self.threshold
+        threshold = min(threshold, size // 4)
+        actual = SequenceMatcher.get_matching_blocks(self)
         return [item for item in actual
                 if item[2] > threshold
                 or not item[2]]
+
 
 if __name__ == '__main__':
     from lxml.html import _diffcommand
