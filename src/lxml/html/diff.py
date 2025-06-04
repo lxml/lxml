@@ -241,15 +241,11 @@ def htmldiff_tokens(html1_tokens, html2_tokens):
             del_tokens = expand_tokens(html1_tokens[i1:i2])
             merge_delete(del_tokens, result)
 
-    #print("MERGED", result)
-
     # If deletes were inserted directly as <del> then we'd have an
     # invalid document at this point.  Instead we put in special
     # markers, and when the complete diffed document has been created
     # we try to move the deletes around and resolve any problems.
     cleanup_delete(result)
-
-    #print("CLEANED", result)
 
     return result
 
@@ -294,8 +290,6 @@ def merge_insert(ins_chunks, doc: list):
             # unmatched start or end
             doc.extend(chunks)
 
-    #print("INS", doc)
-
 
 @cython.cfunc
 def tag_name_of_chunk(chunk: str) -> str:
@@ -336,9 +330,6 @@ def merge_delete(del_chunks, doc: list):
     list of text chunks) with marker to show it is a delete.
     cleanup_delete later resolves these markers into <del> tags."""
 
-    #del_chunks = list(del_chunks)
-    #print("DEL", del_chunks, doc)
-
     doc.append(DEL_START)
     doc.extend(del_chunks)
     doc.append(DEL_END)
@@ -367,8 +358,6 @@ def cleanup_delete(chunks: list):
     start_pos: cython.Py_ssize_t
     chunk: str
 
-    #print("CHUNKS VH", chunks)
-
     start_pos = 0
     while 1:
         # Find a pending DEL_START/DEL_END, splitting the document
@@ -378,7 +367,6 @@ def cleanup_delete(chunks: list):
             del_start = chunks.index(DEL_START, start_pos)
         except ValueError:
             # Nothing found, we've cleaned up the entire doc
-            #print("CHUNKS NH", chunks)
             break
         else:
             del_end = chunks.index(DEL_END, del_start + 1)
@@ -389,7 +377,6 @@ def cleanup_delete(chunks: list):
 
         # For unbalanced start tags at the beginning, find matching (non-deleted)
         # end tags after the current DEL_END and move the start tag outside.
-        #print("DEL-M", deleted_chunks)
         for balanced, del_chunk in deleted_chunks:
             if balanced != 'us':
                 break
@@ -412,7 +399,6 @@ def cleanup_delete(chunks: list):
                     break
                 # Exclude start tag to balance the end tag.
                 shift_start_right += 1
-            #print("START", chunks[del_start - shift_start_right : del_start + shift_start_right])
 
         # For unbalanced end tags at the end, find matching (non-deleted)
         # start tags before the currend DEL_START and move the end tag outside.
@@ -437,9 +423,7 @@ def cleanup_delete(chunks: list):
                     break
                 # Exclude end tag to balance the start tag.
                 shift_end_left += 1
-            #print("END", chunks[del_end - shift_end_left: del_end + shift_end_left])
 
-        #print("PreM", del_start, del_end, shift_start_right, shift_end_left, chunks)
         """
         # This is what we do below in loops, spelled out using slicing and list copying:
 
@@ -488,8 +472,6 @@ def cleanup_delete(chunks: list):
         # Adjust the length of the processed part in 'chunks'.
         del chunks[pos : del_end + shift_start_right + 1]
         start_pos = pos
-
-        #print("PostM", del_start, del_end, chunks)
 
 
 @cython.cfunc
@@ -543,7 +525,6 @@ def mark_unbalanced(chunks) -> list:
         parents.extend(marked)
         marked = parents
 
-    #print("MARKED", marked)
     return marked
 
 
