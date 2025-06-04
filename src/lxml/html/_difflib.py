@@ -46,7 +46,11 @@ __all__ = ['get_close_matches', 'ndiff', 'restore', 'SequenceMatcher',
 
 from heapq import nlargest as _nlargest
 from collections import namedtuple as _namedtuple
-from types import GenericAlias
+
+try:
+    from types import GenericAlias
+except ImportError:
+    GenericAlias = None
 
 Match = _namedtuple('Match', 'a b size')
 
@@ -673,7 +677,8 @@ class SequenceMatcher:
         # shorter sequence
         return _calculate_ratio(min(la, lb), la + lb)
 
-    __class_getitem__ = classmethod(GenericAlias)
+    if GenericAlias is not None:
+        __class_getitem__ = classmethod(GenericAlias)
 
 
 def get_close_matches(word, possibilities, n=3, cutoff=0.6):
