@@ -876,15 +876,17 @@ def _contains_block_level_tag(el):
         return True
     return False
 
+
 def _move_el_inside_block(el, tag):
     """ helper for _fixup_ins_del_tags; actually takes the <ins> etc tags
     and moves them inside any block-level tags.  """
+    makeelement = el.makeelement
     for child in el:
         if _contains_block_level_tag(child):
             break
     else:
         # No block-level tags in any child
-        children_tag = etree.Element(tag)
+        children_tag = makeelement(tag)
         children_tag.text = el.text
         el.text = None
         children_tag.extend(iter(el))
@@ -895,19 +897,20 @@ def _move_el_inside_block(el, tag):
         if _contains_block_level_tag(child):
             _move_el_inside_block(child, tag)
             if child.tail:
-                tail_tag = etree.Element(tag)
+                tail_tag = makeelement(tag)
                 tail_tag.text = child.tail
                 child.tail = None
                 child.addnext(tail_tag)
         else:
-            child_tag = etree.Element(tag)
+            child_tag = makeelement(tag)
             el.replace(child, child_tag)
             child_tag.append(child)
     if el.text:
-        text_tag = etree.Element(tag)
+        text_tag = makeelement(tag)
         text_tag.text = el.text
         el.text = None
         el.insert(0, text_tag)
+
 
 def _merge_element_contents(el):
     """
@@ -916,31 +919,20 @@ def _merge_element_contents(el):
     <p>Hi there!</p>
     """
     parent = el.getparent()
-    text = el.text or ''
-    if el.tail:
+    text = el.text
+    tail = el.tail
+    if tail:
         if not len(el):
-            text += el.tail
+            text = (text or '') + tail
         else:
-            if el[-1].tail:
-                el[-1].tail += el.tail
-            else:
-                el[-1].tail = el.tail
+            el[-1].tail = (el[-1].tail or '') + tail
     index = parent.index(el)
     if text:
-        if index == 0:
-            previous = None
-        else:
-            previous = parent[index-1]
+        previous = el.getprevious()
         if previous is None:
-            if parent.text:
-                parent.text += text
-            else:
-                parent.text = text
+            parent.text = (parent.text or '') + text
         else:
-            if previous.tail:
-                previous.tail += text
-            else:
-                previous.tail = text
+            previous.tail = (previous.tail or '') + text
     parent[index:index+1] = el.getchildren()
 
 class InsensitiveSequenceMatcher(difflib.SequenceMatcher):
