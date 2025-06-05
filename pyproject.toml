@@ -35,7 +35,8 @@ skip = [
 #test-command = "python {package}/test.py -vv"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x", "armv7l"]
+#archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x", "armv7l"]
+archs = ["x86_64", "aarch64", "i686", "armv7l"]
 repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
