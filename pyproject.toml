@@ -3,7 +3,7 @@ requires = ["Cython>=3.1.1", "setuptools", "wheel"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.14.2", LIBXSLT_VERSION = "1.1.43"}
+environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.14.3", LIBXSLT_VERSION = "1.1.43"}
 enable = "pypy cpython-prerelease"
        # "pypy"
        # "cpython-prerelease"
