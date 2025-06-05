@@ -46,7 +46,7 @@ NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
 LDFLAGS = "-fPIC -flto"
 STATIC_DEPS = "true"
-LIBXML2_VERSION = "2.14.2"
+LIBXML2_VERSION = "2.14.3"
 LIBXSLT_VERSION = "1.1.43"
 
 [[tool.cibuildwheel.overrides]]
