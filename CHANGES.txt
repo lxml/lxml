@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* GH#463: ``lxml.html.diff`` is faster and provides structurally better diffs.
+  Original patch by Steven Fernandez.
+
 * GH#405: The factories ``Element`` and ``ElementTree`` can now be used in type hints.
 
 * GH#448: Parsing from ``memoryview`` and other buffers is supported to allow zero-copy parsing.
@@ -67,6 +70,7 @@ Other changes
   To test the availability, use ``"http" in etree.LIBXML_FEATURES``.
 
 * Windows binary wheels use the library versions libxml2 2.11.9, libxslt 1.1.39 and libiconv 1.17.
+  They are now based on VS-2022.
 
 * Built using Cython 3.1.1.
 
