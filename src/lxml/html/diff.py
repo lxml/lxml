@@ -886,8 +886,8 @@ def _move_el_inside_block(el, tag):
     """ helper for _fixup_ins_del_tags; actually takes the <ins> etc tags
     and moves them inside any block-level tags.  """
     makeelement = el.makeelement
-    for child in el:
-        if _contains_block_level_tag(child):
+    for block_level_el in el.iter(*any_block_level_tag):
+        if block_level_el is not el:
             break
     else:
         # No block-level tags in any child
