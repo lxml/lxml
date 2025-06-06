@@ -1,4 +1,5 @@
 # Copied from CPython 3.14b2+.
+# cython: infer_types=True
 
 """
 Module difflib -- helpers for computing deltas between objects.

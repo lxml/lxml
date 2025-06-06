@@ -22,7 +22,8 @@ cdef class SequenceMatcher:
     cdef find_longest_match(self, Py_ssize_t alo=*, ahi_=*, Py_ssize_t blo=*, bhi_=*)
 
     @cython.locals(
-        la=Py_ssize_t, lb=Py_ssize_t, alo=Py_ssize_t, blo=Py_ssize_t,
+        la=Py_ssize_t, lb=Py_ssize_t,
+        alo=Py_ssize_t, blo=Py_ssize_t, ahi=Py_ssize_t, bhi=Py_ssize_t,
         i=Py_ssize_t, j=Py_ssize_t, k=Py_ssize_t,
         i1=Py_ssize_t, j1=Py_ssize_t, k1=Py_ssize_t,
         i2=Py_ssize_t, j2=Py_ssize_t, k2=Py_ssize_t,
