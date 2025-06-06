@@ -864,6 +864,8 @@ def serialize_html_fragment(el, skip_outer=False):
     else:
         return html
 
+
+@cython.cfunc
 def _fixup_ins_del_tags(doc):
     """fixup_ins_del_tags that works on an lxml document in-place
     """
@@ -874,6 +876,8 @@ def _fixup_ins_del_tags(doc):
         el.drop_tag()
         #_merge_element_contents(el)
 
+
+@cython.cfunc
 def _contains_block_level_tag(el):
     """True if the element contains any block-level elements, like <p>, <td>, etc.
     """
@@ -882,6 +886,7 @@ def _contains_block_level_tag(el):
     return False
 
 
+@cython.cfunc
 def _move_el_inside_block(el, tag):
     """ helper for _fixup_ins_del_tags; actually takes the <ins> etc tags
     and moves them inside any block-level tags.  """
