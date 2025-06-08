@@ -5,10 +5,11 @@ Test cases related to Schematron parsing and validation
 
 import unittest
 
-from .common_imports import etree, HelperTestCase, make_doctest
+from .common_imports import etree, HelperTestCase, make_doctest, needs_feature
 
 
 class ETreeSchematronTestCase(HelperTestCase):
+    @needs_feature("schematron")
     def test_schematron(self):
         tree_valid = self.parse('<AAA><BBB/><CCC/></AAA>')
         tree_invalid = self.parse('<AAA><BBB/><CCC/><DDD/></AAA>')
@@ -39,9 +40,11 @@ class ETreeSchematronTestCase(HelperTestCase):
         self.assertTrue(schema.validate(tree_valid))             # repeat valid
         self.assertFalse(schema.error_log.filter_from_errors())  # repeat valid
 
+    @needs_feature("schematron")
     def test_schematron_elementtree_error(self):
         self.assertRaises(ValueError, etree.Schematron, etree.ElementTree())
 
+    @needs_feature("schematron")
     def test_schematron_invalid_schema(self):
         schema = self.parse('''\
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" >
@@ -52,6 +55,7 @@ class ETreeSchematronTestCase(HelperTestCase):
         self.assertRaises(etree.SchematronParseError,
                           etree.Schematron, schema)
 
+    @needs_feature("schematron")
     def test_schematron_invalid_schema_empty(self):
         schema = self.parse('''\
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" />
@@ -59,6 +63,7 @@ class ETreeSchematronTestCase(HelperTestCase):
         self.assertRaises(etree.SchematronParseError,
                           etree.Schematron, schema)
 
+    @needs_feature("schematron")
     def test_schematron_invalid_schema_namespace(self):
         # segfault
         schema = self.parse('''\
