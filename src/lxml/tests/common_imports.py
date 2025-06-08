@@ -59,6 +59,10 @@ def needs_libxml(*version):
 
 
 def needs_feature(feature_name):
+    assert feature_name in [
+        'catalog', 'ftp', 'html', 'http', 'iconv', 'icu',
+        'lzma', 'regexp', 'schematron', 'xmlschema', 'xpath', 'zlib',
+    ], feature_name
     features = ', '.join(sorted(etree.LIBXML_FEATURES))
     return unittest.skipIf(
         feature_name not in etree.LIBXML_FEATURES,
