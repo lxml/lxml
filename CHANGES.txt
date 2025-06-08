@@ -64,6 +64,9 @@ Other changes
   but may get disabled or removed in later (x.y.0) releases.  To test the availability,
   use ``"zlib" in etree.LIBXML_FEATURES``.
 
+* The ``Schematron`` class is deprecated and will become non-functional in a future lxml version.
+  The feature will soon be removed from libxml2 and stop being available.
+
 * Binary wheels use the library versions libxml2 2.14.3 and libxslt 1.1.43.
   Note that this disables direct HTTP and FTP support for parsing from URLs.
   Use Python URL request tools instead (which usually also support HTTPS).
