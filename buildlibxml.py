@@ -26,6 +26,9 @@ except:
 sys_platform = sys.platform
 
 
+MAX_WINLIBS_RELEASE = "2025.05.19"
+
+
 # use pre-built libraries on Windows
 
 def download_and_extract_windows_binaries(destdir):
@@ -39,8 +42,10 @@ def download_and_extract_windows_binaries(destdir):
 
     max_release = {'tag_name': ''}
     for release in releases:
-        if max_release['tag_name'] < release.get('tag_name', ''):
-            max_release = release
+        tag_name = release.get('tag_name', '')
+        if max_release['tag_name'] < tag_name:
+            if tag_name <= MAX_WINLIBS_RELEASE:
+                max_release = release
 
     url = "https://github.com/lxml/libxml2-win-binaries/releases/download/%s/" % max_release['tag_name']
     filenames = [asset['name'] for asset in max_release.get('assets', ())]
@@ -53,9 +58,6 @@ def download_and_extract_windows_binaries(destdir):
         arch = "win64"
     else:
         arch = "win32"
-
-    if sys.version_info < (3, 5):
-        arch = 'vs2008.' + arch
 
     arch_part = '.' + arch + '.'
     filenames = [filename for filename in filenames if arch_part in filename]
