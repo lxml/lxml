@@ -286,6 +286,7 @@ See the websites of lxml
 
 * `older releases <https://lxml.de/5.0/#old-versions>`_
 
+.. _`lxml 5.3.2`: /files/lxml-5.3.2.tgz
 .. _`lxml 5.3.1`: /files/lxml-5.3.1.tgz
 .. _`lxml 5.3.0`: /files/lxml-5.3.0.tgz
 .. _`lxml 5.2.2`: /files/lxml-5.2.2.tgz
@@ -297,6 +298,7 @@ See the websites of lxml
 .. _`lxml 5.0.1`: /files/lxml-5.0.1.tgz
 .. _`lxml 5.0.0`: /files/lxml-5.0.0.zip
 
+.. _`changes for 5.3.2`: /changes-5.3.2.html
 .. _`changes for 5.3.1`: /changes-5.3.1.html
 .. _`changes for 5.3.0`: /changes-5.3.0.html
 .. _`changes for 5.2.2`: /changes-5.2.2.html
