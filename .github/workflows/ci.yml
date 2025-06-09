@@ -173,7 +173,6 @@ jobs:
       USE_CCACHE: 1
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
-      CCACHE_COMPRESSLEVEL: 5
       CCACHE_MAXSIZE: "100M"
 
     steps:
