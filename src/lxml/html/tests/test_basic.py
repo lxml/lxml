@@ -39,6 +39,38 @@ class TestBasicFeatures(unittest.TestCase):
             'c': '',
         })
 
+    def test_element_head_body(self):
+        doc = html.fromstring("""
+        <HTML>
+          <HEAD>
+          </HEAD>
+          <BODY>
+            <p>
+          </body>
+        </HTML>
+        """)
+
+        head = doc.head
+        body = doc.body
+
+        self.assertIs(doc.head, head)
+        self.assertIs(doc.body, body)
+        self.assertIs(doc[0].head, head)
+        self.assertIs(doc[0].body, body)
+        self.assertIs(doc[1].head, head)
+        self.assertIs(doc[1].body, body)
+        self.assertIs(doc[1][0].head, head)
+        self.assertIs(doc[1][0].body, body)
+
+    def test_element_head_body_empty(self):
+        doc = html.fromstring("""
+        <HTML>
+        </HTML>
+        """)
+        self.assertIsNone(doc.head)
+        self.assertIsNone(doc.body)
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([doctest.DocFileSuite('test_basic.txt')])
