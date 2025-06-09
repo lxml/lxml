@@ -75,7 +75,7 @@ Other changes
 * Windows binary wheels use the library versions libxml2 2.11.9, libxslt 1.1.39 and libiconv 1.17.
   They are now based on VS-2022.
 
-* Built using Cython 3.1.1.
+* Built using Cython 3.1.2.
 
 * The debug methods ``MemDebug.dump()`` and ``MemDebug.show()`` were removed completely.
   libxml2 2.13.0 discarded this feature.
