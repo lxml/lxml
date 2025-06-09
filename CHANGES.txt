@@ -42,6 +42,10 @@ Bugs fixed
 * GH#353: Predicates in ``.find*()`` could mishandle tag indices if a default namespace is provided.
   Original patch by Luise K.
 
+* GH#272: The ``head`` and ``body`` properties of ``lxml.html`` elements failed if no such element
+  was found.  They now return ``None`` instead.
+  Original patch by FVolral.
+
 * Tag names provided by code (API, not data) that are longer than ``INT_MAX``
   could be truncated or mishandled in other ways.
 
