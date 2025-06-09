@@ -83,8 +83,10 @@ cdef class Schematron(_Validator):
 
         import warnings
         warnings.warn(
+            "The (non-ISO) Schematron feature is deprecated and will be removed from libxml2 and lxml. "
+            "Use 'lxml.isoschematron' instead.",
             DeprecationWarning,
-            "The (non-ISO) Schematron feature is deprecated and will be removed from libxml2 and lxml.")
+        )
 
         if etree is not None:
             doc = _documentOrRaise(etree)
