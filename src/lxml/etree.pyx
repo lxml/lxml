@@ -1747,16 +1747,18 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     if type(element_class) is not type:
         if not isinstance(element_class, type):
             raise TypeError(f"Element class is not a type, got {type(element_class)}")
-    if hasProxy(c_node):
-        # prevent re-entry race condition - we just called into Python
-        return getProxy(c_node)
-    result = element_class.__new__(element_class)
-    if hasProxy(c_node):
-        # prevent re-entry race condition - we just called into Python
-        result._c_node = NULL
-        return getProxy(c_node)
 
-    _registerProxy(result, doc, c_node)
+    with cython.critical_section(doc):
+        if hasProxy(c_node):
+            # prevent re-entry race condition - we just called into Python
+            return getProxy(c_node)
+        result = element_class.__new__(element_class)
+        if hasProxy(c_node):
+            # prevent re-entry race condition - we just called into Python
+            result._c_node = NULL
+            return getProxy(c_node)
+        _registerProxy(result, doc, c_node)
+
     if element_class is not _Element:
         result._init()
     return result
