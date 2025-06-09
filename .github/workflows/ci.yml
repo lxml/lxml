@@ -173,6 +173,7 @@ jobs:
       USE_CCACHE: 1
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
+      CCACHE_COMPRESSLEVEL: 5
       CCACHE_MAXSIZE: "100M"
 
     steps:
@@ -239,6 +240,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
+      CCACHE_SLOPPINESS: "pch_defines,time_macros"
+      CCACHE_COMPRESS: 1
+      CCACHE_COMPRESSLEVEL: 5
       STATIC_DEPS: true
       LIBXML2_VERSION: 2.14.3
       LIBXSLT_VERSION: 1.1.43
@@ -254,7 +258,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         if: runner.os == 'Linux' || runner.os == 'macOS'
         with:
-          max-size: 100M
+          max-size: 150M
           create-symlink: true
           key: ${{ runner.os }}-benchmarks-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
 
