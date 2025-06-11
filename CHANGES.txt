@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* GH#463: ``lxml.html.diff`` is faster and provides structurally better diffs.
+  Original patch by Steven Fernandez.
+
 * GH#405: The factories ``Element`` and ``ElementTree`` can now be used in type hints.
 
 * GH#448: Parsing from ``memoryview`` and other buffers is supported to allow zero-copy parsing.
@@ -39,6 +42,10 @@ Bugs fixed
 * GH#353: Predicates in ``.find*()`` could mishandle tag indices if a default namespace is provided.
   Original patch by Luise K.
 
+* GH#272: The ``head`` and ``body`` properties of ``lxml.html`` elements failed if no such element
+  was found.  They now return ``None`` instead.
+  Original patch by FVolral.
+
 * Tag names provided by code (API, not data) that are longer than ``INT_MAX``
   could be truncated or mishandled in other ways.
 
@@ -61,14 +68,18 @@ Other changes
   but may get disabled or removed in later (x.y.0) releases.  To test the availability,
   use ``"zlib" in etree.LIBXML_FEATURES``.
 
-* Binary wheels use the library versions libxml2 2.14.2 and libxslt 1.1.43.
+* The ``Schematron`` class is deprecated and will become non-functional in a future lxml version.
+  The feature will soon be removed from libxml2 and stop being available.
+
+* Binary wheels use the library versions libxml2 2.14.3 and libxslt 1.1.43.
   Note that this disables direct HTTP and FTP support for parsing from URLs.
   Use Python URL request tools instead (which usually also support HTTPS).
   To test the availability, use ``"http" in etree.LIBXML_FEATURES``.
 
 * Windows binary wheels use the library versions libxml2 2.11.9, libxslt 1.1.39 and libiconv 1.17.
+  They are now based on VS-2022.
 
-* Built using Cython 3.1.1.
+* Built using Cython 3.1.2.
 
 * The debug methods ``MemDebug.dump()`` and ``MemDebug.show()`` were removed completely.
   libxml2 2.13.0 discarded this feature.

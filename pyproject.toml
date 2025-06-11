@@ -1,9 +1,9 @@
 [build-system]
-requires = ["Cython>=3.1.1", "setuptools", "wheel"]
+requires = ["Cython>=3.1.2", "setuptools", "wheel"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.14.2", LIBXSLT_VERSION = "1.1.43"}
+environment = {STATIC_DEPS="true", LIBXML2_VERSION = "2.14.3", LIBXSLT_VERSION = "1.1.43"}
 enable = "pypy cpython-prerelease"
        # "pypy"
        # "cpython-prerelease"
@@ -35,7 +35,8 @@ skip = [
 #test-command = "python {package}/test.py -vv"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x", "armv7l"]
+#archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x", "armv7l"]
+archs = ["x86_64", "aarch64", "i686", "armv7l"]
 repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
@@ -45,7 +46,7 @@ NM = "gcc-nm"
 RANLIB = "gcc-ranlib"
 LDFLAGS = "-fPIC -flto"
 STATIC_DEPS = "true"
-LIBXML2_VERSION = "2.14.2"
+LIBXML2_VERSION = "2.14.3"
 LIBXSLT_VERSION = "1.1.43"
 
 [[tool.cibuildwheel.overrides]]

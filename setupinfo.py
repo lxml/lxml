@@ -20,6 +20,7 @@ COMPILED_MODULES = [
     "lxml.builder",
     "lxml._elementpath",
     "lxml.html.diff",
+    "lxml.html._difflib",
     "lxml.sax",
 ]
 HEADER_FILES = ['etree.h', 'etree_api.h']

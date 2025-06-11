@@ -80,6 +80,14 @@ cdef class Schematron(_Validator):
         if not config.ENABLE_SCHEMATRON:
             raise SchematronError, \
                 "lxml.etree was compiled without Schematron support."
+
+        import warnings
+        warnings.warn(
+            "The (non-ISO) Schematron feature is deprecated and will be removed from libxml2 and lxml. "
+            "Use 'lxml.isoschematron' instead.",
+            DeprecationWarning,
+        )
+
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)

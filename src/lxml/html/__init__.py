@@ -263,7 +263,9 @@ class HtmlMixin:
         Return the <body> element.  Can be called from a child element
         to get the document's head.
         """
-        return self.xpath('//body|//x:body', namespaces={'x':XHTML_NAMESPACE})[0]
+        for element in self.getroottree().iter("body", f"{{{XHTML_NAMESPACE}}}body"):
+            return element
+        return None
 
     @property
     def head(self):
@@ -271,7 +273,9 @@ class HtmlMixin:
         Returns the <head> element.  Can be called from a child
         element to get the document's head.
         """
-        return self.xpath('//head|//x:head', namespaces={'x':XHTML_NAMESPACE})[0]
+        for element in self.getroottree().iter("head", f"{{{XHTML_NAMESPACE}}}head"):
+            return element
+        return None
 
     @property
     def label(self):

@@ -4,11 +4,13 @@ Test cases related to Schematron parsing and validation
 
 
 import unittest
+import warnings
 
-from .common_imports import etree, HelperTestCase, make_doctest
+from .common_imports import etree, HelperTestCase, make_doctest, needs_feature
 
 
 class ETreeSchematronTestCase(HelperTestCase):
+    @needs_feature("schematron")
     def test_schematron(self):
         tree_valid = self.parse('<AAA><BBB/><CCC/></AAA>')
         tree_invalid = self.parse('<AAA><BBB/><CCC/><DDD/></AAA>')
@@ -29,7 +31,12 @@ class ETreeSchematronTestCase(HelperTestCase):
      </pattern>
 </schema>
 ''')
-        schema = etree.Schematron(schema)
+        with warnings.catch_warnings(record=True) as depwarn:
+            warnings.resetwarnings()
+            schema = etree.Schematron(schema)
+        self.assertTrue(depwarn)
+        self.assertTrue([w for w in depwarn if w.category is DeprecationWarning])
+
         self.assertTrue(schema.validate(tree_valid))
         self.assertFalse(schema.error_log.filter_from_errors())
 
@@ -39,9 +46,14 @@ class ETreeSchematronTestCase(HelperTestCase):
         self.assertTrue(schema.validate(tree_valid))             # repeat valid
         self.assertFalse(schema.error_log.filter_from_errors())  # repeat valid
 
+    @needs_feature("schematron")
     def test_schematron_elementtree_error(self):
-        self.assertRaises(ValueError, etree.Schematron, etree.ElementTree())
+        with warnings.catch_warnings(record=True) as depwarn:
+            warnings.resetwarnings()
+            self.assertRaises(ValueError, etree.Schematron, etree.ElementTree())
+        self.assertTrue(depwarn)
 
+    @needs_feature("schematron")
     def test_schematron_invalid_schema(self):
         schema = self.parse('''\
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" >
@@ -49,23 +61,34 @@ class ETreeSchematronTestCase(HelperTestCase):
      </pattern>
 </schema>
 ''')
-        self.assertRaises(etree.SchematronParseError,
-                          etree.Schematron, schema)
+        with warnings.catch_warnings(record=True) as depwarn:
+            warnings.resetwarnings()
+            self.assertRaises(etree.SchematronParseError,
+                            etree.Schematron, schema)
+        self.assertTrue(depwarn)
 
+    @needs_feature("schematron")
     def test_schematron_invalid_schema_empty(self):
         schema = self.parse('''\
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" />
 ''')
-        self.assertRaises(etree.SchematronParseError,
-                          etree.Schematron, schema)
+        with warnings.catch_warnings(record=True) as depwarn:
+            warnings.resetwarnings()
+            self.assertRaises(etree.SchematronParseError,
+                            etree.Schematron, schema)
+        self.assertTrue(depwarn)
 
+    @needs_feature("schematron")
     def test_schematron_invalid_schema_namespace(self):
         # segfault
         schema = self.parse('''\
 <schema xmlns="mynamespace" />
 ''')
-        self.assertRaises(etree.SchematronParseError,
-                          etree.Schematron, schema)
+        with warnings.catch_warnings(record=True) as depwarn:
+            warnings.resetwarnings()
+            self.assertRaises(etree.SchematronParseError,
+                            etree.Schematron, schema)
+        self.assertTrue(depwarn)
 
 
 def test_suite():

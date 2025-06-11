@@ -113,7 +113,7 @@ jobs:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
 
     env:
-      LIBXML2_VERSION: 2.14.2
+      LIBXML2_VERSION: 2.14.3
       LIBXSLT_VERSION: 1.1.43
 
     steps:

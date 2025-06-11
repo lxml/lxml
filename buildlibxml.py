@@ -54,9 +54,6 @@ def download_and_extract_windows_binaries(destdir):
     else:
         arch = "win32"
 
-    if sys.version_info < (3, 5):
-        arch = 'vs2008.' + arch
-
     arch_part = '.' + arch + '.'
     filenames = [filename for filename in filenames if arch_part in filename]
 
