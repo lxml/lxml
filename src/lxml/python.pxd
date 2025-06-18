@@ -67,6 +67,8 @@ cdef extern from "Python.h":
 
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
+    cdef PyObject* PyDict_GetItemWithError(object d, object key) except? NULL
+    cdef object PyDict_GetItemRef(object d, object key)
     cdef object PyDictProxy_New(object d)
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)

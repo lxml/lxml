@@ -44,6 +44,9 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     """Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node = proxy._c_node
+    if c_node._private is not <void*>proxy:
+        import tracemalloc
+        tracemalloc.get_object_traceback(proxy)
     assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
     c_node._private = NULL
     return 0

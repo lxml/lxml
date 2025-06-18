@@ -113,8 +113,8 @@ cdef class Resolver:
 cdef class _ResolverRegistry:
     cdef object _resolvers
     cdef Resolver _default_resolver
+
     def __cinit__(self, Resolver default_resolver=None):
-        self._resolvers = set()
         self._default_resolver = default_resolver
 
     def add(self, Resolver resolver not None):
@@ -128,16 +128,20 @@ cdef class _ResolverRegistry:
         default resolver.  The resolvers will be tested in an arbitrary order
         until the first match is found.
         """
+        if self._resolvers is None:
+            self._resolvers = set()
         self._resolvers.add(resolver)
 
     def remove(self, resolver):
         "remove(self, resolver)"
-        self._resolvers.discard(resolver)
+        if self._resolvers is not None:
+            self._resolvers.discard(resolver)
 
     cdef _ResolverRegistry _copy(self):
         cdef _ResolverRegistry registry
         registry = _ResolverRegistry(self._default_resolver)
-        registry._resolvers = self._resolvers.copy()
+        if self._resolvers is not None:
+            registry._resolvers = self._resolvers.copy()
         return registry
 
     def copy(self):
@@ -146,16 +150,17 @@ cdef class _ResolverRegistry:
 
     def resolve(self, system_url, public_id, context):
         "resolve(self, system_url, public_id, context)"
-        for resolver in self._resolvers:
-            result = resolver.resolve(system_url, public_id, context)
-            if result is not None:
-                return result
+        if self._resolvers is not None:
+            for resolver in self._resolvers:
+                result = resolver.resolve(system_url, public_id, context)
+                if result is not None:
+                    return result
         if self._default_resolver is None:
             return None
         return self._default_resolver.resolve(system_url, public_id, context)
 
     def __repr__(self):
-        return repr(self._resolvers)
+        return repr(self._resolvers if self._resolvers is not None else set())
 
 
 @cython.internal
@@ -172,7 +177,6 @@ cdef class _ResolverContext(_ExceptionContext):
 cdef _initResolverContext(_ResolverContext context,
                           _ResolverRegistry resolvers):
     if resolvers is None:
-        context._resolvers = _ResolverRegistry()
-    else:
-        context._resolvers = resolvers
+        resolvers = _ResolverRegistry()
+    context._resolvers = resolvers
     context._storage = _TempStore()

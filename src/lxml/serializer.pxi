@@ -99,7 +99,12 @@ cdef _tostring(_Element element, encoding, doctype, method,
     _assertValidNode(element)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        return _textToString(element._c_node, encoding, with_tail)
+        doc = element._doc
+        doc.lock_read()
+        try:
+            return _textToString(element._c_node, encoding, with_tail)
+        finally:
+            doc.unlock_read()
     if encoding is None or encoding is unicode:
         c_enc = NULL
     else:
@@ -122,15 +127,18 @@ cdef _tostring(_Element element, encoding, doctype, method,
         tree.xmlCharEncCloseFunc(enchandler)
         raise MemoryError()
 
+    doc = element._doc
+    doc.lock_read()
     with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_doctype, c_method,
-                           write_xml_declaration, write_complete_document,
-                           pretty_print, with_tail, standalone)
+                        write_xml_declaration, write_complete_document,
+                        pretty_print, with_tail, standalone)
         tree.xmlOutputBufferFlush(c_buffer)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
         else:
             c_result_buffer = c_buffer.buffer
+    doc.unlock_read()
 
     error_result = c_buffer.error
     if error_result != xmlerror.XML_ERR_OK:
@@ -632,7 +640,12 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        data = _textToString(element._c_node, encoding, with_tail)
+        doc = element._doc
+        doc.lock_read()
+        try:
+            data = _textToString(element._c_node, encoding, with_tail)
+        finally:
+            doc.unlock_read()
         if compression:
             bytes_out = BytesIO()
             with GzipFile(fileobj=bytes_out, mode='wb', compresslevel=compression) as gzip_file:
@@ -659,15 +672,20 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         c_doctype = _xcstr(doctype)
 
     writer = _create_output_buffer(f, c_enc, compression, &c_buffer, close=False)
-    if writer is None:
-        with nogil:
+    doc = element._doc
+    doc.lock_read()
+    try:
+        if writer is None:
+            with nogil:
+                error_result = _serialise_node(
+                    c_buffer, c_doctype, c_enc, element._c_node, c_method,
+                    write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
+        else:
             error_result = _serialise_node(
                 c_buffer, c_doctype, c_enc, element._c_node, c_method,
                 write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
-    else:
-        error_result = _serialise_node(
-            c_buffer, c_doctype, c_enc, element._c_node, c_method,
-            write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
+    finally:
+        doc.unlock_read()
 
     if writer is not None:
         writer._exc_context._raise_if_stored()

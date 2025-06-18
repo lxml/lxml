@@ -54,7 +54,11 @@ def strip_attributes(tree_or_element, *attribute_names):
     matcher.cacheTags(element._doc)
     if matcher.rejectsAllAttributes():
         return
+
+    doc = element._doc
+    doc.lock_write()
     _strip_attributes(element._c_node, matcher)
+    doc.unlock_write()
 
 
 cdef _strip_attributes(xmlNode* c_node, _MultiTagMatcher matcher):
@@ -107,13 +111,20 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
     if matcher.rejectsAll():
         return
 
-    if isinstance(tree_or_element, _ElementTree):
-        # include PIs and comments next to the root node
-        if matcher.matchesType(tree.XML_COMMENT_NODE):
-            _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, with_tail)
-        if matcher.matchesType(tree.XML_PI_NODE):
-            _removeSiblings(element._c_node, tree.XML_PI_NODE, with_tail)
-    _strip_elements(doc, element._c_node, matcher, with_tail)
+    # For an ElementTree, include PIs and comments next to the root node.
+    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree):
+
+    doc = element._doc
+    doc.lock_write()
+    try:
+        if include_siblings:
+            if matcher.matchesType(tree.XML_COMMENT_NODE):
+                _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, with_tail)
+            if matcher.matchesType(tree.XML_PI_NODE):
+                _removeSiblings(element._c_node, tree.XML_PI_NODE, with_tail)
+        _strip_elements(doc, element._c_node, matcher, with_tail)
+    finally:
+        doc.unlock_write()
 
 cdef _strip_elements(_Document doc, xmlNode* c_node, _MultiTagMatcher matcher,
                      bint with_tail):
@@ -177,13 +188,21 @@ def strip_tags(tree_or_element, *tag_names):
     if matcher.rejectsAll():
         return
 
-    if isinstance(tree_or_element, _ElementTree):
-        # include PIs and comments next to the root node
-        if matcher.matchesType(tree.XML_COMMENT_NODE):
-            _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, 0)
-        if matcher.matchesType(tree.XML_PI_NODE):
-            _removeSiblings(element._c_node, tree.XML_PI_NODE, 0)
-    _strip_tags(doc, element._c_node, matcher)
+    # For an ElementTree, include PIs and comments next to the root node.
+    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree):
+
+    doc = element._doc
+    doc.lock_write()
+    try:
+        if include_siblings:
+            if matcher.matchesType(tree.XML_COMMENT_NODE):
+                _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, 0)
+            if matcher.matchesType(tree.XML_PI_NODE):
+                _removeSiblings(element._c_node, tree.XML_PI_NODE, 0)
+        _strip_tags(doc, element._c_node, matcher)
+    finally:
+        doc.unlock_write()
+
 
 cdef _strip_tags(_Document doc, xmlNode* c_node, _MultiTagMatcher matcher):
     cdef xmlNode* c_child
