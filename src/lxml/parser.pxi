@@ -1462,7 +1462,7 @@ cdef class _FeedParser(_BaseParser):
                 else:
                     error = 0
 
-        if not pctxt.wellFormed and pctxt.disableSAX and context._has_raised():
+        if not pctxt.wellFormed and xmlparser.xmlCtxtIsStopped(pctxt) and context._has_raised():
             # propagate Python exceptions immediately
             recover = 0
             error = 1
@@ -1499,7 +1499,7 @@ cdef class _FeedParser(_BaseParser):
         else:
             xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
 
-        if (pctxt.recovery and not pctxt.disableSAX and
+        if (pctxt.recovery and not xmlparser.xmlCtxtIsStopped(pctxt) and
                 isinstance(context, _SaxParserContext)):
             # apply any left-over 'end' events
             (<_SaxParserContext>context).flushEvents()
@@ -1551,7 +1551,8 @@ cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
         return error
 
     # fix libxml2 setup for HTML
-    c_ctxt.progressive = 1
+    if tree.LIBXML_VERSION < 21400:
+        c_ctxt.progressive = 1  # TODO: remove
     c_ctxt.html = 1
     htmlparser.htmlCtxtUseOptions(c_ctxt, parse_options)
 
