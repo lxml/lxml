@@ -157,6 +157,8 @@ jobs:
           - os: windows-2022
             env: { STATIC_DEPS: false }  # always static
           - os: windows-11-arm
+            env: { STATIC_DEPS: false }  # always static
+          - os: windows-11-arm
             python-version: "3.8"
           - os: windows-11-arm
             python-version: "3.9"
