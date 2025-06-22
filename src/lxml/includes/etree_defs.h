@@ -159,6 +159,10 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  define xmlBufUse(buf) xmlBufferLength(buf)
 #endif
 
+#if LIBXML_VERSION < 21400
+#  define xmlCtxtIsStopped(p_ctxt)  ((p_ctxt)->disableSAX != 0)
+#endif
+
 /* libexslt 1.1.25+ support EXSLT functions in XPath */
 #if LIBXSLT_VERSION < 10125
 #define exsltDateXpathCtxtRegister(ctxt, prefix)

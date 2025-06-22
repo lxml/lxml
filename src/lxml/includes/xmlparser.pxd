@@ -300,3 +300,4 @@ cdef extern from "libxml/parserInternals.h" nogil:
                                              char* filename)
     cdef void xmlFreeInputStream(xmlParserInput* input)
     cdef int xmlSwitchEncoding(xmlParserCtxt* ctxt, int enc)
+    cdef bint xmlCtxtIsStopped(xmlParserCtxt* ctxt)

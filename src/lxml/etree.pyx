@@ -615,12 +615,14 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         c_ns = self._findOrBuildNodeNs(c_node, c_href, NULL, 0)
         tree.xmlSetNs(c_node, c_ns)
 
+
 cdef tuple __initPrefixCache():
     cdef int i
     return tuple([ python.PyBytes_FromFormat("ns%d", i)
-                   for i in range(30) ])
+                   for i in range(26) ])
 
 cdef tuple _PREFIX_CACHE = __initPrefixCache()
+
 
 cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
