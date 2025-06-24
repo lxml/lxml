@@ -159,11 +159,11 @@ jobs:
           - os: windows-11-arm
             env: { STATIC_DEPS: false }  # always static
           - os: windows-11-arm
-            python-version: "3.8"
+            python-version: "3.8"  # setup-python only supports 3.11+ on windows arm
           - os: windows-11-arm
-            python-version: "3.9"
+            python-version: "3.9"  # setup-python only supports 3.11+ on windows arm
           - os: windows-11-arm
-            python-version: "3.10"
+            python-version: "3.10"  # setup-python only supports 3.11+ on windows arm
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
     # From testing, the runs tend to take 8-20 minutes, so a limit of 45 minutes should be enough.
