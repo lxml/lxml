@@ -159,7 +159,7 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  define xmlBufUse(buf) xmlBufferLength(buf)
 #endif
 
-#if LIBXML_VERSION < 21400
+#if LIBXML_VERSION < 21500
 #  define xmlCtxtIsStopped(p_ctxt)  ((p_ctxt)->disableSAX != 0)
 #endif
 
