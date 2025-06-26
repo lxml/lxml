@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-6.0.0 (2025-??-??)
+6.0.0 (2025-06-26)
 ==================
 
 Features added
@@ -20,8 +20,6 @@ Features added
 
 * GH#458: ``CDATA`` can now be written into the incremental ``xmlfile()`` writer.
   Original patch by Lane Shaw.
-
-* GH#438: Wheels include the ``arm7l`` target.
 
 * A new parser option ``decompress=False`` was added that controls the automatic
   input decompression when using libxml2 2.15.0 or later.  Disabling this option
@@ -71,7 +69,12 @@ Other changes
 * The ``Schematron`` class is deprecated and will become non-functional in a future lxml version.
   The feature will soon be removed from libxml2 and stop being available.
 
-* Binary wheels use the library versions libxml2 2.14.3 and libxslt 1.1.43.
+* GH#438: Wheels include the ``arm7l`` target.
+
+* GH#465: Windows wheels include the ``arm64`` target.
+  Patch by Finn Womack.
+
+* Binary wheels use the library versions libxml2 2.14.4 and libxslt 1.1.43.
   Note that this disables direct HTTP and FTP support for parsing from URLs.
   Use Python URL request tools instead (which usually also support HTTPS).
   To test the availability, use ``"http" in etree.LIBXML_FEATURES``.
