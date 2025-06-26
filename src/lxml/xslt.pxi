@@ -62,6 +62,7 @@ cdef _initXSLTResolverContext(_XSLTResolverContext context,
     context._parser = parser
     context._c_style_doc = NULL
 
+
 cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
                                        int parse_options, int* error) with gil:
     # call the Python document loaders
@@ -101,6 +102,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
                     doc_ref._file, doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_EMPTY:
                 c_return_doc = _newXMLDoc()
+                context._parser.initDocDict(c_return_doc)
             if c_return_doc is not NULL and c_return_doc.URL is NULL:
                 c_return_doc.URL = tree.xmlStrdup(c_uri)
     except:
@@ -598,11 +600,12 @@ cdef class XSLT:
             if resolver_context is not None:
                 resolver_context.clear()
 
-        result_doc = _documentFactory(c_result, input_doc._parser)
-
         c_dict = c_result.dict
         xmlparser.xmlDictReference(c_dict)
-        __GLOBAL_PARSER_CONTEXT.initThreadDictRef(&c_result.dict)
+
+        result_doc = _documentFactory(c_result, input_doc._parser)
+        result_doc.initDict()
+
         if c_dict is not c_result.dict or \
                 self._c_style.doc.dict is not c_result.dict or \
                 input_doc._c_doc.dict is not c_result.dict:
@@ -616,6 +619,7 @@ cdef class XSLT:
                 if input_doc._c_doc.dict is not c_result.dict:
                     fixThreadDictNames(<xmlNode*>c_result,
                                        input_doc._c_doc.dict, c_result.dict)
+
         xmlparser.xmlDictFree(c_dict)
 
         return _xsltResultTreeFactory(result_doc, self, profile_doc)

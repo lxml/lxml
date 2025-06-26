@@ -46,6 +46,53 @@ cdef class ParserError(LxmlError):
 
 @cython.final
 @cython.internal
+cdef class _ParserDictionary:
+    # The string dictionary of a parser, shared by all of its parsed documents.
+
+    cdef tree.xmlDict* _c_dict
+
+    def __cinit__(self):
+        self._c_dict = xmlparser.xmlDictCreate()
+
+    def __dealloc__(self):
+        xmlparser.xmlDictFree(self._c_dict)
+        self._c_dict = NULL
+
+    cdef tree.xmlDict *getDict(self):
+        return self._c_dict
+
+    cdef tree.xmlDict *getDictRef(self):
+        c_dict = self._c_dict
+        xmlparser.xmlDictReference(c_dict)
+        return c_dict
+
+    cdef size_t getDictSize(self):
+        return tree.xmlDictSize(self._c_dict)
+
+    cdef void initDictRef(self, tree.xmlDict** c_dict_ref) noexcept:
+        c_dict = c_dict_ref[0]
+        if c_dict is self._c_dict:
+            return
+
+        c_dict_ref[0] = self.getDictRef()
+        if c_dict is not NULL:
+            xmlparser.xmlDictFree(c_dict)
+
+    cdef void initParserDict(self, xmlparser.xmlParserCtxt* pctxt) noexcept:
+        "Assure we always use the same string dictionary."
+        self.initDictRef(&pctxt.dict)
+        pctxt.dictNames = 1
+
+    #cdef void initXPathParserDict(self, xpath.xmlXPathContext* pctxt) noexcept:
+    #    "Assure we always use the same string dictionary."
+    #    self.initDictRef(&pctxt.dict)
+
+    cdef void initDocDict(self, xmlDoc *c_doc) noexcept:
+        self.initDictRef(&c_doc.dict)
+
+
+@cython.final
+@cython.internal
 cdef class _ParserDictionaryContext:
     # Global parser context to share the string dictionary.
     #
@@ -56,16 +103,11 @@ cdef class _ParserDictionaryContext:
     # __GLOBAL_PARSER_CONTEXT as defined below the class.
     #
 
-    cdef tree.xmlDict* _c_dict
     cdef _BaseParser _default_parser
     cdef list _implied_parser_contexts
 
     def __cinit__(self):
         self._implied_parser_contexts = []
-
-    def __dealloc__(self):
-        if self._c_dict is not NULL:
-            xmlparser.xmlDictFree(self._c_dict)
 
     cdef int initMainParserContext(self) except -1:
         """Put the global context into the thread dictionary of the main
@@ -104,48 +146,6 @@ cdef class _ParserDictionaryContext:
             if context is not self:
                 context._default_parser = self._default_parser._copy()
         return context._default_parser
-
-    cdef tree.xmlDict* _getThreadDict(self, tree.xmlDict* default):
-        "Return the thread-local dict or create a new one if necessary."
-        cdef _ParserDictionaryContext context
-        context = self._findThreadParserContext()
-        if context._c_dict is NULL:
-            # thread dict not yet set up => use default or create a new one
-            if default is not NULL:
-                context._c_dict = default
-                xmlparser.xmlDictReference(default)
-                return default
-            if self._c_dict is NULL:
-                self._c_dict = xmlparser.xmlDictCreate()
-            if context is not self:
-                context._c_dict = xmlparser.xmlDictCreateSub(self._c_dict)
-        return context._c_dict
-
-    cdef int initThreadDictRef(self, tree.xmlDict** c_dict_ref) except -1:
-        c_dict = c_dict_ref[0]
-        c_thread_dict = self._getThreadDict(c_dict)
-        if c_dict is c_thread_dict:
-            return 0
-        if c_dict is not NULL:
-            xmlparser.xmlDictFree(c_dict)
-        c_dict_ref[0] = c_thread_dict
-        xmlparser.xmlDictReference(c_thread_dict)
-
-    cdef int initParserDict(self, xmlparser.xmlParserCtxt* pctxt) except -1:
-        "Assure we always use the same string dictionary."
-        self.initThreadDictRef(&pctxt.dict)
-        pctxt.dictNames = 1
-
-    cdef int initXPathParserDict(self, xpath.xmlXPathContext* pctxt) except -1:
-        "Assure we always use the same string dictionary."
-        self.initThreadDictRef(&pctxt.dict)
-
-    cdef int initDocDict(self, xmlDoc* result) except -1:
-        "Store dict of last object parsed if no shared dict yet"
-        # XXX We also free the result dict here if there already was one.
-        # This case should only occur for new documents with empty dicts,
-        # otherwise we'd free data that's in use => segfault
-        self.initThreadDictRef(&result.dict)
 
     cdef _ParserContext findImpliedContext(self):
         """Return any current implied xml parser context for the current
@@ -537,6 +537,7 @@ cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) noexcept
 @cython.internal
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
+    cdef _ParserDictionary _dict
     cdef _ParserSchemaValidationContext _validator
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     cdef xmlparser.xmlExternalEntityLoader _orig_loader
@@ -549,6 +550,7 @@ cdef class _ParserContext(_ResolverContext):
         if config.ENABLE_THREADING:
             self._lock = python.PyThread_allocate_lock()
         self._error_log = _ErrorLog()
+        self._dict = _ParserDictionary()
 
     def __dealloc__(self):
         if config.ENABLE_THREADING and self._lock is not NULL:
@@ -578,6 +580,7 @@ cdef class _ParserContext(_ResolverContext):
         """
         self._c_ctxt = c_ctxt
         c_ctxt._private = <void*>self
+        self._dict.initParserDict(c_ctxt)
 
     cdef void _resetParserContext(self) noexcept:
         if self._c_ctxt is not NULL:
@@ -703,11 +706,11 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
     # to parse the document.
     cdef bint well_formed
     if result is not NULL:
-        __GLOBAL_PARSER_CONTEXT.initDocDict(result)
+        context._dict.initDocDict(result)
 
     if c_ctxt.myDoc is not NULL:
         if c_ctxt.myDoc is not result:
-            __GLOBAL_PARSER_CONTEXT.initDocDict(c_ctxt.myDoc)
+            context._dict.initDocDict(c_ctxt.myDoc)
             tree.xmlFreeDoc(c_ctxt.myDoc)
         c_ctxt.myDoc = NULL
 
@@ -1001,6 +1004,14 @@ cdef class _BaseParser:
         c_ctxt.sax.startDocument = _initSaxDocument
         return c_ctxt
 
+    @cython.final
+    cdef void initDocDict(self, tree.xmlDoc *c_doc) noexcept:
+        self._getParserContext()._dict.initDocDict(c_doc)
+
+    @cython.final
+    cdef tree.xmlDict* getDict(self) noexcept:
+        return self._getParserContext()._dict.getDict()
+
     @property
     def error_log(self):
         """The error log of the last parser run.
@@ -1018,6 +1029,15 @@ cdef class _BaseParser:
     def version(self):
         """The version of the underlying XML parser."""
         return "libxml2 %d.%d.%d" % LIBXML_VERSION
+
+    @property
+    def dict_size(self):
+        cdef size_t size = 0
+        if self._parser_context is not None:
+            size += self._parser_context._dict.getDictSize()
+        if self._push_parser_context is not None:
+            size += self._push_parser_context._dict.getDictSize()
+        return size
 
     def set_element_class_lookup(self, ElementClassLookup lookup = None):
         """set_element_class_lookup(self, lookup = None)
@@ -1108,7 +1128,6 @@ cdef class _BaseParser:
         context.prepare()
         try:
             pctxt = context._c_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             orig_options = pctxt.options
             with nogil:
                 if self._for_html:
@@ -1140,9 +1159,6 @@ cdef class _BaseParser:
         context = self._getParserContext()
         context.prepare()
         try:
-            pctxt = context._c_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-
             if self._default_encoding is None:
                 c_encoding = NULL
                 # libxml2 (at least 2.9.3) does not recognise UTF-32 BOMs
@@ -1167,6 +1183,7 @@ cdef class _BaseParser:
             else:
                 c_encoding = _cstr(self._default_encoding)
 
+            pctxt = context._c_ctxt
             orig_options = pctxt.options
             with nogil:
                 if self._for_html:
@@ -1197,14 +1214,12 @@ cdef class _BaseParser:
         context = self._getParserContext()
         context.prepare()
         try:
-            pctxt = context._c_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-
             if self._default_encoding is None:
                 c_encoding = NULL
             else:
                 c_encoding = _cstr(self._default_encoding)
 
+            pctxt = context._c_ctxt
             orig_options = pctxt.options
             with nogil:
                 if self._for_html:
@@ -1228,7 +1243,6 @@ cdef class _BaseParser:
         cdef _ParserContext context
         cdef _FileReaderContext file_context
         cdef xmlDoc* result
-        cdef xmlparser.xmlParserCtxt* pctxt
         cdef char* c_filename
         if not filename:
             filename = None
@@ -1236,12 +1250,10 @@ cdef class _BaseParser:
         context = self._getParserContext()
         context.prepare()
         try:
-            pctxt = context._c_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             file_context = _FileReaderContext(
                 filelike, context, filename,
                 encoding or self._default_encoding)
-            result = file_context._readDoc(pctxt, self._parse_options)
+            result = file_context._readDoc(context._c_ctxt, self._parse_options)
 
             return context._handleParseResultDoc(
                 self, result, filename)
@@ -1310,8 +1322,8 @@ cdef void _initSaxDocument(void* ctxt) noexcept with gil:
     if c_doc and c_ctxt.dict and not c_doc.dict:
         # I have no idea why libxml2 disables this - we need it
         c_ctxt.dictNames = 1
-        c_doc.dict = c_ctxt.dict
         xmlparser.xmlDictReference(c_ctxt.dict)
+        c_doc.dict = c_ctxt.dict
 
     # set up XML ID hash table
     if c_ctxt._private:
@@ -1424,7 +1436,6 @@ cdef class _FeedParser(_BaseParser):
             char_data += buffer_len
             if error:
                 raise MemoryError()
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
         #print pctxt.charset, 'NONE' if c_encoding is NULL else c_encoding
 
@@ -1529,9 +1540,9 @@ cdef (int, int) _parse_data_chunk(xmlparser.xmlParserCtxt* c_ctxt,
                 fixup_error = _fixHtmlDictSubtreeNames(
                     c_ctxt.dict, c_ctxt.myDoc, c_node)
                 if c_ctxt.myDoc.dict and c_ctxt.myDoc.dict is not c_ctxt.dict:
+                    xmlparser.xmlDictReference(c_ctxt.dict)
                     xmlparser.xmlDictFree(c_ctxt.myDoc.dict)
                     c_ctxt.myDoc.dict = c_ctxt.dict
-                    xmlparser.xmlDictReference(c_ctxt.dict)
         else:
             orig_loader = _register_document_loader()
             error = xmlparser.xmlParseChunk(c_ctxt, char_data, buffer_len, 0)
@@ -1960,7 +1971,6 @@ cdef xmlDoc* _newXMLDoc() except NULL:
         raise MemoryError()
     if result.encoding is NULL:
         result.encoding = tree.xmlStrdup(<unsigned char*>"UTF-8")
-    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
 cdef xmlDoc* _newHTMLDoc() except NULL:
@@ -1968,7 +1978,6 @@ cdef xmlDoc* _newHTMLDoc() except NULL:
     result = tree.htmlNewDoc(NULL, NULL)
     if result is NULL:
         raise MemoryError()
-    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
 cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
@@ -1980,7 +1989,8 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
         result = tree.xmlCopyDoc(c_doc, 0)
     if result is NULL:
         raise MemoryError()
-    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
+    xmlparser.xmlDictReference(c_doc.dict)
+    result.dict = c_doc.dict
     return result
 
 cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
@@ -1988,7 +1998,9 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
-    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
+    assert result.dict is NULL
+    xmlparser.xmlDictReference(c_doc.dict)
+    result.dict = c_doc.dict
     with nogil:
         c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
     if c_node is NULL:
