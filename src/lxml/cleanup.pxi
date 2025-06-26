@@ -112,7 +112,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
         return
 
     # For an ElementTree, include PIs and comments next to the root node.
-    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree):
+    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree)
 
     doc = element._doc
     doc.lock_write()
@@ -189,7 +189,7 @@ def strip_tags(tree_or_element, *tag_names):
         return
 
     # For an ElementTree, include PIs and comments next to the root node.
-    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree):
+    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree)
 
     doc = element._doc
     doc.lock_write()
