@@ -8,7 +8,7 @@ PYTHON_WITH_CYTHON?=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/d
 CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
 PYTHON_BUILD_VERSION ?= *
-MANYLINUX_LIBXML2_VERSION=2.14.3
+MANYLINUX_LIBXML2_VERSION=2.14.4
 MANYLINUX_LIBXSLT_VERSION=1.1.43
 MANYLINUX_CFLAGS=-O3 -g1 -pipe -fPIC -flto
 MANYLINUX_LDFLAGS=-flto
@@ -121,6 +121,7 @@ apidoc: apidocclean inplace
 		&& (echo "Generating API docs ..." && \
 			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
 				"*includes" "*tests" "*pyclasslookup.py" "*usedoctest.py" "*html/_html5builder.py" \
+				 "*html/_diff*" "*html/_setmixin*" \
 				"*.so" "*.pyd") \
 		|| (echo "not generating Sphinx autodoc API rst files")
 

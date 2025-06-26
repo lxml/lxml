@@ -108,14 +108,15 @@ cdef class CommentBase(_Comment):
     """
     def __init__(self, text):
         # copied from Comment() factory
-        cdef _Document doc
-        cdef xmlDoc*   c_doc
         if text is None:
             text = b''
         else:
             text = _utf8(text)
+
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
+        doc.initDict()
+
         self._c_node = _createComment(c_doc, _xcstr(text))
         if self._c_node is NULL:
             raise MemoryError()
@@ -138,15 +139,16 @@ cdef class PIBase(_ProcessingInstruction):
     """
     def __init__(self, target, text=None):
         # copied from PI() factory
-        cdef _Document doc
-        cdef xmlDoc*   c_doc
         target = _utf8(target)
         if text is None:
             text = b''
         else:
             text = _utf8(text)
+
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
+        doc.initDict()
+
         self._c_node = _createPI(c_doc, _xcstr(target), _xcstr(text))
         if self._c_node is NULL:
             raise MemoryError()
@@ -167,8 +169,6 @@ cdef class EntityBase(_Entity):
     called after object creation.
     """
     def __init__(self, name):
-        cdef _Document doc
-        cdef xmlDoc*   c_doc
         name_utf = _utf8(name)
         c_name = _xcstr(name_utf)
         if c_name[0] == c'#':
@@ -176,8 +176,11 @@ cdef class EntityBase(_Entity):
                 raise ValueError, f"Invalid character reference: '{name}'"
         elif not _xmlNameIsValid(c_name):
             raise ValueError, f"Invalid entity reference: '{name}'"
+
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
+        doc.initDict()
+
         self._c_node = _createEntity(c_doc, c_name)
         if self._c_node is NULL:
             raise MemoryError()
@@ -553,7 +556,7 @@ def set_element_class_lookup(ElementClassLookup lookup = None):
 
     This defines the main entry point for looking up element implementations.
     The standard implementation uses the :class:`ParserBasedElementClassLookup`
-    to delegate to different lookup schemes for each parser. 
+    to delegate to different lookup schemes for each parser.
 
     .. warning::
 

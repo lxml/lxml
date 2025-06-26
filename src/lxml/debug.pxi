@@ -24,13 +24,9 @@ cdef class _MemDebug:
     def dict_size(self):
         """dict_size(self)
 
-        Returns the current size of the global name dictionary used by libxml2
-        for the current thread.  Each thread has its own dictionary.
+        Returns the current size of the default parser's name dictionary used by libxml2.
         """
-        c_dict = __GLOBAL_PARSER_CONTEXT._getThreadDict(NULL)
-        if c_dict is NULL:
-            raise MemoryError()
-        return tree.xmlDictSize(c_dict)
+        return __GLOBAL_PARSER_CONTEXT.getDefaultParser().dict_size
 
 
 memory_debugger = _MemDebug()

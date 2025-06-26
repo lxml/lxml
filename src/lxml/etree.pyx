@@ -487,6 +487,9 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         # the document
         tree.xmlFreeDoc(self._c_doc)
 
+    cdef void initDict(self) noexcept:
+        self._parser.initDocDict(self._c_doc)
+
     # Read-write lock using a Critical Section on this _Document.
 
     @cython.final
@@ -731,12 +734,14 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         c_ns = self._findOrBuildNodeNs(c_node, c_href, NULL, 0)
         tree.xmlSetNs(c_node, c_ns)
 
+
 cdef tuple __initPrefixCache():
     cdef int i
     return tuple([ python.PyBytes_FromFormat("ns%d", i)
-                   for i in range(30) ])
+                   for i in range(26) ])
 
 cdef tuple _PREFIX_CACHE = __initPrefixCache()
+
 
 cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
@@ -3792,10 +3797,6 @@ def Comment(text=None):
     Comment element factory. This factory function creates a special element that will
     be serialized as an XML comment.
     """
-    cdef _Document doc
-    cdef xmlNode*  c_node
-    cdef xmlDoc*   c_doc
-
     if text is None:
         text = b''
     else:
@@ -3805,6 +3806,8 @@ def Comment(text=None):
 
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
+    doc.initDict()
+
     c_node = _createComment(c_doc, _xcstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
@@ -3816,10 +3819,6 @@ def ProcessingInstruction(target, text=None):
     ProcessingInstruction element factory. This factory function creates a
     special element that will be serialized as an XML processing instruction.
     """
-    cdef _Document doc
-    cdef xmlNode*  c_node
-    cdef xmlDoc*   c_doc
-
     target = _utf8(target)
     _tagValidOrRaise(target)
     if target.lower() == b'xml':
@@ -3834,6 +3833,8 @@ def ProcessingInstruction(target, text=None):
 
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
+    doc.initDict()
+
     c_node = _createPI(c_doc, _xcstr(target), _xcstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
@@ -3869,9 +3870,6 @@ def Entity(name):
     declared in the document.  A document that uses entity references
     requires a DTD to define the entities.
     """
-    cdef _Document doc
-    cdef xmlNode*  c_node
-    cdef xmlDoc*   c_doc
     name_utf = _utf8(name)
     c_name = _xcstr(name_utf)
     if c_name[0] == c'#':
@@ -3879,8 +3877,11 @@ def Entity(name):
             raise ValueError, f"Invalid character reference: '{name}'"
     elif not _xmlNameIsValid(c_name):
         raise ValueError, f"Invalid entity reference: '{name}'"
+
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
+    doc.initDict()
+
     c_node = _createEntity(c_doc, c_name)
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
@@ -3900,6 +3901,7 @@ def SubElement(_Element _parent not None, _tag,
     finally:
         doc.unlock_read()
 
+
 from typing import Generic, TypeVar
 
 T = TypeVar("T")
@@ -3910,11 +3912,7 @@ class ElementTree(ABC, Generic[T]):
 
         ElementTree wrapper class.
         """
-        cdef xmlNode* c_next
-        cdef xmlNode* c_node
-        cdef xmlNode* c_node_copy
         cdef xmlDoc*  c_doc
-        cdef _ElementTree etree
         cdef _Document doc
 
         if element is not None:
@@ -3927,14 +3925,17 @@ class ElementTree(ABC, Generic[T]):
         else:
             c_doc = _newXMLDoc()
             doc = _documentFactory(c_doc, parser)
+            doc.initDict()
 
         return _elementTreeFactory(doc, element)
+
 
 # Register _ElementTree as a virtual subclass of ElementTree
 ElementTree.register(_ElementTree)
 
 # Remove "ABC" and typing helpers from module dict
 del ABC, Generic, TypeVar, T
+
 
 def HTML(text, _BaseParser parser=None, *, base_url=None):
     """HTML(text, parser=None, base_url=None)

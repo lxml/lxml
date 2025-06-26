@@ -39,7 +39,7 @@ jobs:
       matrix:
         # Tests [amd64]
         #
-        os: [ubuntu-22.04, macos-latest, windows-2022]
+        os: [ubuntu-22.04, macos-latest, windows-2022, windows-11-arm]
         python-version:
           - "3.8"
           - "3.9"
@@ -158,6 +158,14 @@ jobs:
           # ==============
           - os: windows-2022
             env: { STATIC_DEPS: false }  # always static
+          - os: windows-11-arm
+            env: { STATIC_DEPS: false }  # always static
+          - os: windows-11-arm
+            python-version: "3.8"  # setup-python only supports 3.11+ on windows arm
+          - os: windows-11-arm
+            python-version: "3.9"  # setup-python only supports 3.11+ on windows arm
+          - os: windows-11-arm
+            python-version: "3.10"  # setup-python only supports 3.11+ on windows arm
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
     # From testing, the runs tend to take 8-20 minutes, so a limit of 45 minutes should be enough.
@@ -168,7 +176,7 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.14.3
+      LIBXML2_VERSION: 2.14.4
       LIBXSLT_VERSION: 1.1.43
       COVERAGE: false
       GCC_VERSION: 9
@@ -245,7 +253,7 @@ jobs:
       CCACHE_COMPRESS: 1
       CCACHE_COMPRESSLEVEL: 5
       STATIC_DEPS: true
-      LIBXML2_VERSION: 2.14.3
+      LIBXML2_VERSION: 2.14.4
       LIBXSLT_VERSION: 1.1.43
 
     steps:
