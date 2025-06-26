@@ -160,8 +160,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 5.4.0`_, released 2025-04-22
-(`changes for 5.4.0`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 6.0.0`_, released 2025-06-26
+(`changes for 6.0.0`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -229,6 +229,7 @@ Old Versions
 ------------
 
 See the websites of lxml
+`5.4 <https://lxml.de/5.4/>`_,
 `5.3 <https://lxml.de/5.3/>`_,
 `5.2 <https://lxml.de/5.2/>`_,
 `5.1 <https://lxml.de/5.1/>`_,
@@ -261,7 +262,9 @@ See the websites of lxml
 ..
    and the `latest in-development version <https://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-5.4.0.pdf
+.. _`PDF documentation`: lxmldoc-6.0.0.pdf
+
+* `lxml 6.0.0`_, released 2025-06-26 (`changes for 6.0.0`_)
 
 * `lxml 5.4.0`_, released 2025-04-22 (`changes for 5.4.0`_)
 
@@ -271,24 +274,9 @@ See the websites of lxml
 
 * `lxml 5.3.0`_, released 2024-08-10 (`changes for 5.3.0`_)
 
-* `lxml 5.2.2`_, released 2024-05-12 (`changes for 5.2.2`_)
+* `older releases <https://lxml.de/5.3/#old-versions>`_
 
-* `lxml 5.2.1`_, released 2024-04-02 (`changes for 5.2.1`_)
-
-* `lxml 5.2.0`_, released 2024-03-30 (`changes for 5.2.0`_)
-
-* `lxml 5.1.1`_, released 2024-03-28 (`changes for 5.1.1`_)
-
-* `lxml 5.1.0`_, released 2024-01-05 (`changes for 5.1.0`_)
-
-* `lxml 5.0.2`_, released 2024-03-28 (`changes for 5.0.2`_)
-
-* `lxml 5.0.1`_, released 2024-01-05 (`changes for 5.0.1`_)
-
-* `lxml 5.0.0`_, released 2023-12-29 (`changes for 5.0.0`_)
-
-* `older releases <https://lxml.de/5.0/#old-versions>`_
-
+.. _`lxml 6.0.0`: /files/lxml-6.0.0.tgz
 .. _`lxml 5.4.0`: /files/lxml-5.4.0.tgz
 .. _`lxml 5.3.2`: /files/lxml-5.3.2.tgz
 .. _`lxml 5.3.1`: /files/lxml-5.3.1.tgz
@@ -302,6 +290,7 @@ See the websites of lxml
 .. _`lxml 5.0.1`: /files/lxml-5.0.1.tgz
 .. _`lxml 5.0.0`: /files/lxml-5.0.0.zip
 
+.. _`changes for 6.0.0`: /changes-6.0.0.html
 .. _`changes for 5.4.0`: /changes-5.4.0.html
 .. _`changes for 5.3.2`: /changes-5.3.2.html
 .. _`changes for 5.3.1`: /changes-5.3.1.html
