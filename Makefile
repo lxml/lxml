@@ -121,6 +121,7 @@ apidoc: apidocclean inplace
 		&& (echo "Generating API docs ..." && \
 			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
 				"*includes" "*tests" "*pyclasslookup.py" "*usedoctest.py" "*html/_html5builder.py" \
+				 "*html/_diff*" "*html/_setmixin*" \
 				"*.so" "*.pyd") \
 		|| (echo "not generating Sphinx autodoc API rst files")
 
