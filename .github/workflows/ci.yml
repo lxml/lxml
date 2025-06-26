@@ -174,7 +174,7 @@ jobs:
       OS_NAME: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
-      LIBXML2_VERSION: 2.14.3
+      LIBXML2_VERSION: 2.14.4
       LIBXSLT_VERSION: 1.1.43
       COVERAGE: false
       GCC_VERSION: 9
@@ -251,7 +251,7 @@ jobs:
       CCACHE_COMPRESS: 1
       CCACHE_COMPRESSLEVEL: 5
       STATIC_DEPS: true
-      LIBXML2_VERSION: 2.14.3
+      LIBXML2_VERSION: 2.14.4
       LIBXSLT_VERSION: 1.1.43
 
     steps:
