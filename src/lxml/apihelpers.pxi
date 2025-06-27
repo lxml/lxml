@@ -79,6 +79,7 @@ cdef bint _isAncestorOrSame(xmlNode* c_ancestor, xmlNode* c_node) noexcept:
         c_node = c_node.parent
     return False
 
+
 cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
                            _BaseParser parser, text, tail, attrib, nsmap,
                            dict extra_attrs):
@@ -96,9 +97,10 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
 
     If 'c_doc' is also NULL, a new xmlDoc will be created.
     """
-    cdef xmlNode* c_node
+    cdef bint is_new_doc = doc is None
     if doc is not None:
         c_doc = doc._c_doc
+
     ns_utf, name_utf = _getNsTag(tag)
     if parser is not None and parser._for_html:
         _htmlTagValidOrRaise(name_utf)
@@ -108,34 +110,30 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
         _tagValidOrRaise(name_utf)
         if c_doc is NULL:
             c_doc = _newXMLDoc()
-    c_node = _createElement(c_doc, name_utf)
+
+    if doc is None:
+        doc = _documentFactory(c_doc, parser)
+    if is_new_doc:
+        doc.initDict()
+
+    cdef xmlNode* c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
-        if doc is None and c_doc is not NULL:
-            tree.xmlFreeDoc(c_doc)
         raise MemoryError()
-    try:
-        if doc is None:
-            tree.xmlDocSetRootElement(c_doc, c_node)
-            doc = _documentFactory(c_doc, parser)
-        if text is not None:
-            _setNodeText(c_node, text)
-        if tail is not None:
-            _setTailText(c_node, tail)
-        # add namespaces to node if necessary
-        _setNodeNamespaces(c_node, doc, ns_utf, nsmap)
-        _initNodeAttributes(c_node, doc, attrib, extra_attrs)
-        return _elementFactory(doc, c_node)
-    except:
-        # free allocated c_node/c_doc unless Python does it for us
-        if c_node.doc is not c_doc:
-            # node not yet in document => will not be freed by document
-            if tail is not None:
-                _removeText(c_node.next) # tail
-            tree.xmlFreeNode(c_node)
-        if doc is None:
-            # c_doc will not be freed by doc
-            tree.xmlFreeDoc(c_doc)
-        raise
+    if is_new_doc:
+        tree.xmlDocSetRootElement(c_doc, c_node)
+
+    # add namespaces to node if necessary
+    _setNodeNamespaces(c_node, doc, ns_utf, nsmap)
+
+    if text is not None:
+        _setNodeText(c_node, text)
+    if tail is not None:
+        _setTailText(c_node, tail)
+
+    _initNodeAttributes(c_node, doc, attrib, extra_attrs)
+
+    return _elementFactory(doc, c_node)
+
 
 cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
                          _BaseParser parser, attrib, nsmap, dict extra_attrs) except -1:
@@ -153,19 +151,21 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
     else:
         _tagValidOrRaise(name_utf)
         c_doc = _newXMLDoc()
+
+    doc = _documentFactory(c_doc, parser)
+    doc.initDict()
+
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
-        if c_doc is not NULL:
-            tree.xmlFreeDoc(c_doc)
         raise MemoryError()
     tree.xmlDocSetRootElement(c_doc, c_node)
-    doc = _documentFactory(c_doc, parser)
     # add namespaces to node if necessary
     _setNodeNamespaces(c_node, doc, ns_utf, nsmap)
     _initNodeAttributes(c_node, doc, attrib, extra_attrs)
     _registerProxy(element, doc, c_node)
     element._init()
     return 0
+
 
 cdef _Element _makeSubElement(_Element parent, tag, text, tail,
                               attrib, nsmap, dict extra_attrs):
