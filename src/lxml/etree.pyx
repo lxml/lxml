@@ -463,8 +463,6 @@ include "xmlerror.pxi"     # Error and log handling
 ################################################################################
 # Public Python API
 
-cdef const int max_lock_reader_count = 1 << 30
-
 @cython.final
 @cython.freelist(8)
 cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:

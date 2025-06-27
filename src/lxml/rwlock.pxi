@@ -1,3 +1,9 @@
+"""Read-write lock implementation.
+"""
+
+cdef const long max_lock_reader_count = 1 << 30
+
+
 @cython.final
 @cython.internal
 cdef class RWLock:
@@ -6,8 +12,8 @@ cdef class RWLock:
     Uses a critical section to guard lock operations and a PyMutex for write locking.
     """
     cdef unsigned long _write_locked_id
-    cdef int _reader_count
-    cdef int _writer_reentry
+    cdef long _reader_count
+    cdef long _writer_reentry
     cdef cython.pymutex _write_lock
 
     @cython.inline
