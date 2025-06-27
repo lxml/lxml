@@ -485,38 +485,39 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         # the document
         tree.xmlFreeDoc(self._c_doc)
 
+    # Allow locking and working with the names dict to be done per document
+    # to avoid letting code know that it currently isn't document specific.
+
     cdef void initDict(self) noexcept:
         self._parser.initDocDict(self._c_doc)
 
-    cdef int lock_read(self) noexcept:
-        return self._lock.lock_read()
+    cdef void lock_read(self) noexcept:
+        self._lock.lock_read()
 
-    cdef int unlock_read(self) noexcept:
-        return self._lock.unlock_read()
+    cdef void unlock_read(self) noexcept:
+        self._lock.unlock_read()
 
-    cdef int lock_write(self) noexcept:
-        return self._lock.lock_write()
+    cdef void lock_write(self) noexcept:
+        self._lock.lock_write()
 
-    cdef int unlock_write(self) noexcept:
-        return self._lock.unlock_write()
+    cdef void unlock_write(self) noexcept:
+        self._lock.unlock_write()
 
-    cdef int lock_write_with(self, _Document second_doc):
+    cdef void lock_write_with(self, _Document second_doc) noexcept:
         """Lock two documents for writing at the same time.
         """
         if self._lock is second_doc._lock:
             self._lock.lock_write()
         else:
             self._lock.lock_write_with(second_doc._lock)
-        return 0
 
-    cdef int unlock_write_with(self, _Document second_doc):
+    cdef void unlock_write_with(self, _Document second_doc) noexcept:
         """Unlock two documents for writing after locking them at the same time.
         """
         if self._lock is second_doc._lock:
             self._lock.unlock_write()
         else:
             self._lock.unlock_write_with(second_doc._lock)
-        return 0
 
     # Internal accessors, not locked.
 

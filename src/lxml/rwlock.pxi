@@ -16,38 +16,37 @@ cdef class RWLock:
         return python.PyThread_get_thread_ident() + 1
 
     @cython.critical_section
-    cdef int lock_read(self) noexcept:
+    cdef void lock_read(self) noexcept:
         self._reader_count += 1
         if self._reader_count > 0:
             # Only readers active => go!
-            return 0
+            return
         if self._write_locked_id == self._my_lock_id():
             # I own the write lock => go!
-            return 0
+            return
         # A writer is waiting => wait for lock to become free.
         while self._write_locked_id:
             with nogil:
                 self._write_lock.acquire()
                 self._write_lock.release()
-        return 0
 
     @cython.critical_section
-    cdef int unlock_read(self) noexcept:
+    cdef void unlock_read(self) noexcept:
         self._reader_count -= 1
 
     @cython.critical_section
-    cdef int lock_write(self) noexcept:
+    cdef void lock_write(self) noexcept:
         my_lock_id = self._my_lock_id()
         if self._write_locked_id == my_lock_id:
             self._writer_reentry += 1
-            return 0
+            return
 
         if self._reader_count == 0:
             # No readers, no writers => go
             self._reader_count -= max_lock_reader_count
             self._write_locked_id = my_lock_id
             self._writer_reentry = 0
-            return 0
+            return
 
         if self._reader_count > 0:
             # Readers but no writers yet => block new readers, claim the lock.
@@ -69,20 +68,18 @@ cdef class RWLock:
         # My turn.
         self._write_locked_id = my_lock_id
         self._writer_reentry = 0
-        return 0
 
     @cython.critical_section
-    cdef int unlock_write(self) noexcept:
+    cdef void unlock_write(self) noexcept:
         assert self._write_locked_id == self._my_lock_id()
         assert self._reader_count < 0, self._reader_count
         if self._writer_reentry > 0:
             self._writer_reentry -= 1
-            return 0
+            return
         self._write_locked_id = 0
         self._reader_count += max_lock_reader_count
-        return 0
 
-    cdef int lock_write_with(self, RWLock second_lock):
+    cdef void lock_write_with(self, RWLock second_lock) noexcept:
         """Acquire two locks for writing at the same time.
         """
         # Avoid deadlocks by deterministically locking an arbitrary lock first.
@@ -94,9 +91,8 @@ cdef class RWLock:
         else:
             self.lock_write()
             second_lock.lock_write()
-        return 0
 
-    cdef int unlock_write_with(self, RWLock second_lock):
+    cdef void unlock_write_with(self, RWLock second_lock) noexcept:
         """Release two locks for writing after locking them at the same time.
         """
         # Avoid deadlocks by deterministically locking an arbitrary lock first.
@@ -108,4 +104,3 @@ cdef class RWLock:
         else:
             second_lock.unlock_write()
             self.unlock_write()
-        return 0
