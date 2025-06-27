@@ -830,6 +830,26 @@ cdef inline int _fixHtmlDictNodeNames(tree.xmlDict* c_dict,
     return 0
 
 
+cdef extern from *:
+    """
+    typedef struct {
+        unsigned int for_html: 1;
+        unsigned int remove_comments: 1;
+        unsigned int remove_pis: 1;
+        unsigned int strip_cdata: 1;
+        unsigned int collect_ids: 1;
+        unsigned int resolve_external_entities: 1;
+    } __lxml_ParserFlags;
+    """
+    ctypedef struct ParserFlags "__lxml_ParserFlags":
+        bint for_html
+        bint remove_comments
+        bint remove_pis
+        bint strip_cdata
+        bint collect_ids
+        bint resolve_external_entities
+
+
 @cython.internal
 cdef class _BaseParser:
     cdef ElementClassLookup _class_lookup
@@ -837,12 +857,7 @@ cdef class _BaseParser:
     cdef _ParserContext _parser_context
     cdef _ParserContext _push_parser_context
     cdef int _parse_options
-    cdef bint _for_html
-    cdef bint _remove_comments
-    cdef bint _remove_pis
-    cdef bint _strip_cdata
-    cdef bint _collect_ids
-    cdef bint _resolve_external_entities
+    cdef ParserFlags _flags
     cdef XMLSchema _schema
     cdef bytes _filename
     cdef readonly object target
@@ -858,15 +873,17 @@ cdef class _BaseParser:
             raise TypeError, "This class cannot be instantiated"
 
         self._parse_options = parse_options
-        self.target = target
-        self._for_html = for_html
-        self._remove_comments = remove_comments
-        self._remove_pis = remove_pis
-        self._strip_cdata = strip_cdata
-        self._collect_ids = collect_ids
-        self._resolve_external_entities = resolve_external_entities
-        self._schema = schema
+        self._flags = ParserFlags(
+            for_html=for_html,
+            remove_comments=remove_comments,
+            remove_pis=remove_pis,
+            strip_cdata=strip_cdata,
+            collect_ids=collect_ids,
+            resolve_external_entities=resolve_external_entities,
+        )
 
+        self.target = target
+        self._schema = schema
         self._resolvers = _ResolverRegistry()
 
         if encoding is None:
@@ -894,7 +911,7 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._parser_context is None:
             self._parser_context = self._createContext(self.target, None)
-            self._parser_context._collect_ids = self._collect_ids
+            self._parser_context._collect_ids = self._flags.collect_ids
             if self._schema is not None:
                 self._parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -909,7 +926,7 @@ cdef class _BaseParser:
         if self._push_parser_context is None:
             self._push_parser_context = self._createContext(
                 self.target, self._events_to_collect)
-            self._push_parser_context._collect_ids = self._collect_ids
+            self._push_parser_context._collect_ids = self._flags.collect_ids
             if self._schema is not None:
                 self._push_parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -940,14 +957,14 @@ cdef class _BaseParser:
 
     @cython.final
     cdef int _configureSaxContext(self, xmlparser.xmlParserCtxt* pctxt) except -1:
-        if self._remove_comments:
+        if self._flags.remove_comments:
             pctxt.sax.comment = NULL
-        if self._remove_pis:
+        if self._flags.remove_pis:
             pctxt.sax.processingInstruction = NULL
-        if self._strip_cdata:
+        if self._flags.strip_cdata:
             # hard switch-off for CDATA nodes => makes them plain text
             pctxt.sax.cdataBlock = NULL
-        if not self._resolve_external_entities:
+        if not self._flags.resolve_external_entities:
             pctxt.sax.getEntity = _getInternalEntityOnly
 
     cdef int _registerHtmlErrorHandler(self, xmlparser.xmlParserCtxt* c_ctxt) except -1:
@@ -974,7 +991,7 @@ cdef class _BaseParser:
         Create and initialise a libxml2-level parser context.
         """
         cdef xmlparser.xmlParserCtxt* c_ctxt
-        if self._for_html:
+        if self._flags.for_html:
             c_ctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
             if c_ctxt is not NULL:
                 self._registerHtmlErrorHandler(c_ctxt)
@@ -988,7 +1005,7 @@ cdef class _BaseParser:
     cdef xmlparser.xmlParserCtxt* _newPushParserCtxt(self) except NULL:
         cdef xmlparser.xmlParserCtxt* c_ctxt
         cdef char* c_filename = _cstr(self._filename) if self._filename is not None else NULL
-        if self._for_html:
+        if self._flags.for_html:
             c_ctxt = htmlparser.htmlCreatePushParserCtxt(
                 NULL, NULL, NULL, 0, c_filename, tree.XML_CHAR_ENCODING_NONE)
             if c_ctxt is not NULL:
@@ -1053,10 +1070,7 @@ cdef class _BaseParser:
         cdef _BaseParser parser
         parser = self.__class__()
         parser._parse_options = self._parse_options
-        parser._for_html = self._for_html
-        parser._remove_comments = self._remove_comments
-        parser._remove_pis = self._remove_pis
-        parser._strip_cdata = self._strip_cdata
+        parser._flags = self._flags
         parser._filename = self._filename
         parser._resolvers = self._resolvers
         parser.target = self.target
@@ -1130,7 +1144,7 @@ cdef class _BaseParser:
             pctxt = context._c_ctxt
             orig_options = pctxt.options
             with nogil:
-                if self._for_html:
+                if self._flags.for_html:
                     result = htmlparser.htmlCtxtReadMemory(
                         pctxt, c_text, buffer_len, c_filename, c_encoding,
                         self._parse_options)
@@ -1186,7 +1200,7 @@ cdef class _BaseParser:
             pctxt = context._c_ctxt
             orig_options = pctxt.options
             with nogil:
-                if self._for_html:
+                if self._flags.for_html:
                     result = htmlparser.htmlCtxtReadMemory(
                         pctxt, c_text, c_len, c_filename,
                         c_encoding, self._parse_options)
@@ -1222,7 +1236,7 @@ cdef class _BaseParser:
             pctxt = context._c_ctxt
             orig_options = pctxt.options
             with nogil:
-                if self._for_html:
+                if self._flags.for_html:
                     result = htmlparser.htmlCtxtReadFile(
                         pctxt, c_filename, c_encoding, self._parse_options)
                     if result is not NULL:
@@ -1423,7 +1437,7 @@ cdef class _FeedParser(_BaseParser):
             if char_data is not NULL:
                 buffer_len = 4 if py_buffer_len > 4 else <int>py_buffer_len
             orig_loader = _register_document_loader()
-            if self._for_html:
+            if self._flags.for_html:
                 error = _htmlCtxtResetPush(
                     pctxt, char_data, buffer_len, c_filename, c_encoding,
                     self._parse_options)
@@ -1505,7 +1519,7 @@ cdef class _FeedParser(_BaseParser):
         pctxt = context._c_ctxt
 
         self._feed_parser_running = 0
-        if self._for_html:
+        if self._flags.for_html:
             htmlparser.htmlParseChunk(pctxt, NULL, 0, 1)
         else:
             xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
