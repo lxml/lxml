@@ -408,11 +408,11 @@ def unpack_tarball(tar_filename, dest) -> str:
             # Extract only new files.
             if os_path.exists(abs_path) and os_path.getsize(abs_path) == member.size:
                 continue
-            tar.extract(member)
+            tar.extract(member, abs_dest)
 
         # Update directory properties/times/etc.
         for member in directories:
-            tar.extract(member)
+            tar.extract(member, abs_dest)
 
     return os_path.join(dest, base_dir)
 
