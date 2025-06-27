@@ -371,24 +371,50 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
     return dest_filename
 
 
-def unpack_tarball(tar_filename, dest):
+def unpack_tarball(tar_filename, dest) -> str:
     print('Unpacking %s into %s' % (os.path.basename(tar_filename), dest))
-    if sys.version_info[0] < 3 and tar_filename.endswith('.xz'):
-        # Py 2.7 lacks lzma support
-        tar_cm = py2_tarxz(tar_filename)
-    else:
-        tar_cm = closing(tarfile.open(tar_filename))
+    os_path = os.path
+    abs_dest = os_path.abspath(dest)
+
+    tar_cm = tarfile.open(tar_filename)
+
+    if hasattr(tarfile, 'data_filter'):
+        tar_cm.extraction_filter = tarfile.data_filter
 
     base_dir = None
-    with tar_cm as tar:
+    with closing(tar_cm) as tar:
+        directories = []
         for member in tar:
-            base_name = member.name.split('/')[0]
+            # Guard against malicious tar file content.
+            path = os_path.join(dest, member.name)
+            abs_path = os_path.abspath(path)
+            if not os_path.commonpath([abs_dest, abs_path]).startswith(abs_dest):
+                raise RuntimeError('Unexpected path in %s: %s' % (tar_filename, member.name))
+
+            if member.isdir():
+                directories.append(member)
+                continue
+            elif not member.isfile():
+                raise RuntimeError('Unexpected path in %s: %s' % (tar_filename, member.name))
+
+            # Find common base directory.
+            first_dir = member.name.split('/')[0]
             if base_dir is None:
-                base_dir = base_name
-            elif base_dir != base_name:
-                print('Unexpected path in %s: %s' % (tar_filename, base_name))
-        tar.extractall(dest)
-    return os.path.join(dest, base_dir)
+                base_dir = first_dir
+            elif base_dir != first_dir:
+                print('Unexpected path in %s: %s' % (tar_filename, first_dir))
+                continue
+
+            # Extract only new files.
+            if os_path.exists(abs_path) and os_path.getsize(abs_path) == member.size:
+                continue
+            tar.extract(member)
+
+        # Update directory properties/times/etc.
+        for member in directories:
+            tar.extract(member, abs_dest)
+
+    return os_path.join(dest, base_dir)
 
 
 def call_subprocess(cmd, **kw):
