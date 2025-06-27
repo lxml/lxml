@@ -8,6 +8,13 @@ lxml
 In general
 ----------
 
+* libxml2 2.14:
+
+  disableSAX -> xmlCtxtIsStopped
+  replaceEntities -> XML_PARSE_NOENT
+  progressive (unbenutzt)
+  node -> nicht mehr deprecated aber Benutzung unerwünscht
+
 * more testing on multi-threading
 
 * better exception messages for XPath and schemas based on error log,
