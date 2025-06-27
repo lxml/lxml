@@ -856,6 +856,7 @@ cdef class _BaseParser:
     cdef _ResolverRegistry _resolvers
     cdef _ParserContext _parser_context
     cdef _ParserContext _push_parser_context
+    cdef RWLock _lock
     cdef int _parse_options
     cdef ParserFlags _flags
     cdef XMLSchema _schema
@@ -1078,6 +1079,7 @@ cdef class _BaseParser:
         parser._default_encoding = self._default_encoding
         parser._schema = self._schema
         parser._events_to_collect = self._events_to_collect
+        parser._lock = RWLock()
         return parser
 
     def copy(self):

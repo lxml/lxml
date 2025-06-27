@@ -455,6 +455,7 @@ ctypedef public xmlNode* (*_node_to_node_function)(xmlNode*)
 # Include submodules
 
 include "proxy.pxi"        # Proxy handling (element backpointers/memory/etc.)
+include "rwlock.pxi"       # A read-write lock
 include "apihelpers.pxi"   # Private helper functions
 include "xmlerror.pxi"     # Error and log handling
 
@@ -476,10 +477,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef bytes _prefix_tail
     cdef xmlDoc* _c_doc
     cdef _BaseParser _parser
-    cdef unsigned long _write_locked_id
-    cdef int _reader_count
-    cdef int _writer_reentry
-    cdef cython.pymutex _write_lock
+    cdef RWLock _lock
 
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
@@ -490,112 +488,34 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void initDict(self) noexcept:
         self._parser.initDocDict(self._c_doc)
 
-    # Read-write lock using a Critical Section on this _Document.
-
-    @cython.final
-    cdef unsigned long _my_lock_id(self) noexcept:
-        # "+1" to make sure that "== 0" really means "no thread waiting".
-        return python.PyThread_get_thread_ident() + 1
-
-    @cython.final
-    @cython.critical_section
     cdef int lock_read(self) noexcept:
-        self._reader_count += 1
-        if self._reader_count > 0:
-            # Only readers active => go!
-            return 0
-        if self._write_locked_id == self._my_lock_id():
-            # I own the write lock => go!
-            return 0
-        # A writer is waiting => wait for lock to become free.
-        while self._write_locked_id:
-            with nogil:
-                self._write_lock.acquire()
-                self._write_lock.release()
-        return 0
+        return self._lock.lock_read()
 
-    @cython.final
-    @cython.critical_section
     cdef int unlock_read(self) noexcept:
-        self._reader_count -= 1
+        return self._lock.unlock_read()
 
-    @cython.final
-    @cython.critical_section
     cdef int lock_write(self) noexcept:
-        my_lock_id = self._my_lock_id()
-        if self._write_locked_id == my_lock_id:
-            self._writer_reentry += 1
-            return
+        return self._lock.lock_write()
 
-        if self._reader_count == 0:
-            # No readers, no writers => go
-            self._reader_count -= max_lock_reader_count
-            self._write_locked_id = my_lock_id
-            self._writer_reentry = 0
-            return 0
-
-        if self._reader_count > 0:
-            # Readers but no writers yet => block new readers, claim the lock.
-            self._reader_count -= max_lock_reader_count
-            self._write_locked_id = my_lock_id
-
-        # Waiting readers or writers.
-        while True:
-            with nogil:
-                self._write_lock.acquire()
-                self._write_lock.release()
-            if not self._write_locked_id:
-                # Lock is free => block new readers and take ownership.
-                self._reader_count -= max_lock_reader_count
-                break
-            elif self._write_locked_id == my_lock_id:
-                break
-
-        # My turn.
-        self._write_locked_id = my_lock_id
-        self._writer_reentry = 0
-        return 0
-
-    @cython.final
-    @cython.critical_section
     cdef int unlock_write(self) noexcept:
-        assert self._write_locked_id == self._my_lock_id()
-        assert self._reader_count < 0, self._reader_count
-        if self._writer_reentry > 0:
-            self._writer_reentry -= 1
-            return 0
-        self._write_locked_id = 0
-        self._reader_count += max_lock_reader_count
-        return 0
+        return self._lock.unlock_write()
 
-    @cython.final
     cdef int lock_write_with(self, _Document second_doc):
         """Lock two documents for writing at the same time.
         """
-        # Avoid deadlocks by deterministically locking an arbitrary lock first.
-        if self is second_doc:
-            self.lock_write()
-        elif <void*>self < <void*>second_doc:
-            self.second_doc.lock_write()
-            self.lock_write()
+        if self._lock is second_doc._lock:
+            self._lock.lock_write()
         else:
-            self.lock_write()
-            self.second_doc.lock_write()
+            self._lock.lock_write_with(second_doc._lock)
         return 0
 
-    @cython.final
     cdef int unlock_write_with(self, _Document second_doc):
         """Unlock two documents for writing after locking them at the same time.
         """
-        # Avoid deadlocks by deterministically locking an arbitrary lock first.
-        if self is second_doc:
-            self.unlock_write()
-        elif <void*>self < <void*>second_doc:
-            self.unlock_write()
-            second_doc.unlock_write()
+        if self._lock is second_doc._lock:
+            self._lock.unlock_write()
         else:
-            second_doc.unlock_write()
-            self.unlock_write()
+            self._lock.unlock_write_with(second_doc._lock)
         return 0
 
     # Internal accessors, not locked.
@@ -752,6 +672,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     result._parser = parser
+    result._lock = parser._lock
     return result
 
 
@@ -793,7 +714,7 @@ cdef class DocInfo:
         """Removes DOCTYPE and internal subset from the document."""
         cdef xmlDoc* c_doc
         cdef tree.xmlNode* c_dtd
-        with cython.critical_section(self._doc):
+        with cython.critical_section(self._doc._lock):
             c_doc = self._doc._c_doc
             c_dtd = <xmlNode*>c_doc.intSubset
             if c_dtd is NULL:
@@ -822,7 +743,7 @@ cdef class DocInfo:
                 if not c_value:
                     raise MemoryError()
 
-            with cython.critical_section(self._doc):
+            with cython.critical_section(self._doc._lock):
                 c_dtd = self._get_c_dtd()
                 if not c_dtd:
                     tree.xmlFree(c_value)
@@ -854,7 +775,7 @@ cdef class DocInfo:
                 if not c_value:
                     raise MemoryError()
 
-            with cython.critical_section(self._doc):
+            with cython.critical_section(self._doc._lock):
                 c_dtd = self._get_c_dtd()
                 if not c_dtd:
                     tree.xmlFree(c_value)
@@ -890,14 +811,14 @@ cdef class DocInfo:
         "The source URL of the document (or None if unknown)."
         def __get__(self):
             url = None
-            with cython.critical_section(self._doc):
+            with cython.critical_section(self._doc._lock):
                 c_url = self._doc._c_doc.URL
                 return _decodeFilename(c_url) if c_url is not NULL else None
 
         def __set__(self, url):
             url = _encodeFilename(url)
             c_new_url = tree.xmlStrdup(_xcstr(url)) if url is not None else NULL
-            with cython.critical_section(self._doc):
+            with cython.critical_section(self._doc._lock):
                 c_oldurl = self._doc._c_doc.URL
                 self._doc._c_doc.URL = c_new_url
             if c_oldurl is not NULL:
@@ -931,14 +852,14 @@ cdef class DocInfo:
     @property
     def internalDTD(self):
         """Returns a DTD validator based on the internal subset of the document."""
-        with cython.critical_section(self._doc):
+        with cython.critical_section(self._doc._lock):
             dtd = _dtdFactory(self._doc._c_doc.intSubset)
         return dtd
 
     @property
     def externalDTD(self):
         """Returns a DTD validator based on the external subset of the document."""
-        with cython.critical_section(self._doc):
+        with cython.critical_section(self._doc._lock):
             dtd = _dtdFactory(self._doc._c_doc.extSubset)
         return dtd
 
@@ -2111,7 +2032,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         return None
 
     if hasProxy(c_node):
-        with cython.critical_section(doc):
+        with cython.critical_section(doc._lock):
             if hasProxy(c_node):
                 result = getProxy(c_node)
                 if result is not None:
@@ -2124,14 +2045,14 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
             raise TypeError(f"Element class is not a type, got {type(element_class)}")
 
     if hasProxy(c_node):
-        with cython.critical_section(doc):
+        with cython.critical_section(doc._lock):
             if hasProxy(c_node):
                 # prevent re-entry race condition - we just called into Python
                 return getProxy(c_node)
 
     result = element_class.__new__(element_class)
 
-    with cython.critical_section(doc):
+    with cython.critical_section(doc._lock):
         if hasProxy(c_node):
             # prevent re-entry race condition - we just called into Python
             result._c_node = NULL
