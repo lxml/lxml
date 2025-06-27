@@ -412,7 +412,7 @@ def unpack_tarball(tar_filename, dest) -> str:
 
         # Update directory properties/times/etc.
         for member in directories:
-            tar.extract(member)
+            tar.extract(member, abs_dest)
 
     return os_path.join(dest, base_dir)
 
