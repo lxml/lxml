@@ -583,6 +583,10 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             return <bint>(self._c_doc.standalone == 1)
 
     @cython.final
+    cdef bint ishtml(self):
+        return self._c_doc.type == tree.XML_HTML_DOCUMENT_NODE
+
+    @cython.final
     cdef bytes buildNewPrefix(self):
         # get a new unique prefix ("nsX") for this document
         cdef bytes ns
@@ -805,6 +809,10 @@ cdef class DocInfo:
         ``standalone`` flag was set to ``'yes'`` or not.
         """
         return self._doc.isstandalone()
+
+    @property
+    def is_html(self):
+        return self._doc.ishtml()
 
     property URL:
         "The source URL of the document (or None if unknown)."
@@ -1290,7 +1298,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _assertValidNode(self)
             ns, name = _getNsTag(value)
             parser = self._doc._parser
-            if parser is not None and parser._for_html:
+            if self._doc.ishtml():
                 _htmlTagValidOrRaise(name)
             else:
                 _tagValidOrRaise(name)
