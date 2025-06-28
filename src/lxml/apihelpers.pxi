@@ -97,12 +97,17 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
 
     If 'c_doc' is also NULL, a new xmlDoc will be created.
     """
+    cdef bint is_html = False
     cdef bint is_new_doc = doc is None
+
     if doc is not None:
         c_doc = doc._c_doc
+        is_html = doc.ishtml()
+    elif parser is not None:
+        is_html = parser._flags.for_html
 
     ns_utf, name_utf = _getNsTag(tag)
-    if parser is not None and parser._for_html:
+    if is_html:
         _htmlTagValidOrRaise(name_utf)
         if c_doc is NULL:
             c_doc = _newHTMLDoc()
@@ -180,7 +185,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
     ns_utf, name_utf = _getNsTag(tag)
     c_doc = parent._doc._c_doc
 
-    if parent._doc._parser is not None and parent._doc._parser._for_html:
+    if parent._doc.ishtml():
         _htmlTagValidOrRaise(name_utf)
     else:
         _tagValidOrRaise(name_utf)
@@ -315,7 +320,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
         raise TypeError, f"Invalid attribute dictionary: {python._fqtypename(attrib).decode('utf8')}"
     if not attrib and not extra:
         return  # nothing to do
-    is_html = doc._parser._for_html
+    is_html = doc.ishtml()
     seen = set()
     if extra:
         for name, value in extra.items():
@@ -582,7 +587,7 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef const_xmlChar* c_value
     cdef xmlNs* c_ns
     ns, tag = _getNsTag(key)
-    is_html = element._doc._parser._for_html
+    is_html = element._doc.ishtml()
     if not is_html:
         _attributeValidOrRaise(tag)
     c_tag = _xcstr(tag)
