@@ -1,4 +1,5 @@
 import json
+from os.path import islink
 import os, re, sys, subprocess, platform
 import tarfile
 import time
@@ -394,6 +395,14 @@ def unpack_tarball(tar_filename, dest) -> str:
             if member.isdir():
                 directories.append(member)
                 continue
+            elif member.issym() or member.islnk():
+                link_path = os_path.abspath(os_path.join(
+                    os_path.dirname(abs_path) if member.issym() else abs_dest,
+                    member.linkname))
+                if not os_path.commonpath([abs_dest, link_path]).startswith(abs_dest):
+                    raise RuntimeError('Unexpected path in %s: %s' % (tar_filename, member.name))
+            elif member.islnk():
+                link_path = os_path.abspath(os_path.join(abs_dest, member.linkname))
             elif not member.isfile():
                 raise RuntimeError('Unexpected path in %s: %s' % (tar_filename, member.name))
 
