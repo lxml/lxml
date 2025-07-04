@@ -104,7 +104,7 @@ doctest_parser = doctest.DocTestParser()
 
 def make_doctest(filename):
     file_path = os.path.join(DOC_DIR, filename)
-    return doctest.DocFileSuite(file_path, module_relative=False, encoding='utf-8')
+    return doctest.DocFileSuite(file_path, module_relative=False, encoding='utf-8', optionflags=doctest.ELLIPSIS)
 
 
 class HelperTestCase(unittest.TestCase):
