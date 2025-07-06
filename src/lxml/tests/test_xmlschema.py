@@ -436,10 +436,13 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
         # test that the default resolver will get called if there's no
         # specific parser resolver.
         root_resolver = self.simple_resolver(self.resolver_schema_ext)
-        etree.get_default_parser().resolvers.add(root_resolver)
-        schema_doc = etree.parse(self.resolver_schema_int)
-        schema = etree.XMLSchema(schema_doc)
-        etree.get_default_parser().resolvers.remove(root_resolver)
+        default_resolvers = etree.get_default_parser().resolvers
+        default_resolvers.add(root_resolver)
+        try:
+            schema_doc = etree.parse(self.resolver_schema_int)
+            schema = etree.XMLSchema(schema_doc)
+        finally:
+            default_resolvers.remove(root_resolver)
 
     def test_xmlschema_resolvers_noroot(self):
         # test that the default resolver will not get called when a
@@ -451,14 +454,16 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
                 return None
 
         root_resolver = res_root()
-        etree.get_default_parser().resolvers.add(root_resolver)
+        default_resolvers = etree.get_default_parser().resolvers
+        default_resolvers.add(root_resolver)
+        try:
+            parser = etree.XMLParser()
+            parser.resolvers.add(self.simple_resolver(self.resolver_schema_ext))
 
-        parser = etree.XMLParser()
-        parser.resolvers.add(self.simple_resolver(self.resolver_schema_ext))
-
-        schema_doc = etree.parse(self.resolver_schema_int, parser = parser)
-        schema = etree.XMLSchema(schema_doc)
-        etree.get_default_parser().resolvers.remove(root_resolver)
+            schema_doc = etree.parse(self.resolver_schema_int, parser = parser)
+            schema = etree.XMLSchema(schema_doc)
+        finally:
+            default_resolvers.remove(root_resolver)
 
     def test_xmlschema_nested_resolvers(self):
         # test that resolvers work in a nested fashion.
