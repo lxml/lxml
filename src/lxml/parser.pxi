@@ -479,14 +479,19 @@ cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_
                 if not isinstance(filename, bytes):
                     filename = None
 
-            c_input = xmlparser.xmlNewInputStream(c_context)
-            if c_input is not NULL:
-                if filename is not None:
-                    c_input.filename = <char *>tree.xmlStrdup(_xcstr(filename))
-                c_input.base = _xcstr(data)
-                c_input.length = python.PyBytes_GET_SIZE(data)
-                c_input.cur = c_input.base
-                c_input.end = c_input.base + c_input.length
+            if tree.LIBXML_VERSION >= 21400:
+                c_filename = <char *>tree.xmlStrdup(_xcstr(filename)) if filename is not None else NULL
+                c_input = xmlparser.xmlNewInputFromMemory(
+                    c_filename, _xcstr(data), <size_t> python.PyBytes_GET_SIZE(data), 0)
+            else:
+                c_input = xmlparser.xmlNewInputStream(c_context)
+                if c_input is not NULL:
+                    if filename is not None:
+                        c_input.filename = <char *>tree.xmlStrdup(_xcstr(filename))
+                    c_input.base = _xcstr(data)
+                    c_input.length = python.PyBytes_GET_SIZE(data)
+                    c_input.cur = c_input.base
+                    c_input.end = c_input.base + c_input.length
         elif doc_ref._type == PARSER_DATA_FILENAME:
             data = None
             c_filename = _cstr(doc_ref._filename)
