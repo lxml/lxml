@@ -412,7 +412,7 @@ During evaluation, lxml will emit an XPathEvalError on errors:
   >>> find(root)
   Traceback (most recent call last):
     ...
-  lxml.etree.XPathEvalError: Undefined namespace prefix
+  lxml.etree.XPathEvalError: Undefined namespace prefix...
 
 This works for the ``XPath`` class, however, the other evaluators (including
 the ``xpath()`` method) are one-shot operations that do parsing and evaluation
@@ -429,7 +429,7 @@ in one step.  They therefore raise evaluation exceptions in all cases:
   >>> find = root.xpath("//ns:a")
   Traceback (most recent call last):
     ...
-  lxml.etree.XPathEvalError: Undefined namespace prefix
+  lxml.etree.XPathEvalError: Undefined namespace prefix...
 
   >>> find = root.xpath("\\")
   Traceback (most recent call last):

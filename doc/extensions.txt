@@ -249,7 +249,7 @@ the global mapping of the FunctionNamespace objects:
   >>> e2('/foo:a')
   Traceback (most recent call last):
   ...
-  lxml.etree.XPathEvalError: Undefined namespace prefix
+  lxml.etree.XPathEvalError: Undefined namespace prefix...
 
 
 Evaluator-local extensions
