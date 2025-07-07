@@ -1,6 +1,7 @@
 import threading
 import time
 import unittest
+from collections import Counter
 from contextlib import contextmanager
 from functools import partial, wraps
 
@@ -124,9 +125,10 @@ class RWLockTest(unittest.TestCase):
             lock.lock_write()
             assert lock.writer_blocking_readers
             order.append("locked (1)")
-            start.wait()
 
-            order.append("waiting (1)")
+            start.wait()
+            order.append("waiting")
+
             release.wait()
 
             order.append("releasing (1)")
@@ -135,8 +137,10 @@ class RWLockTest(unittest.TestCase):
 
         def thread_wait():
             start.wait()
-            order.append("waiting (2)")
+            order.append("waiting")
+
             waiting.set()
+
             lock.lock_write()
             order.append("locked (2)")
             lock.unlock_write()
@@ -146,16 +150,17 @@ class RWLockTest(unittest.TestCase):
             waiting.wait()
             release.set()
 
-        self.assertListEqual(['locking (1)', 'locked (1)', 'waiting (2)', 'waiting (1)', 'releasing (1)'], order[:5])
+        self.assertListEqual(['locking (1)', 'locked (1)', 'waiting', 'waiting', 'releasing (1)'], order[:5])
         self.assertListEqual(['locked (2)', 'released (1)', 'released (2)'], sorted(order[5:]))
 
     def test_lock_write_wait_readers(self):
         lock = RWLock()
 
         order = []
+        reader_ids = range(1, 10)
 
-        start = threading.Barrier(9 + 1)
-        waiting = threading.Barrier(9 + 1)
+        start = threading.Barrier(len(reader_ids) + 1)
+        waiting = threading.Barrier(len(reader_ids) + 1 + 1)
         release = threading.Event()
 
         def thread_lock_read(n):
@@ -163,9 +168,10 @@ class RWLockTest(unittest.TestCase):
             lock.lock_read()
             order.append(f"locked ({n})")
             assert not lock.writer_blocking_readers
-            start.wait()
 
+            start.wait()
             order.append(f"waiting ({n})")
+
             waiting.wait()
 
             assert "locked (write)" not in order
@@ -177,6 +183,9 @@ class RWLockTest(unittest.TestCase):
         def thread_wait_write():
             start.wait()
             order.append(f"waiting (write)")
+
+            waiting.wait()
+
             lock.lock_write()
             assert lock.writer_blocking_readers
             release.wait()
@@ -185,20 +194,63 @@ class RWLockTest(unittest.TestCase):
             lock.unlock_write()
             order.append(f"released (write)")
 
-        readers = [partial(thread_lock_read, i) for i in range(1, 10)]
+        readers = [partial(thread_lock_read, n) for n in reader_ids]
 
-        with self.run_threads(*readers, thread_wait_write):
+        with self.run_threads(thread_wait_write, *readers):
             waiting.wait()
             release.set()
 
         self.assertListEqual(
-            [f'locked ({n})' for n in range(1, 10)] + [f'locking ({n})' for n in range(1, 10)] + [f'waiting ({n})' for n in range(1, 10)] + ["waiting (write)"],
-            sorted(order[:9+9+10]))
+            [f'locked ({n})' for n in reader_ids] + [f'locking ({n})' for n in reader_ids] + [f'waiting ({n})' for n in reader_ids] + ["waiting (write)"],
+            sorted(order[:3*len(reader_ids) + 1]))
 
         #self.assertListEqual(['locking (1)', 'locked (1)', 'waiting (2)', 'waiting (1)', 'releasing (1)'], order[:5])
         #self.assertListEqual(['locked (2)', 'released (1)', 'released (2)'], sorted(order[5:]))
 
-    def test_concurrent_read_write(self):
+    def test_concurrent_read_write_processing(self):
+        lock = RWLock()
+
+        memory = bytearray(range(50))
+        failures = []
+
+        def read():
+            for i, ch in enumerate(memory, memory[0]):
+                if ch != i:
+                    failures.append(f"{ch} != {i}")
+
+        def write():
+            for i, ch in enumerate(memory):
+                memory[i] = ch + 1
+
+        def reader():
+            start.wait()
+            with lock.read_lock():
+                read()
+
+        def writer():
+            start.wait()
+            with lock.write_lock():
+                write()
+
+        def writer_reader():
+            start.wait()
+            with lock.write_lock():
+                write()
+                with lock.read_lock():
+                    read()
+
+        threads = [reader, writer, writer_reader] * 30
+        start = threading.Barrier(len(threads))
+
+        with self.run_threads(*threads):
+            pass
+
+        n_writers = len(threads) - threads.count(reader)
+        self.assertEqual(memory, bytearray(range(n_writers, n_writers + len(memory))))
+
+        self.assertFalse(failures)
+
+    def test_concurrent_read_write_locking(self):
         lock = RWLock()
 
         # Thread monitoring:
@@ -211,25 +263,21 @@ class RWLockTest(unittest.TestCase):
         def lock_read():
             nonlocal reader_count
             lock.lock_read()
-            print("LOCK-R", reader_count, writer_count)
             reader_count += 1
 
         def unlock_read():
             nonlocal reader_count
             reader_count -= 1
-            print("UNLOCK-R", reader_count, writer_count)
             lock.unlock_read()
 
         def lock_write():
             nonlocal writer_count
             lock.lock_write()
-            print("LOCK-W", reader_count, writer_count)
             writer_count += 1
 
         def unlock_write():
             nonlocal writer_count
             writer_count -= 1
-            print("UNLOCK-W", reader_count, writer_count)
             lock.unlock_write()
 
         def expect(readers, writers):
@@ -335,9 +383,7 @@ class RWLockTest(unittest.TestCase):
             def wrapped():
                 try:
                     func()
-                    print(func.__name__, "done")
                 except Exception as exc:
-                    print(func.__name__, "failed:", exc)
                     import traceback
                     traceback.print_exc()
                     if not failures:
@@ -352,7 +398,6 @@ class RWLockTest(unittest.TestCase):
                 try:
                     check()
                 except AssertionError as exc:
-                    print(func.__name__, "check failed:", exc)
                     failures.append(str(exc))
 
             return wrapped

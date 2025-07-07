@@ -4,6 +4,8 @@ cimport cython
 
 cimport cpython.pythread as python
 
+from contextlib import contextmanager
+
 include "../rwlock.pxi"
 
 
@@ -28,6 +30,22 @@ cdef class _RWLock:
     @property
     def lock_thread_id(self):
         return self._lock._write_locked_id - 1
+
+    @contextmanager
+    def read_lock(self):
+        self.lock_read()
+        try:
+            yield
+        finally:
+            self.unlock_read()
+
+    @contextmanager
+    def write_lock(self):
+        self.lock_write()
+        try:
+            yield
+        finally:
+            self.unlock_write()
 
     def lock_read(self):
         self._lock.lock_read()
