@@ -293,11 +293,18 @@ cdef extern from "libxml/parser.h" nogil:
 
 
 cdef extern from "libxml/parserInternals.h" nogil:
+    """
+    #if LIBXML_VERSION < 21400
+    #define xmlNewInputFromMemory(url, mem, size, flags)  (NULL)
+    #endif
+    """
     cdef xmlParserInput* xmlNewInputStream(xmlParserCtxt* ctxt)
     cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt,
                                                  char* buffer)
     cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt,
                                              char* filename)
+    cdef xmlParserInput* xmlNewInputFromMemory(
+        const char *url, const void *mem, size_t size, int flags)  # actually "xmlParserInputFlags flags"
     cdef void xmlFreeInputStream(xmlParserInput* input)
     cdef int xmlSwitchEncoding(xmlParserCtxt* ctxt, int enc)
     cdef bint xmlCtxtIsStopped(xmlParserCtxt* ctxt)

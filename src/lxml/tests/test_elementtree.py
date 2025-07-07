@@ -14,6 +14,7 @@ import pyexpat
 import re
 import sys
 import textwrap
+import types
 import unittest
 from contextlib import contextmanager
 from functools import wraps, partial
@@ -4977,6 +4978,35 @@ if ElementTree:
                 'ignore',
                 r'This method will be removed.*\.iter\(\).*instead',
                 PendingDeprecationWarning)
+
+        def test_elementtree_serialises_lxml_tree(self):
+            # Parse tree with lxml.etree.
+            root = etree.XML("""
+            <root>
+              <a>A</a>
+              <b attrb="56" />
+              <c><d attrd="D"/></c>
+            </root>
+            """)
+
+            # Sanity checks.
+            self.assertNotIsInstance(etree.tostring, types.FunctionType)
+            self.assertIsInstance(self.etree.tostring, types.FunctionType)
+
+            # Serialised with xml.etree.ElementTree.tostring()
+            xml_tostring = self.etree.tostring(root, encoding='utf8')
+            self.assertIn(b'<root>', xml_tostring)
+            self.assertIn(b'<a>', xml_tostring)
+
+            # ET.write()
+            out = io.BytesIO()
+            self.etree.ElementTree(root).write(out, encoding='utf8')
+            xml_write = out.getvalue()
+            self.assertIn(b'<root>', xml_write)
+            self.assertIn(b'<c>', xml_write)
+
+            # Both should be identical because they used the same serialiser.
+            self.assertEqual(xml_tostring, xml_write)
 
     filter_by_version(
         ElementTreeTestCase,
