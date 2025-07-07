@@ -2034,7 +2034,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
 
-    print("START")
     if c_node is NULL:
         return None
 
@@ -2069,7 +2068,6 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
 
     if element_class is not _Element:
         result._init()
-    print("END")
     return result
 
 
@@ -2397,7 +2395,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             doc = self._doc
             doc.lock_read()
             try:
-                c_doc = tree.xmlCopyDoc(self._doc._c_doc, 1)
+                c_doc = tree.xmlCopyDoc(doc._c_doc, 1)
             finally:
                 doc.unlock_read()
             if c_doc is NULL:
@@ -2492,7 +2490,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 raise ValueError("Cannot enable XML declaration in C14N")
 
             if method == 'c14n':
-                doc = self._doc
+                doc = self._context_node._doc
                 doc.lock_read()
                 try:
                     _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
@@ -2538,7 +2536,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 DeprecationWarning)
             doctype = docstring
 
-        doc = self._doc
+        doc = self._context_node._doc
         doc.lock_read()
         try:
             _tofilelike(file, self._context_node, encoding, doctype, method,
@@ -2576,7 +2574,6 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if element._doc is not doc:
             raise ValueError, "Element is not in this tree."
 
-        doc = self._doc
         doc.lock_read()
         # FIXME: read or write lock for _fakeRootDoc()?
         try:
@@ -2621,7 +2618,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if element._doc is not root._doc:
             raise ValueError, "Element is not in this tree"
 
-        doc = self._doc
+        doc = root._doc
         doc.lock_read()
         try:
             return self._getelementpath(root, element)
@@ -2927,7 +2924,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if compression is None or compression < 0:
             compression = 0
 
-        doc = self._doc
+        doc = self._context_node._doc
         doc.lock_read()
         try:
             _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
