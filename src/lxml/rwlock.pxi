@@ -138,12 +138,6 @@ cdef class RWLock:
     cdef cython.pymutex _readers_wait_lock
     cdef cython.pymutex _writers_wait_lock
 
-    # Invariants:
-    # - _write_lock is held whenever we need to wait for the lock.
-    # - _write_lock is released whenever a writer or the last reader
-    #   releases the lock *and* someone is waiting for it.
-    # - _reader_count < 0 means a writer owns the lock or is waiting for it. This blocks new readers.
-
     @cython.inline
     cdef unsigned int _my_lock_id(self) noexcept:
         # "+1" to make sure that "== 0" really means "no thread waiting".
