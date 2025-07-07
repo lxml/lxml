@@ -133,6 +133,18 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
 
+cdef int freeSubtree(xmlNode* c_node) noexcept:
+    """Deallocate c_node and its tail text.
+    """
+    if c_node is NULL:
+        #print "not freeing, node is NULL"
+        return 0
+    #print "freeing:", c_top.name
+    _removeText(c_node.next)  # tail
+    tree.xmlFreeNode(c_node)
+    return 1
+
+
 cdef int attemptDeallocation(xmlNode* c_node) noexcept:
     """Attempt deallocation of c_node (or higher up in tree).
     """
@@ -142,12 +154,8 @@ cdef int attemptDeallocation(xmlNode* c_node) noexcept:
         #print "not freeing, node is NULL"
         return 0
     c_top = getDeallocationTop(c_node)
-    if c_top is not NULL:
-        #print "freeing:", c_top.name
-        _removeText(c_top.next) # tail
-        tree.xmlFreeNode(c_top)
-        return 1
-    return 0
+    return freeSubtree(c_top)
+
 
 cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
     """Return the top of the tree that can be deallocated, or NULL.
@@ -185,6 +193,7 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
                 return NULL
         c_next = c_next.next
     return c_node
+
 
 cdef int canDeallocateChildNodes(xmlNode* c_parent) noexcept:
     cdef xmlNode* c_node

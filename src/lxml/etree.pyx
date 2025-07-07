@@ -897,15 +897,21 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     def __dealloc__(self):
         #print("trying to free node:", <int>self._c_node)
         #displayNode(self._c_node, 0)
-        if self._c_node is not NULL:
-            doc = self._doc
-            doc.lock_write()
-            try:
-                if hasProxy(self._c_node):
-                    _unregisterProxy(self)
-                attemptDeallocation(self._c_node)
-            finally:
-                doc.unlock_write()
+        if self._c_node is NULL:
+            return
+
+        doc = self._doc
+        doc.lock_read()
+        try:
+            if hasProxy(self._c_node):
+                _unregisterProxy(self)
+            c_top = getDeallocationTop(self._c_node)
+        finally:
+            doc.unlock_read()
+
+        if c_top is not NULL:
+            # No more references to the tree => no locking needed to free it.
+            freeSubtree(c_top)
 
     # MANIPULATORS
 
