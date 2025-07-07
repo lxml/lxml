@@ -163,7 +163,8 @@ cdef class RWLock:
             # Only readers active => go!
             return
         if self._write_locked_id == self._my_lock_id():
-            # I own the write lock => ready to read!
+            # I own the write lock => ignore the read lock and read!
+            atomic_decr(&self._reader_count)
             return
 
         # A writer is waiting => wait for lock to become free.
@@ -172,6 +173,10 @@ cdef class RWLock:
     cdef void unlock_read(self) noexcept:
         readers = atomic_decr(&self._reader_count)
         if readers < 0:
+            if self._write_locked_id == self._my_lock_id():
+                # I own the write lock and ignored the read lock => undo the read claim.
+                atomic_incr(&self._reader_count)
+                return
             # A writer is waiting.
             if atomic_decr(&self._readers_departing) == 1:
                 # No more readers after us, notify the waiting writer.

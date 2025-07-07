@@ -250,7 +250,17 @@ class RWLockTest(unittest.TestCase):
                 with lock.read_lock():
                     read()
 
-        threads = [reader, writer, writer_reader] * 30
+        """
+        # Deadlocks! - would require remembering what threads own the read lock to allow upgrading to a write lock.
+        def reader_writer():
+            start.wait()
+            with lock.read_lock():
+                read()
+                with lock.write_lock():
+                    write()
+        """
+
+        threads = [reader, writer, writer_reader] * 33
         start = threading.Barrier(len(threads))
 
         with self.run_threads(*threads):
