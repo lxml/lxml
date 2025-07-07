@@ -11,7 +11,18 @@ from lxml.tests._testlock import _RWLock as RWLock
 class RWLockTest(unittest.TestCase):
     @contextmanager
     def run_threads(self, *functions):
-        threads = [threading.Thread(target=function) for function in functions]
+
+        def name(target, _counter={}):
+            if isinstance(target, partial):
+                target = target.func
+            try:
+                count = _counter[target]
+            except KeyError:
+                count = 1
+            _counter[target] = count + 1
+            return f"{target.__name__}-{count:02d}"
+
+        threads = [threading.Thread(target=function, name=name(function)) for function in functions]
         for thread in threads:
             thread.start()
         yield
