@@ -870,6 +870,9 @@ cdef class _BaseParser:
     cdef object _default_encoding
     cdef tuple _events_to_collect  # (event_types, tag)
 
+    def __cinit__(self):
+        self._lock = RWLock()
+
     def __init__(self, int parse_options, bint for_html, XMLSchema schema,
                  remove_comments, remove_pis, strip_cdata, collect_ids,
                  target, encoding, bint resolve_external_entities=True):
@@ -1084,7 +1087,6 @@ cdef class _BaseParser:
         parser._default_encoding = self._default_encoding
         parser._schema = self._schema
         parser._events_to_collect = self._events_to_collect
-        parser._lock = RWLock()
         return parser
 
     def copy(self):
