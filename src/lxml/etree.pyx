@@ -464,6 +464,7 @@ include "xmlerror.pxi"     # Error and log handling
 # Public Python API
 
 @cython.final
+@cython.no_gc_clear
 @cython.freelist(8)
 cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     """Internal base class to reference a libxml document.
@@ -478,9 +479,9 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef RWLock _lock
 
     def __dealloc__(self):
-        # if there are no more references to the document, it is safe
-        # to clean the whole thing up, as all nodes have a reference to
-        # the document
+        # If there are no more references to the document, it is safe
+        # to clean the whole thing up, as all nodes hold a reference to
+        # the _Document.  No locking is needed.
         tree.xmlFreeDoc(self._c_doc)
 
     # Allow locking and working with the names dict to be done per document
