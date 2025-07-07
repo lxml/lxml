@@ -1133,15 +1133,15 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 if element is None:
                     raise TypeError, "Node must not be None"
                 _assertValidNode(element)
-                doc = element._doc
-                if doc is not self._doc:
+                element_doc = element._doc
+                if element_doc is not self._doc:
                     # FIXME: we do not follow the locking order in "lock_write_wirh()"" here.
-                    doc.lock_write()
+                    element_doc.lock_write()
                 try:
                     _appendChild(self, element)
                 finally:
-                    if doc is not self._doc:
-                        doc.unlock_write()
+                    if element_doc is not self._doc:
+                        element_doc.unlock_write()
         finally:
             doc.unlock_write()
 
