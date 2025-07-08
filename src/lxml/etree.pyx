@@ -3486,15 +3486,15 @@ cdef class _ElementMatchIterator:
 
     @cython.final
     cdef int _storeNext(self, _Element node) except -1:
-        doc = self._node._doc
+        doc = node._doc
         doc.lock_read()
         try:
-            self._matcher.cacheTags(node._doc)
+            self._matcher.cacheTags(doc)
             c_node = self._next_element(node._c_node)
             while c_node is not NULL and not self._matcher.matches(c_node):
                 c_node = self._next_element(c_node)
             # store Python ref to next node to make sure it's kept alive
-            self._node = _elementFactory(node._doc, c_node) if c_node is not NULL else None
+            self._node = _elementFactory(doc, c_node) if c_node is not NULL else None
         finally:
             doc.unlock_read()
         return 0
