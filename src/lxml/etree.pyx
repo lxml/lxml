@@ -2669,8 +2669,7 @@ cdef class _Attrib:
         cdef xmlAttr* c_attr = self._element._c_node.properties
         cdef Py_ssize_t c = 0
         while c_attr is not NULL:
-            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-                c += 1
+            c += (c_attr.type == tree.XML_ATTRIBUTE_NODE)
             c_attr = c_attr.next
         return c
 
