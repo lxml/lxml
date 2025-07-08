@@ -318,14 +318,18 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     cdef xmlNs* c_ns
     if attrib is not None and not hasattr(attrib, 'items'):
         raise TypeError, f"Invalid attribute dictionary: {python._fqtypename(attrib).decode('utf8')}"
-    if not attrib and not extra:
+
+    has_attrib = bool(attrib)
+    has_extra = bool(extra)
+    if not has_attrib and not has_extra:
         return  # nothing to do
+
     is_html = doc.ishtml()
     seen = set()
-    if extra:
+    if has_extra:
         for name, value in extra.items():
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)
-    if attrib:
+    if has_attrib:
         for name, value in _iter_attrib(attrib):
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)
 
