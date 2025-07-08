@@ -3099,8 +3099,7 @@ cdef class _Attrib:
         doc.lock_read()
         c_attr = self._element._c_node.properties
         while c_attr is not NULL:
-            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-                c += 1
+            c += (c_attr.type == tree.XML_ATTRIBUTE_NODE)
             c_attr = c_attr.next
         doc.unlock_read()
         return c

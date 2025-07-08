@@ -629,8 +629,7 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
     c_attr = c_node.properties
     count = 0
     while c_attr is not NULL:
-        if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-            count += 1
+        count +=  (c_attr.type == tree.XML_ATTRIBUTE_NODE)
         c_attr = c_attr.next
 
     if not count:

@@ -8,7 +8,7 @@ import sys
 import unittest
 import threading
 
-from .common_imports import etree, HelperTestCase, BytesIO, _bytes
+from .common_imports import etree, HelperTestCase, BytesIO
 
 try:
     from Queue import Queue
