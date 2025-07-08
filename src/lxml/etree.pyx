@@ -2053,7 +2053,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         return None
 
     if hasProxy(c_node):
-        with cython.critical_section(doc._lock):
+        with cython.critical_section(doc):
             if hasProxy(c_node):
                 result = getProxy(c_node)
                 if result is not None:
@@ -2066,14 +2066,15 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
             raise TypeError(f"Element class is not a type, got {type(element_class)}")
 
     if hasProxy(c_node):
-        with cython.critical_section(doc._lock):
+        with cython.critical_section(doc):
             if hasProxy(c_node):
                 # prevent re-entry race condition - we just called into Python
                 return getProxy(c_node)
 
     result = element_class.__new__(element_class)
 
-    with cython.critical_section(doc._lock):
+    # Using a critical section here allows us to put proxies into the node without write-locking the document.
+    with cython.critical_section(doc):
         if hasProxy(c_node):
             # prevent re-entry race condition - we just called into Python
             result._c_node = NULL
