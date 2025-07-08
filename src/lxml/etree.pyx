@@ -505,7 +505,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void lock_write_with(self, _Document second_doc) noexcept:
         """Lock two documents for writing at the same time.
         """
-        if self._lock is second_doc._lock:
+        if second_doc is None or self._lock is second_doc._lock:
             self._lock.lock_write()
         else:
             self._lock.lock_write_with(second_doc._lock)
@@ -513,7 +513,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void unlock_write_with(self, _Document second_doc) noexcept:
         """Unlock two documents for writing after locking them at the same time.
         """
-        if self._lock is second_doc._lock:
+        if second_doc is None or self._lock is second_doc._lock:
             self._lock.unlock_write()
         else:
             self._lock.unlock_write_with(second_doc._lock)
@@ -1132,24 +1132,32 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if not elements:
             return
 
-        doc = self._doc
-        doc.lock_write()
+        cdef _Document locked_main_doc = None
+        cdef _Document last_element_doc = None
+
         try:
             for element in elements:
                 if element is None:
                     raise TypeError, "Node must not be None"
                 _assertValidNode(element)
+
                 element_doc = element._doc
-                if element_doc is not self._doc:
-                    # FIXME: we do not follow the locking order in "lock_write_wirh()"" here.
-                    element_doc.lock_write()
-                try:
-                    _appendChild(self, element)
-                finally:
-                    if element_doc is not self._doc:
-                        element_doc.unlock_write()
+                if element_doc is not last_element_doc and element_doc is not locked_main_doc:
+                    # Most likely, all elements will come from a single document, so try to lock it only once.
+                    if last_element_doc is not None:
+                        last_element_doc.unlock_write()
+                    if locked_main_doc is None:
+                        locked_main_doc = self._doc
+                        locked_main_doc.lock_write_with(element_doc)
+                    else:
+                        # FIXME: we do not follow the locking order in "lock_write_with()"" here.
+                        element_doc.lock_write()
+                    last_element_doc = element_doc
+
+                _appendChild(self, element)
         finally:
-            doc.unlock_write()
+            if locked_main_doc is not None:
+                locked_main_doc.unlock_write_with(last_element_doc)
 
     def clear(self, bint keep_tail=False):
         """clear(self, keep_tail=False)
