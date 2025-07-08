@@ -3081,15 +3081,16 @@ cdef class _Attrib:
     def __bool__(self):
         _assertValidNode(self._element)
         cdef xmlAttr* c_attr
+
         doc = self._element._doc
         doc.lock_read()
         c_attr = self._element._c_node.properties
         while c_attr is not NULL:
             if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-                return 1
+                break
             c_attr = c_attr.next
         doc.unlock_read()
-        return 0
+        return c_attr is not NULL  # any found?
 
     def __len__(self):
         _assertValidNode(self._element)
