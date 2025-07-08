@@ -1210,7 +1210,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         doc = self._doc
         other_doc = element._doc
-        doc.lock_write_write(other_doc)
+        doc.lock_write_with(other_doc)
         try:
             c_node = _findChild(self._c_node, index)
             if c_node is NULL:
