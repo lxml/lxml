@@ -56,6 +56,7 @@ cdef class _XSLTResolverContext(_ResolverContext):
         context._c_style_doc = self._c_style_doc
         return context
 
+
 cdef _initXSLTResolverContext(_XSLTResolverContext context,
                               _BaseParser parser):
     _initResolverContext(context, parser.resolvers)
@@ -164,6 +165,7 @@ cdef xmlDoc* _xslt_doc_loader(const_xmlChar* c_uri, tree.xmlDict* c_dict,
 cdef xslt.xsltDocLoaderFunc XSLT_DOC_DEFAULT_LOADER = xslt.xsltDocDefaultLoader
 xslt.xsltSetLoaderFunc(<xslt.xsltDocLoaderFunc>_xslt_doc_loader)
 
+
 ################################################################################
 # XSLT file/network access control
 
@@ -255,6 +257,7 @@ cdef class XSLTAccessControl:
             python._fqtypename(self).decode('UTF-8').split('.')[-1],
             ', '.join(["%s=%r" % item for item in items]))
 
+
 ################################################################################
 # XSLT
 
@@ -266,7 +269,9 @@ cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf) noexcept:
         <xslt.xsltTransformContext*>ctxt, _xcstr(name_utf), _xcstr(ns_utf),
         <xslt.xmlXPathFunction>_xpath_function_call)
 
+
 cdef dict EMPTY_DICT = {}
+
 
 @cython.final
 @cython.internal
@@ -274,8 +279,8 @@ cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
     cdef _ReadOnlyElementProxy _extension_element_proxy
     cdef dict _extension_elements
+
     def __cinit__(self):
-        self._xsltCtxt = NULL
         self._extension_elements = EMPTY_DICT
 
     def __init__(self, namespaces, extensions, error_log, enable_regexp,
@@ -328,6 +333,7 @@ cdef class _XSLTQuotedStringParam:
     quote escaping.
     """
     cdef bytes strval
+
     def __cinit__(self, strval):
         self.strval = _utf8(strval)
 
@@ -383,7 +389,11 @@ cdef class XSLT:
         self._access_control = access_control
 
         # make a copy of the document as stylesheet parsing modifies it
-        c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+        doc.lock_read()
+        try:
+            c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+        finally:
+            doc.unlock_read()
 
         # make sure we always have a stylesheet URL
         if c_doc.URL is NULL:
@@ -511,11 +521,17 @@ cdef class XSLT:
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
 
-        c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
+        input_doc.lock_fakedoc()
+        try:
+            c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
+        except:
+            input_doc.unlock_fakedoc()
+            raise
 
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
+            input_doc.unlock_fakedoc()
             raise MemoryError()
 
         # using the stylesheet dict is safer than using a possibly
@@ -530,6 +546,8 @@ cdef class XSLT:
             transform_ctxt.dict = xmlparser.xmlDictCreateSub(self._c_style.doc.dict)
             if transform_ctxt.dict is NULL:
                 xslt.xsltFreeTransformContext(transform_ctxt)
+                _destroyFakeDoc(input_doc._c_doc, c_doc)
+                input_doc.unlock_fakedoc()
                 raise MemoryError()
         else:
             transform_ctxt.dict = self._c_style.doc.dict
@@ -569,6 +587,7 @@ cdef class XSLT:
             if context is not None:
                 context.free_context()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
+            input_doc.unlock_fakedoc()
 
         try:
             if resolver_context is not None and resolver_context._has_raised():
@@ -606,19 +625,19 @@ cdef class XSLT:
         result_doc = _documentFactory(c_result, input_doc._parser)
         result_doc.initDict()
 
-        if c_dict is not c_result.dict or \
-                self._c_style.doc.dict is not c_result.dict or \
-                input_doc._c_doc.dict is not c_result.dict:
+        if self._c_style.doc.dict is not c_result.dict:
             with nogil:
-                if c_dict is not c_result.dict:
-                    fixThreadDictNames(<xmlNode*>c_result,
-                                       c_dict, c_result.dict)
                 if self._c_style.doc.dict is not c_result.dict:
                     fixThreadDictNames(<xmlNode*>c_result,
                                        self._c_style.doc.dict, c_result.dict)
+
+        if input_doc._c_doc.dict is not c_result.dict:
+            input_doc.lock_read()
+            with nogil:
                 if input_doc._c_doc.dict is not c_result.dict:
                     fixThreadDictNames(<xmlNode*>c_result,
                                        input_doc._c_doc.dict, c_result.dict)
+            input_doc.unlock_read()
 
         xmlparser.xmlDictFree(c_dict)
 
@@ -685,6 +704,7 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
     params[i] = NULL
     params_ptr[0] = params
 
+
 cdef XSLT _copyXSLT(XSLT stylesheet):
     cdef XSLT new_xslt
     cdef xmlDoc* c_doc
@@ -705,6 +725,7 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
         raise MemoryError()
 
     return new_xslt
+
 
 @cython.final
 cdef class _XSLTResultTree(_ElementTree):
@@ -744,6 +765,7 @@ cdef class _XSLTResultTree(_ElementTree):
         c_compression = compression or 0
         xslt.LXML_GET_XSLT_ENCODING(c_encoding, self._xslt._c_style)
         writer = _create_output_buffer(file, <const_char*>c_encoding, c_compression, &c_buffer, close=False)
+        doc.lock_read()
         if writer is None:
             with nogil:
                 r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
@@ -751,6 +773,7 @@ cdef class _XSLTResultTree(_ElementTree):
         else:
             r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
             rclose = tree.xmlOutputBufferClose(c_buffer)
+        doc.unlock_read()
         if writer is not None:
             writer._exc_context._raise_if_stored()
         if r < 0 or rclose == -1:
@@ -768,9 +791,11 @@ cdef class _XSLTResultTree(_ElementTree):
             if doc is None:
                 s[0] = NULL
                 return
+        doc.lock_read()
         with nogil:
             r = xslt.xsltSaveResultToString(s, l, doc._c_doc,
                                             self._xslt._c_style)
+        doc.unlock_read()
         if r == -1:
             raise MemoryError()
 
@@ -850,12 +875,14 @@ cdef class _XSLTResultTree(_ElementTree):
         def __del__(self):
             self._profile = None
 
+
 cdef _xsltResultTreeFactory(_Document doc, XSLT xslt, _Document profile):
     cdef _XSLTResultTree result
     result = <_XSLTResultTree>_newElementTree(doc, None, _XSLTResultTree)
     result._xslt = xslt
     result._profile = profile
     return result
+
 
 # functions like "output" and "write" are a potential security risk, but we
 # rely on the user to configure XSLTAccessControl as needed
@@ -873,6 +900,7 @@ cdef object _FIND_PI_HREF = _RE_PI_HREF.findall
 cdef object _REPLACE_PI_HREF = _RE_PI_HREF.sub
 cdef XPath __findStylesheetByID = None
 
+
 cdef _findStylesheetByID(_Document doc, id):
     global __findStylesheetByID
     if __findStylesheetByID is None:
@@ -880,6 +908,7 @@ cdef _findStylesheetByID(_Document doc, id):
             "//xsl:stylesheet[@xml:id = $id]",
             namespaces={"xsl" : "http://www.w3.org/1999/XSL/Transform"})
     return __findStylesheetByID(doc, id=id)
+
 
 cdef class _XSLTProcessingInstruction(PIBase):
     def parseXSL(self, parser=None):
@@ -898,10 +927,16 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef bytes href_utf
         cdef const_xmlChar* c_href
         cdef xmlAttr* c_attr
+
         _assertValidNode(self)
-        if self._c_node.content is NULL:
-            raise ValueError, "PI lacks content"
-        hrefs = _FIND_PI_HREF(' ' + (<unsigned char*>self._c_node.content).decode('UTF-8'))
+        self._doc.lock_read()
+        try:
+            if self._c_node.content is NULL:
+                raise ValueError, "PI lacks content"
+            hrefs = _FIND_PI_HREF(' ' + (<unsigned char*>self._c_node.content).decode('UTF-8'))
+        finally:
+            self._doc.unlock_read()
+
         if len(hrefs) != 1:
             raise ValueError, "malformed PI attributes"
         hrefs = hrefs[0]
@@ -910,9 +945,11 @@ cdef class _XSLTProcessingInstruction(PIBase):
 
         if c_href[0] != c'#':
             # normal URL, try to parse from it
+            self._doc.lock_read()
             c_href = tree.xmlBuildURI(
                 c_href,
                 tree.xmlNodeGetBase(self._c_node.doc, self._c_node))
+            self._doc.unlock_read()
             if c_href is not NULL:
                 try:
                     href_utf = <unsigned char*>c_href
@@ -925,10 +962,15 @@ cdef class _XSLTProcessingInstruction(PIBase):
         # try XML:ID lookup
         _assertValidDoc(self._doc)
         c_href += 1 # skip leading '#'
-        c_attr = tree.xmlGetID(self._c_node.doc, c_href)
-        if c_attr is not NULL and c_attr.doc is self._c_node.doc:
-            result_node = _elementFactory(self._doc, c_attr.parent)
-            return _elementTreeFactory(result_node._doc, result_node)
+
+        self._doc.lock_read()
+        try:
+            c_attr = tree.xmlGetID(self._c_node.doc, c_href)
+            if c_attr is not NULL and c_attr.doc is self._c_node.doc:
+                result_node = _elementFactory(self._doc, c_attr.parent)
+                return _elementTreeFactory(result_node._doc, result_node)
+        finally:
+            self._doc.unlock_read()
 
         # try XPath search
         root = _findStylesheetByID(self._doc, funicode(c_href))

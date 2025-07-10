@@ -150,6 +150,7 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
                        _ClassNamespaceRegistry(ns_uri)
             return registry
 
+
 cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
     cdef python.PyObject* dict_result
     cdef ElementNamespaceClassLookup lookup
@@ -226,6 +227,7 @@ def FunctionNamespace(ns_uri):
                    _XPathFunctionNamespaceRegistry(ns_uri)
         return registry
 
+
 @cython.internal
 cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
     def __setitem__(self, name, item):
@@ -239,6 +241,7 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
 
     def __repr__(self):
         return "FunctionNamespace(%r)" % self._ns_uri
+
 
 @cython.final
 @cython.internal
@@ -261,6 +264,7 @@ cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
                 prefix = None # empty prefix
             self._prefix_utf = _utf8(prefix) if prefix is not None else None
             self._prefix = prefix
+
 
 cdef list _find_all_extension_prefixes():
     "Internal lookup function to find all function prefixes for XSLT/XPath."

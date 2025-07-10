@@ -113,16 +113,15 @@ cdef class _BaseContext:
 
     cdef bytes _to_utf(self, s):
         "Convert to UTF-8 and keep a reference to the encoded string"
-        cdef python.PyObject* dict_result
         if s is None:
             return None
-        dict_result = python.PyDict_GetItem(self._utf_refs, s)
-        if dict_result is not NULL:
+        dict_result = self._utf_refs.get(s)
+        if dict_result is not None:
             return <bytes>dict_result
         utf = _utf8(s)
         self._utf_refs[s] = utf
         if python.IS_PYPY:
-            # use C level refs, PyPy refs are not enough!
+            # Use C level refs - PyPy refs only keep the Python object alive, not the C buffer.
             python.Py_INCREF(utf)
         return utf
 
@@ -388,8 +387,11 @@ cdef tuple LIBXML2_XPATH_ERROR_MESSAGES = (
     b"Invalid or incomplete context",
     b"Stack usage error",
     b"Forbidden variable\n",
+    b"Operation limit exceeded",
+    b"Recursion limit exceeded",
     b"?? Unknown error ??\n",
 )
+
 
 cdef void _forwardXPathError(void* c_ctxt, const xmlerror.xmlError* c_error) noexcept with gil:
     cdef xmlerror.xmlError error
@@ -411,6 +413,7 @@ cdef void _forwardXPathError(void* c_ctxt, const xmlerror.xmlError* c_error) noe
     error.node = NULL
 
     (<_BaseContext>c_ctxt)._error_log._receive(&error)
+
 
 cdef void _receiveXPathError(void* c_context, const xmlerror.xmlError* error) noexcept nogil:
     if not __DEBUG:
@@ -446,6 +449,7 @@ def Extension(module, function_mapping=None, *, ns=None):
             functions[(ns, function_name)] = getattr(module, function_name)
     return functions
 
+
 ################################################################################
 # EXSLT regexp implementation
 
@@ -461,9 +465,9 @@ cdef class _ExsltRegExp:
             return value
         elif isinstance(value, list):
             # node set: take recursive text concatenation of first element
-            if python.PyList_GET_SIZE(value) == 0:
+            if len(<list> value) == 0:
                 return ''
-            firstnode = value[0]
+            firstnode = (<list> value)[0]
             if _isString(firstnode):
                 return firstnode
             elif isinstance(firstnode, _Element):
@@ -480,15 +484,15 @@ cdef class _ExsltRegExp:
             return unicode(value)
 
     cdef _compile(self, rexp, ignore_case):
-        cdef python.PyObject* c_result
         rexp = self._make_string(rexp)
         key = (rexp, ignore_case)
-        c_result = python.PyDict_GetItem(self._compile_map, key)
-        if c_result is not NULL:
-            return <object>c_result
+        result = self._compile_map.get(key)
+        if result is not None:
+            return result
+
         py_flags = re.UNICODE
         if ignore_case:
-            py_flags = py_flags | re.IGNORECASE
+            py_flags |= re.IGNORECASE
         rexp_compiled = re.compile(rexp, py_flags)
         self._compile_map[key] = rexp_compiled
         return rexp_compiled
@@ -497,10 +501,7 @@ cdef class _ExsltRegExp:
         flags = self._make_string(flags)
         s = self._make_string(s)
         rexpc = self._compile(rexp, 'i' in flags)
-        if rexpc.search(s) is None:
-            return False
-        else:
-            return True
+        return rexpc.search(s) is not None
 
     def match(self, ctxt, s, rexp, flags=''):
         cdef list result_list
@@ -606,6 +607,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
         raise XPathResultError, f"Unknown return type: {python._fqtypename(obj).decode('utf8')}"
     return xpath.xmlXPathWrapNodeSet(resultSet)
 
+
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
                                _Document doc, _BaseContext context):
     if xpathObj.type == xpath.XPATH_UNDEFINED:
@@ -635,6 +637,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     else:
         raise XPathResultError, f"Unknown xpath result {xpathObj.type}"
 
+
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
                                  _BaseContext context):
     cdef xmlNode* c_node
@@ -648,6 +651,7 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
         _unpackNodeSetEntry(result, c_node, doc, context,
                             xpathObj.type == xpath.XPATH_XSLT_TREE)
     return result
+
 
 cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
                          _BaseContext context, bint is_fragment):
@@ -685,6 +689,7 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
         raise NotImplementedError, \
             f"Not yet implemented result node type: {c_node.type}"
 
+
 cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj) noexcept:
     """Free the XPath object, but *never* free the *content* of node sets.
     Python dealloc will do that for us.
@@ -693,6 +698,7 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj) noexcept:
         xpath.xmlXPathFreeNodeSet(xpathObj.nodesetval)
         xpathObj.nodesetval = NULL
     xpath.xmlXPathFreeObject(xpathObj)
+
 
 cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
                                            _BaseContext context):
@@ -709,6 +715,7 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
         else:
             doc = node_doc
     return _fakeDocElementFactory(doc, c_node)
+
 
 ################################################################################
 # special str/unicode subclasses
@@ -730,6 +737,7 @@ cdef class _ElementUnicodeResult(unicode):
     def is_attribute(self):
         return self.attrname is not None
 
+
 cdef object _elementStringResultFactory(string_value, _Element parent,
                                         attrname, bint is_tail):
     result = _ElementUnicodeResult(string_value)
@@ -737,6 +745,7 @@ cdef object _elementStringResultFactory(string_value, _Element parent,
     result.is_tail = is_tail
     result.attrname = attrname
     return result
+
 
 cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
                                       _BaseContext context):
@@ -776,6 +785,7 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
     return _elementStringResultFactory(
         value, parent, attrname, is_tail)
 
+
 ################################################################################
 # callbacks for XPath/XSLT extension functions
 
@@ -806,6 +816,7 @@ cdef void _extension_function_call(_BaseContext context, function,
         context._exc._store_raised()
     finally:
         return  # swallow any further exceptions
+
 
 # lookup the function by name and call it
 

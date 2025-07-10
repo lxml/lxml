@@ -91,7 +91,11 @@ cdef class Schematron(_Validator):
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            self._c_schema_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            doc.lock_read()
+            try:
+                self._c_schema_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            finally:
+                doc.unlock_read()
             parser_ctxt = schematron.xmlSchematronNewDocParserCtxt(self._c_schema_doc)
         elif file is not None:
             filename = _getFilenameForFile(file)
@@ -151,6 +155,7 @@ cdef class Schematron(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
+        doc.lock_fakedoc()
         try:
             self._error_log.clear()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
@@ -161,6 +166,7 @@ cdef class Schematron(_Validator):
                 ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
+            doc.unlock_fakedoc()
             schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
 
         if ret == -1:

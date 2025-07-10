@@ -17,17 +17,21 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None):
     element = _rootNodeOrRaise(tree_or_element)
     c_element = element._c_node
 
-    if top_nsmap:
-        doc = element._doc
-        # declare namespaces from nsmap, then apply them to the subtree
-        _setNodeNamespaces(c_element, doc, None, top_nsmap)
-        moveNodeToDocument(doc, c_element.doc, c_element)
-
     keep_ns_prefixes = (
-        set([_utf8(prefix) for prefix in keep_ns_prefixes])
+        {_utf8(prefix) for prefix in keep_ns_prefixes}
         if keep_ns_prefixes else None)
 
-    _removeUnusedNamespaceDeclarations(c_element, keep_ns_prefixes)
+    doc = element._doc
+    doc.lock_write()
+    try:
+        if top_nsmap:
+            # declare namespaces from nsmap, then apply them to the subtree
+            _setNodeNamespaces(c_element, doc, None, top_nsmap)
+            moveNodeToDocument(doc, c_element.doc, c_element)
+
+        _removeUnusedNamespaceDeclarations(c_element, keep_ns_prefixes)
+    finally:
+        doc.unlock_write()
 
 
 def strip_attributes(tree_or_element, *attribute_names):
@@ -50,20 +54,23 @@ def strip_attributes(tree_or_element, *attribute_names):
     if not attribute_names:
         return
 
-    matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, attribute_names)
-    matcher.cacheTags(element._doc)
-    if matcher.rejectsAllAttributes():
-        return
-
     doc = element._doc
     doc.lock_write()
-    _strip_attributes(element._c_node, matcher)
-    doc.unlock_write()
+    try:
+        matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, attribute_names)
+        matcher.cacheTags(element._doc)
+        if matcher.rejectsAllAttributes():
+            return
+
+        _strip_attributes(element._c_node, matcher)
+    finally:
+        doc.unlock_write()
 
 
-cdef _strip_attributes(xmlNode* c_node, _MultiTagMatcher matcher):
+cdef void _strip_attributes(xmlNode* c_node, _MultiTagMatcher matcher) noexcept:
     cdef xmlAttr* c_attr
     cdef xmlAttr* c_next_attr
+
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:
         c_attr = c_node.properties
@@ -125,6 +132,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
         _strip_elements(doc, element._c_node, matcher, with_tail)
     finally:
         doc.unlock_write()
+
 
 cdef _strip_elements(_Document doc, xmlNode* c_node, _MultiTagMatcher matcher,
                      bint with_tail):

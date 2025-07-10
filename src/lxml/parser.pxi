@@ -546,21 +546,16 @@ cdef class _ParserContext(_ResolverContext):
     cdef _ParserSchemaValidationContext _validator
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     cdef xmlparser.xmlExternalEntityLoader _orig_loader
-    cdef python.PyThread_type_lock _lock
+    cdef cython.pymutex _lock
     cdef _Document _doc
     cdef bint _collect_ids
 
     def __cinit__(self):
         self._collect_ids = True
-        if config.ENABLE_THREADING:
-            self._lock = python.PyThread_allocate_lock()
         self._error_log = _ErrorLog()
         self._dict = _ParserDictionary()
 
     def __dealloc__(self):
-        if config.ENABLE_THREADING and self._lock is not NULL:
-            python.PyThread_free_lock(self._lock)
-            self._lock = NULL
         if self._c_ctxt is not NULL:
             if <void*>self._validator is not NULL and self._validator is not None:
                 # If the parser was not closed correctly (e.g. interrupted iterparse()),
@@ -600,12 +595,8 @@ cdef class _ParserContext(_ResolverContext):
 
     cdef int prepare(self, bint set_document_loader=True) except -1:
         cdef int result
-        if config.ENABLE_THREADING and self._lock is not NULL:
-            with nogil:
-                result = python.PyThread_acquire_lock(
-                    self._lock, python.WAIT_LOCK)
-            if result == 0:
-                raise ParserError, "parser locking failed"
+        if config.ENABLE_THREADING:
+            self._lock.acquire()
         self._error_log.clear()
         self._doc = None
         # Connect the lxml error log with libxml2's error handling. In the case of parsing
@@ -632,8 +623,8 @@ cdef class _ParserContext(_ResolverContext):
             self._doc = None
             self._c_ctxt.sax.serror = NULL
         finally:
-            if config.ENABLE_THREADING and self._lock is not NULL:
-                python.PyThread_release_lock(self._lock)
+            if config.ENABLE_THREADING:
+                self._lock.release()
         return 0
 
     cdef object _handleParseResult(self, _BaseParser parser,
