@@ -143,15 +143,15 @@ cdef extern from "etree_api.h":
 
     # find child element number 'index' starting at first one
     cdef tree.xmlNode* findChildForwards(tree.xmlNode* c_node,
-                                         Py_ssize_t index) nogil
+                                         Py_ssize_t index) noexcept nogil
 
     # find child element number 'index' starting at last one
     cdef tree.xmlNode* findChildBackwards(tree.xmlNode* c_node,
-                                          Py_ssize_t index) nogil
+                                          Py_ssize_t index) noexcept nogil
 
     # return next/previous sibling element of the node
-    cdef tree.xmlNode* nextElement(tree.xmlNode* c_node) nogil
-    cdef tree.xmlNode* previousElement(tree.xmlNode* c_node) nogil
+    cdef tree.xmlNode* nextElement(tree.xmlNode* c_node) noexcept nogil
+    cdef tree.xmlNode* previousElement(tree.xmlNode* c_node) noexcept nogil
 
     ##########################################################################
     # iterators (DEPRECATED API, don't use in new code!)
@@ -179,7 +179,7 @@ cdef extern from "etree_api.h":
 
     # check if a C node matches a tag name and namespace
     # (NULL allowed for each => always matches)
-    cdef int tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name)
+    cdef int tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name) noexcept
 
     # convert a UTF-8 char* to a Python unicode string
     cdef unicode pyunicode(const_xmlChar* s)
@@ -200,10 +200,10 @@ cdef extern from "etree_api.h":
     cdef unicode namespacedNameFromNsName(const_xmlChar* c_ns, const_xmlChar* c_tag)
 
     # check if the node has a text value (which may be '')
-    cdef bint hasText(tree.xmlNode* c_node) nogil
+    cdef bint hasText(tree.xmlNode* c_node) noexcept nogil
 
     # check if the node has a tail value (which may be '')
-    cdef bint hasTail(tree.xmlNode* c_node) nogil
+    cdef bint hasTail(tree.xmlNode* c_node) noexcept nogil
 
     # get the text content of an element (or None)
     cdef unicode textOf(tree.xmlNode* c_node)
