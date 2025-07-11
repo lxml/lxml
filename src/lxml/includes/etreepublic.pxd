@@ -49,6 +49,23 @@ cdef extern from "etree_api.h":
         cdef ElementClassLookup fallback
         cdef object (*_fallback_function)(object, _Document, tree.xmlNode*)
 
+
+    ##########################################################################
+    # locking documents for reading and writing
+
+    # read-only locking
+    cdef void lock_read(_Document doc) noexcept
+    cdef void unlock_read(_Document doc) noexcept
+
+    # write locking (for modifications)
+    cdef void lock_write(_Document doc) noexcept
+    cdef void unlock_write(_Document doc) noexcept
+
+    # write locking when moving parts between two different documents
+    cdef void lock_write2(_Document doc1, _Document doc2) noexcept
+    cdef void unlock_write2(_Document doc1, _Document doc2) noexcept
+
+
     ##########################################################################
     # creating Element objects
 

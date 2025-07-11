@@ -176,3 +176,24 @@ cdef public api tree.xmlNs* findOrBuildNodeNsPrefix(
     if doc is None:
         raise TypeError
     return doc._findOrBuildNodeNs(c_node, href, prefix, 0)
+
+
+# Document locking
+
+cdef public api void lock_read(_Document doc) noexcept:
+    doc.lock_read()
+
+cdef public api void unlock_read(_Document doc) noexcept:
+    doc.unlock_read()
+
+cdef public api void lock_write(_Document doc) noexcept:
+    doc.lock_write()
+
+cdef public api void unlock_write(_Document doc) noexcept:
+    doc.unlock_write()
+
+cdef public api void lock_write2(_Document doc1, _Document doc2) noexcept:
+    doc1.lock_write_with(doc2)
+
+cdef public api void unlock_write2(_Document doc1, _Document doc2) noexcept:
+    doc1.unlock_write_with(doc2)
