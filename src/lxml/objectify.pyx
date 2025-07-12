@@ -149,7 +149,7 @@ cdef class ObjectifiedElement(ElementBase):
         if __RECURSIVE_STR:
             return _dump(self, 0)
         else:
-            return textOf(self._c_node) or ''
+            return _lockedTextOf(self) or ''
 
     # pickle support for objectified Element
     def __reduce__(self):
@@ -157,7 +157,7 @@ cdef class ObjectifiedElement(ElementBase):
 
     @property
     def text(self):
-        return textOf(self._c_node)
+        return _lockedTextOf(self)
 
     @property
     def __dict__(self):
@@ -167,15 +167,22 @@ cdef class ObjectifiedElement(ElementBase):
         """
         cdef _Element child
         cdef dict children
-        c_ns = tree._getNs(self._c_node)
-        tag = "{%s}*" % pyunicode(c_ns) if c_ns is not NULL else None
-        children = {}
-        for child in etree.ElementChildIterator(self, tag=tag):
-            if c_ns is NULL and tree._getNs(child._c_node) is not NULL:
-                continue
-            name = pyunicode(child._c_node.name)
-            if name not in children:
-                children[name] = child
+
+        doc = self._doc
+        cetree.lock_read(doc)
+        try:
+            c_ns = tree._getNs(self._c_node)
+            tag = "{%s}*" % pyunicode(c_ns) if c_ns is not NULL else None
+            children = {}
+            for child in etree.ElementChildIterator(self, tag=tag):
+                if c_ns is NULL and tree._getNs(child._c_node) is not NULL:
+                    continue
+                name = pyunicode(child._c_node.name)
+                if name not in children:
+                    children[name] = child
+        finally:
+            cetree.unlock_read(doc)
+
         return children
 
     def __len__(self):
@@ -190,15 +197,21 @@ cdef class ObjectifiedElement(ElementBase):
         name.
         """
         # copied from etree
-        cdef Py_ssize_t c
+        cdef Py_ssize_t count
         cdef tree.xmlNode* c_node
-        c = 0
-        c_node = self._c_node.children
-        while c_node is not NULL:
-            if tree._isElement(c_node):
-                c += 1
-            c_node = c_node.next
-        return c
+        count = 0
+
+        doc = self._doc
+        cetree.lock_read(doc)
+        try:
+            c_node = self._c_node.children
+            while c_node is not NULL:
+                count += tree._isElement(c_node)
+                c_node = c_node.next
+        finally:
+            cetree.unlock_read(doc)
+
+        return count
 
     def getchildren(self):
         """getchildren(self)
@@ -208,18 +221,30 @@ cdef class ObjectifiedElement(ElementBase):
         """
         cdef tree.xmlNode* c_node
         result = []
-        c_node = self._c_node.children
-        while c_node is not NULL:
-            if tree._isElement(c_node):
-                result.append(cetree.elementFactory(self._doc, c_node))
-            c_node = c_node.next
+
+        doc = self._doc
+        cetree.lock_read(doc)
+        try:
+            c_node = self._c_node.children
+            while c_node is not NULL:
+                if tree._isElement(c_node):
+                    result.append(cetree.elementFactory(doc, c_node))
+                c_node = c_node.next
+        finally:
+            cetree.unlock_read(doc)
+
         return result
 
     def __getattr__(self, tag):
         """Return the (first) child with the given tag name.  If no namespace
         is provided, the child will be looked up in the same one as self.
         """
-        return _lookupChildOrRaise(self, tag)
+        doc = self._doc
+        cetree.lock_read(doc)
+        try:
+            return _lookupChildOrRaise(self, tag)
+        finally:
+            cetree.unlock_read(doc)
 
     def __setattr__(self, tag, value):
         """Set the value of the (first) child with the given tag name.  If no
@@ -232,7 +257,12 @@ cdef class ObjectifiedElement(ElementBase):
             # read-only !
             raise TypeError, f"attribute '{tag}' of '{_typename(self)}' objects is not writable"
         elif tag == 'tail':
-            cetree.setTailText(self._c_node, value)
+            doc = self._doc
+            cetree.lock_write(doc)
+            try:
+                cetree.setTailText(self._c_node, value)
+            finally:
+                cetree.unlock_write(doc)
             return
         elif tag == 'tag':
             ElementBase.tag.__set__(self, value)
@@ -240,12 +270,18 @@ cdef class ObjectifiedElement(ElementBase):
         elif tag == 'base':
             ElementBase.base.__set__(self, value)
             return
-        tag = _buildChildTag(self, tag)
-        element = _lookupChild(self, tag)
-        if element is None:
-            _appendValue(self, tag, value)
-        else:
-            _replaceElement(element, value)
+
+        doc = self._doc
+        cetree.lock_write(doc)
+        try:
+            tag = _buildChildTag(self, tag)
+            element = _lookupChild(self, tag)
+            if element is None:
+                _appendValue(self, tag, value)
+            else:
+                _replaceElement(element, value)
+        finally:
+            cetree.unlock_write(doc)
 
     def __delattr__(self, tag):
         child = _lookupChildOrRaise(self, tag)
@@ -258,7 +294,12 @@ cdef class ObjectifiedElement(ElementBase):
 
         As opposed to append(), it sets a data value, not an element.
         """
-        _appendValue(self, _buildChildTag(self, tag), value)
+        doc = self._doc
+        cetree.lock_write(doc)
+        try:
+            _appendValue(self, _buildChildTag(self, tag), value)
+        finally:
+            cetree.unlock_write(doc)
 
     def __getitem__(self, key):
         """Return a sibling, counting from the first child of the parent.  The
@@ -276,27 +317,38 @@ cdef class ObjectifiedElement(ElementBase):
         cdef tree.xmlNode* c_parent
         cdef tree.xmlNode* c_node
         cdef Py_ssize_t c_index
+
+        doc = self._doc
         if python._isString(key):
-            return _lookupChildOrRaise(self, key)
+            cetree.lock_read(doc)
+            try:
+                return _lookupChildOrRaise(self, key)
+            finally:
+                cetree.unlock_read(doc)
         elif isinstance(key, slice):
             return list(self)[key]
+
         # normal item access
-        c_index = key   # raises TypeError if necessary
-        c_self_node = self._c_node
-        c_parent = c_self_node.parent
-        if c_parent is NULL:
-            if c_index == 0 or c_index == -1:
-                return self
-            raise IndexError, unicode(key)
-        if c_index < 0:
-            c_node = c_parent.last
-        else:
-            c_node = c_parent.children
-        c_node = _findFollowingSibling(
-            c_node, tree._getNs(c_self_node), c_self_node.name, c_index)
-        if c_node is NULL:
-            raise IndexError, unicode(key)
-        return elementFactory(self._doc, c_node)
+        cetree.lock_read(doc)
+        try:
+            c_index = key   # raises TypeError if necessary
+            c_self_node = self._c_node
+            c_parent = c_self_node.parent
+            if c_parent is NULL:
+                if c_index == 0 or c_index == -1:
+                    return self
+                raise IndexError, str(key)
+            if c_index < 0:
+                c_node = c_parent.last
+            else:
+                c_node = c_parent.children
+            c_node = _findFollowingSibling(
+                c_node, tree._getNs(c_self_node), c_self_node.name, c_index)
+            if c_node is NULL:
+                raise IndexError, str(key)
+            return elementFactory(doc, c_node)
+        finally:
+            cetree.unlock_read(doc)
 
     def __setitem__(self, key, value):
         """Set the value of a sibling, counting from the first child of the
@@ -313,34 +365,45 @@ cdef class ObjectifiedElement(ElementBase):
         """
         cdef _Element element
         cdef tree.xmlNode* c_node
+
         if python._isString(key):
-            key = _buildChildTag(self, key)
-            element = _lookupChild(self, key)
-            if element is None:
-                _appendValue(self, key, value)
-            else:
-                _replaceElement(element, value)
+            doc = self._doc
+            cetree.lock_write(doc)
+            try:
+                key = _buildChildTag(self, key)
+                element = _lookupChild(self, key)
+                if element is None:
+                    _appendValue(self, key, value)
+                else:
+                    _replaceElement(element, value)
+            finally:
+                cetree.unlock_write(doc)
             return
 
-        if self._c_node.parent is NULL:
-            # the 'root[i] = ...' case
-            raise TypeError, "assignment to root element is invalid"
+        doc = self._doc
+        cetree.lock_write(doc)
+        try:
+            if self._c_node.parent is NULL:
+                # the 'root[i] = ...' case
+                raise TypeError, "assignment to root element is invalid"
 
-        if isinstance(key, slice):
-            # slice assignment
-            _setSlice(key, self, value)
-        else:
-            # normal index assignment
-            if key < 0:
-                c_node = self._c_node.parent.last
+            if isinstance(key, slice):
+                # slice assignment
+                _setSlice(key, self, value)
             else:
-                c_node = self._c_node.parent.children
-            c_node = _findFollowingSibling(
-                c_node, tree._getNs(self._c_node), self._c_node.name, key)
-            if c_node is NULL:
-                raise IndexError, unicode(key)
-            element = elementFactory(self._doc, c_node)
-            _replaceElement(element, value)
+                # normal index assignment
+                if key < 0:
+                    c_node = self._c_node.parent.last
+                else:
+                    c_node = self._c_node.parent.children
+                c_node = _findFollowingSibling(
+                    c_node, tree._getNs(self._c_node), self._c_node.name, key)
+                if c_node is NULL:
+                    raise IndexError, unicode(key)
+                element = elementFactory(doc, c_node)
+                _replaceElement(element, value)
+        finally:
+            cetree.unlock_write(doc)
 
     def __delitem__(self, key):
         parent = self.getparent()
@@ -364,7 +427,12 @@ cdef class ObjectifiedElement(ElementBase):
         """
         if prefix is not None and not python._isString(prefix):
             prefix = '.'.join(prefix)
-        return _build_descendant_paths(self._c_node, prefix)
+        doc = self._doc
+        cetree.lock_read(doc)
+        try:
+            return _build_descendant_paths(self._c_node, prefix)
+        finally:
+            cetree.unlock_read(doc)
 
 
 cdef inline bint _tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
@@ -398,6 +466,7 @@ cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
         c_node = c_node.prev
     return count
 
+
 cdef tree.xmlNode* _findFollowingSibling(tree.xmlNode* c_node,
                                          const_xmlChar* href, const_xmlChar* name,
                                          Py_ssize_t index):
@@ -415,6 +484,7 @@ cdef tree.xmlNode* _findFollowingSibling(tree.xmlNode* c_node,
                 return c_node
         c_node = next(c_node)
     return NULL
+
 
 cdef object _lookupChild(_Element parent, tag):
     cdef tree.xmlNode* c_result
@@ -438,17 +508,20 @@ cdef object _lookupChild(_Element parent, tag):
         return None
     return elementFactory(parent._doc, c_result)
 
+
 cdef object _lookupChildOrRaise(_Element parent, tag):
     element = _lookupChild(parent, tag)
     if element is None:
         raise AttributeError, "no such child: " + _buildChildTag(parent, tag)
     return element
 
+
 cdef object _buildChildTag(_Element parent, tag):
     ns, tag = cetree.getNsTag(tag)
     c_tag = _xcstr(tag)
     c_href = tree._getNs(parent._c_node) if ns is None else _xcstr(ns)
     return cetree.namespacedNameFromNsName(c_href, c_tag)
+
 
 cdef _replaceElement(_Element element, value):
     cdef _Element new_element
@@ -464,6 +537,7 @@ cdef _replaceElement(_Element element, value):
         new_element = element.makeelement(element.tag)
         _setElementValue(new_element, value)
     element.getparent().replace(element, new_element)
+
 
 cdef _appendValue(_Element parent, tag, value):
     cdef _Element new_element
@@ -481,6 +555,7 @@ cdef _appendValue(_Element parent, tag, value):
             tag, parent._doc, None, None, None, None, None)
         _setElementValue(new_element, value)
         cetree.appendChildToElement(parent, new_element)
+
 
 cdef _setElementValue(_Element element, value):
     if value is None:
@@ -508,6 +583,7 @@ cdef _setElementValue(_Element element, value):
             cetree.delAttributeFromNsName(
                 element._c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
     cetree.setNodeText(element._c_node, value)
+
 
 cdef _setSlice(sliceobject, _Element target, items):
     cdef _Element parent
@@ -580,6 +656,7 @@ cdef _setSlice(sliceobject, _Element target, items):
             add(item)
             pos += 1
 
+
 ################################################################################
 # Data type support in subclasses
 
@@ -589,19 +666,24 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
     """
     @property
     def pyval(self):
-        return textOf(self._c_node)
+        return _lockedTextOf(self)
 
     def __str__(self):
-        return textOf(self._c_node) or ''
+        return _lockedTextOf(self) or ''
 
     def __repr__(self):
-        return textOf(self._c_node) or ''
+        return _lockedTextOf(self) or ''
 
     def _setText(self, s):
         """For use in subclasses only. Don't use unless you know what you are
         doing.
         """
-        cetree.setNodeText(self._c_node, s)
+        doc = self._doc
+        cetree.lock_write(doc)
+        try:
+            cetree.setNodeText(self._c_node, s)
+        finally:
+            cetree.unlock_write(doc)
 
 
 cdef class NumberElement(ObjectifiedDataElement):
@@ -773,59 +855,56 @@ cdef class StringElement(ObjectifiedDataElement):
     """
     @property
     def pyval(self):
-        return textOf(self._c_node) or ''
+        return _lockedTextOf(self) or ''
 
     def __repr__(self):
-        return repr(textOf(self._c_node) or '')
+        return repr(_lockedTextOf(self) or '')
 
     def strlen(self):
-        text = textOf(self._c_node)
-        if text is None:
-            return 0
-        else:
-            return len(text)
+        text = _lockedTextOf(self)
+        return len(text) if text is not None else 0
 
     def __bool__(self):
-        return bool(textOf(self._c_node))
+        return bool(_lockedTextOf(self))
 
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
 
     def __hash__(self):
-        return hash(textOf(self._c_node) or '')
+        return hash(_lockedTextOf(self) or '')
 
     def __add__(self, other):
-        text  = _strValueOf(self)
+        text  = _lockedTextOf(self) or ''
         other = _strValueOf(other)
         return text + other
 
     def __radd__(self, other):
-        text  = _strValueOf(self)
+        text  = _lockedTextOf(self) or ''
         other = _strValueOf(other)
         return other + text
 
     def __mul__(self, other):
         if isinstance(self, StringElement):
-            return (textOf((<StringElement>self)._c_node) or '') * _numericValueOf(other)
+            return (_lockedTextOf(<StringElement> self) or '') * _numericValueOf(other)
         elif isinstance(other, StringElement):
-            return _numericValueOf(self) * (textOf((<StringElement>other)._c_node) or '')
+            return _numericValueOf(self) * (_lockedTextOf(<StringElement> other) or '')
         else:
             return NotImplemented
 
     def __rmul__(self, other):
-        return _numericValueOf(other) * (textOf((<StringElement>self)._c_node) or '')
+        return _numericValueOf(other) * (_lockedTextOf(<StringElement> self) or '')
 
     def __mod__(self, other):
-        return (_strValueOf(self) or '') % other
+        return (_lockedTextOf(self) or '') % other
 
     def __int__(self):
-        return int(textOf(self._c_node))
+        return int(_lockedTextOf(self))
 
     def __float__(self):
-        return float(textOf(self._c_node))
+        return float(_lockedTextOf(self))
 
     def __complex__(self):
-        return complex(textOf(self._c_node))
+        return complex(_lockedTextOf(self))
 
 
 cdef class NoneElement(ObjectifiedDataElement):
@@ -864,29 +943,29 @@ cdef class BoolElement(IntElement):
         self._parse_value = _parseBool  # wraps as Python callable
 
     def __bool__(self):
-        return _parseBool(textOf(self._c_node))
+        return _parseBool(_lockedTextOf(self))
 
     def __int__(self):
-        return 0 + _parseBool(textOf(self._c_node))
+        return 0 + _parseBool(_lockedTextOf(self))
 
     def __float__(self):
-        return 0.0 + _parseBool(textOf(self._c_node))
+        return 0.0 + _parseBool(_lockedTextOf(self))
 
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
 
     def __hash__(self):
-        return hash(_parseBool(textOf(self._c_node)))
+        return hash(_parseBool(_lockedTextOf(self)))
 
     def __str__(self):
-        return unicode(_parseBool(textOf(self._c_node)))
+        return unicode(_parseBool(_lockedTextOf(self)))
 
     def __repr__(self):
-        return repr(_parseBool(textOf(self._c_node)))
+        return repr(_parseBool(_lockedTextOf(self)))
 
     @property
     def pyval(self):
-        return _parseBool(textOf(self._c_node))
+        return _parseBool(_lockedTextOf(self))
 
 
 cdef _checkBool(s):
@@ -920,7 +999,7 @@ cdef inline int __parseBoolAsInt(text) except -2:
 
 
 cdef object _parseNumber(NumberElement element):
-    return element._parse_value(textOf(element._c_node))
+    return element._parse_value(_lockedTextOf(element))
 
 
 cdef enum NumberParserState:
@@ -1032,11 +1111,20 @@ cdef _checkFloat(s):
     return _checkNumber(<unicode>s, allow_float=True)
 
 
+cdef str _lockedTextOf(_Element element):
+    doc = element._doc
+    cetree.lock_read(doc)
+    try:
+        return textOf(element._c_node)
+    finally:
+        cetree.unlock_read(doc)
+
+
 cdef object _strValueOf(obj):
     if python._isString(obj):
         return obj
     if isinstance(obj, _Element):
-        return textOf((<_Element>obj)._c_node) or ''
+        return _lockedTextOf(<_Element> obj) or ''
     if obj is None:
         return ''
     return unicode(obj)
@@ -1090,8 +1178,8 @@ cdef class PyType:
     def __init__(self, name, type_check, type_class, stringify=None):
         if isinstance(name, bytes):
             name = (<bytes>name).decode('ascii')
-        elif not isinstance(name, unicode):
-            raise TypeError, "Type name must be a string"
+        elif not isinstance(name, str):
+            raise TypeError, f"Type name must be a string, got {repr(name)}"
         if type_check is not None and not callable(type_check):
             raise TypeError, "Type check function must be callable (or None)"
         if name != TREE_PYTYPE_NAME and \
@@ -1101,13 +1189,11 @@ cdef class PyType:
         self.name  = name
         self._type = type_class
         self.type_check = type_check
-        if stringify is None:
-            stringify = unicode
-        self.stringify = stringify
+        self.stringify = stringify if stringify is not None else str
         self._schema_types = []
 
     def __repr__(self):
-        return "PyType(%s, %s)" % (self.name, self._type.__name__)
+        return f"PyType({self.name}, {self._type.__name__})"
 
     def register(self, before=None, after=None):
         """register(self, before=None, after=None)
@@ -1172,27 +1258,31 @@ cdef class PyType:
         def __get__(self):
             return self._schema_types
         def __set__(self, types):
-            self._schema_types = list(map(unicode, types))
+            self._schema_types = list(map(str, types))
 
 
 cdef dict _PYTYPE_DICT = {}
 cdef dict _SCHEMA_TYPE_DICT = {}
 cdef list _TYPE_CHECKS = []
 
-cdef unicode _xml_bool(value):
+
+cdef str _xml_bool(value):
     return "true" if value else "false"
 
-cdef unicode _xml_float(value):
+
+cdef str _xml_float(value):
     if _float_is_inf(value):
         if value > 0:
             return "INF"
         return "-INF"
     if _float_is_nan(value):
         return "NaN"
-    return unicode(repr(value))
+    return repr(value)
+
 
 cdef _pytypename(obj):
     return "str" if python._isString(obj) else _typename(obj)
+
 
 def pytypename(obj):
     """pytypename(obj)
@@ -1200,6 +1290,7 @@ def pytypename(obj):
     Find the name of the corresponding PyType for a Python object.
     """
     return _pytypename(obj)
+
 
 cdef _registerPyTypes():
     pytype = PyType('int', _checkInt, IntElement)  # wraps functions for Python
@@ -1235,10 +1326,13 @@ cdef _registerPyTypes():
     pytype = PyType('none', None, NoneElement)
     pytype.register()
 
+
 # non-registered PyType for inner tree elements
 cdef PyType TREE_PYTYPE = PyType(TREE_PYTYPE_NAME, None, ObjectifiedElement)
 
+
 _registerPyTypes()
+
 
 def getRegisteredTypes():
     """getRegisteredTypes()
@@ -1255,8 +1349,8 @@ def getRegisteredTypes():
     check functions, you can simply register() it, which will append it to the
     end of the type list.
     """
-    cdef list types = []
-    cdef set known = set()
+    types = []
+    known = set()
     for check, pytype in _TYPE_CHECKS:
         name = pytype.name
         if name not in known:
@@ -1269,6 +1363,7 @@ def getRegisteredTypes():
             types.append(pytype)
     return types
 
+
 cdef PyType _guessPyType(value, PyType defaulttype):
     if value is None:
         return None
@@ -1280,6 +1375,7 @@ cdef PyType _guessPyType(value, PyType defaulttype):
             # could not be parsed as the specified type => ignore
             pass
     return defaulttype
+
 
 cdef object _guessElementClass(tree.xmlNode* c_node):
     value = textOf(c_node)
@@ -1295,6 +1391,7 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
         except IGNORABLE_ERRORS:
             pass
     return None
+
 
 ################################################################################
 # adapted ElementMaker supports registered PyTypes
@@ -1322,27 +1419,36 @@ cdef class _ObjectifyElementMakerCaller:
         pytype_name = None
         has_children = False
         has_string_value = False
+
         for child in children:
             if child is None:
                 if len(children) == 1:
                     cetree.setAttributeValue(
                         element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
+
             elif python._isString(child):
                 _add_text(element, child)
                 has_string_value = True
+
             elif isinstance(child, _Element):
-                cetree.appendChildToElement(element, <_Element>child)
+                childElement = <_Element> child
+                doc = childElement._doc
+                cetree.lock_write(doc)
+                try:
+                    cetree.appendChildToElement(element, childElement)
+                finally:
+                    cetree.unlock_write(doc)
                 has_children = True
+
             elif isinstance(child, _ObjectifyElementMakerCaller):
-                elementMaker = <_ObjectifyElementMakerCaller>child
+                elementMaker = <_ObjectifyElementMakerCaller> child
                 if elementMaker._element_factory is None:
-                    cetree.makeSubElement(element, elementMaker._tag,
-                                          None, None, None, None)
+                    cetree.makeSubElement(element, elementMaker._tag, None, None, None, None)
                 else:
-                    childElement = elementMaker._element_factory(
-                        elementMaker._tag)
+                    childElement = elementMaker._element_factory(elementMaker._tag)
                     cetree.appendChildToElement(element, childElement)
                 has_children = True
+
             elif isinstance(child, dict):
                 for name, value in child.items():
                     # keyword arguments in attrib take precedence
@@ -1352,8 +1458,9 @@ cdef class _ObjectifyElementMakerCaller:
                     if pytype is not None:
                         value = (<PyType>pytype).stringify(value)
                     elif not python._isString(value):
-                        value = unicode(value)
+                        value = str(value)
                     cetree.setAttributeValue(element, name, value)
+
             else:
                 if pytype_name is not None:
                     # concatenation always makes the result a string
@@ -1364,7 +1471,7 @@ cdef class _ObjectifyElementMakerCaller:
                     _add_text(element, (<PyType>pytype).stringify(child))
                 else:
                     has_string_value = True
-                    child = unicode(child)
+                    child = str(child)
                     _add_text(element, child)
 
         if self._annotate and not has_children:
@@ -1374,6 +1481,7 @@ cdef class _ObjectifyElementMakerCaller:
                 cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, pytype_name)
 
         return element
+
 
 cdef _add_text(_Element elem, text):
     # add text to the tree in construction, either as element text or
@@ -1390,6 +1498,7 @@ cdef _add_text(_Element elem, text):
         if old is not None:
             text = old + text
         cetree.setNodeText(elem._c_node, text)
+
 
 cdef class ElementMaker:
     """ElementMaker(self, namespace=None, nsmap=None, annotate=True, makeelement=None)
@@ -1422,6 +1531,7 @@ cdef class ElementMaker:
     cdef object _nsmap
     cdef bint _annotate
     cdef dict _cache
+
     def __init__(self, *, namespace=None, nsmap=None, annotate=True,
                  makeelement=None):
         if nsmap is None:
@@ -1473,6 +1583,7 @@ cdef class ElementMaker:
 
 cdef bint __RECURSIVE_STR = 0 # default: off
 
+
 def enable_recursive_str(on=True):
     """enable_recursive_str(on=True)
 
@@ -1482,12 +1593,19 @@ def enable_recursive_str(on=True):
     global __RECURSIVE_STR
     __RECURSIVE_STR = on
 
+
 def dump(_Element element not None):
     """dump(_Element element not None)
 
     Return a recursively generated string representation of an element.
     """
-    return _dump(element, 0)
+    doc = element._doc
+    cetree.lock_read(doc)
+    try:
+        return _dump(element, 0)
+    finally:
+        cetree.unlock_read(doc)
+
 
 cdef object _dump(_Element element, int indent):
     indentstr = "    " * indent
@@ -1537,7 +1655,9 @@ def pickleReduceElementTree(obj):
     return __unpickleElementTree, (etree.tostring(obj),)
 
 _setupPickle(pickleReduceElementTree)
+
 del pickleReduceElementTree
+
 
 ################################################################################
 # Element class lookup
@@ -1548,6 +1668,7 @@ cdef class ObjectifyElementClassLookup(ElementClassLookup):
     """
     cdef object empty_data_class
     cdef object tree_class
+
     def __init__(self, tree_class=None, empty_data_class=None):
         """Lookup mechanism for objectify.
 
@@ -1565,9 +1686,10 @@ cdef class ObjectifyElementClassLookup(ElementClassLookup):
             empty_data_class = StringElement
         self.empty_data_class = empty_data_class
 
+
 cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
-    cdef ObjectifyElementClassLookup lookup
-    lookup = <ObjectifyElementClassLookup>state
+    cdef ObjectifyElementClassLookup lookup = <ObjectifyElementClassLookup> state
+
     # if element has children => no data class
     if cetree.hasChild(c_node):
         return lookup.tree_class
@@ -1627,6 +1749,7 @@ cdef PyType _check_type(tree.xmlNode* c_node, PyType pytype):
         pass
     return None
 
+
 def pyannotate(element_or_tree, *, ignore_old=False, ignore_xsi=False,
              empty_pytype=None):
     """pyannotate(element_or_tree, ignore_old=False, ignore_xsi=False, empty_pytype=None)
@@ -1646,9 +1769,14 @@ def pyannotate(element_or_tree, *, ignore_old=False, ignore_xsi=False,
     ``empty_pytype`` keyword argument.  The default is not to annotate empty
     elements.  Pass 'str', for example, to make string values the default.
     """
-    cdef _Element  element
     element = cetree.rootNodeOrRaise(element_or_tree)
-    _annotate(element, 0, 1, ignore_xsi, ignore_old, None, empty_pytype)
+    doc = element._doc
+    cetree.lock_write(doc)
+    try:
+        _annotate(element, 0, 1, ignore_xsi, ignore_old, None, empty_pytype)
+    finally:
+        cetree.unlock_write(doc)
+
 
 def xsiannotate(element_or_tree, *, ignore_old=False, ignore_pytype=False,
                 empty_type=None):
@@ -1674,9 +1802,14 @@ def xsiannotate(element_or_tree, *, ignore_old=False, ignore_pytype=False,
     ``empty_type`` keyword argument.  The default is not to annotate empty
     elements.  Pass 'string', for example, to make string values the default.
     """
-    cdef _Element  element
     element = cetree.rootNodeOrRaise(element_or_tree)
-    _annotate(element, 1, 0, ignore_old, ignore_pytype, empty_type, None)
+    doc = element._doc
+    cetree.lock_write(doc)
+    try:
+        _annotate(element, 1, 0, ignore_old, ignore_pytype, empty_type, None)
+    finally:
+        cetree.unlock_write(doc)
+
 
 def annotate(element_or_tree, *, ignore_old=True, ignore_xsi=False,
              empty_pytype=None, empty_type=None, annotate_xsi=0,
@@ -1711,10 +1844,14 @@ def annotate(element_or_tree, *, ignore_old=True, ignore_xsi=False,
     The keyword arguments 'annotate_xsi' (default: 0) and 'annotate_pytype'
     (default: 1) control which kind(s) of annotation to use.
     """
-    cdef _Element  element
     element = cetree.rootNodeOrRaise(element_or_tree)
-    _annotate(element, annotate_xsi, annotate_pytype, ignore_xsi,
-              ignore_old, empty_type, empty_pytype)
+    doc = element._doc
+    cetree.lock_write(doc)
+    try:
+        _annotate(element, annotate_xsi, annotate_pytype, ignore_xsi,
+                  ignore_old, empty_type, empty_pytype)
+    finally:
+        cetree.unlock_write(doc)
 
 
 cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
@@ -1749,6 +1886,7 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
                           ignore_xsi, ignore_pytype,
                           empty_type_name, empty_pytype, StrType, NoneType)
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+
 
 cdef int _annotate_element(tree.xmlNode* c_node, _Document doc,
                            bint annotate_xsi, bint annotate_pytype,
@@ -1871,8 +2009,10 @@ cdef int _annotate_element(tree.xmlNode* c_node, _Document doc,
 
     return 0
 
+
 cdef object _strip_attributes = etree.strip_attributes
 cdef object _cleanup_namespaces = etree.cleanup_namespaces
+
 
 def deannotate(element_or_tree, *, bint pytype=True, bint xsi=True,
                bint xsi_nil=False, bint cleanup_namespaces=False):
@@ -1904,15 +2044,15 @@ def deannotate(element_or_tree, *, bint pytype=True, bint xsi=True,
     if cleanup_namespaces:
         _cleanup_namespaces(element_or_tree)
 
+
 ################################################################################
 # Module level parser setup
 
-cdef object __DEFAULT_PARSER
-__DEFAULT_PARSER = etree.XMLParser(remove_blank_text=True)
+cdef object __DEFAULT_PARSER = etree.XMLParser(remove_blank_text=True)
 __DEFAULT_PARSER.set_element_class_lookup( ObjectifyElementClassLookup() )
 
-cdef object objectify_parser
-objectify_parser = __DEFAULT_PARSER
+cdef object objectify_parser = __DEFAULT_PARSER
+
 
 def set_default_parser(new_parser = None):
     """set_default_parser(new_parser = None)
@@ -1932,6 +2072,7 @@ def set_default_parser(new_parser = None):
     else:
         raise TypeError, "parser must inherit from lxml.etree.XMLParser"
 
+
 def makeparser(**kw):
     """makeparser(remove_blank_text=True, **kw)
 
@@ -1948,16 +2089,18 @@ def makeparser(**kw):
     parser.set_element_class_lookup( ObjectifyElementClassLookup() )
     return parser
 
+
 cdef _Element _makeElement(tag, text, attrib, nsmap):
     return cetree.makeElement(tag, None, objectify_parser, text, None, attrib, nsmap)
+
 
 ################################################################################
 # Module level factory functions
 
-cdef object _fromstring
-_fromstring = etree.fromstring
+cdef object _fromstring = etree.fromstring
 
 SubElement = etree.SubElement
+
 
 def fromstring(xml, parser=None, *, base_url=None):
     """fromstring(xml, parser=None, base_url=None)
@@ -1975,6 +2118,7 @@ def fromstring(xml, parser=None, *, base_url=None):
         parser = objectify_parser
     return _fromstring(xml, parser, base_url=base_url)
 
+
 def XML(xml, parser=None, *, base_url=None):
     """XML(xml, parser=None, base_url=None)
 
@@ -1991,8 +2135,9 @@ def XML(xml, parser=None, *, base_url=None):
         parser = objectify_parser
     return _fromstring(xml, parser, base_url=base_url)
 
-cdef object _parse
-_parse = etree.parse
+
+cdef object _parse = etree.parse
+
 
 def parse(f, parser=None, *, base_url=None):
     """parse(f, parser=None, base_url=None)
@@ -2009,13 +2154,16 @@ def parse(f, parser=None, *, base_url=None):
         parser = objectify_parser
     return _parse(f, parser, base_url=base_url)
 
+
 cdef dict _DEFAULT_NSMAP = {
     "py"  : PYTYPE_NAMESPACE,
     "xsi" : XML_SCHEMA_INSTANCE_NS,
     "xsd" : XML_SCHEMA_NS
 }
 
+
 E = ElementMaker()
+
 
 def Element(_tag, attrib=None, nsmap=None, *, _pytype=None, **_attributes):
     """Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes)
@@ -2036,6 +2184,7 @@ def Element(_tag, attrib=None, nsmap=None, *, _pytype=None, **_attributes):
         nsmap = _DEFAULT_NSMAP
     _attributes[PYTYPE_ATTRIBUTE] = _pytype
     return _makeElement(_tag, None, _attributes, nsmap)
+
 
 def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
                 **_attributes):
