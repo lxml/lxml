@@ -4334,6 +4334,7 @@ cdef class DocumentInvalid(LxmlError):
 cdef class _Validator:
     "Base class for XML validators."
     cdef _ErrorLog _error_log
+
     def __cinit__(self):
         self._error_log = _ErrorLog()
 
