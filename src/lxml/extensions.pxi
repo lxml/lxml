@@ -197,14 +197,14 @@ cdef class _BaseContext:
 
     cdef registerGlobalNamespaces(self):
         cdef list ns_prefixes = _find_all_extension_prefixes()
-        if python.PyList_GET_SIZE(ns_prefixes) > 0:
+        if ns_prefixes:
             for prefix_utf, ns_uri_utf in ns_prefixes:
                 self._global_namespaces.append(prefix_utf)
                 xpath.xmlXPathRegisterNs(
                     self._xpathCtxt, _xcstr(prefix_utf), _xcstr(ns_uri_utf))
 
     cdef unregisterGlobalNamespaces(self):
-        if python.PyList_GET_SIZE(self._global_namespaces) > 0:
+        if self._global_namespaces:
             for prefix_utf in self._global_namespaces:
                 xpath.xmlXPathRegisterNs(self._xpathCtxt,
                                          _xcstr(prefix_utf), NULL)
