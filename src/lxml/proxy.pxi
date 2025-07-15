@@ -134,14 +134,15 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
 # support for freeing tree elements when proxy objects are destroyed
 
 cdef int freeSubtree(xmlNode* c_node) noexcept:
-    """Deallocate c_node and its tail text.
+    """Deallocate the c_node, its following siblings and all children.
     """
     if c_node is NULL:
         #print "not freeing, node is NULL"
         return 0
     #print "freeing:", c_top.name
-    _removeText(c_node.next)  # tail
-    tree.xmlFreeNode(c_node)
+
+    # Free the complete list of all siblings.
+    tree.xmlFreeNodeList(c_node)
     return 1
 
 
@@ -158,13 +159,14 @@ cdef int attemptDeallocation(xmlNode* c_node) noexcept:
 
 
 cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
-    """Return the top of the tree that can be deallocated, or NULL.
+    """Return the left-most sibling at the top of the tree that can be deallocated, or NULL.
     """
     cdef xmlNode* c_next
     #print "trying to do deallocating:", c_node.type
     if hasProxy(c_node):
         #print "Not freeing: proxies still exist"
         return NULL
+
     while c_node.parent is not NULL:
         c_node = c_node.parent
         #print "checking:", c_current.type
@@ -176,22 +178,28 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
         if hasProxy(c_node):
             #print "Not freeing: proxies still exist"
             return NULL
+
     # see whether we have children to deallocate
     if not canDeallocateChildNodes(c_node):
         return NULL
+
     # see whether we have siblings to deallocate
-    c_next = c_node.prev
-    while c_next:
-        if _isElement(c_next):
-            if hasProxy(c_next) or not canDeallocateChildNodes(c_next):
-                return NULL
-        c_next = c_next.prev
     c_next = c_node.next
     while c_next:
         if _isElement(c_next):
             if hasProxy(c_next) or not canDeallocateChildNodes(c_next):
                 return NULL
         c_next = c_next.next
+    # Now check the preceding siblings and find the first node.
+    c_next = c_node.prev
+    while c_next:
+        if _isElement(c_next):
+            if hasProxy(c_next) or not canDeallocateChildNodes(c_next):
+                return NULL
+        c_node = c_next
+        c_next = c_next.prev
+
+    # Return the left-most node at the top of the tree.
     return c_node
 
 
