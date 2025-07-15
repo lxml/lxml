@@ -31,6 +31,13 @@ cdef class _RWLock:
     def lock_thread_id(self):
         return self._lock._write_locked_id - 1
 
+    @property
+    def pending_cleanups(self):
+        return self._lock._objects_pending_cleanup
+
+    def add_object_for_cleanup(self, obj):
+        self._lock.add_object_for_cleanup(obj)
+
     @contextmanager
     def read_lock(self):
         self.lock_read()
@@ -49,6 +56,9 @@ cdef class _RWLock:
 
     def lock_read(self):
         self._lock.lock_read()
+
+    def try_lock_read(self):
+        return self._lock.try_lock_read()
 
     def unlock_read(self):
         self._lock.unlock_read()

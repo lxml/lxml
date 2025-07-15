@@ -115,9 +115,9 @@ cdef extern from *:
     ctypedef int atomic_int "__lxml_atomic_int_type"
     ctypedef int nonatomic_int "__lxml_nonatomic_int_type"
 
-    nonatomic_int atomic_add  "__lxml_atomic_add"          (atomic_int *value, nonatomic_int arg)
-    nonatomic_int atomic_incr "__lxml_atomic_incr_relaxed" (atomic_int *value)
-    nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value)
+    nonatomic_int atomic_add  "__lxml_atomic_add"          (atomic_int *value, nonatomic_int arg) noexcept
+    nonatomic_int atomic_incr "__lxml_atomic_incr_relaxed" (atomic_int *value) noexcept
+    nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value) noexcept
 
 
 cdef const long max_lock_reader_count = 1 << 30
@@ -130,6 +130,7 @@ cdef class RWLock:
 
     Uses a critical section to guard lock operations and a PyMutex for write locking.
     """
+    cdef list _objects_pending_cleanup
     cdef unsigned long _write_locked_id
     cdef atomic_int _reader_count
     cdef atomic_int _readers_departing
@@ -143,6 +144,19 @@ cdef class RWLock:
         # "+1" to make sure that "== 0" really means "no thread waiting".
         return python.PyThread_get_thread_ident() + 1
 
+    # Deferred cleanup support.
+
+    cdef int add_object_for_cleanup(self, obj):
+        if self._objects_pending_cleanup is None:
+            self._objects_pending_cleanup = []
+        self._objects_pending_cleanup.append(obj)
+        return 0
+
+    cdef int clean_up_pending_objects(self):
+        if self._objects_pending_cleanup is not None:
+            self._objects_pending_cleanup = None
+        return 0
+
     # Read locking.
 
     cdef void _wait_to_read(self) noexcept:
@@ -150,6 +164,24 @@ cdef class RWLock:
         while self._reader_count < 0:
             self._readers_wait_lock.acquire()
         self._readers_wait_lock.release()
+
+    @cython.critical_section
+    cdef bint try_lock_read(self) noexcept:
+        readers_before = atomic_incr(&self._reader_count)
+        if readers_before >= 0:
+            # Only readers active => go!
+            return True
+        if self._write_locked_id == self._my_lock_id():
+            # I own the write lock => ignore the read lock and read!
+            atomic_decr(&self._reader_count)
+            return True
+
+        # Give up and undo our claim.
+        # We rely on the 'critical_section' to prevent writers from terminating concurrently.
+        readers = atomic_decr(&self._reader_count)
+        assert readers < 0, readers
+
+        return False
 
     cdef void lock_read(self) noexcept:
         readers_before = atomic_incr(&self._reader_count)
@@ -204,7 +236,7 @@ cdef class RWLock:
     cdef void lock_write(self) noexcept:
         my_lock_id = self._my_lock_id()
         # Claim the lock and block new readers if no writers are waiting.
-        readers = atomic_add(&self._reader_count, -max_lock_reader_count)
+        cdef nonatomic_int readers = atomic_add(&self._reader_count, -max_lock_reader_count)
 
         if readers == 0:
             # Fast path: no readers, no writers => go
@@ -236,6 +268,9 @@ cdef class RWLock:
         if self._writer_reentry > 0:
             self._writer_reentry -= 1
             return
+
+        # Clean up any objects that needed the lock for their deallocation (and couldn't get it yet).
+        self.clean_up_pending_objects()
 
         # Release the lock.
         self._write_locked_id = 0

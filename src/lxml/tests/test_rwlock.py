@@ -1,7 +1,6 @@
 import threading
 import time
 import unittest
-from collections import Counter
 from contextlib import contextmanager
 from functools import partial, wraps
 
@@ -59,6 +58,90 @@ class RWLockTest(unittest.TestCase):
         assert lock.reader_count == 0, lock.reader_count
 
         lock.lock_read()
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+    def test_try_lock_read_simple(self):
+        lock = RWLock()
+        assert lock.reader_count == 0, lock.reader_count
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 1, lock.reader_count
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 2, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+        lock.lock_read()
+        assert lock.reader_count == 1, lock.reader_count
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 2, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+    def test_try_lock_read_as_writer(self):
+        lock = RWLock()
+        assert lock.reader_count == 0, lock.reader_count
+        lock.lock_write()
+        assert lock.writer_blocking_readers
+
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 0, lock.reader_count
+        lock.unlock_read()
+
+        assert lock.reader_count == 0, lock.reader_count
+        assert lock.writer_blocking_readers
+
+        lock.unlock_write()
+
+    def test_try_lock_read_failing(self):
+        lock = RWLock()
+        start = threading.Barrier(2)
+        unlock = threading.Barrier(2)
+
+        def writer():
+            lock.lock_write()
+            start.wait()
+            unlock.wait()
+            lock.unlock_write()
+
+        writer_thread = threading.Thread(target=writer)
+        writer_thread.start()
+
+        start.wait()
+        assert lock.reader_count == 0, lock.reader_count
+        assert lock.writer_blocking_readers
+
+        assert lock.try_lock_read() is False
+        assert lock.reader_count == 0, lock.reader_count
+        assert lock.try_lock_read() is False
+        assert lock.reader_count == 0, lock.reader_count
+
+        unlock.wait()
+        writer_thread.join()
+
+        assert not lock.writer_blocking_readers
+
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 1, lock.reader_count
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 2, lock.reader_count
+
+        lock.unlock_read()
         assert lock.reader_count == 1, lock.reader_count
         lock.unlock_read()
         assert lock.reader_count == 0, lock.reader_count
@@ -121,6 +204,24 @@ class RWLockTest(unittest.TestCase):
         assert lock.writer_reentry == 0, lock.writer_reentry
         lock.unlock_write()
         assert lock.writer_reentry == 0, lock.writer_reentry
+
+    def test_lock_write_cleanup(self):
+        lock = RWLock()
+        obj = object()
+
+        lock.lock_write()
+        assert not lock.pending_cleanups
+
+        lock.add_object_for_cleanup(obj)
+        assert lock.pending_cleanups == [obj]  # add_object_for_cleanup() appends the object
+
+        lock.lock_read()
+        assert lock.pending_cleanups == [obj]  # lock_read() doesn't clean up
+        lock.unlock_read()
+        assert lock.pending_cleanups == [obj]  # unlock_read() doesn't clean up
+
+        lock.unlock_write()
+        assert not lock.pending_cleanups  # unlock_write() does clean up
 
     def test_lock_write_wait_writers(self):
         lock = RWLock()

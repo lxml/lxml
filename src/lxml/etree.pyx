@@ -490,8 +490,14 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void initDict(self) noexcept:
         self._parser.initDocDict(self._c_doc)
 
+    cdef int add_element_for_cleanup(self, obj):
+        self._lock.add_object_for_cleanup(obj)
+
     cdef void lock_read(self) noexcept:
         self._lock.lock_read()
+
+    cdef bint try_lock_read(self) noexcept:
+        return self._lock.try_lock_read()
 
     cdef void unlock_read(self) noexcept:
         self._lock.unlock_read()
@@ -909,17 +915,28 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return
 
         doc = self._doc
-        doc.lock_read()
-        try:
-            if hasProxy(self._c_node):
-                _unregisterProxy(self)
-            c_top = getDeallocationTop(self._c_node)
-        finally:
-            doc.unlock_read()
+        if not doc.try_lock_read():
+            # If we cannot get the lock now (because a writer owns it),
+            # store an innocently fresh _Element away for disposal as soon as the writer is done.
+            # Keeping a potentially user typed 'self' around is too risky.
+            element = <_Element> _Element.__new__(_Element)
+            with cython.critical_section(doc):
+                if hasProxy(self._c_node):
+                    _unregisterProxy(self)
+                _registerProxy(element, doc, self._c_node)
+                doc.add_object_for_cleanup(element)
+            return
 
+        # First, disconnect this proxy.
+        if hasProxy(self._c_node):
+            _unregisterProxy(self)
+
+        c_top = getDeallocationTop(self._c_node)
         if c_top is not NULL:
             # No more references to the tree => no locking needed to free it.
             freeSubtree(c_top)
+
+        doc.unlock_read()
 
     # MANIPULATORS
 
