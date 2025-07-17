@@ -7,8 +7,8 @@ import unittest
 from xml.dom import pulldom
 from xml.sax.handler import ContentHandler
 
-from .common_imports import HelperTestCase, make_doctest, BytesIO, _bytes
-from lxml import sax
+from .common_imports import HelperTestCase, make_doctest, BytesIO
+from lxml import etree, sax
 
 
 class ETreeSaxTestCase(HelperTestCase):
@@ -120,6 +120,32 @@ class ETreeSaxTestCase(HelperTestCase):
                          dom.firstChild.namespaceURI)
         self.assertEqual('a',
                          dom.firstChild.prefix)
+
+    def test_sax_non_html(self):
+        # https://bugs.launchpad.net/lxml/+bug/2116333
+        events = []
+
+        from xml.sax.handler import ContentHandler
+        class MyContentHandler(ContentHandler):
+            def startElementNS(self, name, qname, attributes):
+                events.append(("START", name, qname, attributes.items()))
+
+            def characters(self, data):
+                events.append(("DATA", data))
+
+        markup = (
+            '<!DOCTYPE html><html><head>'
+            '<img fbq(\'track\', \'Purchase\' , {currency: "IDR" , value: 20000.00}); />'
+            '</head><body></body>'
+        )
+
+        parser = etree.HTMLParser(recover=True)
+        tree = etree.fromstring(markup, parser)
+
+        self.assertFalse(events)
+        sax.saxify(tree, MyContentHandler())
+        # The exact list of parsed attributes depends on the libxml2 parser version.
+        self.assertTrue(events)
 
     def test_element_sax(self):
         tree = self.parse('<a><b/></a>')
