@@ -1,5 +1,3 @@
-# cython: language_level=2
-
 """
 SAX-based adapter to copy trees from/to the Python standard library.
 
@@ -32,7 +30,7 @@ class SaxError(etree.LxmlError):
 
 
 def _getNsTag(tag):
-    if tag[0] == '{':
+    if tag[0] == '{' and '}' in tag:
         return tuple(tag[1:].split('}', 1))
     else:
         return None, tag
@@ -152,10 +150,11 @@ class ElementTreeContentHandler(ContentHandler):
         try:
             # if there already is a child element, we must append to its tail
             last_element = last_element[-1]
-            last_element.tail = (last_element.tail or '') + data
         except IndexError:
             # otherwise: append to the text
             last_element.text = (last_element.text or '') + data
+        else:
+            last_element.tail = (last_element.tail or '') + data
 
     ignorableWhitespace = characters
 
