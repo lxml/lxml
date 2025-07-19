@@ -166,7 +166,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
     cdef bytes result
     cdef _Document doc
     cdef _Element element
-    cdef xmlChar **c_inclusive_ns_prefixes
+    cdef xmlChar **c_inclusive_ns_prefixes = NULL
 
     if isinstance(element_or_tree, _Element):
         element = <_Element> element_or_tree
