@@ -392,12 +392,14 @@ class ThreadingTestCase(HelperTestCase):
 
         class MyLookup(etree.CustomElementClassLookup):
             repeat = range(100)
+            _TestElement = TestElement
+
             def lookup(self, t, d, ns, name):
                 count = 0
                 for i in self.repeat:
                     # allow other threads to run
-                    count += 1
-                return TestElement
+                    count += i
+                return self._TestElement if count > 1 else self._TestElement
 
         parser = self.etree.XMLParser()
         parser.set_element_class_lookup(MyLookup())
