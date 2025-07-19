@@ -521,11 +521,18 @@ cdef class XSLT:
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
 
-        input_doc.lock_fakedoc()
+        cdef bint use_write_lock = self._context._extensions
+        if use_write_lock:
+            input_doc.lock_write()
+        else:
+            input_doc.lock_fakedoc()
         try:
             c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
         except:
-            input_doc.unlock_fakedoc()
+            if use_write_lock:
+                input_doc.unlock_write()
+            else:
+                input_doc.unlock_fakedoc()
             raise
 
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
@@ -547,7 +554,10 @@ cdef class XSLT:
             if transform_ctxt.dict is NULL:
                 xslt.xsltFreeTransformContext(transform_ctxt)
                 _destroyFakeDoc(input_doc._c_doc, c_doc)
-                input_doc.unlock_fakedoc()
+                if use_write_lock:
+                    input_doc.unlock_write()
+                else:
+                    input_doc.unlock_fakedoc()
                 raise MemoryError()
         else:
             transform_ctxt.dict = self._c_style.doc.dict
@@ -587,7 +597,10 @@ cdef class XSLT:
             if context is not None:
                 context.free_context()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            input_doc.unlock_fakedoc()
+            if use_write_lock:
+                input_doc.unlock_write()
+            else:
+                input_doc.unlock_fakedoc()
 
         try:
             if resolver_context is not None and resolver_context._has_raised():
