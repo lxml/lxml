@@ -924,7 +924,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 if hasProxy(self._c_node):
                     _unregisterProxy(self)
                 _registerProxy(element, doc, self._c_node)
-                doc.add_object_for_cleanup(element)
+                doc.add_element_for_cleanup(element)
             return
 
         # First, disconnect this proxy.
