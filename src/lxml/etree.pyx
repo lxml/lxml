@@ -2086,9 +2086,8 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
 
     element_class = <type> LOOKUP_ELEMENT_CLASS(
         ELEMENT_CLASS_LOOKUP_STATE, doc, c_node)
-    if type(element_class) is not type:
-        if not isinstance(element_class, type):
-            raise TypeError(f"Element class is not a type, got {type(element_class)}")
+    if not isinstance(element_class, type):
+        raise TypeError(f"Element class is not a type, got {type(element_class)}")
 
     if hasProxy(c_node):
         with cython.critical_section(doc):
