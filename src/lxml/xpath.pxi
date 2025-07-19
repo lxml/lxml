@@ -266,7 +266,14 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         path = _utf8(_path)
         doc = self._element._doc
 
-        doc.lock_read()
+        # FIXME: as long as we cannot upgrade a read lock to a write lock, we assume that we need a
+        # write lock if the user provided extensions.
+        cdef bint use_write_lock = self._context._extensions
+        if use_write_lock:
+            doc.lock_write()
+        else:
+            doc.lock_read()
+
         self._lock()
         self._xpathCtxt.node = self._element._c_node
         try:
@@ -280,7 +287,10 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         finally:
             self._context.unregister_context()
             self._unlock()
-            doc.unlock_read()
+            if use_write_lock:
+                doc.unlock_write()
+            else:
+                doc.unlock_read()
 
         return result
 
@@ -317,7 +327,14 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         path = _utf8(_path)
         doc = self._element._doc
 
-        doc.lock_fakedoc()
+        # FIXME: as long as we cannot upgrade a read lock to a write lock, we assume that we need a
+        # write lock if the user provided extensions.
+        cdef bint use_write_lock = self._context._extensions
+        if use_write_lock:
+            doc.lock_write()
+        else:
+            doc.lock_fakedoc()
+
         self._lock()
         try:
             self._context.register_context(doc)
@@ -336,7 +353,10 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
                 self._context.unregister_context()
         finally:
             self._unlock()
-            doc.unlock_fakedoc()
+            if use_write_lock:
+                doc.unlock_write()
+            else:
+                doc.unlock_fakedoc()
 
         return result
 
@@ -403,7 +423,14 @@ cdef class XPath(_XPathEvaluatorBase):
         doc = _documentOrRaise(_etree_or_element)
         element  = _rootNodeOrRaise(_etree_or_element)
 
-        doc.lock_read()
+        # FIXME: as long as we cannot upgrade a read lock to a write lock, we assume that we need a
+        # write lock if the user provided extensions.
+        cdef bint use_write_lock = self._context._extensions
+        if use_write_lock:
+            doc.lock_write()
+        else:
+            doc.lock_read()
+
         self._lock()
         self._xpathCtxt.doc  = doc._c_doc
         self._xpathCtxt.node = element._c_node
@@ -418,7 +445,10 @@ cdef class XPath(_XPathEvaluatorBase):
         finally:
             self._context.unregister_context()
             self._unlock()
-            doc.unlock_read()
+            if use_write_lock:
+                doc.unlock_write()
+            else:
+                doc.unlock_read()
 
         return result
 
