@@ -264,7 +264,7 @@ cdef class RWLock:
     @cython.critical_section
     cdef void unlock_write(self) noexcept:
         assert self._write_locked_id == self._my_lock_id(), f"{self._write_locked_id} != {self._my_lock_id()}"
-        assert self._reader_count < 0, self._reader_count
+        assert self._reader_count < 0, <nonatomic_int> self._reader_count
         if self._writer_reentry > 0:
             self._writer_reentry -= 1
             return
