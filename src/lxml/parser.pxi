@@ -53,12 +53,13 @@ cdef class _ParserDictionary:
 
     def __cinit__(self):
         self._c_dict = xmlparser.xmlDictCreate()
-        # Disable size limitations for the globally shared parser dict.
-        tree.xmlDictSetLimit(self._c_dict, 0)
 
     def __dealloc__(self):
         xmlparser.xmlDictFree(self._c_dict)
         self._c_dict = NULL
+
+    cdef void disableSizeLimit(self):
+        tree.xmlDictSetLimit(self._c_dict, 0)
 
     cdef tree.xmlDict *getDict(self):
         return self._c_dict
@@ -919,6 +920,8 @@ cdef class _BaseParser:
         if self._parser_context is None:
             self._parser_context = self._createContext(self.target, None)
             self._parser_context._collect_ids = self._flags.collect_ids
+            if self._parse_options & tree.XML_PARSE_HUGE:
+                self._parser_context._dict.disableSizeLimit()
             if self._schema is not None:
                 self._parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -934,6 +937,8 @@ cdef class _BaseParser:
             self._push_parser_context = self._createContext(
                 self.target, self._events_to_collect)
             self._push_parser_context._collect_ids = self._flags.collect_ids
+            if self._parse_options & tree.XML_PARSE_HUGE:
+                self._push_parser_context._dict.disableSizeLimit()
             if self._schema is not None:
                 self._push_parser_context._validator = \
                     self._schema._newSaxValidator(
