@@ -1,14 +1,13 @@
 # iterparse -- event-driven parsing
 
-DEF __ITERPARSE_CHUNK_SIZE = 32768
-
 cdef class iterparse:
     """iterparse(self, source, events=("end",), tag=None, \
                   attribute_defaults=False, dtd_validation=False, \
                   load_dtd=False, no_network=True, remove_blank_text=False, \
                   compact=True, resolve_entities='internal', remove_comments=False, \
                   remove_pis=False, strip_cdata=True, encoding=None, \
-                  html=False, recover=None, huge_tree=False, schema=None)
+                  html=False, recover=None, huge_tree=False, schema=None, \
+                  chunk_size=32768)
 
     Incremental parser.
 
@@ -57,6 +56,8 @@ cdef class iterparse:
     Other keyword arguments:
      - encoding: override the document encoding
      - schema: an XMLSchema to validate against
+     - chunk_size: the number of bytes to read from the 'source' in one chunk
+                   (default: 32768)
     """
     cdef _FeedParser _parser
     cdef object _tag
@@ -65,6 +66,7 @@ cdef class iterparse:
     cdef object _source
     cdef object _filename
     cdef object _error
+    cdef object _chunk_size
     cdef bint _close_source_after_read
 
     def __init__(self, source, events=("end",), *, tag=None,
@@ -73,7 +75,7 @@ cdef class iterparse:
                  compact=True, resolve_entities='internal', remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
                  html=False, recover=None, huge_tree=False, collect_ids=True,
-                 XMLSchema schema=None):
+                 XMLSchema schema=None, int chunk_size=32768):
         if not hasattr(source, 'read'):
             source = _getFSPathOrObject(source)
             self._filename = source
@@ -126,6 +128,7 @@ cdef class iterparse:
                 target=None,  # TODO
                 compact=compact)
 
+        self._chunk_size = chunk_size
         self._events = parser.read_events()
         self._parser = parser
 
@@ -217,7 +220,7 @@ cdef class iterparse:
 
     @cython.final
     cdef bint _read_more_events(self, _SaxParserContext context) except -123:
-        data = self._source.read(__ITERPARSE_CHUNK_SIZE)
+        data = self._source.read(self._chunk_size)
         if not isinstance(data, bytes):
             self._close_source()
             raise TypeError("reading file objects must return bytes objects")
