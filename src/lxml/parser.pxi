@@ -919,13 +919,16 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._parser_context is None:
             self._parser_context = self._createContext(self.target, None)
+
             self._parser_context._collect_ids = self._flags.collect_ids
-            if self._parse_options & tree.XML_PARSE_HUGE:
+            if self._parse_options & xmlparser.XML_PARSE_HUGE:
                 self._parser_context._dict.disableSizeLimit()
+
             if self._schema is not None:
                 self._parser_context._validator = \
                     self._schema._newSaxValidator(
                         self._parse_options & xmlparser.XML_PARSE_DTDATTR)
+
             pctxt = self._newParserCtxt()
             _initParserContext(self._parser_context, self._resolvers, pctxt)
             self._configureSaxContext(pctxt)
@@ -936,13 +939,16 @@ cdef class _BaseParser:
         if self._push_parser_context is None:
             self._push_parser_context = self._createContext(
                 self.target, self._events_to_collect)
+
             self._push_parser_context._collect_ids = self._flags.collect_ids
-            if self._parse_options & tree.XML_PARSE_HUGE:
+            if self._parse_options & xmlparser.XML_PARSE_HUGE:
                 self._push_parser_context._dict.disableSizeLimit()
+
             if self._schema is not None:
                 self._push_parser_context._validator = \
                     self._schema._newSaxValidator(
                         self._parse_options & xmlparser.XML_PARSE_DTDATTR)
+
             pctxt = self._newPushParserCtxt()
             _initParserContext(
                 self._push_parser_context, self._resolvers, pctxt)
