@@ -58,6 +58,9 @@ cdef class _ParserDictionary:
         xmlparser.xmlDictFree(self._c_dict)
         self._c_dict = NULL
 
+    cdef void disableSizeLimit(self):
+        tree.xmlDictSetLimit(self._c_dict, 0)
+
     cdef tree.xmlDict *getDict(self):
         return self._c_dict
 
@@ -912,6 +915,8 @@ cdef class _BaseParser:
         if self._parser_context is None:
             self._parser_context = self._createContext(self.target, None)
             self._parser_context._collect_ids = self._flags.collect_ids
+            if self._parse_options & tree.XML_PARSE_HUGE:
+                self._parser_context._dict.disableSizeLimit()
             if self._schema is not None:
                 self._parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -927,6 +932,8 @@ cdef class _BaseParser:
             self._push_parser_context = self._createContext(
                 self.target, self._events_to_collect)
             self._push_parser_context._collect_ids = self._flags.collect_ids
+            if self._parse_options & tree.XML_PARSE_HUGE:
+                self._push_parser_context._dict.disableSizeLimit()
             if self._schema is not None:
                 self._push_parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -1348,6 +1355,7 @@ cdef void _initSaxDocument(void* ctxt) noexcept with gil:
                 # memory errors are not fatal here
                 c_dict = xmlparser.xmlDictCreate()
                 if c_dict:
+                    tree.xmlDictSetLimit(c_dict, 0)
                     c_doc.ids = tree.xmlHashCreateDict(0, c_dict)
                     xmlparser.xmlDictFree(c_dict)
                 else:

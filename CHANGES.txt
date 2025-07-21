@@ -2,6 +2,25 @@
 lxml changelog
 ==============
 
+7.0.0 (2025-??-??)
+==================
+
+Features added
+--------------
+
+* The shared parser name dict is now local to a parser (as opposed to global),
+  which allows to control its lifetime and cross-document usage more easily.
+  It is now also unbounded in size if the ``huge_tree=True`` option is provided.
+
+* The default chunk size for reading from file-likes in ``iterparse()`` was increased
+  from 32 KiB to 64 KiB and is now configurable with a new ``chunk_size`` argument.
+
+Other changes
+-------------
+
+* Some internal adaptations were made for libxml2 2.14.x and 2.15.x.
+
+
 6.0.0 (2025-06-26)
 ==================
 

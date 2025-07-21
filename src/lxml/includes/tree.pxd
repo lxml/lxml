@@ -77,6 +77,7 @@ cdef extern from "libxml/hash.h":
     cdef int xmlHashSize(xmlHashTable* table) nogil
     cdef void xmlHashFree(xmlHashTable* table, xmlHashDeallocator f) nogil
 
+
 cdef extern from * nogil: # actually "libxml/dict.h"
     # libxml/dict.h appears to be broken to include in C
     ctypedef struct xmlDict
@@ -84,6 +85,9 @@ cdef extern from * nogil: # actually "libxml/dict.h"
     cdef const_xmlChar* xmlDictExists(xmlDict* dict, const_xmlChar* name, int len)
     cdef int xmlDictOwns(xmlDict* dict, const_xmlChar* name)
     cdef size_t xmlDictSize(xmlDict* dict)
+    cdef size_t xmlDictSetLimit(xmlDict* dict, size_t limit)
+    cdef size_t xmlDictGetUsage(xmlDict* dict)
+
 
 cdef extern from "libxml/tree.h" nogil:
     ctypedef struct xmlDoc
