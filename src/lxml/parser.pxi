@@ -53,6 +53,8 @@ cdef class _ParserDictionary:
 
     def __cinit__(self):
         self._c_dict = xmlparser.xmlDictCreate()
+        # Disable size limitations for the globally shared parser dict.
+        tree.xmlDictSetLimit(self._c_dict, 0)
 
     def __dealloc__(self):
         xmlparser.xmlDictFree(self._c_dict)
@@ -1353,6 +1355,7 @@ cdef void _initSaxDocument(void* ctxt) noexcept with gil:
                 # memory errors are not fatal here
                 c_dict = xmlparser.xmlDictCreate()
                 if c_dict:
+                    tree.xmlDictSetLimit(c_dict, 0)
                     c_doc.ids = tree.xmlHashCreateDict(0, c_dict)
                     xmlparser.xmlDictFree(c_dict)
                 else:
