@@ -19,9 +19,7 @@ cdef inline _Element getProxy(xmlNode* c_node):
 @cython.linetrace(False)
 @cython.profile(False)
 cdef inline bint hasProxy(xmlNode* c_node):
-    if c_node._private is NULL:
-        return False
-    return True
+    return c_node._private is not NULL
 
 
 @cython.linetrace(False)
