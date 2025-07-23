@@ -449,12 +449,10 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
         element_type = "entity"
     else:
         element_type = "element"
-    if c_node.name is NULL:
-        name = None
-    else:
-        name = funicode(c_node.name)
+
+    name = funicodeOrNone(c_node.name)
     c_str = tree._getNs(c_node)
-    ns = funicode(c_str) if c_str is not NULL else None
+    ns = funicodeOrNone(c_str)
 
     cls = lookup.lookup(element_type, doc, ns, name)
     if cls is not None:
