@@ -52,10 +52,10 @@ cdef class _ParserDictionary:
     cdef tree.xmlDict* _c_dict
 
     def __cinit__(self):
-        self._c_dict = xmlparser.xmlDictCreate()
+        self._c_dict = tree.xmlDictCreate()
 
     def __dealloc__(self):
-        xmlparser.xmlDictFree(self._c_dict)
+        tree.xmlDictFree(self._c_dict)
         self._c_dict = NULL
 
     cdef void disableSizeLimit(self):
@@ -66,7 +66,7 @@ cdef class _ParserDictionary:
 
     cdef tree.xmlDict *getDictRef(self):
         c_dict = self._c_dict
-        xmlparser.xmlDictReference(c_dict)
+        tree.xmlDictReference(c_dict)
         return c_dict
 
     cdef size_t getDictSize(self):
@@ -79,7 +79,7 @@ cdef class _ParserDictionary:
 
         c_dict_ref[0] = self.getDictRef()
         if c_dict is not NULL:
-            xmlparser.xmlDictFree(c_dict)
+            tree.xmlDictFree(c_dict)
 
     cdef void initParserDict(self, xmlparser.xmlParserCtxt* pctxt) noexcept:
         "Assure we always use the same string dictionary."
@@ -1354,7 +1354,7 @@ cdef void _initSaxDocument(void* ctxt) noexcept with gil:
     if c_doc and c_ctxt.dict and not c_doc.dict:
         # I have no idea why libxml2 disables this - we need it
         c_ctxt.dictNames = 1
-        xmlparser.xmlDictReference(c_ctxt.dict)
+        tree.xmlDictReference(c_ctxt.dict)
         c_doc.dict = c_ctxt.dict
 
     # set up XML ID hash table
@@ -1364,11 +1364,11 @@ cdef void _initSaxDocument(void* ctxt) noexcept with gil:
             # keep the global parser dict from filling up with XML IDs
             if c_doc and not c_doc.ids:
                 # memory errors are not fatal here
-                c_dict = xmlparser.xmlDictCreate()
+                c_dict = tree.xmlDictCreate()
                 if c_dict:
                     tree.xmlDictSetLimit(c_dict, 0)
                     c_doc.ids = tree.xmlHashCreateDict(0, c_dict)
-                    xmlparser.xmlDictFree(c_dict)
+                    tree.xmlDictFree(c_dict)
                 else:
                     c_doc.ids = tree.xmlHashCreate(0)
         else:
@@ -1573,8 +1573,8 @@ cdef (int, int) _parse_data_chunk(xmlparser.xmlParserCtxt* c_ctxt,
                 fixup_error = _fixHtmlDictSubtreeNames(
                     c_ctxt.dict, c_ctxt.myDoc, c_node)
                 if c_ctxt.myDoc.dict and c_ctxt.myDoc.dict is not c_ctxt.dict:
-                    xmlparser.xmlDictReference(c_ctxt.dict)
-                    xmlparser.xmlDictFree(c_ctxt.myDoc.dict)
+                    tree.xmlDictReference(c_ctxt.dict)
+                    tree.xmlDictFree(c_ctxt.myDoc.dict)
                     c_ctxt.myDoc.dict = c_ctxt.dict
         else:
             orig_loader = _register_document_loader()
@@ -2022,7 +2022,7 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
         result = tree.xmlCopyDoc(c_doc, 0)
     if result is NULL:
         raise MemoryError()
-    xmlparser.xmlDictReference(c_doc.dict)
+    tree.xmlDictReference(c_doc.dict)
     result.dict = c_doc.dict
     return result
 
@@ -2032,7 +2032,7 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
     assert result.dict is NULL
-    xmlparser.xmlDictReference(c_doc.dict)
+    tree.xmlDictReference(c_doc.dict)
     result.dict = c_doc.dict
     with nogil:
         c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
