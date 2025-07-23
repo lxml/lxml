@@ -722,6 +722,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         parse = self.etree.parse
         self.assertRaises(TypeError, parse, 'notthere.xml', object())
 
+    def test_parse_huge_tree(self):
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = b'<a><b></b><c/></a>'
+        parser = XMLParser(huge_tree=True)
+        self.assertEqual(2, len(fromstring(xml, parser=parser)))
+
     def test_parse_premature_end(self):
         fromstring = self.etree.fromstring
         XMLParser = self.etree.XMLParser
@@ -748,6 +756,17 @@ class ETreeOnlyTestCase(HelperTestCase):
             counts.append(len(list(elem.getiterator())))
         self.assertEqual(
             [1,2,1,4],
+            counts)
+
+    def test_iterparse_huge_tree(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO(b'<a><b><d/></b><c/></a>')
+
+        counts = []
+        for _, elem in iterparse(f, huge_tree=True):
+            counts.append(len(elem))
+        self.assertEqual(
+            [0,1,0,2],
             counts)
 
     def test_iterparse_tree_comments(self):

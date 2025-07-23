@@ -81,6 +81,11 @@ cdef extern from "libxml/hash.h":
 cdef extern from * nogil: # actually "libxml/dict.h"
     # libxml/dict.h appears to be broken to include in C
     ctypedef struct xmlDict
+
+    cdef xmlDict* xmlDictCreate()
+    cdef xmlDict* xmlDictCreateSub(xmlDict* subdict)
+    cdef void xmlDictFree(xmlDict* sub)
+    cdef int xmlDictReference(xmlDict* dict)
     cdef const_xmlChar* xmlDictLookup(xmlDict* dict, const_xmlChar* name, int len)
     cdef const_xmlChar* xmlDictExists(xmlDict* dict, const_xmlChar* name, int len)
     cdef int xmlDictOwns(xmlDict* dict, const_xmlChar* name)

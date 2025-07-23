@@ -546,11 +546,11 @@ cdef class XSLT:
         # non-input tag/attr names will come from the stylesheet
         # anyway.
         if transform_ctxt.dict is not NULL:
-            xmlparser.xmlDictFree(transform_ctxt.dict)
+            tree.xmlDictFree(transform_ctxt.dict)
         if kw:
             # parameter values are stored in the dict
             # => avoid unnecessarily cluttering the global dict
-            transform_ctxt.dict = xmlparser.xmlDictCreateSub(self._c_style.doc.dict)
+            transform_ctxt.dict = tree.xmlDictCreateSub(self._c_style.doc.dict)
             if transform_ctxt.dict is NULL:
                 xslt.xsltFreeTransformContext(transform_ctxt)
                 _destroyFakeDoc(input_doc._c_doc, c_doc)
@@ -561,7 +561,7 @@ cdef class XSLT:
                 raise MemoryError()
         else:
             transform_ctxt.dict = self._c_style.doc.dict
-            xmlparser.xmlDictReference(transform_ctxt.dict)
+            tree.xmlDictReference(transform_ctxt.dict)
 
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
@@ -633,7 +633,7 @@ cdef class XSLT:
                 resolver_context.clear()
 
         c_dict = c_result.dict
-        xmlparser.xmlDictReference(c_dict)
+        tree.xmlDictReference(c_dict)
 
         result_doc = _documentFactory(c_result, input_doc._parser)
         result_doc.initDict()
@@ -652,7 +652,7 @@ cdef class XSLT:
                                        input_doc._c_doc.dict, c_result.dict)
             input_doc.unlock_read()
 
-        xmlparser.xmlDictFree(c_dict)
+        tree.xmlDictFree(c_dict)
 
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 

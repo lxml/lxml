@@ -136,10 +136,12 @@ cdef extern from "libxml/parser.h" nogil:
 
     cdef bint xmlHasFeature(xmlFeature feature)
 
+    # START: Legacy, moved to tree.pxd
     cdef xmlDict* xmlDictCreate()
     cdef xmlDict* xmlDictCreateSub(xmlDict* subdict)
     cdef void xmlDictFree(xmlDict* sub)
     cdef int xmlDictReference(xmlDict* dict)
+    # END: Legacy, moved to tree.pxd
 
     cdef int XML_COMPLETE_ATTRS  # SAX option for adding DTD default attributes
     cdef int XML_SKIP_IDS        # SAX option for not building an XML ID dict
