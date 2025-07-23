@@ -410,7 +410,7 @@ class ThreadingTestCase(HelperTestCase):
         child_count = len(root)
         def testrun():
             for i in range(1000):
-                el = root[i%child_count]
+                el = root[i % child_count]
                 del el
         self._run_threads(10, testrun)
 
