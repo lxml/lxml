@@ -71,6 +71,7 @@ import types
 import getopt
 import unittest
 import traceback
+import tracemalloc
 
 from unittest import TextTestResult
 
@@ -547,6 +548,9 @@ def main(argv):
     if cfg.run_tests and cfg.coverage:
         from coverage import Coverage
         cov = Coverage(omit=['test.py'])
+
+    # Configure tracemalloc.
+    tracemalloc.start()
 
     # Finding and importing
     test_files = get_test_files(cfg)
