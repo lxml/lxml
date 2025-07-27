@@ -10,30 +10,44 @@ cdef inline _Element getProxy(xmlNode* c_node):
     """Get a proxy for a given node.
     """
     #print "getProxy for:", <int>c_node
-    if c_node is not NULL and c_node._private is not NULL:
-        return <_Element>c_node._private
-    else:
+    if c_node is NULL or not hasProxy(c_node):
         return None
+    return <_Element> c_node._private
 
 
 @cython.linetrace(False)
 @cython.profile(False)
-cdef inline bint hasProxy(xmlNode* c_node):
-    return c_node._private is not NULL
+cdef inline bint hasProxy(xmlNode* c_node) noexcept:
+    proxy = <cpython.object.PyObject*> c_node._private
+    return (
+        # Node has a proxy reference?
+        proxy is not NULL and
+        # Proxy reference is not currently deallocating?
+        cpython.ref._Py_REFCNT(proxy) > 0
+    )
 
 
 @cython.linetrace(False)
 @cython.profile(False)
-cdef inline int _registerProxy(_Element proxy, _Document doc,
-                               xmlNode* c_node) except -1:
+cdef inline _Element _registerProxy(_Element proxy, _Document doc, xmlNode* c_node):
     """Register a proxy and type for the node it's proxying for.
     """
     #print "registering for:", <int>proxy._c_node
-    assert not hasProxy(c_node), "double registering proxy!"
-    proxy._doc = doc
+    cdef cpython.object.PyObject *expected_proxy = NULL
+    old_proxy = <cpython.object.PyObject*> atomic_doc_pointer_compare_exchange(doc, &c_node._private, expected_proxy, <void*> proxy)
+
+    while old_proxy is not expected_proxy:
+        # Another proxy object was already registered.
+        if cpython.ref._Py_REFCNT(old_proxy) > 0:
+            # Old proxy is alive, use it.
+            return <_Element> old_proxy
+        # Proxy has died. Overwrite it and take ownership of the node.
+        expected_proxy = old_proxy
+        old_proxy = <cpython.object.PyObject*> atomic_doc_pointer_compare_exchange(doc, &c_node._private, expected_proxy, <void*> proxy)
+
     proxy._c_node = c_node
-    c_node._private = <void*>proxy
-    return 0
+    proxy._doc = doc
+    return proxy
 
 
 @cython.linetrace(False)
@@ -42,12 +56,18 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     """Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node = proxy._c_node
-    if c_node._private is not <void*>proxy:
-        import tracemalloc
-        tracemalloc.get_object_traceback(proxy)
-    assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
-    c_node._private = NULL
-    return 0
+    #if c_node._private is not <void*>proxy:
+    #    import tracemalloc
+    #    print(tracemalloc.get_object_traceback(proxy))
+
+    old_proxy = <cpython.object.PyObject*> atomic_doc_pointer_compare_exchange(proxy._doc, &c_node._private, <void*> proxy, NULL)
+    if old_proxy is not <void*> proxy and old_proxy is not NULL:
+        #print(f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> old_proxy:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}")
+        return 0
+
+    proxy._c_node = NULL
+    proxy._doc = None
+    return 1
 
 
 ################################################################################
@@ -344,6 +364,17 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     step 1), but freed only after the complete subtree was traversed
     and all occurrences were replaced by tree-internal pointers.
     """
+    if not tree._isElementOrXInclude(c_element):
+        return 0
+
+    doc.lock_proxies()
+    try:
+        return moveNodeToDocument_locked(doc, c_source_doc, c_element)
+    finally:
+        doc.unlock_proxies()
+
+
+cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode* c_element) except -1:
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
     cdef xmlDoc* c_doc = doc._c_doc
@@ -352,9 +383,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_del_ns_list = NULL
     cdef proxy_count = 0
-
-    if not tree._isElementOrXInclude(c_element):
-        return 0
 
     c_start_node = c_element
 
@@ -400,7 +428,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     # 4) fix _Document references
     #    (and potentially deallocate the source document)
     if proxy_count > 0:
-        if proxy_count == 1 and c_start_node._private is not NULL:
+        if proxy_count == 1 and hasProxy(c_start_node):
             proxy = getProxy(c_start_node)
             if proxy is not None:
                 if proxy._doc is not doc:
@@ -474,7 +502,7 @@ cdef int fixElementDocument(xmlNode* c_element, _Document doc,
     cdef xmlNode* c_node = c_element
     cdef _Element proxy = None # init-to-None required due to fake-loop below
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
-    if c_node._private is not NULL:
+    if hasProxy(c_node):
         proxy = getProxy(c_node)
         if proxy is not None:
             if proxy._doc is not doc:

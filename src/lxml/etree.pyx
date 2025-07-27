@@ -58,7 +58,8 @@ from lxml.includes cimport c14n
 # Cython's standard declarations
 cimport cpython.mem
 cimport cpython.ref
-from libc cimport limits, stdio, stdlib
+cimport cpython.object
+from libc cimport limits, stdio, stdlib, stdint
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 from libc.string cimport const_char
 
@@ -477,6 +478,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef xmlDoc* _c_doc
     cdef _BaseParser _parser
     cdef RWLock _lock
+    cdef cython.pymutex _proxy_lock
 
     def __dealloc__(self):
         # If there are no more references to the document, it is safe
@@ -492,6 +494,12 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
 
     cdef int add_element_for_cleanup(self, obj):
         self._lock.add_object_for_cleanup(obj)
+
+    cdef void lock_proxies(self) noexcept:
+        self._proxy_lock.acquire()
+
+    cdef void unlock_proxies(self) noexcept:
+        self._proxy_lock.release()
 
     cdef void lock_read(self) noexcept:
         self._lock.lock_read()
@@ -908,35 +916,44 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     @cython.linetrace(False)
     @cython.profile(False)
-    def __dealloc__(self):
+    def __del__(self):
         #print("trying to free node:", <int>self._c_node)
         #displayNode(self._c_node, 0)
-        if self._c_node is NULL:
+        c_node = self._c_node
+        if c_node is NULL:
+            stdio.printf("DEAD1  ")
             return
+
+        assert c_node._private is not NULL
+        assert cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private) > 0, \
+            cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private)
 
         doc = self._doc
-        if not doc.try_lock_read():
-            # If we cannot get the lock now (because a writer owns it),
-            # store an innocently fresh _Element away for disposal as soon as the writer is done.
-            # Keeping a potentially user typed 'self' around is too risky.
-            element = <_Element> _Element.__new__(_Element)
-            with cython.critical_section(doc):
-                if hasProxy(self._c_node):
-                    _unregisterProxy(self)
-                _registerProxy(element, doc, self._c_node)
-                doc.add_element_for_cleanup(element)
-            return
+        stdio.printf("DEALLOC " if type(doc) is _Document else "DEALLOC [**NO DOC!**] ")
+        # None probably means that the unregistration has happened concurrently.
+        if doc is not None:
+            doc.lock_proxies()
 
-        # First, disconnect this proxy.
-        if hasProxy(self._c_node):
+        try:
+            # Now, owning the lock, make sure there is still something to deallocate.
+            c_node = self._c_node
+            if c_node is NULL:
+                stdio.printf("DEAD**2**  ")
+                return
+
+            # First, disconnect and invalidate this proxy.
             _unregisterProxy(self)
 
-        c_top = getDeallocationTop(self._c_node)
-        if c_top is not NULL:
-            # No more references to the tree => no locking needed to free it.
-            freeSubtree(c_top)
+            # Search for other proxy references to the tree.
+            c_top = getDeallocationTop(c_node)
+        finally:
+            if doc is not None:
+                doc.unlock_proxies()
 
-        doc.unlock_read()
+        stdio.printf("c_top(%d)  ", <int> (c_top is not NULL))
+        if c_top is not NULL:
+            # No more references => no locking needed to free it.
+            freeSubtree(c_top)
 
     # MANIPULATORS
 
@@ -2078,11 +2095,13 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         return None
 
     if hasProxy(c_node):
-        with cython.critical_section(doc):
+        # Reuse existing proxies.
+        doc.lock_proxies()
+        try:
             if hasProxy(c_node):
-                result = getProxy(c_node)
-                if result is not None:
-                    return result
+                return getProxy(c_node)
+        finally:
+            doc.unlock_proxies()
 
     element_class = <type> LOOKUP_ELEMENT_CLASS(
         ELEMENT_CLASS_LOOKUP_STATE, doc, c_node)
@@ -2090,21 +2109,26 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         raise TypeError(f"Element class is not a type, got {type(element_class)}")
 
     if hasProxy(c_node):
-        with cython.critical_section(doc):
+        # prevent re-entry race condition - we just called into Python
+        doc.lock_proxies()
+        try:
             if hasProxy(c_node):
-                # prevent re-entry race condition - we just called into Python
                 return getProxy(c_node)
+        finally:
+            doc.unlock_proxies()
 
     result = element_class.__new__(element_class)
 
-    # Using a critical section here allows us to put proxies into the node without write-locking the document.
-    with cython.critical_section(doc):
+    doc.lock_proxies()
+    try:
         if hasProxy(c_node):
             # prevent re-entry race condition - we just called into Python
             result._c_node = NULL
             return getProxy(c_node)
 
-        _registerProxy(result, doc, c_node)
+        result = _registerProxy(result, doc, c_node)
+    finally:
+        doc.unlock_proxies()
 
     if element_class is not _Element:
         result._init()
