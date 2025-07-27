@@ -478,6 +478,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef xmlDoc* _c_doc
     cdef _BaseParser _parser
     cdef RWLock _lock
+    # Short-lived lock to guard proxy link changes.
     cdef cython.pymutex _proxy_lock
 
     def __dealloc__(self):
@@ -921,7 +922,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         #displayNode(self._c_node, 0)
         c_node = self._c_node
         if c_node is NULL:
-            stdio.printf("DEAD1  ")
+            #stdio.printf("DEAD1(** 1 **)  ")
             return
 
         assert c_node._private is not NULL
@@ -929,7 +930,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private)
 
         doc = self._doc
-        stdio.printf("DEALLOC " if type(doc) is _Document else "DEALLOC [**NO DOC!**] ")
+        #stdio.printf("DEALLOC " if type(doc) is _Document else "DEALLOC [**NO DOC!**] ")
         # None probably means that the unregistration has happened concurrently.
         if doc is not None:
             doc.lock_proxies()
@@ -938,7 +939,19 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # Now, owning the lock, make sure there is still something to deallocate.
             c_node = self._c_node
             if c_node is NULL:
-                stdio.printf("DEAD**2**  ")
+                #stdio.printf("DEAD(** 2 **)  ")
+                return
+            if c_node._private is NULL:
+                self._c_node = NULL
+                #stdio.printf("DEAD(** 3  **)  ")
+                return
+            if cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private) > 1:
+                # Proxy is (now) used elsewhere. Might have happened when we waited for the lock.
+                #stdio.printf("REUSED(** 4  **)  ")
+                return
+            if c_node._private is not <void*> self and cpython.ref.Py_REFCNT(self) > 1:
+                # Proxy is (now) used elsewhere. Might have happened when we waited for the lock.
+                #stdio.printf("REUSED(** 5  **)  ")
                 return
 
             # First, disconnect and invalidate this proxy.
@@ -950,7 +963,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if doc is not None:
                 doc.unlock_proxies()
 
-        stdio.printf("c_top(%d)  ", <int> (c_top is not NULL))
+        #stdio.printf("c_top(%d)  ", <int> (c_top is not NULL))
         if c_top is not NULL:
             # No more references => no locking needed to free it.
             freeSubtree(c_top)
@@ -2126,7 +2139,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
             result._c_node = NULL
             return getProxy(c_node)
 
-        result = _registerProxy(result, doc, c_node)
+        _registerProxy(result, doc, c_node)
     finally:
         doc.unlock_proxies()
 

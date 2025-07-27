@@ -29,25 +29,16 @@ cdef inline bint hasProxy(xmlNode* c_node) noexcept:
 
 @cython.linetrace(False)
 @cython.profile(False)
-cdef inline _Element _registerProxy(_Element proxy, _Document doc, xmlNode* c_node):
+cdef inline int _registerProxy(_Element proxy, _Document doc,
+                               xmlNode* c_node) except -1:
     """Register a proxy and type for the node it's proxying for.
     """
     #print "registering for:", <int>proxy._c_node
-    cdef cpython.object.PyObject *expected_proxy = NULL
-    old_proxy = <cpython.object.PyObject*> atomic_doc_pointer_compare_exchange(doc, &c_node._private, expected_proxy, <void*> proxy)
-
-    while old_proxy is not expected_proxy:
-        # Another proxy object was already registered.
-        if cpython.ref._Py_REFCNT(old_proxy) > 0:
-            # Old proxy is alive, use it.
-            return <_Element> old_proxy
-        # Proxy has died. Overwrite it and take ownership of the node.
-        expected_proxy = old_proxy
-        old_proxy = <cpython.object.PyObject*> atomic_doc_pointer_compare_exchange(doc, &c_node._private, expected_proxy, <void*> proxy)
-
-    proxy._c_node = c_node
+    assert not hasProxy(c_node), "double registering proxy!"
+    c_node._private = <void*> proxy
     proxy._doc = doc
-    return proxy
+    proxy._c_node = c_node
+    return 0
 
 
 @cython.linetrace(False)
@@ -59,15 +50,13 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     #if c_node._private is not <void*>proxy:
     #    import tracemalloc
     #    print(tracemalloc.get_object_traceback(proxy))
+    assert c_node._private is NULL or c_node._private is <void*>proxy, \
+        f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> c_node._private:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}"
 
-    old_proxy = <cpython.object.PyObject*> atomic_doc_pointer_compare_exchange(proxy._doc, &c_node._private, <void*> proxy, NULL)
-    if old_proxy is not <void*> proxy and old_proxy is not NULL:
-        #print(f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> old_proxy:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}")
-        return 0
-
+    c_node._private = NULL
     proxy._c_node = NULL
     proxy._doc = None
-    return 1
+    return 0
 
 
 ################################################################################
