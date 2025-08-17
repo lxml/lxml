@@ -3,7 +3,6 @@ import os, re, sys, platform
 import tarfile
 import time
 from contextlib import closing
-from distutils import log
 from ftplib import FTP
 
 import urllib.error
@@ -447,7 +446,7 @@ def call_subprocess(cmd, **kw):
     import subprocess
     cwd = kw.get('cwd', '.')
     cmd_desc = ' '.join(cmd)
-    log.info('Running "%s" in %s' % (cmd_desc, cwd))
+    print(f'Running "{cmd_desc}" in {cwd}')
     returncode = subprocess.call(cmd, **kw)
     if returncode:
         raise Exception('Command "%s" returned code %s' % (cmd_desc, returncode))
