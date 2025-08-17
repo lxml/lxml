@@ -230,7 +230,6 @@ build the sources, see the build instructions on the project home page.
         versioninfo.dev_status(),
         'Intended Audience :: Developers',
         'Intended Audience :: Information Technology',
-        'License :: OSI Approved :: BSD License',
         'Programming Language :: Cython',
         # NOTE: keep in sync with 'python_requires' list above.
         'Programming Language :: Python :: 3',

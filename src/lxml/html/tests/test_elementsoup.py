@@ -50,7 +50,7 @@ if BS_INSTALLED:
 
         def test_wrap_html(self):
             # <head> outside <html>, parser should fix that
-            html = '<head><title>title</test></head><html><body/></html>'
+            html = '<head><title>title</title></head><html><body/></html>'
             res = b'<html><head><title>title</title></head><body></body></html>'
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
