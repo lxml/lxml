@@ -1,10 +1,9 @@
 import json
-from os.path import islink
-import os, re, sys, subprocess, platform
+import os, re, sys, platform
 import tarfile
 import time
+from contextlib import closing
 from distutils import log
-from contextlib import closing, contextmanager
 from ftplib import FTP
 
 import urllib.error
@@ -29,6 +28,22 @@ sys_platform = sys.platform
 
 # use pre-built libraries on Windows
 
+def read_file_digest(file):
+    buffer = bytearray(2**18)
+    view = memoryview(buffer)
+
+    from hashlib import sha256
+    filehash = sha256()
+    with open(file, 'rb') as f:
+        while True:
+            size = f.readinto(buffer)
+            if not size:
+                break
+            filehash.update(view[:size])
+
+    return 'sha256:' + filehash.hexdigest()
+
+
 def download_and_extract_windows_binaries(destdir):
     url = "https://api.github.com/repos/lxml/libxml2-win-binaries/releases?per_page=5"
     releases, _ = read_url(
@@ -44,7 +59,10 @@ def download_and_extract_windows_binaries(destdir):
             max_release = release
 
     url = "https://github.com/lxml/libxml2-win-binaries/releases/download/%s/" % max_release['tag_name']
-    filenames = [asset['name'] for asset in max_release.get('assets', ())]
+    asset_files = {
+        asset['name']: (asset['size'], asset['digest'])
+        for asset in max_release.get('assets', ())
+    }
 
     # Check for native ARM64 build or the environment variable that is set by
     # Visual Studio for cross-compilation (same variable as setuptools uses)
@@ -56,13 +74,17 @@ def download_and_extract_windows_binaries(destdir):
         arch = "win32"
 
     arch_part = '.' + arch + '.'
-    filenames = [filename for filename in filenames if arch_part in filename]
+    asset_files = {
+        filename: details
+        for filename, details in asset_files.items()
+        if arch_part in filename
+    }
 
     libs = {}
     for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
         libs[libname] = "%s-%s.%s.zip" % (
             libname,
-            find_max_version(libname, filenames),
+            find_max_version(libname, list(asset_files)),
             arch,
         )
 
@@ -72,11 +94,17 @@ def download_and_extract_windows_binaries(destdir):
     for libname, libfn in libs.items():
         srcfile = urljoin(url, libfn)
         destfile = os.path.join(destdir, libfn)
-        if os.path.exists(destfile + ".keep"):
-            print('Using local copy of  "{}"'.format(srcfile))
-        else:
-            print('Retrieving "%s" to "%s"' % (srcfile, destfile))
-            urlretrieve(srcfile, destfile)
+        if os.path.exists(destfile):
+            file_size, file_digest = asset_files.get(libfn, (None, None))
+            if file_size and os.path.getsize(destfile) == file_size and read_file_digest(destfile) == file_digest:
+                print('Using local copy of  "{}"'.format(srcfile))
+                continue
+
+        print('Retrieving "%s" to "%s"' % (srcfile, destfile))
+        urlretrieve(srcfile, destfile)
+
+    for libname, libfn in libs.items():
+        destfile = os.path.join(destdir, libfn)
         d = unpack_zipfile(destfile, destdir)
         libs[libname] = d
 
@@ -85,7 +113,7 @@ def download_and_extract_windows_binaries(destdir):
 
 def find_top_dir_of_zipfile(zipfile):
     topdir = None
-    files = [f.filename for f in zipfile.filelist]
+    files = (f.filename for f in zipfile.filelist)
     dirs = [d for d in files if d.endswith('/')]
     if dirs:
         dirs.sort(key=len)
@@ -104,13 +132,12 @@ def find_top_dir_of_zipfile(zipfile):
 def unpack_zipfile(zipfn, destdir):
     assert zipfn.endswith('.zip')
     import zipfile
-    print('Unpacking %s into %s' % (os.path.basename(zipfn), destdir))
-    f = zipfile.ZipFile(zipfn)
-    try:
+
+    print(f'Unpacking {os.path.basename(zipfn)} into {destdir}')
+    with zipfile.ZipFile(zipfn) as f:
         extracted_dir = os.path.join(destdir, find_top_dir_of_zipfile(f))
         f.extractall(path=destdir)
-    finally:
-        f.close()
+
     assert os.path.exists(extracted_dir), 'missing: %s' % extracted_dir
     return extracted_dir
 
@@ -249,16 +276,6 @@ def tryint(s):
         return int(s)
     except ValueError:
         return s
-
-
-@contextmanager
-def py2_tarxz(filename):
-    import tempfile
-    with tempfile.TemporaryFile() as tmp:
-        subprocess.check_call(["xz", "-dc", filename], stdout=tmp.fileno())
-        tmp.seek(0)
-        with closing(tarfile.TarFile(fileobj=tmp)) as tf:
-            yield tf
 
 
 def download_libxml2(dest_dir, version=None):
