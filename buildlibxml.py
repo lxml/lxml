@@ -488,15 +488,34 @@ def configure_darwin_env(env_setup):
         env_setup['env'] = env_default
 
 
-def build_libxml2xslt(download_dir, build_dir,
-                      static_include_dirs, static_library_dirs,
-                      static_cflags, static_binaries,
-                      libxml2_version=None,
-                      libxslt_version=None,
-                      libiconv_version=None,
-                      zlib_version=None,
-                      multicore=None,
-                      with_zlib=True):
+def build_libxml2xslt(
+        download_dir, build_dir,
+        static_include_dirs, static_library_dirs,
+        static_cflags, static_binaries,
+        libxml2_version=None,
+        libxslt_version=None,
+        libiconv_version=None,
+        zlib_version=None,
+        multicore=None,
+        with_zlib=True):
+    lib_dirs = download_libs(download_dir, build_dir,
+        libxml2_version, libxslt_version, libiconv_version, zlib_version, with_zlib=with_zlib)
+    return build_libs(
+        build_dir, lib_dirs,
+        static_include_dirs, static_library_dirs, static_cflags, static_binaries,
+        libxml2_version=libxml2_version,
+        multicore=multicore,
+        with_zlib=with_zlib,
+    )
+
+
+def download_libs(
+        download_dir, build_dir,
+        libxml2_version=None,
+        libxslt_version=None,
+        libiconv_version=None,
+        zlib_version=None,
+        with_zlib=True):
     safe_mkdir(download_dir)
     safe_mkdir(build_dir)
 
@@ -507,6 +526,18 @@ def build_libxml2xslt(download_dir, build_dir,
     libiconv_dir = unpack_tarball(download_libiconv(download_dir, libiconv_version), build_dir)
     libxml2_dir  = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
     libxslt_dir  = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
+
+    return zlib_dir, libiconv_dir, libxml2_dir, libxslt_dir
+
+
+def build_libs(
+        build_dir, lib_dirs,
+        static_include_dirs, static_library_dirs,
+        static_cflags, static_binaries,
+        libxml2_version=None,
+        multicore=None,
+        with_zlib=True):
+    zlib_dir, libiconv_dir, libxml2_dir, libxslt_dir = lib_dirs
 
     prefix = os.path.join(os.path.abspath(build_dir), 'libxml2')
     lib_dir = os.path.join(prefix, 'lib')
@@ -617,17 +648,25 @@ def build_libxml2xslt(download_dir, build_dir,
     return xml2_config, xslt_config
 
 
-def main():
+def main(download_only=False, platform=None):
     static_include_dirs = []
     static_library_dirs = []
     download_dir = "libs"
+
+    if platform is None:
+        platform = sys_platform
 
     if sys_platform.startswith('win'):
         return get_prebuilt_libxml2xslt(
             download_dir, static_include_dirs, static_library_dirs)
     else:
-        return build_libxml2xslt(
-            download_dir, 'build/tmp',
+        build_dir = 'build/tmp'
+        lib_dirs = download_libs(download_dir, build_dir)
+        if download_only:
+            return None, None
+
+        return build_libs(
+            build_dir, lib_dirs,
             static_include_dirs, static_library_dirs,
             static_cflags=[],
             static_binaries=[]
@@ -635,7 +674,11 @@ def main():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
+    args = sys.argv[1:]
+    download_only = '--download-only' in args
+    if download_only:
+        args.remove('--download-only')
+    if args:
         # change global sys_platform setting
-        sys_platform = sys.argv[1]
-    main()
+        sys_platform = args[0]
+    main(download_only=download_only, platform=sys_platform)
