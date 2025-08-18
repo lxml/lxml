@@ -648,7 +648,7 @@ def build_libs(
     return xml2_config, xslt_config
 
 
-def main(download_only=False, platform=None):
+def main(with_zlib=True, download_only=False, platform=None):
     static_include_dirs = []
     static_library_dirs = []
     download_dir = "libs"
@@ -659,18 +659,33 @@ def main(download_only=False, platform=None):
     if sys_platform.startswith('win'):
         return get_prebuilt_libxml2xslt(
             download_dir, static_include_dirs, static_library_dirs)
-    else:
-        build_dir = 'build/tmp'
-        lib_dirs = download_libs(download_dir, build_dir)
-        if download_only:
-            return None, None
 
-        return build_libs(
-            build_dir, lib_dirs,
-            static_include_dirs, static_library_dirs,
-            static_cflags=[],
-            static_binaries=[]
-        )
+    get_env = os.environ.get
+    zlib_version = get_env('ZLIB_VERSION')
+    libiconv_version = get_env('LIBICONV_VERSION')
+    libxml2_version = get_env('LIBXML2_VERSION')
+    libxslt_version = get_env('LIBXSLT_VERSION')
+
+    build_dir = 'build/tmp'
+    lib_dirs = download_libs(
+        download_dir, build_dir,
+        libxml2_version=libxml2_version,
+        libxslt_version=libxslt_version,
+        libiconv_version=libiconv_version,
+        zlib_version=zlib_version,
+        with_zlib=with_zlib,
+    )
+    if download_only:
+        return None, None
+
+    return build_libs(
+        build_dir, lib_dirs,
+        static_include_dirs, static_library_dirs,
+        static_cflags=[],
+        static_binaries=[],
+        libxml2_version=libxml2_version,
+        with_zlib=with_zlib,
+    )
 
 
 if __name__ == '__main__':
