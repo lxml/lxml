@@ -3,13 +3,8 @@ Simple HTTP request dumper for tests.
 """
 
 import sys
+import urllib.parse as urlparse
 from contextlib import contextmanager
-
-try:
-    import urlparse
-except ImportError:
-    # Python 3
-    import urllib.parse as urlparse
 
 
 @contextmanager
@@ -39,13 +34,9 @@ def webserver(app, port=0, host=None):
     thread.join(timeout=1)
 
 
-try:
-    from SocketServer import ThreadingMixIn
-except ImportError:
-    # Python 3
-    from socketserver import ThreadingMixIn
-
+from socketserver import ThreadingMixIn
 import wsgiref.simple_server as wsgiserver
+
 class WebServer(wsgiserver.WSGIServer, ThreadingMixIn):
     """A web server that starts a new thread for each request.
     """
