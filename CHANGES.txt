@@ -21,7 +21,7 @@ Other changes
 * Some internal adaptations were made for libxml2 2.14.x and 2.15.x.
 
 
-6.0.1 (2025-08-??)
+6.0.1 (2025-08-22)
 ==================
 
 Bugs fixed
