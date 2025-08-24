@@ -71,7 +71,11 @@ import types
 import getopt
 import unittest
 import traceback
-import tracemalloc
+
+try:
+    import tracemalloc
+except ImportError:
+    tracemalloc = None
 
 from unittest import TextTestResult
 
@@ -550,7 +554,8 @@ def main(argv):
         cov = Coverage(omit=['test.py'])
 
     # Configure tracemalloc.
-    tracemalloc.start()
+    if tracemalloc is not None:
+        tracemalloc.start()
 
     # Finding and importing
     test_files = get_test_files(cfg)
