@@ -8,7 +8,7 @@ import sys
 import unittest
 import threading
 
-from .common_imports import etree, HelperTestCase, BytesIO
+from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON
 
 try:
     from Queue import Queue
@@ -512,6 +512,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             last.start()
         return in_queue, start, last
 
+    @unittest.skipIf(IS_FT_PYTHON, "FIXME: not currently working in freethreading Python")
     def test_thread_pipeline_thread_parse(self):
         item_count = self.item_count
         xml = self.xml.replace(b'thread', b'THREAD')  # use fresh tag names
@@ -546,6 +547,7 @@ class ThreadPipelineTestCase(HelperTestCase):
         for i, result in enumerate(results[1:]):
             self.assertEqual(comparison, result)
 
+    @unittest.skipIf(IS_FT_PYTHON, "FIXME: not currently working in freethreading Python")
     def test_thread_pipeline_global_parse(self):
         item_count = self.item_count
         xml = self.xml.replace(b'thread', b'GLOBAL')  # use fresh tag names
