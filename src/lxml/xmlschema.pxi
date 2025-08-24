@@ -52,7 +52,11 @@ cdef class XMLSchema(_Validator):
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            doc.lock_read()
+            try:
+                c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            finally:
+                doc.unlock_read()
             self._doc = _documentFactory(c_doc, doc._parser)
             parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(c_doc)
         elif file is not None:
@@ -120,6 +124,7 @@ cdef class XMLSchema(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
+        doc.lock_fakedoc()
         try:
             if self._add_attribute_defaults:
                 xmlschema.xmlSchemaSetValidOptions(
@@ -135,6 +140,7 @@ cdef class XMLSchema(_Validator):
                 ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
+            doc.unlock_fakedoc()
             xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
 
         if ret == -1:
@@ -154,6 +160,7 @@ cdef class XMLSchema(_Validator):
         context._add_default_attributes = (self._has_default_attributes and (
             add_default_attributes or self._add_attribute_defaults))
         return context
+
 
 @cython.final
 @cython.internal

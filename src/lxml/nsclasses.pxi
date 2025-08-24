@@ -16,6 +16,7 @@ cdef class _NamespaceRegistry:
     cdef bytes _ns_uri_utf
     cdef dict _entries
     cdef char* _c_ns_uri_utf
+
     def __cinit__(self, ns_uri):
         self._ns_uri = ns_uri
         if ns_uri is None:
@@ -47,26 +48,12 @@ cdef class _NamespaceRegistry:
     def __getitem__(self, name):
         if name is not None:
             name = _utf8(name)
-        return self._get(name)
+        return self._entries[name]
 
     def __delitem__(self, name):
         if name is not None:
             name = _utf8(name)
         del self._entries[name]
-
-    cdef object _get(self, object name):
-        cdef python.PyObject* dict_result
-        dict_result = python.PyDict_GetItem(self._entries, name)
-        if dict_result is NULL:
-            raise KeyError, "Name not registered."
-        return <object>dict_result
-
-    cdef object _getForString(self, char* name):
-        cdef python.PyObject* dict_result
-        dict_result = python.PyDict_GetItem(self._entries, name)
-        if dict_result is NULL:
-            raise KeyError, "Name not registered."
-        return <object>dict_result
 
     def __iter__(self):
         return iter(self._entries)
@@ -137,6 +124,7 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
     ...     "Element implementation for 'movie' tag (explicit tag name) in schema namespace."
     """
     cdef dict _namespace_registries
+
     def __cinit__(self):
         self._namespace_registries = {}
 
@@ -162,10 +150,11 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
                        _ClassNamespaceRegistry(ns_uri)
             return registry
 
+
 cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
     cdef python.PyObject* dict_result
     cdef ElementNamespaceClassLookup lookup
-    cdef _NamespaceRegistry registry
+    cdef _NamespaceRegistry registry = None
     if state is None:
         return _lookupDefaultElementClass(None, doc, c_node)
 
@@ -174,27 +163,32 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
         return _callLookupFallback(lookup, doc, c_node)
 
     c_namespace_utf = _getNs(c_node)
-    if c_namespace_utf is not NULL:
-        dict_result = python.PyDict_GetItem(
-            lookup._namespace_registries, <unsigned char*>c_namespace_utf)
-    else:
-        dict_result = python.PyDict_GetItem(
-            lookup._namespace_registries, None)
-    if dict_result is not NULL:
-        registry = <_NamespaceRegistry>dict_result
+    # Use Python's own dict critical section to guard against changes.
+    with cython.critical_section(lookup._namespace_registries):
+        if c_namespace_utf is not NULL:
+            dict_result = python.PyDict_GetItemWithError(
+                lookup._namespace_registries, <unsigned char*>c_namespace_utf)
+        else:
+            dict_result = python.PyDict_GetItemWithError(
+                lookup._namespace_registries, None)
+
+        if dict_result is not NULL:
+            registry = <_NamespaceRegistry>dict_result
+
+    if registry is not None:
         classes = registry._entries
 
         if c_node.name is not NULL:
-            dict_result = python.PyDict_GetItem(
-                classes, <unsigned char*>c_node.name)
-        else:
-            dict_result = NULL
+            with cython.critical_section(classes):
+                dict_result = python.PyDict_GetItemWithError(
+                    classes, <unsigned char*>c_node.name)
+                if dict_result is not NULL:
+                    return <object>dict_result
 
-        if dict_result is NULL:
-            dict_result = python.PyDict_GetItem(classes, None)
-
+        dict_result = python.PyDict_GetItemWithError(classes, None)
         if dict_result is not NULL:
             return <object>dict_result
+
     return _callLookupFallback(lookup, doc, c_node)
 
 
@@ -233,6 +227,7 @@ def FunctionNamespace(ns_uri):
                    _XPathFunctionNamespaceRegistry(ns_uri)
         return registry
 
+
 @cython.internal
 cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
     def __setitem__(self, name, item):
@@ -246,6 +241,7 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
 
     def __repr__(self):
         return "FunctionNamespace(%r)" % self._ns_uri
+
 
 @cython.final
 @cython.internal
@@ -268,6 +264,7 @@ cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
                 prefix = None # empty prefix
             self._prefix_utf = _utf8(prefix) if prefix is not None else None
             self._prefix = prefix
+
 
 cdef list _find_all_extension_prefixes():
     "Internal lookup function to find all function prefixes for XSLT/XPath."

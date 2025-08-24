@@ -10,18 +10,20 @@ cdef inline _Element getProxy(xmlNode* c_node):
     """Get a proxy for a given node.
     """
     #print "getProxy for:", <int>c_node
-    if c_node is not NULL and c_node._private is not NULL:
-        return <_Element>c_node._private
-    else:
+    if c_node is NULL or not hasProxy(c_node):
         return None
+    if not python.PyUnstable_TryIncRef(<cpython.object.PyObject*> c_node._private):
+        c_node._private = NULL
+        return None
+    element = <_Element> c_node._private
+    python.Py_DECREF(element)  # correct double incref
+    return element
 
 
 @cython.linetrace(False)
 @cython.profile(False)
-cdef inline bint hasProxy(xmlNode* c_node):
-    if c_node._private is NULL:
-        return False
-    return True
+cdef inline bint hasProxy(xmlNode* c_node) noexcept:
+    return c_node._private is not NULL
 
 
 @cython.linetrace(False)
@@ -32,9 +34,10 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     """
     #print "registering for:", <int>proxy._c_node
     assert not hasProxy(c_node), "double registering proxy!"
+    c_node._private = <void*> proxy
     proxy._doc = doc
     proxy._c_node = c_node
-    c_node._private = <void*>proxy
+    python.PyUnstable_EnableTryIncRef(proxy)
     return 0
 
 
@@ -44,8 +47,16 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     """Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node = proxy._c_node
-    assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
-    c_node._private = NULL
+    #if c_node._private is not <void*>proxy:
+    #    import tracemalloc
+    #    print(tracemalloc.get_object_traceback(proxy))
+    #assert c_node._private is NULL or c_node._private is <void*>proxy, \
+    #    f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> c_node._private:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}"
+
+    if c_node._private is <void*>proxy:
+        c_node._private = NULL
+    proxy._c_node = NULL
+    proxy._doc = None
     return 0
 
 
@@ -130,6 +141,19 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
 
+cdef int freeSubtree(xmlNode* c_node) noexcept:
+    """Deallocate the c_node, its following siblings and all children.
+    """
+    if c_node is NULL:
+        #print "not freeing, node is NULL"
+        return 0
+    #print "freeing:", c_top.name
+
+    # Free the complete list of all siblings.
+    tree.xmlFreeNodeList(c_node)
+    return 1
+
+
 cdef int attemptDeallocation(xmlNode* c_node) noexcept:
     """Attempt deallocation of c_node (or higher up in tree).
     """
@@ -139,21 +163,18 @@ cdef int attemptDeallocation(xmlNode* c_node) noexcept:
         #print "not freeing, node is NULL"
         return 0
     c_top = getDeallocationTop(c_node)
-    if c_top is not NULL:
-        #print "freeing:", c_top.name
-        _removeText(c_top.next) # tail
-        tree.xmlFreeNode(c_top)
-        return 1
-    return 0
+    return freeSubtree(c_top)
+
 
 cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
-    """Return the top of the tree that can be deallocated, or NULL.
+    """Return the left-most sibling at the top of the tree that can be deallocated, or NULL.
     """
     cdef xmlNode* c_next
     #print "trying to do deallocating:", c_node.type
     if hasProxy(c_node):
         #print "Not freeing: proxies still exist"
         return NULL
+
     while c_node.parent is not NULL:
         c_node = c_node.parent
         #print "checking:", c_current.type
@@ -165,23 +186,30 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
         if hasProxy(c_node):
             #print "Not freeing: proxies still exist"
             return NULL
+
     # see whether we have children to deallocate
     if not canDeallocateChildNodes(c_node):
         return NULL
+
     # see whether we have siblings to deallocate
-    c_next = c_node.prev
-    while c_next:
-        if _isElement(c_next):
-            if hasProxy(c_next) or not canDeallocateChildNodes(c_next):
-                return NULL
-        c_next = c_next.prev
     c_next = c_node.next
     while c_next:
         if _isElement(c_next):
             if hasProxy(c_next) or not canDeallocateChildNodes(c_next):
                 return NULL
         c_next = c_next.next
+    # Now check the preceding siblings and find the first node.
+    c_next = c_node.prev
+    while c_next:
+        if _isElement(c_next):
+            if hasProxy(c_next) or not canDeallocateChildNodes(c_next):
+                return NULL
+        c_node = c_next
+        c_next = c_next.prev
+
+    # Return the left-most node at the top of the tree.
     return c_node
+
 
 cdef int canDeallocateChildNodes(xmlNode* c_parent) noexcept:
     cdef xmlNode* c_node
@@ -326,6 +354,17 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     step 1), but freed only after the complete subtree was traversed
     and all occurrences were replaced by tree-internal pointers.
     """
+    if not tree._isElementOrXInclude(c_element):
+        return 0
+
+    doc.lock_proxies()
+    try:
+        return moveNodeToDocument_locked(doc, c_source_doc, c_element)
+    finally:
+        doc.unlock_proxies()
+
+
+cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode* c_element) except -1:
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
     cdef xmlDoc* c_doc = doc._c_doc
@@ -334,9 +373,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_del_ns_list = NULL
     cdef proxy_count = 0
-
-    if not tree._isElementOrXInclude(c_element):
-        return 0
 
     c_start_node = c_element
 
@@ -382,7 +418,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     # 4) fix _Document references
     #    (and potentially deallocate the source document)
     if proxy_count > 0:
-        if proxy_count == 1 and c_start_node._private is not NULL:
+        if proxy_count == 1 and hasProxy(c_start_node):
             proxy = getProxy(c_start_node)
             if proxy is not None:
                 if proxy._doc is not doc:
@@ -456,7 +492,7 @@ cdef int fixElementDocument(xmlNode* c_element, _Document doc,
     cdef xmlNode* c_node = c_element
     cdef _Element proxy = None # init-to-None required due to fake-loop below
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
-    if c_node._private is not NULL:
+    if hasProxy(c_node):
         proxy = getProxy(c_node)
         if proxy is not None:
             if proxy._doc is not doc:
