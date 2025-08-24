@@ -121,9 +121,9 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #ifndef __Pyx_Locks_PyMutex
     #if defined(CYTHON_COMPILING_IN_LIMITED_API) && CYTHON_COMPILING_IN_LIMITED_API
         #if defined(_MSC_VER)
-            #pragma message ("Please do not use lxml's Document class in Limited-API modules. See https://github.com/cython/cython/issues/6995")
+            #pragma message ("Please do not use lxml´s Document class in Limited-API modules. See https://github.com/cython/cython/issues/6995")
         #else
-            #warning Please do not use lxml's Document class in Limited-API modules. See https://github.com/cython/cython/issues/6995
+            #warning Please do not use lxml´s Document class in Limited-API modules. See https://github.com/cython/cython/issues/6995
         #endif
     #endif
 
