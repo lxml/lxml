@@ -433,7 +433,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             get, put = self.in_queue.get, self.out_queue.put
             handle = self.handle
             for _ in range(self.in_count):
-                put(handle(get()))
+                put(handle(get(timeout=10)))
 
         def handle(self, data):
             raise NotImplementedError()
@@ -536,11 +536,11 @@ class ThreadPipelineTestCase(HelperTestCase):
         # start the first thread and thus everything
         start.start()
         # make sure the last thread has terminated
-        last.join(60)  # time out after 60 seconds
+        last.join(60)  # time out after x seconds
         self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
-        results = [get() for _ in range(item_count)]
+        results = [get(timeout=10) for _ in range(item_count)]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):
@@ -568,11 +568,11 @@ class ThreadPipelineTestCase(HelperTestCase):
         # start the first thread and thus everything
         start.start()
         # make sure the last thread has terminated
-        last.join(60)  # time out after 90 seconds
+        last.join(60)  # time out after x seconds
         self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
-        results = [get() for _ in range(item_count)]
+        results = [get(timeout=10) for _ in range(item_count)]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):
