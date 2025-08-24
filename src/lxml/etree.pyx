@@ -925,9 +925,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             #stdio.printf("DEAD1(** 1 **)  ")
             return
 
-        assert c_node._private is not NULL
-        assert cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private) > 0, \
-            cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private)
+        #assert c_node._private is not NULL
+        #assert cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private) > 0, \
+        #    cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private)
 
         doc = self._doc
         #stdio.printf("DEALLOC " if type(doc) is _Document else "DEALLOC [**NO DOC!**] ")
@@ -941,18 +941,18 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if c_node is NULL:
                 #stdio.printf("DEAD(** 2 **)  ")
                 return
-            if c_node._private is NULL:
-                self._c_node = NULL
-                #stdio.printf("DEAD(** 3  **)  ")
-                return
-            if cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private) > 1:
-                # Proxy is (now) used elsewhere. Might have happened when we waited for the lock.
-                #stdio.printf("REUSED(** 4  **)  ")
-                return
-            if c_node._private is not <void*> self and cpython.ref.Py_REFCNT(self) > 1:
-                # Proxy is (now) used elsewhere. Might have happened when we waited for the lock.
-                #stdio.printf("REUSED(** 5  **)  ")
-                return
+            #if c_node._private is NULL:
+            #    self._c_node = NULL
+            #    #stdio.printf("DEAD(** 3  **)  ")
+            #    return
+            #if cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private) > 1:
+            #    # Proxy is (now) used elsewhere. Might have happened when we waited for the lock.
+            #    #stdio.printf("REUSED(** 4  **)  ")
+            #    return
+            #if c_node._private is not <void*> self and cpython.ref.Py_REFCNT(self) > 1:
+            #    # Proxy is (now) used elsewhere. Might have happened when we waited for the lock.
+            #    #stdio.printf("REUSED(** 5  **)  ")
+            #    return
 
             # First, disconnect and invalidate this proxy.
             _unregisterProxy(self)
@@ -2111,8 +2111,9 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         # Reuse existing proxies.
         doc.lock_proxies()
         try:
-            if hasProxy(c_node):
-                return getProxy(c_node)
+            result = getProxy(c_node)
+            if result is not None:
+                return result
         finally:
             doc.unlock_proxies()
 
@@ -2125,8 +2126,9 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         # prevent re-entry race condition - we just called into Python
         doc.lock_proxies()
         try:
-            if hasProxy(c_node):
-                return getProxy(c_node)
+            result = getProxy(c_node)
+            if result is not None:
+                return result
         finally:
             doc.unlock_proxies()
 
@@ -2136,8 +2138,10 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     try:
         if hasProxy(c_node):
             # prevent re-entry race condition - we just called into Python
-            result._c_node = NULL
-            return getProxy(c_node)
+            proxy = getProxy(c_node)
+            if proxy is not None:
+                result._c_node = NULL
+                return proxy
 
         _registerProxy(result, doc, c_node)
     finally:

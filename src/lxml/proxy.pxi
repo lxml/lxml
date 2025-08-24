@@ -12,19 +12,18 @@ cdef inline _Element getProxy(xmlNode* c_node):
     #print "getProxy for:", <int>c_node
     if c_node is NULL or not hasProxy(c_node):
         return None
-    return <_Element> c_node._private
+    if not python.PyUnstable_TryIncRef(<cpython.object.PyObject*> c_node._private):
+        c_node._private = NULL
+        return None
+    element = <_Element> c_node._private
+    python.Py_DECREF(element)  # correct double incref
+    return element
 
 
 @cython.linetrace(False)
 @cython.profile(False)
 cdef inline bint hasProxy(xmlNode* c_node) noexcept:
-    proxy = <cpython.object.PyObject*> c_node._private
-    return (
-        # Node has a proxy reference?
-        proxy is not NULL and
-        # Proxy reference is not currently deallocating?
-        cpython.ref._Py_REFCNT(proxy) > 0
-    )
+    return c_node._private is not NULL
 
 
 @cython.linetrace(False)
@@ -38,6 +37,7 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     c_node._private = <void*> proxy
     proxy._doc = doc
     proxy._c_node = c_node
+    python.PyUnstable_EnableTryIncRef(proxy)
     return 0
 
 
@@ -50,10 +50,11 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     #if c_node._private is not <void*>proxy:
     #    import tracemalloc
     #    print(tracemalloc.get_object_traceback(proxy))
-    assert c_node._private is NULL or c_node._private is <void*>proxy, \
-        f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> c_node._private:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}"
+    #assert c_node._private is NULL or c_node._private is <void*>proxy, \
+    #    f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> c_node._private:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}"
 
-    c_node._private = NULL
+    if c_node._private is <void*>proxy:
+        c_node._private = NULL
     proxy._c_node = NULL
     proxy._doc = None
     return 0
