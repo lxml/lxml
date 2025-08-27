@@ -67,6 +67,8 @@ cdef extern from "Python.h":
 
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
+    cdef PyObject* PyDict_GetItemWithError(object d, object key) except? NULL
+    cdef object PyDict_GetItemRef(object d, object key)
     cdef object PyDictProxy_New(object d)
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)
@@ -111,6 +113,32 @@ cdef extern from "Python.h":
     cdef int PyBUF_F_CONTIGUOUS
     cdef int PyBUF_ANY_CONTIGUOUS
     cdef int PyBUF_INDIRECT
+
+
+cdef extern from *:
+    """
+    #if PY_VERSION_HEX < 0x030e0000 || !defined(Py_GIL_DISABLED)
+        #define PyUnstable_EnableTryIncRef(obj)
+        #define PyUnstable_TryIncRef(obj) (Py_INCREF(obj), 1)
+    #endif
+    """
+
+    void PyUnstable_EnableTryIncRef(object o)
+    # Enables subsequent uses of PyUnstable_TryIncRef() on obj.
+    # The caller must hold a strong reference to obj when calling this.
+    #
+    # Added in CPython 3.14.
+
+    bint PyUnstable_TryIncRef(PyObject *o)
+    # Increments the reference count of obj if it is not zero.
+    # Returns 1 if the object’s reference count was successfully incremented.
+    # Otherwise, this function returns 0.
+    #
+    # PyUnstable_EnableTryIncRef() must have been called earlier on obj
+    # or this function may spuriously return 0 in the free threading build.
+    #
+    # Added in CPython 3.14.
+
 
 cdef extern from "pythread.h":
     ctypedef void* PyThread_type_lock
