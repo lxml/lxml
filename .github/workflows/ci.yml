@@ -54,7 +54,6 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-          - "3.13t"
           - "3.14-dev"
           - "3.14t-dev"
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
