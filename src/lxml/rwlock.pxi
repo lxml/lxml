@@ -29,7 +29,7 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
-    static void* __lxml_atomic_pointer_exchange(void **value, void *expected, void *new_value) {
+    static CYTHON_INLINE void* __lxml_atomic_pointer_exchange(void **value, void *expected, void *new_value) {
         (void) _Py_atomic_compare_exchange_ptr(value, &expected, new_value);
         return expected;
     }
@@ -53,7 +53,7 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
-    static void* __lxml_atomic_pointer_exchange(void **value, void *expected, void *new_value) {
+    static CYTHON_INLINE void* __lxml_atomic_pointer_exchange(__lxml_atomic_ptr_type *value, void *expected, void *new_value) {
         (void) atomic_compare_exchange_strong(value, &expected, new_value);
         return expected;
     }
