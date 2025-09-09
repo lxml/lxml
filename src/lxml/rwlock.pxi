@@ -22,18 +22,10 @@ cdef extern from *:
 
 #if LXML_ATOMICS_ENABLED && defined(Py_ATOMIC_H)
     // "Python.h" included "pyatomics.h"
-    #define __lxml_atomic_ptr_type void*
-    #define __lxml_nonatomic_ptr_type void*
 
     #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-
-    static CYTHON_INLINE void* __lxml_atomic_pointer_exchange(void **value, void *expected, void *new_value) {
-        (void) _Py_atomic_compare_exchange_ptr(value, &expected, new_value);
-        return expected;
-    }
-    #define __lxml_atomic_doc_pointer_exchange(doc, value, expected, new_value) __lxml_atomic_pointer_exchange((value), (expected), (new_value))
 
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Using pyatomics.h atomics"
@@ -46,18 +38,10 @@ cdef extern from *:
     // C11 atomics are available and  ATOMIC_INT_LOCK_FREE is definitely on
     #undef __lxml_atomic_int_type
     #define __lxml_atomic_int_type atomic_int
-    #define __lxml_atomic_ptr_type atomic_uintptr_t
-    #define __lxml_nonatomic_ptr_type uintptr_t
 
     #define __lxml_atomic_add(value, arg)     atomic_fetch_add_explicit((value), (arg), memory_order_relaxed)
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-
-    static CYTHON_INLINE void* __lxml_atomic_pointer_exchange(__lxml_atomic_ptr_type *value, void *expected, void *new_value) {
-        (void) atomic_compare_exchange_strong(value, &expected, new_value);
-        return expected;
-    }
-    #define __lxml_atomic_doc_pointer_exchange(doc, value, expected, new_value) __lxml_atomic_pointer_exchange((value), (expected), (new_value))
 
     #if defined(__lxml_DEBUG_ATOMICS) && defined(_MSC_VER)
         #pragma message ("Using standard C atomics")
@@ -68,16 +52,11 @@ cdef extern from *:
 #elif LXML_ATOMICS_ENABLED && (__GNUC__ >= 5 || (__GNUC__ == 4 && \
                     (__GNUC_MINOR__ > 1 ||  \
                     (__GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ >= 2))))
-    #define __lxml_atomic_ptr_type void*
-    #define __lxml_nonatomic_ptr_type void*
 
     /* gcc >= 4.1.2 */
     #define __lxml_atomic_add(value, arg)     __sync_fetch_and_add((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __sync_fetch_and_add((value), 1)
     #define __lxml_atomic_decr_relaxed(value) __sync_fetch_and_sub((value), 1)
-
-    #define __lxml_atomic_pointer_exchange(value, expected, new_value) __sync_val_compare_and_swap((value), (expected), (new_value))
-    #define __lxml_atomic_doc_pointer_exchange(doc, value, expected, new_value) __lxml_atomic_pointer_exchange((value), (expected), (new_value))
 
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Using GNU atomics"
@@ -90,17 +69,12 @@ cdef extern from *:
     #define __lxml_atomic_int_type long
     #undef __lxml_nonatomic_int_type
     #define __lxml_nonatomic_int_type long
-    #define __lxml_atomic_ptr_type void*
-    #define __lxml_nonatomic_ptr_type void*
 
     #pragma intrinsic (_InterlockedExchangeAdd, _InterlockedCompareExchangePointer)
 
     #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-
-    #define __lxml_atomic_pointer_exchange(value, expected, new_value) _InterlockedCompareExchangePointer((value), (__pyx_atomic_ptr_type) (new_value), (expected))
-    #define __lxml_atomic_doc_pointer_exchange(doc, value, expected, new_value) __lxml_atomic_pointer_exchange((value), (expected), (new_value))
 
     #ifdef __lxml_DEBUG_ATOMICS
         #pragma message ("Using MSVC atomics")
@@ -109,9 +83,6 @@ cdef extern from *:
 #elif PY_VERSION_HEX >= 0x030d0000
     #undef LXML_ATOMICS_ENABLED
     #define LXML_ATOMICS_ENABLED 0
-
-    #define __lxml_atomic_ptr_type void*
-    #define __lxml_nonatomic_ptr_type void*
 
     static _lxml_nonatomic_int_type __lxml_atomic_add_cs(PyObject *cs, _lxml_atomic_int_type *value, _lxml_nonatomic_int_type arg) {
         _lxml_nonatomic_int_type old_value;
@@ -126,21 +97,6 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
-    /* In practice, we will only use this to set the proxy pointer to _Elements which have a "->_doc" */
-    #define __lxml_atomic_pointer_exchange(value, expected, new_value)  __lxml_cs_atomic_pointer_exchange(__pyx_v_self->_doc, (value), (expected), (new_value))
-    #define __lxml_atomic_doc_pointer_exchange(doc, value, expected, new_value) __lxml_cs_atomic_pointer_exchange((doc), (value), (expected), (new_value))
-
-    static _lxml_nonatomic_ptr_type __lxml_cs_atomic_pointer_exchange(
-            PyObject *cs,  __lxml_atomic_ptr_type *value, _lxml_nonatomic_ptr_type expected, _lxml_nonatomic_ptr_type new_value) {
-        _lxml_nonatomic_ptr_type old_value;
-        Py_BEGIN_CRITICAL_SECTION(cs);
-        old_value = *value;
-        if (old_value == expected)
-            *value = new_value;
-        Py_END_CRITICAL_SECTION();
-        return old_value;
-    }
-
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Not using atomics, using CPython critical section"
     #endif
@@ -153,13 +109,6 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value)  (*(value))++
     #define __lxml_atomic_decr_relaxed(value)  (*(value))--
 
-    static void* __lxml_atomic_pointer_exchange(void **value, void *expected, void *new_value) {
-        void *old_value = *value;
-        if (old_value == expected) *value = new_value;
-        return old_value;
-    }
-    #define __lxml_atomic_doc_pointer_exchange(doc, value, expected, new_value) __lxml_atomic_pointer_exchange((value), (expected), (new_value))
-
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Not using atomics, using the GIL"
     #endif
@@ -168,14 +117,10 @@ cdef extern from *:
     const bint LXML_ATOMICS_ENABLED
     ctypedef int atomic_int "__lxml_atomic_int_type"
     ctypedef int nonatomic_int "__lxml_nonatomic_int_type"
-    ctypedef void* atomic_ptr "__lxml_atomic_ptr_type"
 
     nonatomic_int atomic_add  "__lxml_atomic_add"          (atomic_int *value, nonatomic_int arg) noexcept
     nonatomic_int atomic_incr "__lxml_atomic_incr_relaxed" (atomic_int *value) noexcept
     nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value) noexcept
-
-    void *atomic_doc_pointer_compare_exchange "__lxml_atomic_doc_pointer_exchange" (object document, atomic_ptr *value, void *expected, void *new_value) noexcept
-    void *atomic_pointer_compare_exchange "__lxml_atomic_pointer_exchange" (atomic_ptr *value, void *expected, void *new_value) noexcept
 
 
 cdef const long max_lock_reader_count = 1 << 30
