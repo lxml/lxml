@@ -70,12 +70,12 @@ LIBXSLT_VERSION = "1.1.43"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_x86_64"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3"
 
 [[tool.cibuildwheel.overrides]]
 select = "*aarch64"
