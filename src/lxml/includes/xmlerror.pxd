@@ -5,23 +5,23 @@
 
 cdef extern from "libxml/xmlerror.h":
     ctypedef enum xmlErrorLevel:
-        XML_ERR_NONE                                       =       0
-        XML_ERR_WARNING                                    =       1 # A simple warning
-        XML_ERR_ERROR                                      =       2 # A recoverable error
+        XML_ERR_NONE                                       =       0 # Success
+        XML_ERR_WARNING                                    =       1 # A warning
+        XML_ERR_ERROR                                      =       2 # An error
         XML_ERR_FATAL                                      =       3 # A fatal error
 
     ctypedef enum xmlErrorDomain:
-        XML_FROM_NONE                                      =       0
+        XML_FROM_NONE                                      =       0 # Unknown
         XML_FROM_PARSER                                    =       1 # The XML parser
-        XML_FROM_TREE                                      =       2 # The tree module
+        XML_FROM_TREE                                      =       2 # The tree module (unused)
         XML_FROM_NAMESPACE                                 =       3 # The XML Namespace module
-        XML_FROM_DTD                                       =       4 # The XML DTD validation with parser contex
+        XML_FROM_DTD                                       =       4 # The XML DTD validation with parser context
         XML_FROM_HTML                                      =       5 # The HTML parser
-        XML_FROM_MEMORY                                    =       6 # The memory allocator
+        XML_FROM_MEMORY                                    =       6 # The memory allocator (unused)
         XML_FROM_OUTPUT                                    =       7 # The serialization code
         XML_FROM_IO                                        =       8 # The Input/Output stack
-        XML_FROM_FTP                                       =       9 # The FTP module
-        XML_FROM_HTTP                                      =      10 # The HTTP module
+        XML_FROM_FTP                                       =       9 # The FTP module (unused)
+        XML_FROM_HTTP                                      =      10 # The HTTP module (unused)
         XML_FROM_XINCLUDE                                  =      11 # The XInclude processing
         XML_FROM_XPATH                                     =      12 # The XPath module
         XML_FROM_XPOINTER                                  =      13 # The XPointer module
@@ -33,20 +33,20 @@ cdef extern from "libxml/xmlerror.h":
         XML_FROM_RELAXNGV                                  =      19 # The Relax-NG validator module
         XML_FROM_CATALOG                                   =      20 # The Catalog module
         XML_FROM_C14N                                      =      21 # The Canonicalization module
-        XML_FROM_XSLT                                      =      22 # The XSLT engine from libxslt
+        XML_FROM_XSLT                                      =      22 # The XSLT engine from libxslt (unused)
         XML_FROM_VALID                                     =      23 # The XML DTD validation with valid context
-        XML_FROM_CHECK                                     =      24 # The error checking module
+        XML_FROM_CHECK                                     =      24 # The error checking module (unused)
         XML_FROM_WRITER                                    =      25 # The xmlwriter module
-        XML_FROM_MODULE                                    =      26 # The dynamically loaded module modul
-        XML_FROM_I18N                                      =      27 # The module handling character conversion
+        XML_FROM_MODULE                                    =      26 # The dynamically loaded module module (unused)
+        XML_FROM_I18N                                      =      27 # The module handling character conversion (unused)
         XML_FROM_SCHEMATRONV                               =      28 # The Schematron validator module
-        XML_FROM_BUFFER                                    =      29 # The buffers module
-        XML_FROM_URI                                       =      30 # The URI module
+        XML_FROM_BUFFER                                    =      29 # The buffers module (unused)
+        XML_FROM_URI                                       =      30 # The URI module (unused)
 
     ctypedef enum xmlParserErrors:
-        XML_ERR_OK                                         =       0
-        XML_ERR_INTERNAL_ERROR                             =       1
-        XML_ERR_NO_MEMORY                                  =       2
+        XML_ERR_OK                                         =       0 # Success
+        XML_ERR_INTERNAL_ERROR                             =       1 # Internal assertion failure
+        XML_ERR_NO_MEMORY                                  =       2 # Out of memory
         XML_ERR_DOCUMENT_START                             =       3
         XML_ERR_DOCUMENT_EMPTY                             =       4
         XML_ERR_DOCUMENT_END                               =       5
@@ -76,7 +76,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_ERR_ENTITY_IS_EXTERNAL                         =      29
         XML_ERR_ENTITY_IS_PARAMETER                        =      30
         XML_ERR_UNKNOWN_ENCODING                           =      31
-        XML_ERR_UNSUPPORTED_ENCODING                       =      32
+        XML_ERR_UNSUPPORTED_ENCODING                       =      32 # Unsupported character encoding
         XML_ERR_STRING_NOT_STARTED                         =      33
         XML_ERR_STRING_NOT_CLOSED                          =      34
         XML_ERR_NS_DECL_ERROR                              =      35
@@ -157,6 +157,12 @@ cdef extern from "libxml/xmlerror.h":
         XML_ERR_NAME_TOO_LONG                              =     110
         XML_ERR_USER_STOP                                  =     111
         XML_ERR_COMMENT_ABRUPTLY_ENDED                     =     112
+        XML_WAR_ENCODING_MISMATCH                          =     113
+        XML_ERR_RESOURCE_LIMIT                             =     114 # Internal resource limit like maximum amplification factor exceeded
+        XML_ERR_ARGUMENT                                   =     115 # Invalid argument
+        XML_ERR_SYSTEM                                     =     116 # Unexpected error from the OS or an external library
+        XML_ERR_REDECL_PREDEF_ENTITY                       =     117
+        XML_ERR_INT_SUBSET_NOT_FINISHED                    =     118
         XML_NS_ERR_XML_NAMESPACE                           =     200
         XML_NS_ERR_UNDEFINED_NAMESPACE                     =     201
         XML_NS_ERR_QNAME                                   =     202
@@ -207,6 +213,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_DTD_DUP_TOKEN                                  =     541
         XML_HTML_STRUCURE_ERROR                            =     800
         XML_HTML_UNKNOWN_TAG                               =     801
+        XML_HTML_INCORRECTLY_OPENED_COMMENT                =     802
         XML_RNGP_ANYNAME_ATTR_ANCESTOR                     =    1000
         XML_RNGP_ATTR_CONFLICT                             =    1001
         XML_RNGP_ATTRIBUTE_CHILDREN                        =    1002
@@ -385,7 +392,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_IO_ENAMETOOLONG                                =    1521
         XML_IO_ENFILE                                      =    1522
         XML_IO_ENODEV                                      =    1523
-        XML_IO_ENOENT                                      =    1524
+        XML_IO_ENOENT                                      =    1524 # File not found
         XML_IO_ENOEXEC                                     =    1525
         XML_IO_ENOLCK                                      =    1526
         XML_IO_ENOMEM                                      =    1527
@@ -418,6 +425,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_IO_EADDRINUSE                                  =    1554
         XML_IO_EALREADY                                    =    1555
         XML_IO_EAFNOSUPPORT                                =    1556
+        XML_IO_UNSUPPORTED_PROTOCOL                        =    1557
         XML_XINCLUDE_RECURSION                             =    1600
         XML_XINCLUDE_PARSE_VALUE                           =    1601
         XML_XINCLUDE_ENTITY_DEF_MISMATCH                   =    1602
@@ -708,8 +716,8 @@ cdef extern from "libxml/xmlerror.h":
         XML_SCHEMAP_SRC_IMPORT_2                           =    3066
         XML_SCHEMAP_SRC_IMPORT_2_1                         =    3067
         XML_SCHEMAP_SRC_IMPORT_2_2                         =    3068
-        XML_SCHEMAP_INTERNAL                               =    3069 # 3069 non-W3C
-        XML_SCHEMAP_NOT_DETERMINISTIC                      =    3070 # 3070 non-W3C
+        XML_SCHEMAP_INTERNAL                               =    3069
+        XML_SCHEMAP_NOT_DETERMINISTIC                      =    3070
         XML_SCHEMAP_SRC_ATTRIBUTE_GROUP_1                  =    3071
         XML_SCHEMAP_SRC_ATTRIBUTE_GROUP_2                  =    3072
         XML_SCHEMAP_SRC_ATTRIBUTE_GROUP_3                  =    3073
@@ -725,12 +733,12 @@ cdef extern from "libxml/xmlerror.h":
         XML_SCHEMAP_WARN_SKIP_SCHEMA                       =    3083
         XML_SCHEMAP_WARN_UNLOCATED_SCHEMA                  =    3084
         XML_SCHEMAP_WARN_ATTR_REDECL_PROH                  =    3085
-        XML_SCHEMAP_WARN_ATTR_POINTLESS_PROH               =    3086 # 3085
-        XML_SCHEMAP_AG_PROPS_CORRECT                       =    3087 # 3086
-        XML_SCHEMAP_COS_CT_EXTENDS_1_2                     =    3088 # 3087
-        XML_SCHEMAP_AU_PROPS_CORRECT                       =    3089 # 3088
-        XML_SCHEMAP_A_PROPS_CORRECT_3                      =    3090 # 3089
-        XML_SCHEMAP_COS_ALL_LIMITED                        =    3091 # 3090
+        XML_SCHEMAP_WARN_ATTR_POINTLESS_PROH               =    3086
+        XML_SCHEMAP_AG_PROPS_CORRECT                       =    3087
+        XML_SCHEMAP_COS_CT_EXTENDS_1_2                     =    3088
+        XML_SCHEMAP_AU_PROPS_CORRECT                       =    3089
+        XML_SCHEMAP_A_PROPS_CORRECT_3                      =    3090
+        XML_SCHEMAP_COS_ALL_LIMITED                        =    3091
         XML_SCHEMATRONV_ASSERT                             =    4000
         XML_SCHEMATRONV_REPORT                             =    4001
         XML_MODULE_OPEN                                    =    4900
