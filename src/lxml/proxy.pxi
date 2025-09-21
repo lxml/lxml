@@ -574,7 +574,10 @@ cdef void fixThreadDictNamesForDtd(tree.xmlDtd* c_dtd,
                 _fixThreadDictPtr(&c_element.content.prefix, c_src_dict, c_dict)
             c_attribute = c_element.attributes
             while c_attribute:
-                _fixThreadDictPtr(&c_attribute.defaultValue, c_src_dict, c_dict)
+                if tree.LIBXML_VERSION < 21500:
+                    # libxml2 2.15 no longer stores default values in the dict.
+                    # See https://gitlab.gnome.org/GNOME/libxml2/-/commit/24628f25
+                    _fixThreadDictPtr(<const_xmlChar**>&c_attribute.defaultValue, c_src_dict, c_dict)
                 _fixThreadDictPtr(&c_attribute.name, c_src_dict, c_dict)
                 _fixThreadDictPtr(&c_attribute.prefix, c_src_dict, c_dict)
                 _fixThreadDictPtr(&c_attribute.elem, c_src_dict, c_dict)
