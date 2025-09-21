@@ -5624,9 +5624,10 @@ class ETreeWriteTestCase(HelperTestCase):
     @needs_feature("zlib")
     def test_write_file_gzip_parse(self):
         tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
+        parser = etree.XMLParser(decompress=True)
         with tmpfile() as filename:
             tree.write(filename, compression=9)
-            data = etree.tostring(etree.parse(filename))
+            data = etree.tostring(etree.parse(filename, parser))
         self.assertEqual(b'<a>'+b'<b/>'*200+b'</a>',
                           data)
 
