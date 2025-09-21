@@ -149,7 +149,18 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  define HTML_PARSE_NODEFDTD 4
 #endif
 #if LIBXML_VERSION < 20900
-#  define XML_PARSE_BIG_LINES 4194304
+#  define XML_PARSE_BIG_LINES 0x40000
+#endif
+#if LIBXML_VERSION < 21300
+#  define XML_PARSE_NO_XXE 0x80000
+#endif
+#if LIBXML_VERSION < 21400
+#  define XML_PARSE_UNZIP 0x100000
+#  define XML_PARSE_NO_SYS_CATALOG 0x200000
+#  define XML_PARSE_CATALOG_PI 0x400000
+#endif
+#if LIBXML_VERSION < 21500
+#  define XML_PARSE_SKIP_IDS 0x800000
 #endif
 
 #include "libxml/tree.h"
