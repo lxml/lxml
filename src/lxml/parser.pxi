@@ -1669,6 +1669,8 @@ cdef class XMLParser(_FeedParser):
             resolve_external = False
         if not strip_cdata:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOCDATA
+        if decompress:
+            parse_options |= xmlparser.XML_PARSE_UNZIP
 
         _BaseParser.__init__(self, parse_options, False, schema,
                              remove_comments, remove_pis, strip_cdata,
@@ -1847,6 +1849,8 @@ cdef class HTMLParser(_FeedParser):
             parse_options = parse_options ^ htmlparser.HTML_PARSE_NODEFDTD
         if huge_tree:
             parse_options = parse_options | xmlparser.XML_PARSE_HUGE
+        if decompress:
+            parse_options |= xmlparser.XML_PARSE_UNZIP
 
         if strip_cdata is not _UNUSED:
             import warnings
