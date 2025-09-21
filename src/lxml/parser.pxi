@@ -880,6 +880,9 @@ cdef class _BaseParser:
         if not isinstance(self, (XMLParser, HTMLParser)):
             raise TypeError, "This class cannot be instantiated"
 
+        if not collect_ids and tree.LIBXML_VERSION >= 21500:
+            parse_options |= xmlparser.XML_PARSE_SKIP_IDS
+
         self._parse_options = parse_options
         self._flags = ParserFlags(
             for_html=for_html,
