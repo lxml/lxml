@@ -132,7 +132,7 @@ jobs:
             {
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-22.04"}' \
-              | sed -e '/aarch64/s|ubuntu-22.04|ubuntu-22.04-arm|' \
+              | sed -e '/aarch64\|armv7l/s|ubuntu-22.04|ubuntu-22.04-arm|' \
               && cibuildwheel --print-build-identifiers --platform macos \
               | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               && cibuildwheel --print-build-identifiers --platform windows \
