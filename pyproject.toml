@@ -34,13 +34,7 @@ skip = [
     "cp311-musllinux_ppc64le",
 
     "cp38-manylinux_riscv64",
-    "cp39-manylinux_riscv64",
-    "cp310-manylinux_riscv64",
-    "cp311-manylinux_riscv64",
     "cp38-musllinux_riscv64",
-    "cp39-musllinux_riscv64",
-    "cp310-musllinux_riscv64",
-    "cp311-musllinux_riscv64",
 
     "cp38-manylinux_s390x",
     "cp39-manylinux_s390x",
