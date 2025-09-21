@@ -222,17 +222,17 @@ cdef extern from "libxml/parser.h" nogil:
         # libxml2 2.7.3+ only:
         XML_PARSE_OLDSAX = 0x10_0000              # parse using SAX2 interface before 2.7.0
         # libxml2 2.8.0+ only:
-        XML_PARSE_IGNORE_ENC = 0x20_000           # ignore internal document encoding hint
+        XML_PARSE_IGNORE_ENC = 0x20_0000          # ignore internal document encoding hint
         # libxml2 2.9.0+ only:
-        XML_PARSE_BIG_LINES = 0x40_000            # Store big lines numbers in text PSVI field
+        XML_PARSE_BIG_LINES = 0x40_0000           # Store big lines numbers in text PSVI field
         # libxml2 2.13.0+ only:
-        XML_PARSE_NO_XXE = 0x80_000               # Disable loading of external DTDs or entities
+        XML_PARSE_NO_XXE = 0x80_0000              # Disable loading of external DTDs or entities
         # libxml2 2.14.0+ only:
-        XML_PARSE_UNZIP = 0x100_000               # Enable input decompression (and potential gzip bombs)
-        XML_PARSE_NO_SYS_CATALOG = 0x200_000      # Disable the global system XML catalog
-        XML_PARSE_CATALOG_PI = 0x400_000          # Enable XML catalog processing instructions
+        XML_PARSE_UNZIP = 0x100_0000              # Enable input decompression (and potential gzip bombs)
+        XML_PARSE_NO_SYS_CATALOG = 0x200_0000     # Disable the global system XML catalog
+        XML_PARSE_CATALOG_PI = 0x400_0000         # Enable XML catalog processing instructions
         # libxml2 2.15.0+ only:
-        XML_PARSE_SKIP_IDS = 0x800_000            # Force the parser to ignore IDs
+        XML_PARSE_SKIP_IDS = 0x800_0000           # Force the parser to ignore IDs
 
     cdef void xmlInitParser()
     cdef void xmlCleanupParser()
