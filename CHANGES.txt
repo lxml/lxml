@@ -21,6 +21,16 @@ Other changes
 * Some internal adaptations were made for libxml2 2.14.x and 2.15.x.
 
 
+6.0.2 (2025-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#2125278: Compilation with libxml2 2.15.0 failed.
+  Original patch by Xi Ruoyao.
+
+
 6.0.1 (2025-08-22)
 ==================
 
