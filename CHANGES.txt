@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-6.0.2 (2025-??-??)
+6.0.2 (2025-09-21)
 ==================
 
 Bugs fixed
@@ -49,6 +49,7 @@ Bugs fixed
   Patch by Miro Hrončok.
 
 * Binary wheels use the library version libxml2 2.14.5.
+  See https://gitlab.gnome.org/GNOME/libxml2/-/releases/v2.14.5
 
 * Windows binary wheels continue to use a security patched library version libxml2 2.11.9.
 
