@@ -5855,7 +5855,18 @@ def test_suite():
     suite.addTests(doctest.DocTestSuite(selftest2))
 
     # add doctests
-    suite.addTests(doctest.DocTestSuite(etree))
+    doctest_stubs = {}
+    if 'schematron' not in etree.LIBXML_COMPILED_FEATURES:
+        # See doctest of class "lxml.etree.Schematron".
+        class FakeSchematron:
+            def __init__(self, schema):
+                self._results = iter([0, 1])
+            def validate(self, xml):
+                return next(self._results)
+
+        doctest_stubs['Schematron'] = FakeSchematron
+
+    suite.addTests(doctest.DocTestSuite(etree, extraglobs=doctest_stubs))
     suite.addTests(
         [make_doctest('tutorial.txt')])
     suite.addTests(
