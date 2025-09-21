@@ -192,7 +192,7 @@ jobs:
 
       - name: Build faster Linux wheels
         # also build wheels with the most recent manylinux images and gcc
-        if: runner.os == 'Linux' && !contains(matrix.only, 'i686')
+        if: runner.os == 'Linux' && (contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
         uses: pypa/cibuildwheel@v3.1.4
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
