@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import operator
 import os.path
+import pathlib
 import sys
 import xml.etree.ElementTree as ET
 
@@ -71,8 +72,8 @@ def regenerate_file(filename, result):
     return True
 
 
-def parse_enums(doc_dir, api_filename, enum_dict):
-    tree = ET.parse(os.path.join(doc_dir, api_filename))
+def parse_from_api_xml(api_xml_path, enum_dict):
+    tree = ET.parse(str(api_xml_path))
     for enum in tree.iterfind('symbols/enum'):
         enum_type = enum.get('type')
         if enum_type not in ENUM_MAP:
@@ -88,15 +89,33 @@ def parse_enums(doc_dir, api_filename, enum_dict):
         ))
 
 
-def main(doc_dir):
-    enum_dict = {}
-    parse_enums(doc_dir, 'libxml2-api.xml',   enum_dict)
-    #parse_enums(doc_dir, 'libxml-xmlerror.html',   enum_dict)
-    #parse_enums(doc_dir, 'libxml-xpath.html',      enum_dict)
-    #parse_enums(doc_dir, 'libxml-xmlschemas.html', enum_dict)
-    #parse_enums(doc_dir, 'libxml-relaxng.html',    enum_dict)
+def parse_from_doxygen_xml(doxygen_xml_path, enum_dict):
+    for xml_file in doxygen_xml_path.glob("*_8h.xml"):
+        for _, compound in ET.iterparse(xml_file):
+            if compound.tag != 'compounddef':
+                continue
+            if not compound.findtext('compoundname', '').endswith('.h'):
+                break
+            for memberdef in compound.iterfind('sectiondef[@kind = "enum"]/memberdef'):
+                enum_type = memberdef.findtext('name')
+                if enum_type not in ENUM_MAP:
+                    continue
+                entries = enum_dict.get(enum_type)
+                if not entries:
+                    print("Found enum", enum_type)
+                    entries = enum_dict[enum_type] = []
 
-    # regenerate source files
+                enum_value = 0
+                for enum in memberdef.iterfind('enumvalue'):
+                    enum_value = int(enum.findtext('initializer', '').lstrip('= ') or enum_value + 1)
+                    entries.append((
+                        enum.findtext('name'),
+                        enum_value,
+                        enum.findtext('briefdescription/para', '').rstrip('. ').strip(),
+                    ))
+
+
+def generate_source_files(enum_dict):
     pxi_result = []
     append_pxi = pxi_result.append
     pxd_result = []
@@ -146,6 +165,23 @@ def main(doc_dir):
         print("No changes.")
 
     print("Done")
+
+
+def main(doc_dir):
+    doc_path = pathlib.Path(doc_dir)
+    api_xml_path = doc_path / 'libxml2-api.xml'
+    doxygen_xml_path = doc_path / 'xml'
+
+    enum_dict = {}
+    if api_xml_path.exists():
+        parse_from_api_xml(api_xml_path, enum_dict)
+    elif doxygen_xml_path.exists():
+        parse_from_doxygen_xml(doxygen_xml_path, enum_dict)
+    else:
+        print(f"XML files for libxml2 API not found - did you generate the libxml2 documentation in {doc_dir}?")
+        return
+
+    generate_source_files(enum_dict)
 
 
 if __name__ == "__main__":
