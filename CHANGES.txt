@@ -11,6 +11,22 @@ Bugs fixed
 * LP#2125278: Compilation with libxml2 2.15.0 failed.
   Original patch by Xi Ruoyao.
 
+* Setting ``decompress=True`` in the parser had no effect in libxml2 2.15.
+
+* Binary wheels on Linux and macOS use the library version libxml2 2.14.6.
+  See https://gitlab.gnome.org/GNOME/libxml2/-/releases/v2.14.6
+
+* Test failures in libxml2 2.15.0 were fixed.
+
+Other changes
+-------------
+
+* Binary wheels for Py3.9-3.11 on the ``riscv64`` architecture were added.
+
+* Error constants were updated to match libxml2 2.15.0.
+
+* Built using Cython 3.1.4.
+
 
 6.0.1 (2025-08-22)
 ==================
