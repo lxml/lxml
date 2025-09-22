@@ -132,6 +132,15 @@ jobs:
               LIBXSLT_VERSION: "",
             }
             extra_hash: "-latestlibs"
+          - os: ubuntu-latest
+            python-version: "pypy-3.11"
+            allowed_failure: true
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: "",
+              LIBXSLT_VERSION: "",
+            }
+            extra_hash: "-latestlibs"
 
           - os: ubuntu-latest
             python-version: "3.12"
