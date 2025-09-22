@@ -119,7 +119,7 @@ jobs:
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: 2.13.7,
-              LIBXSLT_VERSION: 1.1.37,
+              LIBXSLT_VERSION: 1.1.40,
             }
             extra_hash: "-oldlibs213"
 
