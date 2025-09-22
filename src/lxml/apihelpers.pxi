@@ -812,19 +812,10 @@ cdef int _findChildSlice(
             c_step[0] = 1
         else:
             python._PyEval_SliceIndex(sliceobject.step, c_step)
-            if python.IS_PYPY:
-                if sliceobject.step != c_step[0]:
-                    # PyPy might not clip integer values.
-                    c_step[0] = python.PY_SSIZE_T_MIN if sliceobject.step < 0 else python.PY_SSIZE_T_MAX
         return 0
 
     python.PySlice_GetIndicesEx(
         sliceobject, childcount, &start, &stop, c_step, c_length)
-
-    if python.IS_PYPY:
-        if sliceobject.step is not None and sliceobject.step != c_step[0]:
-            # PyPy might not clip integer values.
-            c_step[0] = python.PY_SSIZE_T_MIN if sliceobject.step < 0 else python.PY_SSIZE_T_MAX
 
     if start > childcount // 2:
         c_start_node[0] = _findChildBackwards(c_parent, childcount - start - 1)
