@@ -794,6 +794,7 @@ cdef inline Py_ssize_t _countElements(xmlNode* c_node) noexcept:
         c_node = c_node.next
     return count
 
+
 cdef int _findChildSlice(
     slice sliceobject, xmlNode* c_parent,
     xmlNode** c_start_node, Py_ssize_t* c_step, Py_ssize_t* c_length) except -1:
@@ -811,14 +812,26 @@ cdef int _findChildSlice(
             c_step[0] = 1
         else:
             python._PyEval_SliceIndex(sliceobject.step, c_step)
+            if python.IS_PYPY:
+                if sliceobject.step != c_step[0]:
+                    # PyPy might not clip integer values.
+                    c_step[0] = python.PY_SSIZE_T_MIN if sliceobject.step < 0 else python.PY_SSIZE_T_MAX
         return 0
+
     python.PySlice_GetIndicesEx(
         sliceobject, childcount, &start, &stop, c_step, c_length)
+
+    if python.IS_PYPY:
+        if sliceobject.step != c_step[0]:
+            # PyPy might not clip integer values.
+            c_step[0] = python.PY_SSIZE_T_MIN if sliceobject.step < 0 else python.PY_SSIZE_T_MAX
+
     if start > childcount // 2:
         c_start_node[0] = _findChildBackwards(c_parent, childcount - start - 1)
     else:
         c_start_node[0] = _findChild(c_parent, start)
     return 0
+
 
 cdef bint _isFullSlice(slice sliceobject) except -1:
     """Conservative guess if this slice is a full slice as in ``s[:]``.
@@ -1208,7 +1221,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     cdef _Element element
     cdef Py_ssize_t seqlength, i, c
     cdef _node_to_node_function next_element
-    assert step > 0
+    assert step > 0, step
     if left_to_right:
         next_element = _nextElement
     else:
