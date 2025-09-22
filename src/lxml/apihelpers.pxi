@@ -822,7 +822,7 @@ cdef int _findChildSlice(
         sliceobject, childcount, &start, &stop, c_step, c_length)
 
     if python.IS_PYPY:
-        if sliceobject.step != c_step[0]:
+        if sliceobject.step is not None and sliceobject.step != c_step[0]:
             # PyPy might not clip integer values.
             c_step[0] = python.PY_SSIZE_T_MIN if sliceobject.step < 0 else python.PY_SSIZE_T_MAX
 
