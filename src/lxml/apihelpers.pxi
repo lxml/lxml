@@ -1182,7 +1182,7 @@ cdef int _deleteSlice(_Document doc, xmlNode* c_node,
     if step > 0:
         next_element = _nextElement
     else:
-        step = -step
+        step = -step if step != python.PY_SSIZE_T_MIN else python.PY_SSIZE_T_MAX
         next_element = _previousElement
     # now start deleting nodes
     c = 0

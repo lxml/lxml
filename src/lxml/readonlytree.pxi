@@ -60,7 +60,7 @@ cdef class _ReadOnlyProxy:
             return f'&{funicode(self._c_node.name)};'
         else:
             self._raise_unsupported_type()
-        
+
     @property
     def tail(self):
         """Text after this element's end tag, but before the next sibling
@@ -119,7 +119,7 @@ cdef class _ReadOnlyProxy:
             if step > 0:
                 next_element = _nextElement
             else:
-                step = -step
+                step = -step if step != python.PY_SSIZE_T_MIN else python.PY_SSIZE_T_MAX
                 next_element = _previousElement
             result = []
             c = 0
@@ -160,7 +160,7 @@ cdef class _ReadOnlyProxy:
     def __deepcopy__(self, memo):
         "__deepcopy__(self, memo)"
         return self.__copy__()
-        
+
     cpdef __copy__(self):
         "__copy__(self)"
         cdef xmlDoc* c_doc
@@ -495,7 +495,7 @@ cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
         c_next = c_node.next
         tree.xmlAddChild(self._c_node, c_node)
         _moveTail(c_next, c_node)
-            
+
     def extend(self, elements):
         """Append a copy of all Elements from a sequence to the list of
         children.

@@ -877,7 +877,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 left_to_right = 1
             else:
                 left_to_right = 0
-                step = -step
+                step = -step if step != python.PY_SSIZE_T_MIN else python.PY_SSIZE_T_MAX
             _replaceSlice(self, c_node, slicelength, step, left_to_right, value)
             return
         else:
@@ -1292,7 +1292,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if step > 0:
                 next_element = _nextElement
             else:
-                step = -step
+                step = -step if step != python.PY_SSIZE_T_MIN else python.PY_SSIZE_T_MAX
                 next_element = _previousElement
             result = []
             c = 0
