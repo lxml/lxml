@@ -69,7 +69,7 @@ def main():
 
     total = sum(stats.values())
     days = {"month": 30, "week": 7, "day": 1}
-    print(f"Total downloads: {total * days['month']:-12,.1f}")
+    print(f"Total downloads per month: {total * days['month']:-12,.1f}")
 
 
 if __name__ == '__main__':
