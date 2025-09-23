@@ -275,6 +275,10 @@ jobs:
 
   benchmarks:
     runs-on: ubuntu-latest
+
+    # The benchmarks are currently inconclusive and take a very long time to run.
+    if: false
+
     env:
       CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
