@@ -134,7 +134,7 @@ jobs:
             extra_hash: "-latestlibs"
           - os: ubuntu-latest
             python-version: "pypy-3.11"
-            allowed_failure: true
+            #allowed_failure: true
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: "",
@@ -163,11 +163,11 @@ jobs:
           - os: ubuntu-latest
             python-version: pypy-3.10
             env: { STATIC_DEPS: false }
-            allowed_failure: true
+            #allowed_failure: true
           - os: ubuntu-latest
             python-version: pypy-3.11
             env: { STATIC_DEPS: false }
-            allowed_failure: true
+            #allowed_failure: true
 
           # MacOS sub-jobs
           # ==============
