@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+6.0.3 (2025-??-??)
+==================
+
+Bugs fixed
+----------
+
+* Slicing with large step values (outside of ``+/- sys.maxsize``) could trigger undefined C behaviour.
+
+* LP#2125399: Some failing tests were fixed or disabled in PyPy.
+
+
 6.0.2 (2025-09-21)
 ==================
 
