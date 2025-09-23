@@ -20,8 +20,9 @@ cdef extern from "Python.h":
     """
 
     ctypedef struct PyObject
-    cdef int PY_SSIZE_T_MAX
-    cdef int PY_VERSION_HEX
+    cdef const Py_ssize_t PY_SSIZE_T_MIN
+    cdef const Py_ssize_t PY_SSIZE_T_MAX
+    cdef const int PY_VERSION_HEX
 
     cdef void Py_INCREF(object o)
     cdef void Py_DECREF(object o)
