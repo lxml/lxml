@@ -610,12 +610,12 @@ cdef class _FilelikeWriter:
             use_mview = True
             close = True
         else:
-            use_mview = isinstance(filelike, (BufferedWriter, BytesIO))
+            use_mview = not python.IS_PYPY and isinstance(filelike, (BufferedWriter, BytesIO))
 
         self._filelike = filelike
         if close:
             self._close_filelike = filelike.close
-        if use_mview:
+        if not python.IS_PYPY and use_mview:
             self._mview = _SlidingMemoryView()
 
         if exc_context is None:
