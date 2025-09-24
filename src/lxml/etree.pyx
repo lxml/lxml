@@ -58,15 +58,16 @@ from lxml.includes cimport c14n
 # Cython's standard declarations
 cimport cpython.mem
 cimport cpython.ref
-from libc cimport limits, stdio, stdlib
+from cpython.buffer cimport PyBUF_SIMPLE, PyBUF_READ, PyBUF_FORMAT, PyBUF_ND, PyBUF_STRIDES
+from libc cimport limits, stdio, stdlib, stdint
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 from libc.string cimport const_char
 
 cdef object os_path_abspath
 from os.path import abspath as os_path_abspath
 
-cdef object BytesIO, StringIO
-from io import BytesIO, StringIO
+cdef object BytesIO, StringIO, BufferedWriter
+from io import BytesIO, StringIO, BufferedWriter
 
 cdef object OrderedDict
 from collections import OrderedDict
