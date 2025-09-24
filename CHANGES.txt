@@ -15,10 +15,16 @@ Features added
 * The default chunk size for reading from file-likes in ``iterparse()`` was increased
   from 32 KiB to 64 KiB and is now configurable with a new ``chunk_size`` argument.
 
+* Writing to Python file objects minimises data copying by passing buffers around.
+
 Other changes
 -------------
 
 * Some internal adaptations were made for libxml2 2.14.x and 2.15.x.
+
+* The ``xmlDict...`` C functions of libxml2 are now declared in ``tree.pxd``.
+  They remain in ``xmlparser.pxd`` for legacy reasons but Cython code that uses them
+  should migrate the import to ``tree.pxd``.
 
 
 6.0.3 (2025-??-??)
