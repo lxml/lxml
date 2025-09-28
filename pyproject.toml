@@ -1,9 +1,9 @@
 [build-system]
-requires = ["Cython>=3.1.2", "setuptools"]
+requires = ["Cython>=3.1.4", "setuptools"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.1", LIBICONV_VERSION = "1.18", LIBXML2_VERSION = "2.14.5", LIBXSLT_VERSION = "1.1.43"}
+environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.1", LIBICONV_VERSION = "1.18", LIBXML2_VERSION = "2.14.6", LIBXSLT_VERSION = "1.1.43"}
 enable = ["pypy", "cpython-prerelease", "cpython-freethreading"]
        # "pypy"
        # "cpython-prerelease"
@@ -22,33 +22,18 @@ skip = [
     # Py3.8 wheel for macos is not universal: https://bugs.launchpad.net/lxml/+bug/2055404
     "cp38-macosx_universal2",
     # Reduce job load and HTTP hit rate on library servers.
-    "cp38-manylinux_aarch64",
-    "cp38-musllinux_aarch64",
-    "cp38-manylinux_armv7l",
-    "cp38-musllinux_armv7l",
+    "cp38-*_aarch64",
+    "cp38-*_armv7l",
 
-    "cp38-manylinux_ppc64le",
-    "cp39-manylinux_ppc64le",
-    "cp310-manylinux_ppc64le",
-    "cp311-manylinux_ppc64le",
-    "cp38-musllinux_ppc64le",
-    "cp39-musllinux_ppc64le",
-    "cp310-musllinux_ppc64le",
-    "cp311-musllinux_ppc64le",
+    "cp38-*_ppc64le",
+    "cp39-*_ppc64le",
+    "cp310-*_ppc64le",
+    "cp311-*_ppc64le",
 
-    "cp38-manylinux_riscv64",
-    "cp39-manylinux_riscv64",
-    "cp310-manylinux_riscv64",
-    "cp311-manylinux_riscv64",
-    "cp38-musllinux_riscv64",
-    "cp39-musllinux_riscv64",
-    "cp310-musllinux_riscv64",
-    "cp311-musllinux_riscv64",
+    "cp38-*_riscv64",
 
-    "cp38-manylinux_s390x",
-    "cp39-manylinux_s390x",
-    "cp38-musllinux_s390x",
-    "cp39-musllinux_s390x",
+    "cp38-*_s390x",
+    "cp39-*_s390x",
 ]
 #test-command = "python {package}/test.py -vv"
 
@@ -57,15 +42,15 @@ skip = [
 archs = ["x86_64", "aarch64", "i686", "ppc64le", "armv7l", "riscv64"]
 repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 
-[tool.cibuildwheel.linux.environment]
-CFLAGS = "-O3 -g1 -pipe -fPIC -flto"
-AR = "gcc-ar"
-NM = "gcc-nm"
-RANLIB = "gcc-ranlib"
-LDFLAGS = "-fPIC -flto"
-STATIC_DEPS = "true"
-LIBXML2_VERSION = "2.14.5"
-LIBXSLT_VERSION = "1.1.43"
+[[tool.cibuildwheel.overrides]]
+select = "*linux_*"
+inherit.environment = "append"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto"
+environment.AR = "gcc-ar"
+environment.NM = "gcc-nm"
+environment.RANLIB = "gcc-ranlib"
+environment.LDFLAGS = "-fPIC -flto"
+environment.STATIC_DEPS = "true"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
@@ -78,7 +63,7 @@ inherit.environment = "append"
 environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3"
 
 [[tool.cibuildwheel.overrides]]
-select = "*aarch64"
+select = "*linux_aarch64"
 inherit.environment = "append"
 environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72"
 

@@ -20,8 +20,9 @@ cdef extern from "Python.h":
     """
 
     ctypedef struct PyObject
-    cdef int PY_SSIZE_T_MAX
-    cdef int PY_VERSION_HEX
+    cdef const Py_ssize_t PY_SSIZE_T_MIN
+    cdef const Py_ssize_t PY_SSIZE_T_MAX
+    cdef const int PY_VERSION_HEX
 
     cdef void Py_INCREF(object o)
     cdef void Py_DECREF(object o)
@@ -103,16 +104,16 @@ cdef extern from "Python.h":
     cdef char* __cstr "PyBytes_AS_STRING" (PyObject* s)
 
     # Py_buffer related flags
-    cdef int PyBUF_SIMPLE
-    cdef int PyBUF_WRITABLE
-    cdef int PyBUF_LOCK
-    cdef int PyBUF_FORMAT
-    cdef int PyBUF_ND
-    cdef int PyBUF_STRIDES
-    cdef int PyBUF_C_CONTIGUOUS
-    cdef int PyBUF_F_CONTIGUOUS
-    cdef int PyBUF_ANY_CONTIGUOUS
-    cdef int PyBUF_INDIRECT
+    cdef const int PyBUF_SIMPLE
+    cdef const int PyBUF_WRITABLE
+    cdef const int PyBUF_LOCK
+    cdef const int PyBUF_FORMAT
+    cdef const int PyBUF_ND
+    cdef const int PyBUF_STRIDES
+    cdef const int PyBUF_C_CONTIGUOUS
+    cdef const int PyBUF_F_CONTIGUOUS
+    cdef const int PyBUF_ANY_CONTIGUOUS
+    cdef const int PyBUF_INDIRECT
 
 
 cdef extern from *:

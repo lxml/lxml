@@ -3,13 +3,13 @@ Test cases related to namespace implementation classes and the
 namespace registry mechanism
 """
 
-
+import gc
 import unittest
 
-from .common_imports import etree, HelperTestCase, _bytes, make_doctest
+from .common_imports import etree, HelperTestCase, make_doctest, IS_PYPY
 
 class ETreeNamespaceClassesTestCase(HelperTestCase):
-    
+
     class default_class(etree.ElementBase):
         pass
     class maeh_class(etree.ElementBase):
@@ -58,6 +58,12 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertFalse(hasattr(el[0], 'bluff'))
         self.assertEqual(el.bluff(), 'bluff')
         del el
+        gc.collect()
+
+        if IS_PYPY:
+            # PyPy doesn't necessarily clean up the tree immediately.
+            # Relax the test and use a new tree.
+            tree = self.parse(b'<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>')
 
         self.Namespace('ns11').update(maeh_dict)
         el = tree.getroot()
@@ -66,6 +72,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertEqual(el.bluff(), 'bluff')
         self.assertEqual(el[0].maeh(), 'maeh')
         del el
+        gc.collect()
 
         self.Namespace('ns10').clear()
 
@@ -196,7 +203,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertEqual('TAiL', el[1][1].tail)
         self.assertEqual('bluff_class', el[1][0].tag)
         self.assertEqual('{http://a.b/c}HONK', el[1][1].tag)
-        
+
 
 def test_suite():
     suite = unittest.TestSuite()

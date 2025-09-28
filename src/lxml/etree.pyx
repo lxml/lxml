@@ -59,6 +59,7 @@ from lxml.includes cimport c14n
 cimport cpython.mem
 cimport cpython.ref
 cimport cpython.object
+from cpython.buffer cimport PyBUF_SIMPLE, PyBUF_READ, PyBUF_FORMAT, PyBUF_ND, PyBUF_STRIDES
 from libc cimport limits, stdio, stdlib, stdint
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 from libc.string cimport const_char
@@ -66,8 +67,8 @@ from libc.string cimport const_char
 cdef object os_path_abspath
 from os.path import abspath as os_path_abspath
 
-cdef object BytesIO, StringIO
-from io import BytesIO, StringIO
+cdef object BytesIO, StringIO, BufferedWriter
+from io import BytesIO, StringIO, BufferedWriter
 
 cdef object OrderedDict
 from collections import OrderedDict
@@ -995,7 +996,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                     left_to_right = 1
                 else:
                     left_to_right = 0
-                    step = -step
+                    step = -step if step != python.PY_SSIZE_T_MIN else python.PY_SSIZE_T_MAX
                 _replaceSlice(self, c_node, slicelength, step, left_to_right, value)
             finally:
                 doc.unlock_write()
@@ -1572,7 +1573,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 if step > 0:
                     next_element = _nextElement
                 else:
-                    step = -step
+                    step = -step if step != python.PY_SSIZE_T_MIN else python.PY_SSIZE_T_MAX
                     next_element = _previousElement
                 result = []
                 c = 0

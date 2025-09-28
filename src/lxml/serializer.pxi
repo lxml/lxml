@@ -588,20 +588,66 @@ def _open_utf8_file(file, compression=0):
 
 @cython.final
 @cython.internal
+cdef class _SlidingMemoryView:
+    cdef char *buffer
+    cdef Py_ssize_t length
+    cdef stdint.uintptr_t used
+
+    cdef int point_buffer(self, char* data, Py_ssize_t length):
+        if self.used:
+            raise RuntimeError, f"Buffer object is not free to use, {self.used:d} references found"
+        self.buffer = data
+        self.length = length
+        return 0
+
+    def __getbuffer__(self, Py_buffer* info, int flags):
+        assert (flags | PyBUF_READ | PyBUF_FORMAT | PyBUF_ND | PyBUF_STRIDES) == (PyBUF_SIMPLE | PyBUF_READ | PyBUF_FORMAT | PyBUF_ND | PyBUF_STRIDES), flags
+        assert self.buffer is not NULL
+
+        self.used += 1
+
+        info.obj = self
+        info.buf = self.buffer
+        info.len = self.length
+        info.itemsize = 1
+        info.readonly = 1
+        info.ndim = 1
+        info.format = b'B'
+        info.shape = &info.itemsize
+        info.strides = &info.itemsize
+        info.suboffsets = NULL
+        info.internal = NULL
+
+    def __releasebuffer__(self, Py_buffer* info):
+        info.buf = NULL
+        self.used -= 1
+
+
+@cython.final
+@cython.internal
 cdef class _FilelikeWriter:
     cdef object _filelike
     cdef object _close_filelike
+    cdef _SlidingMemoryView _mview
     cdef _ExceptionContext _exc_context
     cdef _ErrorLog error_log
 
-    def __cinit__(self, filelike, exc_context=None, compression=None, close=False):
+    def __cinit__(self, filelike, exc_context=None, compression=None, bint close=False):
+        cdef bint use_mview
         if compression is not None and compression > 0:
             filelike = GzipFile(
                 fileobj=filelike, mode='wb', compresslevel=compression)
-            self._close_filelike = filelike.close
-        elif close:
-            self._close_filelike = filelike.close
+            use_mview = True
+            close = True
+        else:
+            use_mview = not python.IS_PYPY and isinstance(filelike, (BufferedWriter, BytesIO))
+
         self._filelike = filelike
+        if close:
+            self._close_filelike = filelike.close
+        if not python.IS_PYPY and use_mview:
+            self._mview = _SlidingMemoryView()
+
         if exc_context is None:
             self._exc_context = _ExceptionContext()
         else:
@@ -622,8 +668,13 @@ cdef class _FilelikeWriter:
         try:
             if self._filelike is None:
                 raise IOError, "File is already closed"
-            py_buffer = <bytes>c_buffer[:size]
-            self._filelike.write(py_buffer)
+            # If we don't know what the 'filelike' does with the data object, we pass it as plain 'bytes' copy.
+            if self._mview is None:
+                py_buffer = <bytes>c_buffer[:size]
+                self._filelike.write(py_buffer)
+            else:
+                self._mview.point_buffer(c_buffer, size)
+                self._filelike.write(self._mview)
         except:
             size = -1
             self._exc_context._store_raised()
@@ -741,6 +792,7 @@ cdef _FilelikeWriter _create_output_buffer(
     cdef tree.xmlOutputBuffer* c_buffer
     cdef _FilelikeWriter writer
     cdef bytes filename8
+
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
         raise LookupError(
@@ -779,6 +831,7 @@ cdef _FilelikeWriter _create_output_buffer(
     c_buffer_ret[0] = c_buffer
     return writer
 
+
 cdef xmlChar **_convert_ns_prefixes(tree.xmlDict* c_dict, ns_prefixes) except NULL:
     cdef size_t i, num_ns_prefixes = len(ns_prefixes)
     # Need to allocate one extra memory block to handle last NULL entry
@@ -803,6 +856,7 @@ cdef xmlChar **_convert_ns_prefixes(tree.xmlDict* c_dict, ns_prefixes) except NU
 
     c_ns_prefixes[i] = NULL  # append end marker
     return c_ns_prefixes
+
 
 cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                      int compression, inclusive_ns_prefixes):
