@@ -45,7 +45,7 @@ repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_*"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -std=c11"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto"
 environment.AR = "gcc-ar"
 environment.NM = "gcc-nm"
 environment.RANLIB = "gcc-ranlib"
@@ -55,17 +55,17 @@ environment.STATIC_DEPS = "true"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -std=c11 -march=core2 -mtune=generic -mno-ssse3"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_x86_64"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -std=c11 -march=core2 -mtune=generic -mno-ssse3"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_aarch64"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -std=c11 -march=armv8-a -mtune=cortex-a72"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72"
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "x86"]
