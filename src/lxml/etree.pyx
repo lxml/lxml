@@ -494,9 +494,6 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void initDict(self) noexcept:
         self._parser.initDocDict(self._c_doc)
 
-    cdef int add_element_for_cleanup(self, obj):
-        self._lock.add_object_for_cleanup(obj)
-
     cdef void lock_proxies(self) noexcept:
         self._proxy_lock.acquire()
 

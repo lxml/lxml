@@ -205,24 +205,6 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_write()
         assert lock.writer_reentry == 0, lock.writer_reentry
 
-    def test_lock_write_cleanup(self):
-        lock = RWLock()
-        obj = object()
-
-        lock.lock_write()
-        assert not lock.pending_cleanups
-
-        lock.add_object_for_cleanup(obj)
-        assert lock.pending_cleanups == [obj]  # add_object_for_cleanup() appends the object
-
-        lock.lock_read()
-        assert lock.pending_cleanups == [obj]  # lock_read() doesn't clean up
-        lock.unlock_read()
-        assert lock.pending_cleanups == [obj]  # unlock_read() doesn't clean up
-
-        lock.unlock_write()
-        assert not lock.pending_cleanups  # unlock_write() does clean up
-
     def test_lock_write_wait_writers(self):
         lock = RWLock()
 

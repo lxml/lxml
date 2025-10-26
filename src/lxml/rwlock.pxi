@@ -4,16 +4,17 @@
 cdef extern from *:
     """
 #include <pythread.h>
+#include <stdint.h>
 
 #ifndef LXML_ATOMICS_ENABLED
     #define LXML_ATOMICS_ENABLED 1
 #endif
 
-#define __lxml_atomic_int_type int
-#define __lxml_nonatomic_int_type int
+#define __lxml_atomic_int_type int64_t
+#define __lxml_nonatomic_int_type int64_t
 
-// For standard C atomics, get the headers first so we have ATOMIC_INT_LOCK_FREE
-// defined when we decide to use them.
+/* For standard C atomics, get the headers first so we have ATOMIC_INT_LOCK_FREE */
+/* defined when we decide to use them. */
 #if LXML_ATOMICS_ENABLED && (defined(__STDC_VERSION__) && \
                         (__STDC_VERSION__ >= 201112L) && \
                         !defined(__STDC_NO_ATOMICS__))
@@ -21,9 +22,10 @@ cdef extern from *:
 #endif
 
 #if LXML_ATOMICS_ENABLED && defined(Py_ATOMIC_H)
-    // "Python.h" included "pyatomics.h"
+    /* "Python.h" included "pyatomics.h" */
 
-    #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int((value), (arg))
+    #define __lxml_atomic_compare_exchange(value, expected, desired)  _Py_atomic_compare_exchange_int64((value), (expected), (desired))
+    #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int64((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
@@ -35,18 +37,19 @@ cdef extern from *:
                         (__STDC_VERSION__ >= 201112L) && \
                         !defined(__STDC_NO_ATOMICS__) && \
                        ATOMIC_INT_LOCK_FREE == 2)
-    // C11 atomics are available and  ATOMIC_INT_LOCK_FREE is definitely on
+    /* C11 atomics are available and  ATOMIC_INT_LOCK_FREE is definitely on */
     #undef __lxml_atomic_int_type
-    #define __lxml_atomic_int_type atomic_int
+    #define __lxml_atomic_int_type _Atomic __lxml_nonatomic_int_type
 
+    #define __lxml_atomic_compare_exchange(value, expected, desired)  atomic_compare_exchange_weak((value), (expected), (desired))
     #define __lxml_atomic_add(value, arg)     atomic_fetch_add_explicit((value), (arg), memory_order_relaxed)
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
     #if defined(__lxml_DEBUG_ATOMICS) && defined(_MSC_VER)
-        #pragma message ("Using standard C atomics")
+        #pragma message ("Using standard C11 atomics")
     #elif defined(__lxml_DEBUG_ATOMICS)
-        #warning "Using standard C atomics"
+        #warning "Using standard C11 atomics"
     #endif
 
 #elif LXML_ATOMICS_ENABLED && (__GNUC__ >= 5 || (__GNUC__ == 4 && \
@@ -58,6 +61,15 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __sync_fetch_and_add((value), 1)
     #define __lxml_atomic_decr_relaxed(value) __sync_fetch_and_sub((value), 1)
 
+    static int __lxml_atomic_compare_exchange(_lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
+        _lxml_nonatomic_int_type old_value = __sync_val_compare_and_swap(value, *expected, desired);
+        if (old_value != *expected) {
+            *expected = old_value;
+            return 0;
+        }
+        return 1;
+    }
+
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Using GNU atomics"
     #endif
@@ -65,22 +77,28 @@ cdef extern from *:
 #elif LXML_ATOMICS_ENABLED && defined(_MSC_VER)
     /* msvc */
     #include <intrin.h>
-    #undef __lxml_atomic_int_type
-    #define __lxml_atomic_int_type long
-    #undef __lxml_nonatomic_int_type
-    #define __lxml_nonatomic_int_type long
 
-    #pragma intrinsic (_InterlockedExchangeAdd, _InterlockedCompareExchangePointer)
+    #pragma intrinsic (_InterlockedExchangeAdd64, _InterlockedCompareExchange64)
 
-    #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd((value), (arg))
+    #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd64((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
+
+    static int __lxml_atomic_compare_exchange(_lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
+        _lxml_nonatomic_int_type old_value = _InterlockedCompareExchange64(value, *expected, desired);
+        if (old_value != *expected) {
+            *expected = old_value;
+            return 0;
+        }
+        return 1;
+    }
 
     #ifdef __lxml_DEBUG_ATOMICS
         #pragma message ("Using MSVC atomics")
     #endif
 
 #elif PY_VERSION_HEX >= 0x030d0000
+    /* Python critical section */
     #undef LXML_ATOMICS_ENABLED
     #define LXML_ATOMICS_ENABLED 0
 
@@ -97,6 +115,24 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
+    static int __lxml_atomic_compare_exchange_cs(PyObject *cs, _lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
+        _lxml_nonatomic_int_type old_value;
+        int retval;
+        Py_BEGIN_CRITICAL_SECTION(cs);
+        old_value = *value;
+        if (old_value == *expected) {
+            *value = desired;
+            retval = 1;
+        } else {
+            *expected = old_value;
+            retval = 0;
+        }
+        Py_END_CRITICAL_SECTION();
+        return retval;
+    }
+
+    #define __lxml_atomic_compare_exchange(value, expected, desired)  __lxml_atomic_compare_exchange_cs(__pyx_v_self, (value), (expected), (desired))
+
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Not using atomics, using CPython critical section"
     #endif
@@ -109,34 +145,49 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value)  (*(value))++
     #define __lxml_atomic_decr_relaxed(value)  (*(value))--
 
+    static int __lxml_atomic_compare_exchange(_lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
+        _lxml_nonatomic_int_type old_value = *value;
+        if (old_value == *expected) {
+            *value = desired;
+            return 1;
+        } else {
+            *expected = old_value;
+            return 0;
+        }
+    }
+
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Not using atomics, using the GIL"
     #endif
 #endif
     """
     const bint LXML_ATOMICS_ENABLED
-    ctypedef int atomic_int "__lxml_atomic_int_type"
-    ctypedef int nonatomic_int "__lxml_nonatomic_int_type"
+    ctypedef long atomic_int "__lxml_atomic_int_type"
+    ctypedef long nonatomic_int "__lxml_nonatomic_int_type"
 
     nonatomic_int atomic_add  "__lxml_atomic_add"          (atomic_int *value, nonatomic_int arg) noexcept
     nonatomic_int atomic_incr "__lxml_atomic_incr_relaxed" (atomic_int *value) noexcept
     nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value) noexcept
+    int atomic_compare_exchange "__lxml_atomic_compare_exchange"  (atomic_int *value, nonatomic_int *desired, nonatomic_int expected) noexcept
 
 
-cdef const long max_lock_reader_count = 1 << 30
+cdef const nonatomic_int max_lock_reader_count = 1 << 30
 
 
 @cython.final
 @cython.internal
+@cython.profile(False)
+@cython.linetrace(False)
 cdef class RWLock:
     """Read-write lock.
 
-    Uses a critical section to guard lock operations and a PyMutex for write locking.
+    Uses a critical section to guard lock operations and PyMutex for waiting.
     """
     cdef list _objects_pending_cleanup
     cdef unsigned long _write_locked_id
     cdef atomic_int _reader_count
     cdef atomic_int _readers_departing
+    cdef atomic_int _critical_section
     cdef nonatomic_int _writers_waiting
     cdef nonatomic_int _writer_reentry
     cdef cython.pymutex _readers_wait_lock
@@ -147,18 +198,17 @@ cdef class RWLock:
         # "+1" to make sure that "== 0" really means "no thread waiting".
         return python.PyThread_get_thread_ident() + 1
 
-    # Deferred cleanup support.
+    @cython.inline
+    cdef void _wait_for_critical_section(self) noexcept:
+        cdef nonatomic_int current_value = 0
+        while not atomic_compare_exchange(&self._critical_section, &current_value, 1):
+            current_value = 0
 
-    cdef int add_object_for_cleanup(self, obj):
-        if self._objects_pending_cleanup is None:
-            self._objects_pending_cleanup = []
-        self._objects_pending_cleanup.append(obj)
-        return 0
-
-    cdef int clean_up_pending_objects(self):
-        if self._objects_pending_cleanup is not None:
-            self._objects_pending_cleanup = None
-        return 0
+    @cython.inline
+    cdef void _release_critical_section(self) noexcept:
+        cdef nonatomic_int current_value = 1
+        while not atomic_compare_exchange(&self._critical_section, &current_value, 0) and current_value != 0:
+            current_value = 1
 
     # Read locking.
 
@@ -168,22 +218,19 @@ cdef class RWLock:
             self._readers_wait_lock.acquire()
         self._readers_wait_lock.release()
 
-    @cython.critical_section
     cdef bint try_lock_read(self) noexcept:
         readers_before = atomic_incr(&self._reader_count)
         if readers_before >= 0:
             # Only readers active => go!
             return True
-        if self._write_locked_id == self._my_lock_id():
+
+        if self._my_lock_id() == self._write_locked_id:
             # I own the write lock => ignore the read lock and read!
             atomic_decr(&self._reader_count)
             return True
 
-        # Give up and undo our claim.
-        # We rely on the 'critical_section' to prevent writers from terminating concurrently.
-        readers = atomic_decr(&self._reader_count)
-        assert readers < 0, readers
-
+        # Write lock was owned => give up and undo our read claim.
+        atomic_decr(&self._reader_count)
         return False
 
     cdef void lock_read(self) noexcept:
@@ -191,7 +238,8 @@ cdef class RWLock:
         if readers_before >= 0:
             # Only readers active => go!
             return
-        if self._write_locked_id == self._my_lock_id():
+
+        if self._my_lock_id() == self._write_locked_id:
             # I own the write lock => ignore the read lock and read!
             atomic_decr(&self._reader_count)
             return
@@ -202,40 +250,48 @@ cdef class RWLock:
     cdef void unlock_read(self) noexcept:
         readers = atomic_decr(&self._reader_count)
         if readers < 0:
-            if self._write_locked_id == self._my_lock_id():
+            if self._my_lock_id() == self._write_locked_id:
                 # I own the write lock and ignored the read lock => undo the read claim.
                 atomic_incr(&self._reader_count)
                 return
+
             # A writer is waiting.
             if atomic_decr(&self._readers_departing) == 1:
                 # No more readers after us, notify the waiting writer.
+                self._wait_for_critical_section()
                 self._writers_wait_lock.release()
+                self._release_critical_section()
 
     # Write locking.
 
     cdef void _wait_for_write_lock(self, unsigned long my_lock_id) noexcept:
-        # No atomics, this is guarded by critical_section(self).
+        self._wait_for_critical_section()
         self._writers_waiting += 1
         if self._writers_waiting == 1:
             # I am the first waiting writer and the mutex is not locked yet. Lock it now.
             self._writers_wait_lock.acquire()
+        self._release_critical_section()
 
-        # Wait for the current writer or the last reader to release the mutex to us.
+        # Wait for the current writer or the last reader to release the mutex to us
+        # and try to claim the write lock.
         while True:
             self._writers_wait_lock.acquire()
             if self._write_locked_id == 0:
                 break
+            # Let the current writer work
             self._writers_wait_lock.release()
+
+        self._wait_for_critical_section()
 
         # Claim the write lock.
         self._write_locked_id = my_lock_id
         self._writers_waiting -= 1
 
         # If no one else is waiting, unlock the mutex.
-        if self._writers_waiting == 0:
+        if not self._writers_waiting:
             self._writers_wait_lock.release()
+        self._release_critical_section()
 
-    @cython.critical_section
     cdef void lock_write(self) noexcept:
         my_lock_id = self._my_lock_id()
         # Claim the lock and block new readers if no writers are waiting.
@@ -264,7 +320,6 @@ cdef class RWLock:
             else:
                 self._wait_for_write_lock(my_lock_id)
 
-    @cython.critical_section
     cdef void unlock_write(self) noexcept:
         assert self._write_locked_id == self._my_lock_id(), f"{self._write_locked_id} != {self._my_lock_id()}"
         assert self._reader_count < 0, <nonatomic_int> self._reader_count
@@ -272,8 +327,7 @@ cdef class RWLock:
             self._writer_reentry -= 1
             return
 
-        # Clean up any objects that needed the lock for their deallocation (and couldn't get it yet).
-        self.clean_up_pending_objects()
+        self._wait_for_critical_section()
 
         # Release the lock.
         self._write_locked_id = 0
@@ -281,7 +335,10 @@ cdef class RWLock:
         if self._writers_waiting > 0:
             # Notify the next waiting writer.
             self._writers_wait_lock.release()
+            self._release_critical_section()
             return
+
+        self._release_critical_section()
 
         # No writers waiting, unblock readers.
         readers = atomic_add(&self._reader_count, max_lock_reader_count) + max_lock_reader_count
