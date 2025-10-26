@@ -28,6 +28,36 @@ env:
 
 
 jobs:
+  cache_libs:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - "ubuntu-22.04"
+          - "ubuntu-22.04-arm"
+          - "macos-latest"
+          - "windows-2022"
+          - "windows-11-arm"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+    - name: Cache [libs]
+      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: |
+          libs/*.xz
+          libs/*.gz
+          libs/*.zip
+        key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+
+    - name: Download latest libraries
+      env:
+        GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python3 buildlibxml.py --download-only
+
   ci:
     strategy:
       # Allows for matrix sub-jobs to fail without canceling the rest
@@ -201,6 +231,8 @@ jobs:
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
     # From testing, the runs tend to take 8-20 minutes, so a limit of 45 minutes should be enough.
     timeout-minutes: 45
+
+    needs: [ cache_libs ]
     runs-on: ${{ matrix.os }}
 
     env:
@@ -247,7 +279,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ matrix.env.LIBXML2_VERSION || env.LIBXML2_VERSION }}-${{ matrix.env.LIBXSLT_VERSION || env.LIBXSLT_VERSION }}
+          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ matrix.env.LIBXML2_VERSION || env.LIBXML2_VERSION }}-${{ matrix.env.LIBXSLT_VERSION || env.LIBXSLT_VERSION }}
 
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
@@ -281,7 +313,7 @@ jobs:
     if: false
 
     env:
-      CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
+      CFLAGS: -march=core2 -O3 -flto -std=c11 -fPIC -g -Wall -Wextra
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
       CCACHE_COMPRESSLEVEL: 5
