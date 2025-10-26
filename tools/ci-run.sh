@@ -32,13 +32,13 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   fi
   export PATH="/usr/lib/ccache:$PATH"
   TEST_CFLAGS="-Og -g -fPIC"
-  EXTRA_CFLAGS="-Wall -Wextra"
+  EXTRA_CFLAGS="-Wall -Wextra -D__lxml_DEBUG_ATOMICS=1"
 
 elif [ -z "${OS_NAME##macos*}" ]; then
   export CC="clang -Wno-deprecated-declarations"
   TEST_CFLAGS="-Og -g -fPIC -arch arm64 -arch x86_64"
   EXTRA_LDFLAGS="-arch arm64 -arch x86_64"
-  EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64"
+  EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64 -D__lxml_DEBUG_ATOMICS=1"
 
   if [[ $PYTHON_VERSION == "3."[78]* ]]; then
     # Py3.7/8 require the same target version as originally used for CPython itself.
