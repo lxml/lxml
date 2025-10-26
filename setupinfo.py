@@ -317,6 +317,8 @@ def cflags(static_cflags):
         result.append('-w')
     if OPTION_DEBUG_GCC:
         result.append('-g2')
+    if OPTION_CSTD:
+        result.append(f'/std:{OPTION_CSTD}' if sys.platform == 'win32' else f'-std={OPTION_CSTD}')
 
     if OPTION_STATIC:
         if not static_cflags:
@@ -558,6 +560,7 @@ OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
 OPTION_ZLIB_VERSION = option_value('zlib-version')
 OPTION_MULTICORE = option_value('multicore')
+OPTION_CSTD = option_value('lxml-cstd')
 OPTION_DOWNLOAD_DIR = option_value('download-dir')
 if OPTION_DOWNLOAD_DIR is None:
     OPTION_DOWNLOAD_DIR = 'libs'

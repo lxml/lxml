@@ -25,7 +25,7 @@ env:
   LIBICONV_VERSION: "1.18"
   LIBXML2_VERSION: "2.14.6"
   LIBXSLT_VERSION: "1.1.43"
-
+  LXML_CSTD: c11
 
 jobs:
   cache_libs:
@@ -313,7 +313,8 @@ jobs:
     if: false
 
     env:
-      CFLAGS: -march=core2 -O3 -flto -std=c11 -fPIC -g -Wall -Wextra
+      CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
+      LXML_CSTD: c11
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
       CCACHE_COMPRESSLEVEL: 5
