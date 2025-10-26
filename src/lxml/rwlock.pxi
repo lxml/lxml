@@ -61,8 +61,8 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __sync_fetch_and_add((value), 1)
     #define __lxml_atomic_decr_relaxed(value) __sync_fetch_and_sub((value), 1)
 
-    static int __lxml_atomic_compare_exchange(_lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
-        _lxml_nonatomic_int_type old_value = __sync_val_compare_and_swap(value, *expected, desired);
+    static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
+        __lxml_nonatomic_int_type old_value = __sync_val_compare_and_swap(value, *expected, desired);
         if (old_value != *expected) {
             *expected = old_value;
             return 0;
@@ -84,8 +84,8 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
-    static int __lxml_atomic_compare_exchange(_lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
-        _lxml_nonatomic_int_type old_value = _InterlockedCompareExchange64(value, *expected, desired);
+    static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
+        __lxml_nonatomic_int_type old_value = _InterlockedCompareExchange64(value, *expected, desired);
         if (old_value != *expected) {
             *expected = old_value;
             return 0;
@@ -102,8 +102,8 @@ cdef extern from *:
     #undef LXML_ATOMICS_ENABLED
     #define LXML_ATOMICS_ENABLED 0
 
-    static _lxml_nonatomic_int_type __lxml_atomic_add_cs(PyObject *cs, _lxml_atomic_int_type *value, _lxml_nonatomic_int_type arg) {
-        _lxml_nonatomic_int_type old_value;
+    static __lxml_nonatomic_int_type __lxml_atomic_add_cs(PyObject *cs, __lxml_atomic_int_type *value, __lxml_nonatomic_int_type arg) {
+        __lxml_nonatomic_int_type old_value;
         Py_BEGIN_CRITICAL_SECTION(cs);
         old_value = *value;
         *value = old_value + arg;
@@ -115,8 +115,8 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
 
-    static int __lxml_atomic_compare_exchange_cs(PyObject *cs, _lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
-        _lxml_nonatomic_int_type old_value;
+    static int __lxml_atomic_compare_exchange_cs(PyObject *cs, __lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
+        __lxml_nonatomic_int_type old_value;
         int retval;
         Py_BEGIN_CRITICAL_SECTION(cs);
         old_value = *value;
@@ -145,8 +145,8 @@ cdef extern from *:
     #define __lxml_atomic_incr_relaxed(value)  (*(value))++
     #define __lxml_atomic_decr_relaxed(value)  (*(value))--
 
-    static int __lxml_atomic_compare_exchange(_lxml_atomic_int_type *value, _lxml_nonatomic_int_type *expected, _lxml_nonatomic_int_type desired) {
-        _lxml_nonatomic_int_type old_value = *value;
+    static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
+        __lxml_nonatomic_int_type old_value = *value;
         if (old_value == *expected) {
             *value = desired;
             return 1;
