@@ -865,7 +865,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
     cdef xmlChar **c_inclusive_ns_prefixes = NULL
     cdef char* c_filename
     cdef xmlDoc* c_base_doc
-    cdef xmlDoc* c_doc
+    cdef xmlDoc* c_doc = NULL
     cdef int bytes_count, error = 0
 
     doc = element._doc
@@ -910,7 +910,8 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
         else:
             raise TypeError(f"File or filename expected, got '{python._fqtypename(f).decode('UTF-8')}'")
     finally:
-        _destroyFakeDoc(c_base_doc, c_doc)
+        if c_doc is not NULL:
+            _destroyFakeDoc(c_base_doc, c_doc)
         doc.unlock_fakedoc()
         if c_inclusive_ns_prefixes is not NULL:
             python.lxml_free(c_inclusive_ns_prefixes)
