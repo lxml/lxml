@@ -28,6 +28,7 @@ cdef extern from *:
     #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int64((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)         _Py_atomic_load_int64((value))
 
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Using pyatomics.h atomics"
@@ -45,6 +46,7 @@ cdef extern from *:
     #define __lxml_atomic_add(value, arg)     atomic_fetch_add_explicit((value), (arg), memory_order_relaxed)
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)         atomic_load((value))
 
     #if defined(__lxml_DEBUG_ATOMICS) && defined(_MSC_VER)
         #pragma message ("Using standard C11 atomics")
@@ -60,6 +62,7 @@ cdef extern from *:
     #define __lxml_atomic_add(value, arg)     __sync_fetch_and_add((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __sync_fetch_and_add((value), 1)
     #define __lxml_atomic_decr_relaxed(value) __sync_fetch_and_sub((value), 1)
+    #define __lxml_atomic_load(value)         __sync_fetch_and_add((value), 0)
 
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = __sync_val_compare_and_swap(value, *expected, desired);
@@ -83,6 +86,7 @@ cdef extern from *:
     #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd64((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)          (*(value))
 
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = _InterlockedCompareExchange64(value, *expected, desired);
@@ -114,6 +118,7 @@ cdef extern from *:
     #define __lxml_atomic_add(value, arg)   __lxml_atomic_add_cs(__pyx_v_self, value, arg)
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)          (*(value))
 
     static int __lxml_atomic_compare_exchange_cs(PyObject *cs, __lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value;
@@ -144,6 +149,7 @@ cdef extern from *:
     #define __lxml_atomic_add(value, arg)      ((*(value)) += (arg), (*(value) - (arg)))
     #define __lxml_atomic_incr_relaxed(value)  (*(value))++
     #define __lxml_atomic_decr_relaxed(value)  (*(value))--
+    #define __lxml_atomic_load(value)          (*(value))
 
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = *value;
@@ -168,6 +174,7 @@ cdef extern from *:
     nonatomic_int atomic_add  "__lxml_atomic_add"          (atomic_int *value, nonatomic_int arg) noexcept
     nonatomic_int atomic_incr "__lxml_atomic_incr_relaxed" (atomic_int *value) noexcept
     nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value) noexcept
+    nonatomic_int atomic_load "__lxml_atomic_load"         (atomic_int *value) noexcept
     int atomic_compare_exchange "__lxml_atomic_compare_exchange"  (atomic_int *value, nonatomic_int *desired, nonatomic_int expected) noexcept
 
 
@@ -214,7 +221,7 @@ cdef class RWLock:
 
     cdef void _wait_to_read(self) noexcept:
         # Wait for the writer to release the lock, thus notifying us.
-        while self._reader_count < 0:
+        while atomic_load(&self._reader_count) < 0:
             self._readers_wait_lock.acquire()
         self._readers_wait_lock.release()
 
@@ -266,22 +273,32 @@ cdef class RWLock:
 
     cdef void _wait_for_write_lock(self, unsigned long my_lock_id) noexcept:
         self._wait_for_critical_section()
+
+        if self._write_locked_id == my_lock_id:
+            # I own the lock myself.
+            self._writer_reentry += 1
+            self._release_critical_section()
+            return
+
         self._writers_waiting += 1
         if self._writers_waiting == 1:
             # I am the first waiting writer and the mutex is not locked yet. Lock it now.
             self._writers_wait_lock.acquire()
+
         self._release_critical_section()
 
         # Wait for the current writer or the last reader to release the mutex to us
         # and try to claim the write lock.
         while True:
             self._writers_wait_lock.acquire()
+
+            self._wait_for_critical_section()
             if self._write_locked_id == 0:
                 break
+            self._release_critical_section()
+
             # Let the current writer work
             self._writers_wait_lock.release()
-
-        self._wait_for_critical_section()
 
         # Claim the write lock.
         self._write_locked_id = my_lock_id
@@ -305,10 +322,6 @@ cdef class RWLock:
         elif readers < 0:
             # Another writer has already claimed the lock. Undo our claim and wait for the writer.
             atomic_add(&self._reader_count, max_lock_reader_count)
-            if self._write_locked_id == my_lock_id:
-                # I own the lock myself.
-                self._writer_reentry += 1
-                return
             self._wait_for_write_lock(my_lock_id)
 
         else:  # readers > 0:
@@ -322,7 +335,7 @@ cdef class RWLock:
 
     cdef void unlock_write(self) noexcept:
         assert self._write_locked_id == self._my_lock_id(), f"{self._write_locked_id} != {self._my_lock_id()}"
-        assert self._reader_count < 0, <nonatomic_int> self._reader_count
+        assert atomic_load(&self._reader_count) < 0, atomic_load(&self._reader_count)
         if self._writer_reentry > 0:
             self._writer_reentry -= 1
             return
