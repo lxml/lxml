@@ -7,13 +7,9 @@ import re
 import sys
 import unittest
 import threading
+from queue import Queue
 
 from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON
-
-try:
-    from Queue import Queue
-except ImportError:
-    from queue import Queue # Py3
 
 
 class ThreadingTestCase(HelperTestCase):
