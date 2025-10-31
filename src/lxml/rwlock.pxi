@@ -81,7 +81,13 @@ cdef extern from *:
     /* msvc */
     #include <intrin.h>
 
-    #pragma intrinsic (_InterlockedExchangeAdd64, _InterlockedCompareExchange64)
+    #if defined(_WIN64) && _WIN64
+      #pragma intrinsic (_InterlockedExchangeAdd64, _InterlockedCompareExchange64)
+    #else
+      #include <winnt.h>
+      #define _InterlockedExchangeAdd64(value, arg)  InterlockedExchangeAdd64((value), (arg))
+      #pragma intrinsic (_InterlockedCompareExchange64)
+    #endif
 
     #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd64((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
