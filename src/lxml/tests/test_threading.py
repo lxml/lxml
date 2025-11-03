@@ -419,6 +419,7 @@ class ThreadPipelineTestCase(HelperTestCase):
 
     class Worker(threading.Thread):
         _print_lock = threading.Lock()
+        _DEBUG = False
 
         def __init__(self, in_queue, in_count, **kwargs):
             threading.Thread.__init__(self)
@@ -429,8 +430,10 @@ class ThreadPipelineTestCase(HelperTestCase):
             self.__dict__.update(kwargs)
 
         def _debug_print(self, s):
-            self._print_counter += 1
+            if not self._DEBUG:
+                return
             with self._print_lock:
+                self._print_counter += 1
                 print(f"{s}[{self._print_counter}]")
 
         def run(self):
