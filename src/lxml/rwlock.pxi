@@ -1,7 +1,7 @@
 """Read-write lock implementation.
 """
 
-cdef extern from *:
+cdef extern from * nogil:
     """
 #include <pythread.h>
 #include <stdint.h>
@@ -215,12 +215,12 @@ cdef class RWLock:
     cdef int _writer_reentry
 
     @cython.inline
-    cdef unsigned int _my_lock_id(self) noexcept:
+    cdef unsigned long _my_lock_id(self) noexcept:
         # "+1" to make sure that "== 0" really means "no thread waiting".
         return python.PyThread_get_thread_ident() + 1
 
     @cython.inline
-    cdef unsigned int _owns_write_lock(self, unsigned long lock_id) noexcept:
+    cdef unsigned int _owns_write_lock(self, unsigned long lock_id) noexcept nogil:
         return lock_id == self._write_locked_id
 
     # Read locking.
@@ -228,7 +228,7 @@ cdef class RWLock:
     cdef void _notify_readers(self) noexcept:
         while atomic_load(&self._readers_waiting) == 0:
             # Race condition - wait for the first reader to acquire the lock.
-            pass
+            with nogil: pass
         with cython.critical_section(self):
             self._readers_wait_lock.release()
 
@@ -263,13 +263,14 @@ cdef class RWLock:
 
     cdef bint _try_lock_read_spin(self) noexcept:
         # Spin a couple of times to see if the writer finishes in time.
-        for _ in range(100):
-            if atomic_load(&self._reader_count) >= 0:
-                # Only readers active => go!
-                return True
+        with nogil:
+            for _ in range(100):
+                if atomic_load(&self._reader_count) >= 0:
+                    # Only readers active => go!
+                    return True
 
-        # Write lock still owned => give up and undo our read claim.
-        atomic_decr(&self._reader_count)
+            # Write lock still owned => give up and undo our read claim.
+            atomic_decr(&self._reader_count)
         return False
 
     cdef void lock_read(self) noexcept:
@@ -308,7 +309,7 @@ cdef class RWLock:
     cdef void _notify_writer(self) noexcept:
         while atomic_load(&self._writers_waiting) == 0:
             # Race condition - wait for the writer to acquire the lock.
-            pass
+            with nogil: pass
 
         with cython.critical_section(self):
             self._writers_wait_lock.release()
@@ -323,21 +324,22 @@ cdef class RWLock:
                 # Lock is not acquired yet. Acquire it now to allow waiting for its release.
                 self._writers_wait_lock.acquire()
 
-        while True:
-            # Wait for someone to release the lock.
-            self._writers_wait_lock.acquire()
+        with nogil:
+            while True:
+                # Wait for someone to release the lock.
+                self._writers_wait_lock.acquire()
 
-            if self._owns_write_lock(0):
-                # Claim the write lock.
-                self._write_locked_id = my_lock_id
+                if self._owns_write_lock(0):
+                    # Claim the write lock.
+                    self._write_locked_id = my_lock_id
 
-                if atomic_decr(&self._writers_waiting) == 1:
-                    # I am the last to wait for the lock => release it.
-                    self._writers_wait_lock.release()
-                return
+                    if atomic_decr(&self._writers_waiting) == 1:
+                        # I am the last to wait for the lock => release it.
+                        self._writers_wait_lock.release()
+                    return
 
-            # Let the current writer work
-            self._writers_wait_lock.release()
+                # Let the current writer work
+                self._writers_wait_lock.release()
 
     cdef void lock_write(self) noexcept:
         my_lock_id = self._my_lock_id()

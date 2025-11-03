@@ -146,8 +146,8 @@ cdef extern from "pythread.h":
     cdef PyThread_type_lock PyThread_allocate_lock()
     cdef void PyThread_free_lock(PyThread_type_lock lock)
     cdef int  PyThread_acquire_lock(PyThread_type_lock lock, int mode) nogil
-    cdef void PyThread_release_lock(PyThread_type_lock lock)
-    cdef long PyThread_get_thread_ident()
+    cdef void PyThread_release_lock(PyThread_type_lock lock) nogil
+    cdef unsigned long PyThread_get_thread_ident()
 
     ctypedef enum __WaitLock:
         WAIT_LOCK
