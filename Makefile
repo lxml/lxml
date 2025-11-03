@@ -2,10 +2,13 @@ PYTHON?=python3
 TESTFLAGS=-p -vv
 TESTOPTS=
 SETUPFLAGS=
+TSAN_FLAGS=-D__lxml_DEBUG_ATOMICS=1 -fsanitize=thread
 LXMLVERSION:=$(shell $(PYTHON) -c 'import re; print(re.findall(r"__version__\s*=\s*\"([^\"]+)\"", open("src/lxml/__init__.py").read())[0])' )
 
 PYTHON_WITH_CYTHON?=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
+
+BUILD_COMMAND=setup.py $(SETUPFLAGS) build_ext $(PYTHON_WITH_CYTHON) --warnings $(subst --,--with-,$(CYTHON_WITH_COVERAGE)) -j7
 
 PYTHON_BUILD_VERSION ?= *
 MANYLINUX_LIBXML2_VERSION=2.14.6
@@ -34,7 +37,12 @@ all: inplace
 
 # Build in-place
 inplace:
-	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON) --warnings $(subst --,--with-,$(CYTHON_WITH_COVERAGE)) -j7
+	$(PYTHON) $(BUILD_COMMAND) -i
+
+tsan:
+	CFLAGS="$$CFLAGS $(TSAN_FLAGS)" \
+		TSAN_OPTIONS="suppressions=tools/tsan.supp" \
+		$(PYTHON) $(BUILD_COMMAND) -i
 
 rebuild-sdist: require-cython
 	rm -f dist/lxml-$(LXMLVERSION).tar.gz
