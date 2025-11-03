@@ -192,19 +192,19 @@ cdef const nonatomic_int max_lock_reader_count = 1 << 30
 @cython.profile(False)
 @cython.linetrace(False)
 cdef class RWLock:
-    """Read-write lock.
+    """Writer-preferring Read-Write lock.
 
-    Uses a critical section to guard lock operations and PyMutex for waiting.
+    Uses atomics to avoid locking in the non-congested case.
+    Uses 'PyMutex' to block readers and writers while writing.
     """
-    cdef list _objects_pending_cleanup
     cdef unsigned long _write_locked_id
     cdef atomic_int _reader_count
     cdef atomic_int _readers_departing
-    cdef atomic_int _critical_section
-    cdef nonatomic_int _writers_waiting
-    cdef nonatomic_int _writer_reentry
+    cdef atomic_int _writers_waiting
+    cdef atomic_int _readers_waiting
     cdef cython.pymutex _readers_wait_lock
     cdef cython.pymutex _writers_wait_lock
+    cdef int _writer_reentry
 
     @cython.inline
     cdef unsigned int _my_lock_id(self) noexcept:
@@ -212,37 +212,55 @@ cdef class RWLock:
         return python.PyThread_get_thread_ident() + 1
 
     @cython.inline
-    cdef void _wait_for_critical_section(self) noexcept:
-        cdef nonatomic_int current_value = 0
-        while not atomic_compare_exchange(&self._critical_section, &current_value, 1):
-            current_value = 0
-
-    @cython.inline
-    cdef void _release_critical_section(self) noexcept:
-        cdef nonatomic_int current_value = 1
-        while not atomic_compare_exchange(&self._critical_section, &current_value, 0) and current_value != 0:
-            current_value = 1
+    cdef unsigned int _owns_write_lock(self, unsigned long lock_id) noexcept:
+        return lock_id == self._write_locked_id
 
     # Read locking.
 
-    cdef void _wait_to_read(self) noexcept:
-        # Wait for the writer to release the lock, thus notifying us.
-        while atomic_load(&self._reader_count) < 0:
-            self._readers_wait_lock.acquire()
-        self._readers_wait_lock.release()
+    cdef void _notify_readers(self) noexcept:
+        while atomic_load(&self._readers_waiting) == 0:
+            # Race condition - wait for the first reader to acquire the lock.
+            pass
+        with cython.critical_section(self):
+            self._readers_wait_lock.release()
 
+    cdef void _wait_to_read(self) noexcept:
+        with cython.critical_section(self):
+            other_readers_waiting = atomic_incr(&self._readers_waiting)
+            if other_readers_waiting == 0:
+                # Lock is not acquired yet. Acquire it now to make sure it can be released.
+                self._readers_wait_lock.acquire()
+
+        # Wait for someone to release the lock.
+        # Note that we are still registered as reader, so new writers will wait for us to terminate.
+        self._readers_wait_lock.acquire()
+
+        with cython.critical_section(self):
+            atomic_decr(&self._readers_waiting)
+            self._readers_wait_lock.release()
+
+    @cython.inline
     cdef bint try_lock_read(self) noexcept:
         readers_before = atomic_incr(&self._reader_count)
         if readers_before >= 0:
             # Only readers active => go!
             return True
 
-        if self._my_lock_id() == self._write_locked_id:
+        if self._owns_write_lock(self._my_lock_id()):
             # I own the write lock => ignore the read lock and read!
             atomic_decr(&self._reader_count)
             return True
 
-        # Write lock was owned => give up and undo our read claim.
+        return self._try_lock_read_spin()
+
+    cdef bint _try_lock_read_spin(self) noexcept:
+        # Spin a couple of times to see if the writer finishes in time.
+        for _ in range(100):
+            if atomic_load(&self._reader_count) >= 0:
+                # Only readers active => go!
+                return True
+
+        # Write lock still owned => give up and undo our read claim.
         atomic_decr(&self._reader_count)
         return False
 
@@ -252,7 +270,7 @@ cdef class RWLock:
             # Only readers active => go!
             return
 
-        if self._my_lock_id() == self._write_locked_id:
+        if self._owns_write_lock(self._my_lock_id()):
             # I own the write lock => ignore the read lock and read!
             atomic_decr(&self._reader_count)
             return
@@ -261,64 +279,63 @@ cdef class RWLock:
         self._wait_to_read()
 
     cdef void unlock_read(self) noexcept:
-        readers = atomic_decr(&self._reader_count)
-        if readers < 0:
-            if self._my_lock_id() == self._write_locked_id:
-                # I own the write lock and ignored the read lock => undo the read claim.
-                atomic_incr(&self._reader_count)
-                return
+        readers_before = atomic_decr(&self._reader_count)
+        assert readers_before != 0
+        if readers_before >= 0:
+            return
 
-            # A writer is waiting.
-            if atomic_decr(&self._readers_departing) == 1:
-                # No more readers after us, notify the waiting writer.
-                self._wait_for_critical_section()
-                self._writers_wait_lock.release()
-                self._release_critical_section()
+        if self._owns_write_lock(self._my_lock_id()):
+            # I own the write lock and ignored the read lock => undo the read claim.
+            atomic_incr(&self._reader_count)
+            return
+
+        # A writer is waiting.
+        if atomic_decr(&self._readers_departing) == 1:
+            # No more readers after us, notify the waiting writer.
+            self._notify_writer()
 
     # Write locking.
 
+    @cython.inline
+    cdef void _notify_writer(self) noexcept:
+        while atomic_load(&self._writers_waiting) == 0:
+            # Race condition - wait for the writer to acquire the lock.
+            pass
+
+        with cython.critical_section(self):
+            self._writers_wait_lock.release()
+
     cdef void _wait_for_write_lock(self, unsigned long my_lock_id) noexcept:
-        self._wait_for_critical_section()
-
-        if self._write_locked_id == my_lock_id:
-            # I own the lock myself.
-            self._writer_reentry += 1
-            self._release_critical_section()
-            return
-
-        self._writers_waiting += 1
-        if self._writers_waiting == 1:
-            # I am the first waiting writer and the mutex is not locked yet. Lock it now.
-            self._writers_wait_lock.acquire()
-
-        self._release_critical_section()
-
         # Wait for the current writer or the last reader to release the mutex to us
         # and try to claim the write lock.
+
+        with cython.critical_section(self):
+            other_writers_waiting = atomic_incr(&self._writers_waiting)
+            if other_writers_waiting == 0:
+                # Lock is not acquired yet. Acquire it now to allow waiting for its release.
+                self._writers_wait_lock.acquire()
+
         while True:
+            # Wait for someone to release the lock.
             self._writers_wait_lock.acquire()
 
-            self._wait_for_critical_section()
-            if self._write_locked_id == 0:
-                break
-            self._release_critical_section()
+            if self._owns_write_lock(0):
+                # Claim the write lock.
+                self._write_locked_id = my_lock_id
+
+                if atomic_decr(&self._writers_waiting) == 1:
+                    # I am the last to wait for the lock => release it.
+                    self._writers_wait_lock.release()
+                return
 
             # Let the current writer work
             self._writers_wait_lock.release()
 
-        # Claim the write lock.
-        self._write_locked_id = my_lock_id
-        self._writers_waiting -= 1
-
-        # If no one else is waiting, unlock the mutex.
-        if not self._writers_waiting:
-            self._writers_wait_lock.release()
-        self._release_critical_section()
-
     cdef void lock_write(self) noexcept:
         my_lock_id = self._my_lock_id()
+
         # Claim the lock and block new readers if no writers are waiting.
-        cdef nonatomic_int readers = atomic_add(&self._reader_count, -max_lock_reader_count)
+        readers: nonatomic_int = atomic_add(&self._reader_count, -max_lock_reader_count)
 
         if readers == 0:
             # Fast path: no readers, no writers => go
@@ -326,9 +343,11 @@ cdef class RWLock:
             return
 
         elif readers < 0:
-            # Another writer has already claimed the lock. Undo our claim and wait for the writer.
-            atomic_add(&self._reader_count, max_lock_reader_count)
-            self._wait_for_write_lock(my_lock_id)
+            if self._owns_write_lock(my_lock_id):
+                # I already own the write lock myself => reset "_reader_count" and continue.
+                atomic_add(&self._reader_count, max_lock_reader_count)
+                self._writer_reentry += 1
+                return
 
         else:  # readers > 0:
             # Push current readers to '_readers_departing' and wait for them to exit.
@@ -336,34 +355,29 @@ cdef class RWLock:
             if readers_departing == 0:
                 # Race condition: the last reader ended before we could update 'self._readers_departing'. Claim the lock.
                 self._write_locked_id = my_lock_id
-            else:
-                self._wait_for_write_lock(my_lock_id)
+                return
+
+        # Another writer has already claimed the lock. Wait for the writer.
+        self._wait_for_write_lock(my_lock_id)
 
     cdef void unlock_write(self) noexcept:
-        assert self._write_locked_id == self._my_lock_id(), f"{self._write_locked_id} != {self._my_lock_id()}"
+        assert self._owns_write_lock(self._my_lock_id()), f"{self._write_locked_id} != {self._my_lock_id()}"
         assert atomic_load(&self._reader_count) < 0, atomic_load(&self._reader_count)
+
         if self._writer_reentry > 0:
             self._writer_reentry -= 1
             return
 
-        self._wait_for_critical_section()
-
-        # Release the lock.
         self._write_locked_id = 0
 
-        if self._writers_waiting > 0:
-            # Notify the next waiting writer.
-            self._writers_wait_lock.release()
-            self._release_critical_section()
-            return
-
-        self._release_critical_section()
-
-        # No writers waiting, unblock readers.
         readers = atomic_add(&self._reader_count, max_lock_reader_count) + max_lock_reader_count
         if readers > 0:
-            # Notify waiting readers.
-            self._readers_wait_lock.release()
+            # Unblock the waiting readers.
+            self._notify_readers()
+        elif readers < 0:
+            # Unblock the next waiting writer.
+            self._notify_writer()
+        # else:  # No writers waiting.
 
     # Double locking.
 

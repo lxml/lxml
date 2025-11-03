@@ -418,28 +418,39 @@ class ThreadPipelineTestCase(HelperTestCase):
     item_count = 40
 
     class Worker(threading.Thread):
+        _print_lock = threading.Lock()
+
         def __init__(self, in_queue, in_count, **kwargs):
             threading.Thread.__init__(self)
             self.in_queue = in_queue
             self.in_count = in_count
             self.out_queue = Queue(in_count)
+            self._print_counter = 0
             self.__dict__.update(kwargs)
+
+        def _debug_print(self, s):
+            self._print_counter += 1
+            with self._print_lock:
+                print(f"{s}[{self._print_counter}]")
 
         def run(self):
             get, put = self.in_queue.get, self.out_queue.put
             handle = self.handle
             for _ in range(self.in_count):
                 put(handle(get(timeout=10)))
+            self._debug_print(f"done({type(self).__name__})")
 
         def handle(self, data):
             raise NotImplementedError()
 
     class ParseWorker(Worker):
         def handle(self, xml, _fromstring=etree.fromstring):
+            self._debug_print("parse")
             return _fromstring(xml)
 
     class RotateWorker(Worker):
         def handle(self, element):
+            self._debug_print("rotate")
             first = element[0]
             element[:] = element[1:]
             element.append(first)
@@ -447,27 +458,32 @@ class ThreadPipelineTestCase(HelperTestCase):
 
     class ReverseWorker(Worker):
         def handle(self, element):
+            self._debug_print("reverse")
             element[:] = element[::-1]
             return element
 
     class ParseAndExtendWorker(Worker):
         def handle(self, element, _fromstring=etree.fromstring):
+            self._debug_print("parseandextend")
             element.extend(_fromstring(self.xml))
             return element
 
     class ParseAndInjectWorker(Worker):
         def handle(self, element, _fromstring=etree.fromstring):
+            self._debug_print("parseandinject")
             root = _fromstring(self.xml)
             root.extend(element)
             return root
 
     class Validate(Worker):
         def handle(self, element):
+            self._debug_print("validate")
             element.getroottree().docinfo.internalDTD.assertValid(element)
             return element
 
     class SerialiseWorker(Worker):
         def handle(self, element):
+            self._debug_print("serialise")
             return etree.tostring(element)
 
     xml = (b'''\
@@ -508,7 +524,6 @@ class ThreadPipelineTestCase(HelperTestCase):
             last.start()
         return in_queue, start, last
 
-    @unittest.skipIf(IS_FT_PYTHON, "FIXME: not currently working in freethreading Python")
     def test_thread_pipeline_thread_parse(self):
         item_count = self.item_count
         xml = self.xml.replace(b'thread', b'THREAD')  # use fresh tag names
@@ -526,7 +541,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             xml=xml)
 
         # fill the queue
-        put = start.in_queue.put
+        put = in_queue.put
         for _ in range(item_count):
             put(xml)
 
@@ -558,7 +573,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             xml=xml)
 
         # fill the queue
-        put = start.in_queue.put
+        put = in_queue.put
         for _ in range(item_count):
             put(XML(xml))
 
