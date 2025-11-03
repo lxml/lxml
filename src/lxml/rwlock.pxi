@@ -64,6 +64,7 @@ cdef extern from *:
     #define __lxml_atomic_decr_relaxed(value) __sync_fetch_and_sub((value), 1)
     #define __lxml_atomic_load(value)         __sync_fetch_and_add((value), 0)
 
+    /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = __sync_val_compare_and_swap(value, *expected, desired);
         if (old_value != *expected) {
@@ -72,6 +73,7 @@ cdef extern from *:
         }
         return 1;
     }
+    */
 
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Using GNU atomics"
@@ -94,6 +96,7 @@ cdef extern from *:
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
     #define __lxml_atomic_load(value)          (*(value))
 
+    /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = _InterlockedCompareExchange64(value, *expected, desired);
         if (old_value != *expected) {
@@ -102,6 +105,7 @@ cdef extern from *:
         }
         return 1;
     }
+    */
 
     #ifdef __lxml_DEBUG_ATOMICS
         #pragma message ("Using MSVC atomics")
@@ -126,6 +130,7 @@ cdef extern from *:
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
     #define __lxml_atomic_load(value)          (*(value))
 
+    /* UNUSED
     static int __lxml_atomic_compare_exchange_cs(PyObject *cs, __lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value;
         int retval;
@@ -143,6 +148,7 @@ cdef extern from *:
     }
 
     #define __lxml_atomic_compare_exchange(value, expected, desired)  __lxml_atomic_compare_exchange_cs(__pyx_v_self, (value), (expected), (desired))
+    */
 
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Not using atomics, using CPython critical section"
@@ -157,6 +163,7 @@ cdef extern from *:
     #define __lxml_atomic_decr_relaxed(value)  (*(value))--
     #define __lxml_atomic_load(value)          (*(value))
 
+    /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = *value;
         if (old_value == *expected) {
@@ -167,6 +174,7 @@ cdef extern from *:
             return 0;
         }
     }
+    */
 
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Not using atomics, using the GIL"
