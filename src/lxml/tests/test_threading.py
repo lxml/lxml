@@ -7,7 +7,7 @@ import re
 import sys
 import unittest
 import threading
-from queue import Queue
+from queue import Queue, Empty
 
 from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON
 
@@ -439,8 +439,14 @@ class ThreadPipelineTestCase(HelperTestCase):
         def run(self):
             get, put = self.in_queue.get, self.out_queue.put
             handle = self.handle
-            for _ in range(self.in_count):
-                put(handle(get(timeout=10)))
+            i = 0
+            try:
+                for i in range(self.in_count):
+                    put(handle(get(timeout=10)))
+            except Empty:
+                self._debug_print(f"failed({type(self).__name__})")
+                raise RuntimeError(f"timeout after {i} items in thread {type(self).__name__}")
+
             self._debug_print(f"done({type(self).__name__})")
 
         def handle(self, data):
