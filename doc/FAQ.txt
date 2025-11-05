@@ -163,7 +163,7 @@ lxml currently supports libxml2 2.6.20 or later, which has even better
 support for various XML standards.  The important ones are:
 
 * XML 1.0
-* HTML 4
+* HTML 4 (recent libxml2 versions implement HTML 5)
 * XML namespaces
 * XML Schema 1.0
 * XPath 1.0
