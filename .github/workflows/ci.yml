@@ -313,7 +313,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # The benchmarks are currently inconclusive and take a very long time to run.
-    if: false
+    #if: false
 
     env:
       CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
