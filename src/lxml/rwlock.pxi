@@ -10,8 +10,8 @@ cdef extern from * nogil:
     #define LXML_ATOMICS_ENABLED 1
 #endif
 
-#define __lxml_atomic_int_type int64_t
-#define __lxml_nonatomic_int_type int64_t
+#define __lxml_atomic_int_type int32_t
+#define __lxml_nonatomic_int_type int32_t
 
 /* For standard C atomics, get the headers first so we have ATOMIC_INT_LOCK_FREE */
 /* defined when we decide to use them. */
@@ -24,11 +24,11 @@ cdef extern from * nogil:
 #if LXML_ATOMICS_ENABLED && defined(Py_ATOMIC_H)
     /* "Python.h" included "pyatomics.h" */
 
-    #define __lxml_atomic_compare_exchange(value, expected, desired)  _Py_atomic_compare_exchange_int64((value), (expected), (desired))
-    #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int64((value), (arg))
+    #define __lxml_atomic_compare_exchange(value, expected, desired)  _Py_atomic_compare_exchange_int32((value), (expected), (desired))
+    #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int32((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-    #define __lxml_atomic_load(value)         _Py_atomic_load_int64((value))
+    #define __lxml_atomic_load(value)         _Py_atomic_load_int32((value))
 
     #ifdef __lxml_DEBUG_ATOMICS
         #warning "Using pyatomics.h atomics"
@@ -83,22 +83,16 @@ cdef extern from * nogil:
     /* msvc */
     #include <intrin.h>
 
-    #if defined(_WIN64) && _WIN64
-      #pragma intrinsic (_InterlockedExchangeAdd64, _InterlockedCompareExchange64)
-    #else
-      #include <winnt.h>
-      #define _InterlockedExchangeAdd64(value, arg)  InterlockedExchangeAdd64((value), (arg))
-      #pragma intrinsic (_InterlockedCompareExchange64)
-    #endif
+    #pragma intrinsic (_InterlockedExchangeAdd, _InterlockedCompareExchange)
 
-    #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd64((value), (arg))
+    #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd((value), (arg))
     #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
     #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
     #define __lxml_atomic_load(value)          (*(value))
 
     /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
-        __lxml_nonatomic_int_type old_value = _InterlockedCompareExchange64(value, *expected, desired);
+        __lxml_nonatomic_int_type old_value = _InterlockedCompareExchange(value, *expected, desired);
         if (old_value != *expected) {
             *expected = old_value;
             return 0;
@@ -208,10 +202,10 @@ cdef class RWLock:
     cdef unsigned long _write_locked_id
     cdef atomic_int _reader_count
     cdef atomic_int _readers_departing
-    cdef atomic_int _writers_waiting
     cdef atomic_int _readers_waiting
     cdef cython.pymutex _readers_wait_lock
-    cdef cython.pymutex _writers_wait_lock
+    cdef cython.pymutex _writer_wait_lock
+    cdef cython.pymutex _writer_lock
     cdef int _writer_reentry
 
     @cython.inline
@@ -220,32 +214,36 @@ cdef class RWLock:
         return python.PyThread_get_thread_ident() + 1
 
     @cython.inline
-    cdef unsigned int _owns_write_lock(self, unsigned long lock_id) noexcept nogil:
+    cdef bint _owns_write_lock(self, unsigned long lock_id) noexcept nogil:
         return lock_id == self._write_locked_id
 
     # Read locking.
 
-    cdef void _notify_readers(self) noexcept:
+    cdef void _notify_readers(self, nonatomic_int waiting_readers) noexcept:
         while atomic_load(&self._readers_waiting) == 0:
             # Race condition - wait for the first reader to acquire the lock.
             with nogil: pass
-        with cython.critical_section(self):
-            self._readers_wait_lock.release()
+
+        # Signal to the reader(s) that we noticed it taking the lock.
+        atomic_add(&self._readers_waiting, waiting_readers)
+
+        # Unlock the first reader.
+        self._readers_wait_lock.release()
 
     cdef void _wait_to_read(self) noexcept:
-        with cython.critical_section(self):
-            other_readers_waiting = atomic_incr(&self._readers_waiting)
-            if other_readers_waiting == 0:
-                # Lock is not acquired yet. Acquire it now to make sure it can be released.
+        with nogil:
+            self._readers_wait_lock.acquire()
+
+        # Signal the writer that we have acquired the lock.
+        readers_waiting = atomic_decr(&self._readers_waiting)
+
+        if readers_waiting <= 0:
+            # We acquired the lock and notified the writer about it.
+            # Wait for the writer to release the lock to us.
+            with nogil:
                 self._readers_wait_lock.acquire()
 
-        # Wait for someone to release the lock.
-        # Note that we are still registered as reader, so new writers will wait for us to terminate.
-        self._readers_wait_lock.acquire()
-
-        with cython.critical_section(self):
-            atomic_decr(&self._readers_waiting)
-            self._readers_wait_lock.release()
+        self._readers_wait_lock.release()
 
     @cython.inline
     cdef bint try_lock_read(self) noexcept:
@@ -271,6 +269,7 @@ cdef class RWLock:
 
             # Write lock still owned => give up and undo our read claim.
             atomic_decr(&self._reader_count)
+
         return False
 
     cdef void lock_read(self) noexcept:
@@ -307,42 +306,28 @@ cdef class RWLock:
 
     @cython.inline
     cdef void _notify_writer(self) noexcept:
-        while atomic_load(&self._writers_waiting) == 0:
-            # Race condition - wait for the writer to acquire the lock.
-            with nogil: pass
+        self._writer_wait_lock.release()
 
-        with cython.critical_section(self):
-            self._writers_wait_lock.release()
-
-    cdef void _wait_for_write_lock(self, unsigned long my_lock_id) noexcept:
-        # Wait for the current writer or the last reader to release the mutex to us
-        # and try to claim the write lock.
-
-        with cython.critical_section(self):
-            other_writers_waiting = atomic_incr(&self._writers_waiting)
-            if other_writers_waiting == 0:
-                # Lock is not acquired yet. Acquire it now to allow waiting for its release.
-                self._writers_wait_lock.acquire()
-
+    cdef void _wait_for_readers_to_finish(self, nonatomic_int readers) noexcept:
         with nogil:
-            while True:
-                # Wait for someone to release the lock.
-                self._writers_wait_lock.acquire()
-
-                if self._owns_write_lock(0):
-                    # Claim the write lock.
-                    self._write_locked_id = my_lock_id
-
-                    if atomic_decr(&self._writers_waiting) == 1:
-                        # I am the last to wait for the lock => release it.
-                        self._writers_wait_lock.release()
-                    return
-
-                # Let the current writer work
-                self._writers_wait_lock.release()
+            self._writer_wait_lock.acquire()
+        # Push current readers to '_readers_departing' and wait for them to exit.
+        readers_departing = atomic_add(&self._readers_departing, readers) + readers
+        if readers_departing > 0:
+            # Wait for the readers to finish.
+            with nogil:
+                self._writer_wait_lock.acquire()
+        self._writer_wait_lock.release()
 
     cdef void lock_write(self) noexcept:
         my_lock_id = self._my_lock_id()
+
+        if self._owns_write_lock(my_lock_id):
+            self._writer_reentry += 1
+            return
+
+        with nogil:
+            self._writer_lock.acquire()
 
         # Claim the lock and block new readers if no writers are waiting.
         readers: nonatomic_int = atomic_add(&self._reader_count, -max_lock_reader_count)
@@ -350,25 +335,13 @@ cdef class RWLock:
         if readers == 0:
             # Fast path: no readers, no writers => go
             self._write_locked_id = my_lock_id
-            return
 
-        elif readers < 0:
-            if self._owns_write_lock(my_lock_id):
-                # I already own the write lock myself => reset "_reader_count" and continue.
-                atomic_add(&self._reader_count, max_lock_reader_count)
-                self._writer_reentry += 1
-                return
+        elif readers > 0:
+            self._wait_for_readers_to_finish(readers)
+            self._write_locked_id = my_lock_id
 
-        else:  # readers > 0:
-            # Push current readers to '_readers_departing' and wait for them to exit.
-            readers_departing = atomic_add(&self._readers_departing, readers) + readers
-            if readers_departing == 0:
-                # Race condition: the last reader ended before we could update 'self._readers_departing'. Claim the lock.
-                self._write_locked_id = my_lock_id
-                return
-
-        # Another writer has already claimed the lock. Wait for the writer.
-        self._wait_for_write_lock(my_lock_id)
+        else:
+            assert False, "Writer claimed the lock but did not acquire it!"
 
     cdef void unlock_write(self) noexcept:
         assert self._owns_write_lock(self._my_lock_id()), f"{self._write_locked_id} != {self._my_lock_id()}"
@@ -383,13 +356,11 @@ cdef class RWLock:
         readers = atomic_add(&self._reader_count, max_lock_reader_count) + max_lock_reader_count
         if readers > 0:
             # Unblock the waiting readers.
-            self._notify_readers()
-        elif readers < 0:
-            # Unblock the next waiting writer.
-            self._notify_writer()
-        # else:  # No writers waiting.
+            self._notify_readers(readers)
 
-    # Double locking.
+        self._writer_lock.release()
+
+    # Double lock locking.
 
     cdef void lock_write_with(self, RWLock second_lock) noexcept:
         """Acquire two locks for writing at the same time.
