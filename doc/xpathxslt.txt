@@ -562,7 +562,6 @@ and writes the expected data into the output file.
   >>> result.write_output("output.txt.gz", compression=9)    # doctest: +SKIP
 
 ..
-
   >>> from io import BytesIO
   >>> out = BytesIO()
   >>> result.write_output(out)
