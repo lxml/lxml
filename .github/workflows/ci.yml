@@ -317,7 +317,6 @@ jobs:
 
     env:
       CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
-      LXML_CSTD: c11
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
       CCACHE_COMPRESSLEVEL: 5
