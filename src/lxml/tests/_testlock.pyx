@@ -31,6 +31,9 @@ cdef class _RWLock:
     def lock_thread_id(self):
         return self._lock._write_locked_id - 1
 
+    def get_perf_counters(self):
+        return self._lock.get_perf_counters()
+
     @contextmanager
     def read_lock(self):
         self.lock_read()

@@ -10,6 +10,10 @@ cdef extern from * nogil:
     #define LXML_ATOMICS_ENABLED 1
 #endif
 
+#ifndef LXML_LOCK_PERFORMANCE
+    #define LXML_LOCK_PERFORMANCE 0
+#endif
+
 #define __lxml_atomic_int_type int32_t
 #define __lxml_nonatomic_int_type int32_t
 
@@ -174,8 +178,35 @@ cdef extern from * nogil:
         #warning "Not using atomics, using the GIL"
     #endif
 #endif
+
+#if LXML_LOCK_PERFORMANCE
+    #define __lxml_inc_counter(counter)  __lxml_atomic_incr_relaxed((counter))
+    typedef struct {
+        __lxml_atomic_int_type read_acquired;
+        __lxml_atomic_int_type write_acquired;
+        __lxml_atomic_int_type write_reentry;
+        __lxml_atomic_int_type try_lock_read_success;
+        __lxml_atomic_int_type try_lock_read_fail;
+        __lxml_atomic_int_type read_wait_on_writer;
+        __lxml_atomic_int_type write_wait_on_reader;
+        __lxml_atomic_int_type write_wait_on_writer;
+    } __lxml_lock_perf;
+#else
+    /* Fake counter struct that just provides all attributes. */
+    #define __lxml_inc_counter(counter)
+    typedef struct {
+        unsigned int read_acquired: 1;
+        unsigned int write_acquired: 1;
+        unsigned int write_reentry: 1;
+        unsigned int try_lock_read_success : 1;
+        unsigned int try_lock_read_fail: 1;
+        unsigned int read_wait_on_writer: 1;
+        unsigned int write_wait_on_reader: 1;
+        unsigned int write_wait_on_writer: 1;
+    } __lxml_lock_perf;
+#endif
     """
-    const bint LXML_ATOMICS_ENABLED
+    const bint ATOMICS_ENABLED "LXML_ATOMICS_ENABLED"
     ctypedef long atomic_int "__lxml_atomic_int_type"
     ctypedef long nonatomic_int "__lxml_nonatomic_int_type"
 
@@ -184,6 +215,19 @@ cdef extern from * nogil:
     nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value) noexcept
     nonatomic_int atomic_load "__lxml_atomic_load"         (atomic_int *value) noexcept
     int atomic_compare_exchange "__lxml_atomic_compare_exchange"  (atomic_int *value, nonatomic_int *desired, nonatomic_int expected) noexcept
+
+    const bint COUNT_LOCK_PERFORMANCE "LXML_LOCK_PERFORMANCE"
+    void inc_perf_counter "__lxml_inc_counter" (atomic_int *counter)
+
+    ctypedef struct lock_perf "__lxml_lock_perf":
+        atomic_int read_acquired
+        atomic_int write_acquired
+        atomic_int write_reentry
+        atomic_int try_lock_read_success
+        atomic_int try_lock_read_fail
+        atomic_int read_wait_on_writer
+        atomic_int write_wait_on_reader
+        atomic_int write_wait_on_writer
 
 
 cdef const nonatomic_int max_lock_reader_count = 1 << 30
@@ -207,6 +251,7 @@ cdef class RWLock:
     cdef cython.pymutex _writer_wait_lock
     cdef cython.pymutex _writer_lock
     cdef int _writer_reentry
+    cdef lock_perf _perf_counters
 
     @cython.inline
     cdef unsigned long _my_lock_id(self) noexcept:
@@ -216,6 +261,14 @@ cdef class RWLock:
     @cython.inline
     cdef bint _owns_write_lock(self, unsigned long lock_id) noexcept nogil:
         return lock_id == self._write_locked_id
+
+    def get_perf_counters(self) -> dict:
+        """Return the current performance counters as dict.
+        """
+        if COUNT_LOCK_PERFORMANCE:
+            return self._perf_counters
+        else:
+            return {}
 
     # Read locking.
 
@@ -234,6 +287,8 @@ cdef class RWLock:
         with nogil:
             self._readers_wait_lock.acquire()
 
+        inc_perf_counter(&self._perf_counters.read_wait_on_writer)
+
         # Signal the writer that we have acquired the lock.
         readers_waiting = atomic_decr(&self._readers_waiting)
 
@@ -243,18 +298,24 @@ cdef class RWLock:
             with nogil:
                 self._readers_wait_lock.acquire()
 
+        inc_perf_counter(&self._perf_counters.read_acquired)
+
         self._readers_wait_lock.release()
 
     @cython.inline
     cdef bint try_lock_read(self) noexcept:
         readers_before = atomic_incr(&self._reader_count)
         if readers_before >= 0:
+            inc_perf_counter(&self._perf_counters.try_lock_read_success)
+            inc_perf_counter(&self._perf_counters.read_acquired)
             # Only readers active => go!
             return True
 
         if self._owns_write_lock(self._my_lock_id()):
             # I own the write lock => ignore the read lock and read!
             atomic_decr(&self._reader_count)
+            inc_perf_counter(&self._perf_counters.try_lock_read_success)
+            inc_perf_counter(&self._perf_counters.read_acquired)
             return True
 
         return self._try_lock_read_spin()
@@ -265,22 +326,27 @@ cdef class RWLock:
             for _ in range(100):
                 if atomic_load(&self._reader_count) >= 0:
                     # Only readers active => go!
+                    inc_perf_counter(&self._perf_counters.try_lock_read_success)
+                    inc_perf_counter(&self._perf_counters.read_acquired)
                     return True
 
             # Write lock still owned => give up and undo our read claim.
             atomic_decr(&self._reader_count)
 
+        inc_perf_counter(&self._perf_counters.try_lock_read_fail)
         return False
 
     cdef void lock_read(self) noexcept:
         readers_before = atomic_incr(&self._reader_count)
         if readers_before >= 0:
             # Only readers active => go!
+            inc_perf_counter(&self._perf_counters.read_acquired)
             return
 
         if self._owns_write_lock(self._my_lock_id()):
             # I own the write lock => ignore the read lock and read!
             atomic_decr(&self._reader_count)
+            inc_perf_counter(&self._perf_counters.read_acquired)
             return
 
         # A writer is waiting => wait for lock to become free.
@@ -311,6 +377,9 @@ cdef class RWLock:
     cdef void _wait_for_readers_to_finish(self, nonatomic_int readers) noexcept:
         with nogil:
             self._writer_wait_lock.acquire()
+
+        inc_perf_counter(&self._perf_counters.write_wait_on_reader)
+
         # Push current readers to '_readers_departing' and wait for them to exit.
         readers_departing = atomic_add(&self._readers_departing, readers) + readers
         if readers_departing > 0:
@@ -323,8 +392,13 @@ cdef class RWLock:
         my_lock_id = self._my_lock_id()
 
         if self._owns_write_lock(my_lock_id):
+            inc_perf_counter(&self._perf_counters.write_reentry)
             self._writer_reentry += 1
             return
+
+        if COUNT_LOCK_PERFORMANCE:
+            if self._write_locked_id != 0:
+                inc_perf_counter(&self._perf_counters.write_wait_on_writer)
 
         with nogil:
             self._writer_lock.acquire()
@@ -342,6 +416,8 @@ cdef class RWLock:
 
         else:
             assert False, "Writer claimed the lock but did not acquire it!"
+
+        inc_perf_counter(&self._perf_counters.write_acquired)
 
     cdef void unlock_write(self) noexcept:
         assert self._owns_write_lock(self._my_lock_id()), f"{self._write_locked_id} != {self._my_lock_id()}"

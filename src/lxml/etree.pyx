@@ -539,6 +539,9 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         else:
             self._lock.unlock_write_with(second_doc._lock)
 
+    def get_lock_perf_counters(self) -> dict:
+        return self._lock.get_perf_counters()
+
     # Internal accessors, not locked.
 
     @cython.final
@@ -2503,6 +2506,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if self._doc is not None:
             return self._doc._parser
         return None
+
+    def get_lock_perf_counters(self) -> dict:
+        """Return the performance counters of the document's concurrency lock as dict.
+        """
+        doc = self._context_node._doc if self._context_node is not None else self._doc
+        return doc.get_lock_perf_counters()
 
     def write(self, file, *, encoding=None, method="xml",
               bint pretty_print=False, xml_declaration=None, bint with_tail=True,

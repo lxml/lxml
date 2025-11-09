@@ -7,6 +7,47 @@ from functools import partial, wraps
 from lxml.tests._testlock import _RWLock as RWLock
 
 
+def diff_perf_counters(start_counters, end_counters):
+    return {
+        name: end_value - start_counters[name]
+        for name, end_value in end_counters.items()
+    }
+
+
+def assert_perf_counters(**counter_diffs):
+    def decorator(f):
+        @wraps(f)
+        def check_counters(self):
+            lock = RWLock()
+            start_counters = lock.get_perf_counters()
+
+            f(self, lock)
+
+            end_counters = lock.get_perf_counters()
+            diff = diff_perf_counters(start_counters, end_counters)
+
+            for name in counter_diffs:
+                assert name in diff, f"Test bug: unknown counter name '{name}'"
+
+            differences = []
+            for name, diff_value in diff.items():
+                if name in counter_diffs:
+                    expected_diff_value = counter_diffs[name]
+                    if expected_diff_value is None:
+                        continue
+                else:
+                    expected_diff_value = 0
+
+                if diff_value != expected_diff_value:
+                    differences.append(f"{name} == {diff_value} != {expected_diff_value}")
+
+            if differences:
+                self.fail(', '.join(sorted(differences)))
+
+        return check_counters
+    return decorator
+
+
 class RWLockTest(unittest.TestCase):
     @contextmanager
     def run_threads(self, *functions):
@@ -28,8 +69,8 @@ class RWLockTest(unittest.TestCase):
         for thread in threads:
             thread.join()
 
-    def test_lock_read(self):
-        lock = RWLock()
+    @assert_perf_counters(read_acquired=2)
+    def test_lock_read(self, lock):
         assert lock.reader_count == 0, lock.reader_count
         lock.lock_read()
         assert lock.reader_count == 1, lock.reader_count
@@ -40,51 +81,42 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_read()
         assert lock.reader_count == 0, lock.reader_count
 
-    def test_lock_read_reentry(self):
-        lock = RWLock()
+    @assert_perf_counters(read_acquired=4)
+    def test_lock_read_reentry(self, lock):
         lock.lock_read()
         assert lock.reader_count == 1, lock.reader_count
 
-        lock.lock_read()
-        assert lock.reader_count == 2, lock.reader_count
-        lock.unlock_read()
-        assert lock.reader_count == 1, lock.reader_count
         lock.lock_read()
         assert lock.reader_count == 2, lock.reader_count
         lock.unlock_read()
         assert lock.reader_count == 1, lock.reader_count
-
-        lock.unlock_read()
-        assert lock.reader_count == 0, lock.reader_count
-
         lock.lock_read()
-        assert lock.reader_count == 1, lock.reader_count
-        lock.unlock_read()
-        assert lock.reader_count == 0, lock.reader_count
-
-    def test_try_lock_read_simple(self):
-        lock = RWLock()
-        assert lock.reader_count == 0, lock.reader_count
-        assert lock.try_lock_read() is True
-        assert lock.reader_count == 1, lock.reader_count
-        lock.unlock_read()
-        assert lock.reader_count == 0, lock.reader_count
-
-        assert lock.try_lock_read() is True
-        assert lock.reader_count == 1, lock.reader_count
-        lock.unlock_read()
-        assert lock.reader_count == 0, lock.reader_count
-
-        assert lock.try_lock_read() is True
-        assert lock.reader_count == 1, lock.reader_count
-        assert lock.try_lock_read() is True
         assert lock.reader_count == 2, lock.reader_count
         lock.unlock_read()
         assert lock.reader_count == 1, lock.reader_count
+
         lock.unlock_read()
         assert lock.reader_count == 0, lock.reader_count
 
         lock.lock_read()
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+    @assert_perf_counters(read_acquired=6, try_lock_read_success=5)
+    def test_try_lock_read_simple(self, lock):
+        assert lock.reader_count == 0, lock.reader_count
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+        assert lock.try_lock_read() is True
         assert lock.reader_count == 1, lock.reader_count
         assert lock.try_lock_read() is True
         assert lock.reader_count == 2, lock.reader_count
@@ -93,8 +125,17 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_read()
         assert lock.reader_count == 0, lock.reader_count
 
-    def test_try_lock_read_as_writer(self):
-        lock = RWLock()
+        lock.lock_read()
+        assert lock.reader_count == 1, lock.reader_count
+        assert lock.try_lock_read() is True
+        assert lock.reader_count == 2, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 1, lock.reader_count
+        lock.unlock_read()
+        assert lock.reader_count == 0, lock.reader_count
+
+    @assert_perf_counters(try_lock_read_success=1, read_acquired=1, write_acquired=1)
+    def test_try_lock_read_as_writer(self, lock):
         assert lock.reader_count == 0, lock.reader_count
         lock.lock_write()
         assert lock.writer_blocking_readers
@@ -108,8 +149,8 @@ class RWLockTest(unittest.TestCase):
 
         lock.unlock_write()
 
-    def test_try_lock_read_failing(self):
-        lock = RWLock()
+    @assert_perf_counters(try_lock_read_fail=2, try_lock_read_success=2, read_acquired=2, write_acquired=1)
+    def test_try_lock_read_failing(self, lock):
         start = threading.Barrier(2)
         unlock = threading.Barrier(2)
 
@@ -146,9 +187,8 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_read()
         assert lock.reader_count == 0, lock.reader_count
 
-    def test_lock_write(self):
-        lock = RWLock()
-
+    @assert_perf_counters(write_acquired=3)
+    def test_lock_write(self, lock):
         assert not lock.writer_blocking_readers
         assert lock.reader_count == 0, lock.reader_count
         lock.lock_write()
@@ -168,9 +208,8 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_write()
         assert lock.reader_count == 0, lock.reader_count
 
-    def test_lock_write_reentry(self):
-        lock = RWLock()
-
+    @assert_perf_counters(write_acquired=2, write_reentry=3)
+    def test_lock_write_reentry(self, lock):
         assert not lock.writer_blocking_readers
         assert lock.writer_reentry == 0, lock.writer_reentry
         lock.lock_write()
@@ -205,9 +244,8 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_write()
         assert lock.writer_reentry == 0, lock.writer_reentry
 
-    def test_lock_write_wait_writers(self):
-        lock = RWLock()
-
+    @assert_perf_counters(write_acquired=2, write_wait_on_writer=1)
+    def test_lock_write_wait_writers(self, lock):
         order = []
 
         start = threading.Barrier(2)
