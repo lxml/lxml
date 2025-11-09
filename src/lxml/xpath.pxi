@@ -268,7 +268,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
 
         # FIXME: as long as we cannot upgrade a read lock to a write lock, we assume that we need a
         # write lock if the user provided extensions.
-        cdef bint use_write_lock = self._context._extensions
+        cdef bint use_write_lock = self._context._has_user_extensions
         if use_write_lock:
             doc.lock_write()
         else:
@@ -329,7 +329,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
         # FIXME: as long as we cannot upgrade a read lock to a write lock, we assume that we need a
         # write lock if the user provided extensions.
-        cdef bint use_write_lock = self._context._extensions
+        cdef bint use_write_lock = self._context._has_user_extensions
         if use_write_lock:
             doc.lock_write()
         else:
@@ -425,7 +425,7 @@ cdef class XPath(_XPathEvaluatorBase):
 
         # FIXME: as long as we cannot upgrade a read lock to a write lock, we assume that we need a
         # write lock if the user provided extensions.
-        cdef bint use_write_lock = self._context._extensions
+        cdef bint use_write_lock = self._context._has_user_extensions
         if use_write_lock:
             doc.lock_write()
         else:

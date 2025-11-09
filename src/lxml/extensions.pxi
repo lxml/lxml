@@ -36,6 +36,7 @@ cdef class _BaseContext:
     cdef dict _function_cache
     cdef dict _eval_context_dict
     cdef bint _build_smart_strings
+    cdef bint _has_user_extensions
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
     cdef set _temp_documents
@@ -67,6 +68,7 @@ cdef class _BaseContext:
                     name_utf = self._to_utf(name)
                     new_extensions[(ns_utf, name_utf)] = function
             extensions = new_extensions or None
+            self._has_user_extensions = extensions is not None
 
         if namespaces is not None:
             if isinstance(namespaces, dict):
