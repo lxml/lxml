@@ -540,6 +540,10 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             self._lock.unlock_write_with(second_doc._lock)
 
     def get_lock_perf_counters(self) -> dict:
+        """Return the current performance counters of this document's concurrency lock in a dict.
+
+        lxml needs to be compiled with '-DLXML_LOCK_PERFORMANCE=1' to make this useful.
+        """
         return self._lock.get_perf_counters()
 
     # Internal accessors, not locked.
