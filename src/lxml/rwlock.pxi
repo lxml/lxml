@@ -284,8 +284,7 @@ cdef class RWLock:
         self._readers_wait_lock.release()
 
     cdef void _wait_to_read(self) noexcept:
-        with nogil:
-            self._readers_wait_lock.acquire()
+        self._readers_wait_lock.acquire()
 
         inc_perf_counter(&self._perf_counters.read_wait_on_writer)
 
@@ -295,8 +294,7 @@ cdef class RWLock:
         if readers_waiting <= 0:
             # We acquired the lock and notified the writer about it.
             # Wait for the writer to release the lock to us.
-            with nogil:
-                self._readers_wait_lock.acquire()
+            self._readers_wait_lock.acquire()
 
         inc_perf_counter(&self._perf_counters.read_acquired)
 
@@ -375,8 +373,7 @@ cdef class RWLock:
         self._writer_wait_lock.release()
 
     cdef void _wait_for_readers_to_finish(self, nonatomic_int readers) noexcept:
-        with nogil:
-            self._writer_wait_lock.acquire()
+        self._writer_wait_lock.acquire()
 
         inc_perf_counter(&self._perf_counters.write_wait_on_reader)
 
@@ -384,8 +381,7 @@ cdef class RWLock:
         readers_departing = atomic_add(&self._readers_departing, readers) + readers
         if readers_departing > 0:
             # Wait for the readers to finish.
-            with nogil:
-                self._writer_wait_lock.acquire()
+            self._writer_wait_lock.acquire()
         self._writer_wait_lock.release()
 
     cdef void lock_write(self) noexcept:
@@ -400,8 +396,7 @@ cdef class RWLock:
             if self._write_locked_id != 0:
                 inc_perf_counter(&self._perf_counters.write_wait_on_writer)
 
-        with nogil:
-            self._writer_lock.acquire()
+        self._writer_lock.acquire()
 
         # Claim the lock and block new readers if no writers are waiting.
         readers: nonatomic_int = atomic_add(&self._reader_count, -max_lock_reader_count)
