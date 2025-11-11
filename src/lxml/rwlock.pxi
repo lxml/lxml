@@ -338,6 +338,8 @@ cdef class RWLock:
         inc_perf_counter(&self._perf_counters.write_wait_on_reader)
 
         # Push current readers to '_readers_departing' and wait for them to exit.
+        # Note that they might have departed already, making "self._readers_departing" negative
+        # before we add to it.
         readers_departing = atomic_add(&self._readers_departing, readers) + readers
         if readers_departing > 0:
             # Wait for the readers to finish.
@@ -353,7 +355,9 @@ cdef class RWLock:
             return
 
         if COUNT_LOCK_PERFORMANCE:
-            if self._write_locked_id != 0:
+            if not self._owns_write_lock(0):
+                # Risks race conditions if a writer finishes between now and us acquiring
+                # the writer lock below, but that seems acceptable for a performance counter.
                 inc_perf_counter(&self._perf_counters.write_wait_on_writer)
 
         self._writer_lock.acquire()
