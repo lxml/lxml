@@ -185,8 +185,6 @@ cdef extern from * nogil:
         __lxml_atomic_int_type read_acquired;
         __lxml_atomic_int_type write_acquired;
         __lxml_atomic_int_type write_reentry;
-        __lxml_atomic_int_type try_lock_read_success;
-        __lxml_atomic_int_type try_lock_read_fail;
         __lxml_atomic_int_type read_wait_on_writer;
         __lxml_atomic_int_type write_wait_on_reader;
         __lxml_atomic_int_type write_wait_on_writer;
@@ -198,8 +196,6 @@ cdef extern from * nogil:
         unsigned int read_acquired: 1;
         unsigned int write_acquired: 1;
         unsigned int write_reentry: 1;
-        unsigned int try_lock_read_success : 1;
-        unsigned int try_lock_read_fail: 1;
         unsigned int read_wait_on_writer: 1;
         unsigned int write_wait_on_reader: 1;
         unsigned int write_wait_on_writer: 1;
@@ -223,8 +219,6 @@ cdef extern from * nogil:
         atomic_int read_acquired
         atomic_int write_acquired
         atomic_int write_reentry
-        atomic_int try_lock_read_success
-        atomic_int try_lock_read_fail
         atomic_int read_wait_on_writer
         atomic_int write_wait_on_reader
         atomic_int write_wait_on_writer
@@ -299,40 +293,6 @@ cdef class RWLock:
         inc_perf_counter(&self._perf_counters.read_acquired)
 
         self._readers_wait_lock.release()
-
-    @cython.inline
-    cdef bint try_lock_read(self) noexcept:
-        readers_before = atomic_incr(&self._reader_count)
-        if readers_before >= 0:
-            inc_perf_counter(&self._perf_counters.try_lock_read_success)
-            inc_perf_counter(&self._perf_counters.read_acquired)
-            # Only readers active => go!
-            return True
-
-        if self._owns_write_lock(self._my_lock_id()):
-            # I own the write lock => ignore the read lock and read!
-            atomic_decr(&self._reader_count)
-            inc_perf_counter(&self._perf_counters.try_lock_read_success)
-            inc_perf_counter(&self._perf_counters.read_acquired)
-            return True
-
-        return self._try_lock_read_spin()
-
-    cdef bint _try_lock_read_spin(self) noexcept:
-        # Spin a couple of times to see if the writer finishes in time.
-        with nogil:
-            for _ in range(100):
-                if atomic_load(&self._reader_count) >= 0:
-                    # Only readers active => go!
-                    inc_perf_counter(&self._perf_counters.try_lock_read_success)
-                    inc_perf_counter(&self._perf_counters.read_acquired)
-                    return True
-
-            # Write lock still owned => give up and undo our read claim.
-            atomic_decr(&self._reader_count)
-
-        inc_perf_counter(&self._perf_counters.try_lock_read_fail)
-        return False
 
     cdef void lock_read(self) noexcept:
         readers_before = atomic_incr(&self._reader_count)

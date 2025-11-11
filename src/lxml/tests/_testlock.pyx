@@ -53,9 +53,6 @@ cdef class _RWLock:
     def lock_read(self):
         self._lock.lock_read()
 
-    def try_lock_read(self):
-        return self._lock.try_lock_read()
-
     def unlock_read(self):
         self._lock.unlock_read()
 

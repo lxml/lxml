@@ -503,9 +503,6 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void lock_read(self) noexcept:
         self._lock.lock_read()
 
-    cdef bint try_lock_read(self) noexcept:
-        return self._lock.try_lock_read()
-
     cdef void unlock_read(self) noexcept:
         self._lock.unlock_read()
 
