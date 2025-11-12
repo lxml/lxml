@@ -268,11 +268,11 @@ cdef class RWLock:
 
     cdef void _notify_readers(self, nonatomic_int waiting_readers) noexcept:
         while atomic_load(&self._readers_waiting) == 0:
-            # Race condition - wait for the first reader to acquire the lock.
+            # Wait for the first reader to acquire the lock.
             with nogil: pass
 
         # Signal to the reader(s) that we noticed it taking the lock.
-        atomic_add(&self._readers_waiting, waiting_readers)
+        waiting_already = atomic_add(&self._readers_waiting, -waiting_readers)
 
         # Unlock the first reader.
         self._readers_wait_lock.release()
@@ -283,9 +283,9 @@ cdef class RWLock:
         inc_perf_counter(&self._perf_counters.read_wait_on_writer)
 
         # Signal the writer that we have acquired the lock.
-        readers_waiting = atomic_decr(&self._readers_waiting)
+        readers_waiting = atomic_incr(&self._readers_waiting)
 
-        if readers_waiting <= 0:
+        if readers_waiting == 0:
             # We acquired the lock and notified the writer about it.
             # Wait for the writer to release the lock to us.
             self._readers_wait_lock.acquire()
