@@ -77,3 +77,46 @@ cdef class _RWLock:
             self._lock.unlock_write()
         else:
             self._lock.unlock_write_with(second_lock._lock)
+
+
+def trace(test_function):
+    """Compiled test trace helper.
+    """
+    import sys
+    from functools import partial, wraps
+    from threading import get_ident as get_thread_id
+
+    _print = sys.stdout.write
+    sysmon = sys.monitoring
+    tool_id = sysmon.DEBUGGER_ID
+
+    print_lock: cython.pymutex
+
+    test_function_startline = test_function.__code__.co_firstlineno
+
+    def trace_event(event, code, instruction_offset, *arg):
+        filename: str = code.co_filename
+        if 'test_' in filename and code.co_firstlineno < test_function_startline:
+            return sysmon.DISABLE
+        if 'lock' not in filename and 'etree' not in filename:
+            return sysmon.DISABLE
+
+        message = f"[{get_thread_id() & 0xffffffff:08x}] {event:6} {code.co_name}\n"
+        with print_lock:
+            _print(message)
+
+    @wraps(test_function)
+    def method(*args):
+        sysmon.use_tool_id(tool_id, "tracer")
+        sysmon.set_events(tool_id, sysmon.events.PY_START | sysmon.events.PY_RETURN)
+
+        sysmon.register_callback(
+            tool_id, sysmon.events.PY_START, partial(trace_event, 'call'))
+        sysmon.register_callback(
+            tool_id, sysmon.events.PY_RETURN, partial(trace_event, 'return'))
+
+        test_function(*args)
+
+        sysmon.clear_tool_id(tool_id)
+
+    return method

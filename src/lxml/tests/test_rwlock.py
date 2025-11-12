@@ -4,7 +4,7 @@ import unittest
 from contextlib import contextmanager
 from functools import partial, wraps
 
-from lxml.tests._testlock import _RWLock as RWLock
+from lxml.tests._testlock import _RWLock as RWLock, trace
 
 
 def diff_perf_counters(start_counters, end_counters):
