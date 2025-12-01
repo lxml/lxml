@@ -117,23 +117,6 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  define ENABLE_THREADING 1
 #endif
 
-/* Work around Cython bug https://github.com/cython/cython/issues/6995 */
-#ifndef __Pyx_Locks_PyMutex
-    #if defined(CYTHON_COMPILING_IN_LIMITED_API) && CYTHON_COMPILING_IN_LIMITED_API
-        #if defined(_MSC_VER)
-            #pragma message ("Please do not use lxml´s Document class in Limited-API modules. See https://github.com/cython/cython/issues/6995")
-        #else
-            #warning Please do not use lxml´s Document class in Limited-API modules. See https://github.com/cython/cython/issues/6995
-        #endif
-    #endif
-
-    #if PY_VERSION_HEX > 0x030d0000
-    #define __Pyx_Locks_PyMutex PyMutex
-    #else
-    #define __Pyx_Locks_PyMutex PyThread_type_lock
-    #endif
-#endif
-
 #if LIBXML_VERSION < 20704
 /* FIXME: hack to make new error reporting compile in old libxml2 versions */
 #  define xmlStructuredErrorContext NULL
