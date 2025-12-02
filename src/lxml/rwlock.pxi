@@ -57,7 +57,7 @@ cdef extern from * nogil:
 
     #if defined(__lxml_DEBUG_ATOMICS) && defined(_MSC_VER)
         #pragma message ("Using pyatomics.h atomics")
-    #ifdef __lxml_DEBUG_ATOMICS
+    #elif defined(__lxml_DEBUG_ATOMICS)
         #warning "Using pyatomics.h atomics"
     #endif
 
