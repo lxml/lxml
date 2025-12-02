@@ -366,19 +366,16 @@ cdef class RWLock:
         self._writer_lock.acquire()
 
         # Claim the lock and block new readers if no writers are waiting.
-        readers: nonatomic_int = atomic_add(&self._reader_count, -max_lock_reader_count)
+        readers = atomic_add(&self._reader_count, -max_lock_reader_count)
 
-        if readers == 0:
-            # Fast path: no readers, no writers => go
-            self._write_locked_id = my_lock_id
+        if readers != 0:
+            if readers > 0:
+                self._wait_for_readers_to_finish(readers)
+            else:
+                assert readers >= 0, "Writer claimed the lock but did not acquire it!"
 
-        elif readers > 0:
-            self._wait_for_readers_to_finish(readers)
-            self._write_locked_id = my_lock_id
-
-        else:
-            assert False, "Writer claimed the lock but did not acquire it!"
-
+        # No readers, no writers => go.
+        self._write_locked_id = my_lock_id
         inc_perf_counter(&self._perf_counters.write_acquired)
 
     cdef void unlock_write(self) noexcept:
