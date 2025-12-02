@@ -280,7 +280,7 @@ class RWLockTest(unittest.TestCase):
             with lock.write_lock():
                 write()
 
-        def writer_reader():
+        def writereader():
             start.wait()
             with lock.write_lock():
                 write()
@@ -297,7 +297,7 @@ class RWLockTest(unittest.TestCase):
                     write()
         """
 
-        threads = [reader, writer, writer_reader] * 33
+        threads = [reader, writer, writereader] * 33
         start = threading.Barrier(len(threads))
 
         with self.run_threads(*threads):
@@ -378,7 +378,7 @@ class RWLockTest(unittest.TestCase):
             expect(0, 1)
             unlock_write()
 
-        def readwrite_once():
+        def rw_once():
             start.wait()
 
             lock_write()
@@ -395,7 +395,7 @@ class RWLockTest(unittest.TestCase):
             expect(0, 1)
             unlock_write()
 
-        def readwrite_many():
+        def rw_many():
             start.wait()
 
             lock_write()
@@ -465,8 +465,8 @@ class RWLockTest(unittest.TestCase):
             for func in (
                 read,
                 write,
-                #readwrite_once,
-                #readwrite_many,
+                #rw_once,
+                #rw_many,
             )
             for _ in range(2)
         ]
