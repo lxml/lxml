@@ -25,24 +25,12 @@ cdef extern from * nogil:
     #include <stdatomic.h>
 #endif
 
-#if LXML_ATOMICS_ENABLED && defined(Py_ATOMIC_H)
-    /* "Python.h" included "pyatomics.h" */
-
-    #define __lxml_atomic_compare_exchange(value, expected, desired)  _Py_atomic_compare_exchange_int32((value), (expected), (desired))
-    #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int32((value), (arg))
-    #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
-    #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-    #define __lxml_atomic_load(value)         _Py_atomic_load_int32((value))
-
-    #ifdef __lxml_DEBUG_ATOMICS
-        #warning "Using pyatomics.h atomics"
-    #endif
-
-#elif LXML_ATOMICS_ENABLED && (defined(__STDC_VERSION__) && \
+#if LXML_ATOMICS_ENABLED && (defined(__STDC_VERSION__) && \
                         (__STDC_VERSION__ >= 201112L) && \
                         !defined(__STDC_NO_ATOMICS__) && \
                        ATOMIC_INT_LOCK_FREE == 2)
     /* C11 atomics are available and  ATOMIC_INT_LOCK_FREE is definitely on */
+    /* Prefer this over pyatomics.h, which enforces strict memory ordering. We only need atomic operations. */
     #undef __lxml_atomic_int_type
     #define __lxml_atomic_int_type _Atomic __lxml_nonatomic_int_type
 
@@ -56,6 +44,19 @@ cdef extern from * nogil:
         #pragma message ("Using standard C11 atomics")
     #elif defined(__lxml_DEBUG_ATOMICS)
         #warning "Using standard C11 atomics"
+    #endif
+
+#elif LXML_ATOMICS_ENABLED && defined(Py_ATOMIC_H)
+    /* "Python.h" included "pyatomics.h" */
+
+    #define __lxml_atomic_compare_exchange(value, expected, desired)  _Py_atomic_compare_exchange_int32((value), (expected), (desired))
+    #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int32((value), (arg))
+    #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
+    #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)         _Py_atomic_load_int32((value))
+
+    #ifdef __lxml_DEBUG_ATOMICS
+        #warning "Using pyatomics.h atomics"
     #endif
 
 #elif LXML_ATOMICS_ENABLED && (__GNUC__ >= 5 || (__GNUC__ == 4 && \
