@@ -119,7 +119,7 @@ class ThreadingTestCase(HelperTestCase):
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:template match="tag" />
     <!-- extend time for parsing + transform -->
-''' + '\n'.join('<xsl:template match="tag%x" />' % i for i in range(200)) + '''
+''' + '\n'.join(f'<xsl:template match="tag{i:x}" />' for i in range(200)) + '''
     <xsl:UnExpectedElement />
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTParseError,
@@ -145,7 +145,7 @@ class ThreadingTestCase(HelperTestCase):
                 self.assertEqual(len(last_log), len(log))
             self.assertTrue(len(log) >= 2, len(log))
             for error in log:
-                self.assertTrue(':ERROR:XSLT:' in str(error), str(error))
+                self.assertIn(':ERROR:XSLT:', str(error), str(error))
             self.assertTrue(any('UnExpectedElement' in str(error) for error in log), log)
             last_log = log
 
@@ -158,7 +158,7 @@ class ThreadingTestCase(HelperTestCase):
         <xsl:message terminate="yes">FAIL</xsl:message>
     </xsl:template>
     <!-- extend time for parsing + transform -->
-''' + '\n'.join('<xsl:template match="tag%X" name="tag%x"> <xsl:call-template name="tag%x" /> </xsl:template>' % (i, i, i-1)
+''' + '\n'.join(f'<xsl:template match="tag{i:X}" name="tag{i:x}"> <xsl:call-template name="tag{i-1:x}" /> </xsl:template>'
                 for i in range(1, 256)) + '''
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTApplyError,
@@ -185,7 +185,7 @@ class ThreadingTestCase(HelperTestCase):
                 self.assertEqual(len(last_log), len(log))
             self.assertEqual(1, len(log))
             for error in log:
-                self.assertTrue(':ERROR:XSLT:' in str(error))
+                self.assertIn(':ERROR:XSLT:', str(error))
             last_log = log
 
     def test_thread_xslt_attr_replace(self):
