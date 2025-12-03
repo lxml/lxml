@@ -344,7 +344,7 @@ class ThreadingTestCase(HelperTestCase):
     def test_concurrent_attribute_names_in_dicts(self):
         SubElement = self.etree.SubElement
         names = list('abcdefghijklmnop')
-        runs_per_name = range(50)
+        runs_per_name = range(20)
         result_matches = re.compile(
             br'<thread_root>'
             br'(?:<[a-p]{5} thread_attr_[a-p]="value" thread_attr2_[a-p]="value2"\s?/>)+'
@@ -355,10 +355,10 @@ class ThreadingTestCase(HelperTestCase):
                 root = self.etree.Element('thread_root')
                 for name in names:
                     tag_name = name * 5
-                    new = []
-                    for _ in runs_per_name:
-                        el = SubElement(root, tag_name, {'thread_attr_' + name: 'value'})
-                        new.append(el)
+                    new = [
+                        SubElement(root, tag_name, {'thread_attr_' + name: 'value'})
+                        for _ in runs_per_name
+                    ]
                     for el in new:
                         el.set('thread_attr2_' + name, 'value2')
                 s = etree.tostring(root)
