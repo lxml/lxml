@@ -213,7 +213,7 @@ cdef extern from * nogil:
     nonatomic_int atomic_incr "__lxml_atomic_incr_relaxed" (atomic_int *value) noexcept
     nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value) noexcept
     nonatomic_int atomic_load "__lxml_atomic_load"         (atomic_int *value) noexcept
-    int atomic_compare_exchange "__lxml_atomic_compare_exchange"  (atomic_int *value, nonatomic_int *desired, nonatomic_int expected) noexcept
+    int atomic_compare_exchange "__lxml_atomic_compare_exchange"  (atomic_int *value, nonatomic_int *expected, nonatomic_int desired) noexcept
 
     const bint COUNT_LOCK_PERFORMANCE "LXML_LOCK_PERFORMANCE"
     void inc_perf_counter "__lxml_inc_counter" (atomic_int *counter)
