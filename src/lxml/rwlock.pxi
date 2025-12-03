@@ -245,17 +245,20 @@ cdef class RWLock:
     cdef atomic_int _readers_departing
     cdef atomic_int _readers_waiting
     cdef cython.pymutex _readers_wait_lock
+    cdef cython.pymutex _readers_wait_guard
     cdef cython.pymutex _writer_wait_lock
     cdef cython.pymutex _writer_lock
     cdef int _writer_reentry
     cdef lock_perf _perf_counters
 
     @cython.inline
+    @cython.profile(False)
     cdef unsigned long _my_lock_id(self) noexcept:
         # "+1" to make sure that "== 0" really means "no thread waiting".
         return python.PyThread_get_thread_ident() + 1
 
     @cython.inline
+    @cython.profile(False)
     cdef bint _owns_write_lock(self, unsigned long lock_id) noexcept nogil:
         return lock_id == self._write_locked_id
 
@@ -269,33 +272,39 @@ cdef class RWLock:
 
     # Read locking.
 
-    cdef void _notify_readers(self, nonatomic_int waiting_readers) noexcept:
+    cdef void _unblock_readers(self, nonatomic_int waiting_readers) noexcept:
         while atomic_load(&self._readers_waiting) == 0:
             # Wait for the first reader to acquire the lock.
             with nogil: pass
 
-        # Signal to the reader(s) that we noticed it taking the lock.
-        waiting_already = atomic_add(&self._readers_waiting, -waiting_readers)
+        # Signal to the reader that we noticed it taking the lock.
+        waiting_already = atomic_add(&self._readers_waiting, waiting_readers)
+        assert waiting_already == -1, waiting_already
 
         # Unlock the first reader.
         self._readers_wait_lock.release()
 
+    cdef void _wait_for_pending_readers_to_start(self):
+        """Wait for any pending readers to start running after a writer unblocked them."""
+        while atomic_load(&self._readers_waiting) > 0:
+            with nogil: pass
+
     cdef void _wait_to_read(self) noexcept:
-        self._readers_wait_lock.acquire()
+        # Guard against concurrent readers.
+        with self._readers_wait_guard:
+            inc_perf_counter(&self._perf_counters.read_wait_on_writer)
 
-        inc_perf_counter(&self._perf_counters.read_wait_on_writer)
+            # Wait for writer to unblock us.
+            with self._readers_wait_lock:
+                # Signal the writer that we have acquired the lock.
+                readers_waiting = atomic_decr(&self._readers_waiting)
 
-        # Signal the writer that we have acquired the lock.
-        readers_waiting = atomic_incr(&self._readers_waiting)
+                if readers_waiting == 0:
+                    # We acquired the lock first and notified the writer about it.
+                    # Wait for the writer to release the lock to us.
+                    self._readers_wait_lock.acquire()
 
-        if readers_waiting == 0:
-            # We acquired the lock and notified the writer about it.
-            # Wait for the writer to release the lock to us.
-            self._readers_wait_lock.acquire()
-
-        inc_perf_counter(&self._perf_counters.read_acquired)
-
-        self._readers_wait_lock.release()
+            inc_perf_counter(&self._perf_counters.read_acquired)
 
     cdef void lock_read(self) noexcept:
         readers_before = atomic_incr(&self._reader_count)
@@ -325,7 +334,8 @@ cdef class RWLock:
             return
 
         # A writer is waiting.
-        if atomic_decr(&self._readers_departing) == 1:
+        readers_departing = atomic_decr(&self._readers_departing)
+        if readers_departing == 1:
             # No more readers after us, notify the waiting writer.
             self._notify_writer()
 
@@ -365,6 +375,8 @@ cdef class RWLock:
 
         self._writer_lock.acquire()
 
+        self._wait_for_pending_readers_to_start()
+
         # Claim the lock and block new readers if no writers are waiting.
         readers = atomic_add(&self._reader_count, -max_lock_reader_count)
 
@@ -390,8 +402,7 @@ cdef class RWLock:
 
         readers = atomic_add(&self._reader_count, max_lock_reader_count) + max_lock_reader_count
         if readers > 0:
-            # Unblock the waiting readers.
-            self._notify_readers(readers)
+            self._unblock_readers(readers)
 
         self._writer_lock.release()
 
