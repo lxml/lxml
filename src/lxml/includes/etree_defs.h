@@ -5,8 +5,8 @@
 #include "Python.h"
 #ifndef PY_VERSION_HEX
 #  error the development package of Python (header files etc.) is not installed correctly
-#elif PY_VERSION_HEX < 0x03060000
-#  error this version of lxml requires Python 3.6 or later
+#elif PY_VERSION_HEX < 0x03090000
+#  error this version of lxml requires Python 3.9 or later
 #endif
 
 #include "libxml/xmlversion.h"

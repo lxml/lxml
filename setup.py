@@ -7,8 +7,8 @@ import os.path
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
 
-if sys.version_info[:2] < (3, 8):
-    print("This lxml version requires Python 3.8 or later.")
+if sys.version_info[:2] < (3, 9):
+    print("This lxml version requires Python 3.9 or later.")
     sys.exit(1)
 
 from setuptools import setup
@@ -53,7 +53,7 @@ with open("requirements.txt", "r") as f:
     deps = [line.strip() for line in f if ':' in line]
 
 extra_options = {
-    'python_requires': '>=3.8',  # NOTE: keep in sync with Trove classifier list below.
+    'python_requires': '>=3.9',  # NOTE: keep in sync with Trove classifier list below.
 
     'extras_require': {
         'source': deps,
@@ -233,7 +233,6 @@ build the sources, see the build instructions on the project home page.
         'Programming Language :: Cython',
         # NOTE: keep in sync with 'python_requires' list above.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
