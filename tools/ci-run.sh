@@ -26,10 +26,6 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 60
 
   export CC="gcc"
-  if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ]; then
-    # Make sure we use the same linker and C compiler.
-    export LDSHARED="$CC -shared"
-  fi
   export PATH="/usr/lib/ccache:$PATH"
   TEST_CFLAGS="-Og -g -fPIC"
   EXTRA_CFLAGS="-Wall -Wextra"
@@ -39,16 +35,6 @@ elif [ -z "${OS_NAME##macos*}" ]; then
   TEST_CFLAGS="-Og -g -fPIC -arch arm64 -arch x86_64"
   EXTRA_LDFLAGS="-arch arm64 -arch x86_64"
   EXTRA_CFLAGS="-Wall -Wextra -arch arm64 -arch x86_64"
-
-  if [[ $PYTHON_VERSION == "3."[78]* ]]; then
-    # Py3.7/8 require the same target version as originally used for CPython itself.
-    export MACOSX_DEPLOYMENT_TARGET="11.7"
-  fi
-
-  if [[ $PYTHON_VERSION == "2.7"* ]]; then
-    # make sure we find Python 2.7 before Python 3.x
-    export PATH=/Library/Frameworks/Python.framework/Versions/2.7/bin:$PATH
-  fi
 fi
 
 # Log versions in use
@@ -69,20 +55,14 @@ ccache -s || true
 
 # Install python requirements
 echo "Installing requirements [python]"
-if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ];
-  then python -m pip install -U "pip<21" "setuptools<45" "wheel<38";
-  else python -m pip install -U pip setuptools wheel;
-fi
 if [ -z "${PYTHON_VERSION##*-dev}" ];
   then CYTHON_COMPILE_MINIMAL=true  python -m pip install https://github.com/cython/cython/archive/master.zip;
   else python -m pip install -r requirements.txt;
 fi
-if [ -z "${PYTHON_VERSION##2*}" ] || [ -z "${PYTHON_VERSION##pypy-2*}" ]; then
-  python -m pip install -U beautifulsoup4==4.9.3 cssselect==1.1.0 html5lib==1.1 rnc2rng==2.6.5 ${EXTRA_DEPS} || exit 1
-else
-  python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
-  python -m pip install --no-deps lxml_html_clean || exit 1
-fi
+
+python -m pip install -U beautifulsoup4 cssselect html5lib rnc2rng ${EXTRA_DEPS} || exit 1
+python -m pip install --no-deps lxml_html_clean || exit 1
+
 if [[ "$COVERAGE" == "true" ]]; then
   python -m pip install "coverage<5" || exit 1
 fi
@@ -91,8 +71,7 @@ fi
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       CFLAGS="$CFLAGS $TEST_CFLAGS $EXTRA_CFLAGS" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
-      python -u setup.py build_ext --inplace --warnings \
-      $(if [ -n "${PYTHON_VERSION##2.*}" ] && [ -n "${PYTHON_VERSION##pypy-2.*}" ]; then echo -n " -j7 "; fi ) \
+      python -u setup.py build_ext --inplace --warnings -j7 \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
 
