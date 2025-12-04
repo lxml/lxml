@@ -2033,21 +2033,27 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
     result.dict = c_doc.dict
     return result
 
+
 cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     "Recursively copy the document and make c_new_root the new root node."
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
+
     assert result.dict is NULL
     tree.xmlDictReference(c_doc.dict)
     result.dict = c_doc.dict
+
     with nogil:
         c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
     if c_node is NULL:
+        tree.xmlFreeDoc(result)
         raise MemoryError()
+
     tree.xmlDocSetRootElement(result, c_node)
     _copyTail(c_new_root.next, c_node)
     return result
+
 
 cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc) except NULL:
     "Recursively copy the element into the document. c_doc is not modified."
