@@ -6,11 +6,13 @@ on:
       - '**'
       - '!.github/**'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/cache_libs.yml'
   pull_request:
     paths:
       - '**'
       - '!.github/**'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/cache_libs.yml'
   workflow_dispatch:
 
 concurrency:
@@ -20,45 +22,31 @@ concurrency:
 permissions:
   contents: read  # to fetch code (actions/checkout)
 
-env:
-  LXML_CSTD: c11
-  ZLIB_VERSION: "1.3.1"
-  LIBICONV_VERSION: "1.18"
-  LIBXML2_VERSION: "2.14.6"
-  LIBXSLT_VERSION: "1.1.43"
 
 jobs:
   cache_libs:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - "ubuntu-22.04"
-          - "ubuntu-22.04-arm"
-          - "macos-latest"
-          - "windows-2022"
-          - "windows-11-arm"
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-
-    - name: Cache [libs]
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
-      with:
-        path: |
-          libs/*.xz
-          libs/*.gz
-          libs/*.zip
-        key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
-
-    - name: Download latest libraries
-      env:
-        GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python3 buildlibxml.py --download-only
+    uses: ./.github/workflows/cache_libs.yml
+    secrets: inherit
 
   ci:
+    needs: [ cache_libs ]
+
+    env:
+      OS_NAME: ${{ matrix.os }}
+      PYTHON_VERSION: ${{ matrix.python-version }}
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+      COVERAGE: false
+      GCC_VERSION: 9
+      USE_CCACHE: 1
+      CCACHE_SLOPPINESS: "pch_defines,time_macros"
+      CCACHE_COMPRESS: 1
+      CCACHE_MAXSIZE: "100M"
+      LXML_CSTD: c11
+      ZLIB_VERSION: ${{ needs.cache_libs.outputs.ZLIB_VERSION }}
+      LIBICONV_VERSION: ${{ needs.cache_libs.outputs.LIBICONV_VERSION }}
+      LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}
+      LIBXSLT_VERSION: ${{ needs.cache_libs.outputs.LIBXSLT_VERSION }}
+
     strategy:
       # Allows for matrix sub-jobs to fail without canceling the rest
       fail-fast: false
@@ -76,7 +64,12 @@ jobs:
       matrix:
         # Tests [amd64]
         #
-        os: [ubuntu-22.04, ubuntu-22.04-arm, macos-latest, windows-2022, windows-11-arm]
+        os:
+          - "ubuntu-22.04"
+          - "ubuntu-22.04-arm"
+          - "macos-latest"
+          - "windows-2022"
+          - "windows-11-arm"
         python-version:
           - "3.9"
           - "3.10"  # quotes to avoid being interpreted as the number 3.1
@@ -88,7 +81,9 @@ jobs:
           - "3.14t"
           - "3.15-dev"
           - "3.15t-dev"
-        env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
+        env:
+          - { STATIC_DEPS: true }
+          - { STATIC_DEPS: false }
 
         include:
           #- os: ubuntu-22.04
@@ -230,21 +225,10 @@ jobs:
 
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
     # From testing, the runs tend to take 8-20 minutes, so a limit of 45 minutes should be enough.
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     needs: [ cache_libs ]
     runs-on: ${{ matrix.os }}
-
-    env:
-      OS_NAME: ${{ matrix.os }}
-      PYTHON_VERSION: ${{ matrix.python-version }}
-      MACOSX_DEPLOYMENT_TARGET: "11.0"
-      COVERAGE: false
-      GCC_VERSION: 9
-      USE_CCACHE: 1
-      CCACHE_SLOPPINESS: "pch_defines,time_macros"
-      CCACHE_COMPRESS: 1
-      CCACHE_MAXSIZE: "100M"
 
     steps:
       - name: Checkout repo
@@ -305,48 +289,3 @@ jobs:
           name: pycoverage_html
           path: coverage*
           if-no-files-found: ignore
-
-  benchmarks:
-    runs-on: ubuntu-latest
-
-    # The benchmarks are currently inconclusive and take a very long time to run.
-    #if: false
-
-    env:
-      CFLAGS: -march=core2 -O3 -flto -fPIC -g -Wall -Wextra
-      CCACHE_SLOPPINESS: "pch_defines,time_macros"
-      CCACHE_COMPRESS: 1
-      CCACHE_COMPRESSLEVEL: 5
-      STATIC_DEPS: true
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-        with:
-          max-size: 150M
-          create-symlink: true
-          key: ${{ runner.os }}-benchmarks-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
-
-      - name: Setup Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
-        with:
-          python-version: |
-            3.15t-dev
-            3.15-dev
-            3.12
-
-      - name: Run Benchmarks
-        run: |
-          # Run benchmarks in all Python versions.
-          for PYTHON in  python3.15  python3.15t  python3.12  ; do
-              ${PYTHON} -m pip install setuptools "Cython>=3.2.2"
-              # Compare against arbitrary 6.0-pre baseline revision (compatible with Cython 3.1) and current master.
-              ${PYTHON} benchmark/run_benchmarks.py  0eb4f0029497957e58a9f15280b3529bdb18d117  origin/master  HEAD
-          done
