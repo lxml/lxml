@@ -23,8 +23,6 @@ Other changes
 * Support for Python 3.8 was removed.  Python 3.9 will continue to be supported for
   several years due to its usage in LTS Linux distributions.
 
-* Binary wheels use the library versions libxml2 2.14.6 and libxslt 1.1.45.
-
 * Some internal adaptations were made for libxml2 2.14.x and 2.15.x.
 
 * The ``xmlDict...`` C functions of libxml2 are now declared in ``tree.pxd``.
