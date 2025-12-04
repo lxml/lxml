@@ -1,5 +1,12 @@
 # XSLT extension elements
 
+cdef bint is_blank_text(unicode s):
+    for ch in s:
+        if not ch.isspace():
+            return False
+    return True
+
+
 cdef class XSLTExtension:
     """Base class of an XSLT extension element.
     """
@@ -129,13 +136,14 @@ cdef class XSLTExtension:
         cdef xmlNode* c_next
         cdef _ReadOnlyProxy proxy
         cdef list results = [] # or maybe _collectAttributes(c_parent, 2) ?
+
         c_node = c_parent.children
         while c_node is not NULL:
             c_next = c_node.next
             if c_node.type == tree.XML_TEXT_NODE:
                 if not elements_only:
                     s = funicode(c_node.content)
-                    if not remove_blank_text or s.strip():
+                    if not (remove_blank_text and is_blank_text(s)):
                         results.append(s)
                     s = None
             elif c_node.type == tree.XML_ELEMENT_NODE:
@@ -159,16 +167,17 @@ cdef _registerXSLTExtensions(xslt.xsltTransformContext* c_ctxt,
             c_ctxt, _xcstr(name_utf), _xcstr(ns_utf),
             <xslt.xsltTransformFunction>_callExtensionElement)
 
+
 cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
                                 xmlNode* c_context_node,
                                 xmlNode* c_inst_node,
                                 void* dummy) noexcept with gil:
     cdef _XSLTContext context
     cdef XSLTExtension extension
-    cdef python.PyObject* dict_result
     cdef xmlNode* c_node
     cdef _ReadOnlyProxy context_node = None, self_node = None
     cdef object output_parent # not restricted to ro-nodes
+
     c_uri = _getNs(c_inst_node)
     if c_uri is NULL:
         # not allowed, and should never happen
@@ -176,14 +185,13 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
     if c_ctxt.xpathCtxt.userData is NULL:
         # just for safety, should never happen
         return
+
     context = <_XSLTContext>c_ctxt.xpathCtxt.userData
     try:
         try:
-            dict_result = python.PyDict_GetItem(
-                context._extension_elements, (c_uri, c_inst_node.name))
-            if dict_result is NULL:
+            extension = context._extension_elements.get((c_uri, c_inst_node.name))
+            if extension is None:
                 raise KeyError, f"extension element {funicode(c_inst_node.name)} not found"
-            extension = <object>dict_result
 
             try:
                 # build the context proxy nodes

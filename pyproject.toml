@@ -3,8 +3,8 @@ requires = ["Cython>=3.2.2", "setuptools"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.1", LIBICONV_VERSION = "1.18", LIBXML2_VERSION = "2.14.6", LIBXSLT_VERSION = "1.1.43"}
-enable = ["pypy", "cpython-prerelease"]
+environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.1", LIBICONV_VERSION = "1.18", LIBXML2_VERSION = "2.14.6", LIBXSLT_VERSION = "1.1.43", LXML_CSTD = "c11"}
+enable = ["pypy", "cpython-prerelease", "cpython-freethreading"]
        # "pypy"
        # "cpython-prerelease"
        # "cpython-freethreading"
@@ -12,6 +12,9 @@ skip = [
     "cp36-*",
     "pp36-",
     "cp37-*",
+    # FT-Python 3.13t is probably not worth supporting (at least right now).
+    "cp313t-*",
+    # Exclude old PyPy versions.
     "pp37-*",
     "cp38-*",
     "pp38-*",
@@ -38,7 +41,6 @@ environment.AR = "gcc-ar"
 environment.NM = "gcc-nm"
 environment.RANLIB = "gcc-ranlib"
 environment.LDFLAGS = "-fPIC -flto"
-environment.STATIC_DEPS = "true"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"

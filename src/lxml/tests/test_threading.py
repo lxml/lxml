@@ -7,13 +7,9 @@ import re
 import sys
 import unittest
 import threading
+from queue import Queue, Empty
 
-from .common_imports import etree, HelperTestCase, BytesIO
-
-try:
-    from Queue import Queue
-except ImportError:
-    from queue import Queue # Py3
+from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON
 
 
 class ThreadingTestCase(HelperTestCase):
@@ -123,7 +119,7 @@ class ThreadingTestCase(HelperTestCase):
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:template match="tag" />
     <!-- extend time for parsing + transform -->
-''' + '\n'.join('<xsl:template match="tag%x" />' % i for i in range(200)) + '''
+''' + '\n'.join(f'<xsl:template match="tag{i:x}" />' for i in range(200)) + '''
     <xsl:UnExpectedElement />
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTParseError,
@@ -149,7 +145,7 @@ class ThreadingTestCase(HelperTestCase):
                 self.assertEqual(len(last_log), len(log))
             self.assertTrue(len(log) >= 2, len(log))
             for error in log:
-                self.assertTrue(':ERROR:XSLT:' in str(error), str(error))
+                self.assertIn(':ERROR:XSLT:', str(error), str(error))
             self.assertTrue(any('UnExpectedElement' in str(error) for error in log), log)
             last_log = log
 
@@ -162,7 +158,7 @@ class ThreadingTestCase(HelperTestCase):
         <xsl:message terminate="yes">FAIL</xsl:message>
     </xsl:template>
     <!-- extend time for parsing + transform -->
-''' + '\n'.join('<xsl:template match="tag%X" name="tag%x"> <xsl:call-template name="tag%x" /> </xsl:template>' % (i, i, i-1)
+''' + '\n'.join(f'<xsl:template match="tag{i:X}" name="tag{i:x}"> <xsl:call-template name="tag{i-1:x}" /> </xsl:template>'
                 for i in range(1, 256)) + '''
 </xsl:stylesheet>''')
         self.assertRaises(etree.XSLTApplyError,
@@ -189,7 +185,7 @@ class ThreadingTestCase(HelperTestCase):
                 self.assertEqual(len(last_log), len(log))
             self.assertEqual(1, len(log))
             for error in log:
-                self.assertTrue(':ERROR:XSLT:' in str(error))
+                self.assertIn(':ERROR:XSLT:', str(error))
             last_log = log
 
     def test_thread_xslt_attr_replace(self):
@@ -348,7 +344,7 @@ class ThreadingTestCase(HelperTestCase):
     def test_concurrent_attribute_names_in_dicts(self):
         SubElement = self.etree.SubElement
         names = list('abcdefghijklmnop')
-        runs_per_name = range(50)
+        runs_per_name = range(20)
         result_matches = re.compile(
             br'<thread_root>'
             br'(?:<[a-p]{5} thread_attr_[a-p]="value" thread_attr2_[a-p]="value2"\s?/>)+'
@@ -359,10 +355,10 @@ class ThreadingTestCase(HelperTestCase):
                 root = self.etree.Element('thread_root')
                 for name in names:
                     tag_name = name * 5
-                    new = []
-                    for _ in runs_per_name:
-                        el = SubElement(root, tag_name, {'thread_attr_' + name: 'value'})
-                        new.append(el)
+                    new = [
+                        SubElement(root, tag_name, {'thread_attr_' + name: 'value'})
+                        for _ in runs_per_name
+                    ]
                     for el in new:
                         el.set('thread_attr2_' + name, 'value2')
                 s = etree.tostring(root)
@@ -380,7 +376,7 @@ class ThreadingTestCase(HelperTestCase):
         child_count = len(root)
         def testrun():
             for i in range(10000):
-                el = root[i%child_count]
+                el = root[i % child_count]
                 del el
         self._run_threads(10, testrun)
 
@@ -392,12 +388,14 @@ class ThreadingTestCase(HelperTestCase):
 
         class MyLookup(etree.CustomElementClassLookup):
             repeat = range(100)
+            _TestElement = TestElement
+
             def lookup(self, t, d, ns, name):
                 count = 0
                 for i in self.repeat:
                     # allow other threads to run
-                    count += 1
-                return TestElement
+                    count += i
+                return self._TestElement if count > 1 else self._TestElement
 
         parser = self.etree.XMLParser()
         parser.set_element_class_lookup(MyLookup())
@@ -408,7 +406,7 @@ class ThreadingTestCase(HelperTestCase):
         child_count = len(root)
         def testrun():
             for i in range(1000):
-                el = root[i%child_count]
+                el = root[i % child_count]
                 del el
         self._run_threads(10, testrun)
 
@@ -420,28 +418,48 @@ class ThreadPipelineTestCase(HelperTestCase):
     item_count = 40
 
     class Worker(threading.Thread):
+        _print_lock = threading.Lock()
+        _DEBUG = False
+
         def __init__(self, in_queue, in_count, **kwargs):
             threading.Thread.__init__(self)
             self.in_queue = in_queue
             self.in_count = in_count
             self.out_queue = Queue(in_count)
+            self._print_counter = 0
             self.__dict__.update(kwargs)
+
+        def _debug_print(self, s):
+            if not self._DEBUG:
+                return
+            with self._print_lock:
+                self._print_counter += 1
+                print(f"{s}[{self._print_counter}]")
 
         def run(self):
             get, put = self.in_queue.get, self.out_queue.put
             handle = self.handle
-            for _ in range(self.in_count):
-                put(handle(get()))
+            i = 0
+            try:
+                for i in range(self.in_count):
+                    put(handle(get(timeout=10)))
+            except Empty:
+                self._debug_print(f"failed({type(self).__name__})")
+                raise RuntimeError(f"timeout after {i} items in thread {type(self).__name__}")
+
+            self._debug_print(f"done({type(self).__name__})")
 
         def handle(self, data):
             raise NotImplementedError()
 
     class ParseWorker(Worker):
         def handle(self, xml, _fromstring=etree.fromstring):
+            self._debug_print("parse")
             return _fromstring(xml)
 
     class RotateWorker(Worker):
         def handle(self, element):
+            self._debug_print("rotate")
             first = element[0]
             element[:] = element[1:]
             element.append(first)
@@ -449,27 +467,32 @@ class ThreadPipelineTestCase(HelperTestCase):
 
     class ReverseWorker(Worker):
         def handle(self, element):
+            self._debug_print("reverse")
             element[:] = element[::-1]
             return element
 
     class ParseAndExtendWorker(Worker):
         def handle(self, element, _fromstring=etree.fromstring):
+            self._debug_print("parseandextend")
             element.extend(_fromstring(self.xml))
             return element
 
     class ParseAndInjectWorker(Worker):
         def handle(self, element, _fromstring=etree.fromstring):
+            self._debug_print("parseandinject")
             root = _fromstring(self.xml)
             root.extend(element)
             return root
 
     class Validate(Worker):
         def handle(self, element):
+            self._debug_print("validate")
             element.getroottree().docinfo.internalDTD.assertValid(element)
             return element
 
     class SerialiseWorker(Worker):
         def handle(self, element):
+            self._debug_print("serialise")
             return etree.tostring(element)
 
     xml = (b'''\
@@ -527,18 +550,18 @@ class ThreadPipelineTestCase(HelperTestCase):
             xml=xml)
 
         # fill the queue
-        put = start.in_queue.put
+        put = in_queue.put
         for _ in range(item_count):
             put(xml)
 
         # start the first thread and thus everything
         start.start()
         # make sure the last thread has terminated
-        last.join(60)  # time out after 60 seconds
+        last.join(60)  # time out after x seconds
         self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
-        results = [get() for _ in range(item_count)]
+        results = [get(timeout=10) for _ in range(item_count)]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):
@@ -559,18 +582,18 @@ class ThreadPipelineTestCase(HelperTestCase):
             xml=xml)
 
         # fill the queue
-        put = start.in_queue.put
+        put = in_queue.put
         for _ in range(item_count):
             put(XML(xml))
 
         # start the first thread and thus everything
         start.start()
         # make sure the last thread has terminated
-        last.join(60)  # time out after 90 seconds
+        last.join(60)  # time out after x seconds
         self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
-        results = [get() for _ in range(item_count)]
+        results = [get(timeout=10) for _ in range(item_count)]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):

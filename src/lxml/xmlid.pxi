@@ -55,6 +55,7 @@ def parseid(source, parser=None, *, base_url=None):
     doc = _parseDocument(source, parser, base_url)
     return _elementTreeFactory(doc, None), _IDDict(doc)
 
+
 cdef class _IDDict:
     """IDDict(self, etree)
     A dictionary-like proxy class that mapps ID attributes to elements.
@@ -162,6 +163,7 @@ cdef class _IDDict:
                          <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
         return items
 
+
 cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name) noexcept:
     # collect elements from ID attribute hash table
     cdef list lst
@@ -171,6 +173,7 @@ cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name) no
     lst, doc = <tuple>context
     element = _elementFactory(doc, c_id.attr.parent)
     lst.append( (funicode(name), element) )
+
 
 cdef void _collectIdHashKeys(void* payload, void* collect_list, xmlChar* name) noexcept:
     c_id = <tree.xmlID*>payload

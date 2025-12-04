@@ -117,6 +117,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
+      LXML_CSTD: "c11"
       ZLIB_VERSION: ${{ needs.cache_libs.outputs.ZLIB_VERSION }}
       LIBICONV_VERSION: ${{ needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}

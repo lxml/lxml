@@ -1206,17 +1206,16 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 
     ``c_node`` may be NULL to indicate the end of the children list.
     """
+    # 'parent._doc' is assumed to be locked or otherwise safe to modify.
+    # The documents of the inserted elements will be locked on use.
     cdef xmlNode* c_orig_neighbour
     cdef xmlNode* c_next
     cdef xmlDoc*  c_source_doc
     cdef _Element element
+    cdef _Document doc
     cdef Py_ssize_t seqlength, i, c
     cdef _node_to_node_function next_element
     assert step > 0, step
-    if left_to_right:
-        next_element = _nextElement
-    else:
-        next_element = _previousElement
 
     if not isinstance(elements, (list, tuple)):
         elements = list(elements)
@@ -1230,22 +1229,35 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 
     if c_node is NULL:
         # no children yet => add all elements straight away
-        if left_to_right:
+        add_child = _appendChild if left_to_right else _prependChild
+        doc = None
+        try:
             for element in elements:
-                assert element is not None, "Node must not be None"
-                _appendChild(parent, element)
-        else:
-            for element in elements:
-                assert element is not None, "Node must not be None"
-                _prependChild(parent, element)
+                if element is None:
+                    raise ValueError("Element must not be None")
+                _assertValidNode(element)
+
+                if doc is not element._doc and doc is not parent._doc:
+                    if doc is not None:
+                        doc.unlock_write()
+                    doc = element._doc
+                    doc.lock_write()
+
+                add_child(parent, element)
+
+        finally:
+            if doc is not None:
+                doc.unlock_write()
         return 0
 
     # remove the elements first as some might be re-added
     if left_to_right:
         # L->R, remember left neighbour
+        next_element = _nextElement
         c_orig_neighbour = _previousElement(c_node)
     else:
         # R->L, remember right neighbour
+        next_element = _previousElement
         c_orig_neighbour = _nextElement(c_node)
 
     # We remove the original slice elements one by one. Since we hold
@@ -1276,17 +1288,31 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     elif c_orig_neighbour is NULL:
         # at the end, but reversed stepping
         # append one element and go to the next insertion point
-        for element in elements:
-            assert element is not None, "Node must not be None"
-            _appendChild(parent, element)
-            c_node = element._c_node
-            if slicelength > 0:
-                slicelength -= 1
-                for i in range(1, step):
-                    c_node = next_element(c_node)
-                    if c_node is NULL:
-                        break
-            break
+        doc = None
+        try:
+            for element in elements:
+                if element is None:
+                    raise ValueError("Element must not be None")
+                _assertValidNode(element)
+
+                if doc is not element._doc and doc is not parent._doc:
+                    if doc is not None:
+                        doc.unlock_write()
+                    doc = element._doc
+                    doc.lock_write()
+
+                _appendChild(parent, element)
+                c_node = element._c_node
+                if slicelength > 0:
+                    slicelength -= 1
+                    for i in range(1, step):
+                        c_node = next_element(c_node)
+                        if c_node is NULL:
+                            break
+                break
+        finally:
+            if doc is not None:
+                doc.unlock_write()
     else:
         c_node = c_orig_neighbour
 
@@ -1297,42 +1323,64 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 
     # now insert elements where we removed them
     if c_node is not NULL:
-        for element in elements:
-            assert element is not None, "Node must not be None"
-            _assertValidNode(element)
-            # move element and tail over
-            c_source_doc = element._c_node.doc
-            c_next = element._c_node.next
-            tree.xmlAddPrevSibling(c_node, element._c_node)
-            _moveTail(c_next, element._c_node)
+        doc = None
+        try:
+            for element in elements:
+                if element is None:
+                    raise ValueError("Element must not be None")
+                _assertValidNode(element)
 
-            # integrate element into new document
-            moveNodeToDocument(parent._doc, c_source_doc, element._c_node)
+                if doc is not element._doc and doc is not parent._doc:
+                    if doc is not None:
+                        doc.unlock_write()
+                    doc = element._doc
+                    doc.lock_write()
 
-            # stop at the end of the slice
-            if slicelength > 0:
-                slicelength -= 1
-                for i in range(step):
-                    c_node = next_element(c_node)
+                # move element and tail over
+                c_source_doc = element._c_node.doc
+                c_next = element._c_node.next
+                tree.xmlAddPrevSibling(c_node, element._c_node)
+                _moveTail(c_next, element._c_node)
+
+                # integrate element into new document
+                moveNodeToDocument(parent._doc, c_source_doc, element._c_node)
+
+                # stop at the end of the slice
+                if slicelength > 0:
+                    slicelength -= 1
+                    for i in range(step):
+                        c_node = next_element(c_node)
+                        if c_node is NULL:
+                            break
                     if c_node is NULL:
                         break
-                if c_node is NULL:
-                    break
-        else:
-            # everything inserted
-            return 0
+            else:
+                # everything inserted
+                return 0
+        finally:
+            if doc is not None:
+                doc.unlock_write()
 
     # append the remaining elements at the respective end
-    if left_to_right:
+    add_child = _appendChild if left_to_right else _prependChild
+    doc = None
+    try:
         for element in elements:
-            assert element is not None, "Node must not be None"
+            if element is None:
+                raise ValueError("Element must not be None")
             _assertValidNode(element)
-            _appendChild(parent, element)
-    else:
-        for element in elements:
-            assert element is not None, "Node must not be None"
-            _assertValidNode(element)
-            _prependChild(parent, element)
+
+            if doc is not element._doc and doc is not parent._doc:
+                if doc is not None:
+                    doc.unlock_write()
+                doc = element._doc
+                doc.lock_write()
+
+            add_child(parent, element)
+
+    finally:
+        if doc is not None:
+            doc.unlock_write()
 
     return 0
 

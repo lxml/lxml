@@ -48,6 +48,9 @@ cdef class XInclude:
         self._error_log.connect()
         if tree.LIBXML_VERSION < 20704 or not c_context:
             __GLOBAL_PARSER_CONTEXT.pushImpliedContext(context)
+
+        doc = node._doc
+        doc.lock_write()
         with nogil:
             orig_loader = _register_document_loader()
             if c_context:
@@ -56,6 +59,8 @@ cdef class XInclude:
             else:
                 result = xinclude.xmlXIncludeProcessTree(node._c_node)
             _reset_document_loader(orig_loader)
+        doc.unlock_write()
+
         if tree.LIBXML_VERSION < 20704 or not c_context:
             __GLOBAL_PARSER_CONTEXT.popImpliedContext()
         self._error_log.disconnect()

@@ -1,5 +1,6 @@
 import collections
 import io
+import itertools
 import logging
 import os
 import pathlib
@@ -195,7 +196,7 @@ def benchmark_revisions(benchmarks, revisions, profiler=None, limited_revisions=
 
 
 def cache_libs(lxml_dir, deps_zipfile):
-    for dir_path, _, filenames in (lxml_dir / "build" / "tmp").walk():
+    for dir_path, _, filenames in itertools.chain((lxml_dir / "build" / "tmp").walk(), (lxml_dir / "libs").walk()):
         for filename in filenames:
             path = dir_path / filename
             deps_zipfile.write(path, path.relative_to(lxml_dir))

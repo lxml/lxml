@@ -290,7 +290,13 @@ cdef class iterwalk:
                         elif self._event_filter & PARSE_EVENT_FILTER_PI and elem.tag is PI:
                             self._events.append(('pi', elem))
 
-            ns_count = self._start_node(root)
+            doc = root._doc
+            doc.lock_read()
+            try:
+                ns_count = self._start_node(root)
+            finally:
+                doc.unlock_read()
+
             self._node_stack.append( (root, ns_count) )
         else:
             self._index = -1
@@ -300,52 +306,68 @@ cdef class iterwalk:
 
     def __next__(self):
         cdef xmlNode* c_child
+        cdef _Document doc
         cdef _Element node
         cdef _Element next_node
         cdef int ns_count = 0
         if self._events:
             return self._next_event()
-        if self._matcher is not None and self._index >= 0:
-            node = self._node_stack[self._index][0]
-            self._matcher.cacheTags(node._doc)
 
-        # find next node
-        while self._index >= 0:
-            node = self._node_stack[self._index][0]
+        doc = None
+        try:
+            if self._matcher is not None and self._index >= 0:
+                node = self._node_stack[self._index][0]
+                doc = node._doc
+                doc.lock_read()
+                self._matcher.cacheTags(doc)
 
-            if self._skip_state == IWSKIP_SKIP_NEXT:
-                c_child = NULL
-            else:
-                c_child = self._process_non_elements(
-                    node._doc, _findChildForwards(node._c_node, 0))
-            self._skip_state = IWSKIP_CANNOT_SKIP
+            # find next node
+            while self._index >= 0:
+                node = self._node_stack[self._index][0]
+                if doc is not node._doc:
+                    # Normally, we should traverse only one doc. But if users move elements to other documents
+                    # while we're still traversing them, we should handle a document switch as well.
+                    if doc is not None:
+                        doc.unlock_read()
+                    doc = node._doc
+                    doc.lock_read()
 
-            while c_child is NULL:
-                # back off through parents
-                self._index -= 1
-                node = self._end_node()
-                if self._index < 0:
-                    break
-                c_child = self._process_non_elements(
-                    node._doc, _nextElement(node._c_node))
+                if self._skip_state == IWSKIP_SKIP_NEXT:
+                    c_child = NULL
+                else:
+                    c_child = self._process_non_elements(
+                        node._doc, _findChildForwards(node._c_node, 0))
+                self._skip_state = IWSKIP_CANNOT_SKIP
 
-            if c_child is not NULL:
-                next_node = _elementFactory(node._doc, c_child)
-                if self._event_filter & (PARSE_EVENT_FILTER_START |
-                                         PARSE_EVENT_FILTER_START_NS):
-                    ns_count = self._start_node(next_node)
-                elif self._event_filter & PARSE_EVENT_FILTER_END_NS:
-                    ns_count = _countNsDefs(next_node._c_node)
-                self._node_stack.append( (next_node, ns_count) )
-                self._index += 1
-            if self._events:
-                return self._next_event()
+                while c_child is NULL:
+                    # back off through parents
+                    self._index -= 1
+                    node = self._end_node()
+                    if self._index < 0:
+                        break
+                    c_child = self._process_non_elements(
+                        node._doc, _nextElement(node._c_node))
 
-        if self._include_siblings is not None:
-            node, self._include_siblings = self._include_siblings, None
-            self._process_non_elements(node._doc, _nextElement(node._c_node))
-            if self._events:
-                return self._next_event()
+                if c_child is not NULL:
+                    next_node = _elementFactory(node._doc, c_child)
+                    if self._event_filter & (PARSE_EVENT_FILTER_START |
+                                            PARSE_EVENT_FILTER_START_NS):
+                        ns_count = self._start_node(next_node)
+                    elif self._event_filter & PARSE_EVENT_FILTER_END_NS:
+                        ns_count = _countNsDefs(next_node._c_node)
+                    self._node_stack.append( (next_node, ns_count) )
+                    self._index += 1
+                if self._events:
+                    return self._next_event()
+
+            if self._include_siblings is not None:
+                node, self._include_siblings = self._include_siblings, None
+                self._process_non_elements(node._doc, _nextElement(node._c_node))
+                if self._events:
+                    return self._next_event()
+        finally:
+            if doc is not None:
+                doc.unlock_read()
 
         raise StopIteration
 

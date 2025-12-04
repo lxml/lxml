@@ -41,6 +41,7 @@ jobs:
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
       CCACHE_MAXSIZE: "100M"
+      LXML_CSTD: c11
       ZLIB_VERSION: ${{ needs.cache_libs.outputs.ZLIB_VERSION }}
       LIBICONV_VERSION: ${{ needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}
@@ -75,8 +76,11 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+          - "3.13t"
           - "3.14"
+          - "3.14t"
           - "3.15-dev"
+          - "3.15t-dev"
         env:
           - { STATIC_DEPS: true }
           - { STATIC_DEPS: false }
@@ -222,6 +226,7 @@ jobs:
     # This defaults to 360 minutes (6h) which is way too long and if a test gets stuck, it can block other pipelines.
     # From testing, the runs tend to take 8-20 minutes, so a limit of 45 minutes should be enough.
     timeout-minutes: 45
+
     runs-on: ${{ matrix.os }}
 
     steps:

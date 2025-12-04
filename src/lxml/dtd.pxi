@@ -372,19 +372,21 @@ cdef class DTD(_Validator):
 
         valid_ctxt = dtdvalid.xmlNewValidCtxt()
         if valid_ctxt is NULL:
-            raise DTDError("Failed to create validation context")
+            raise MemoryError()
 
         # work around error reporting bug in libxml2 <= 2.9.1 (and later?)
         # https://bugzilla.gnome.org/show_bug.cgi?id=724903
         valid_ctxt.error = <dtdvalid.xmlValidityErrorFunc>_nullGenericErrorFunc
         valid_ctxt.userData = NULL
 
+        doc.lock_fakedoc()
         try:
             with self._error_log:
                 c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
                 ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
                 _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
+            doc.unlock_fakedoc()
             dtdvalid.xmlFreeValidCtxt(valid_ctxt)
 
         if ret == -1:

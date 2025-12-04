@@ -51,7 +51,7 @@ cdef public api object callLookupFallback(FallbackElementClassLookup lookup,
                                           _Document doc, xmlNode* c_node):
     return _callLookupFallback(lookup, doc, c_node)
 
-cdef public api int tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
+cdef public api int tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name) noexcept:
     if c_node is NULL:
         return -1
     return _tagMatches(c_node, c_href, c_name)
@@ -62,10 +62,10 @@ cdef public api _Document documentOrRaise(object input):
 cdef public api _Element rootNodeOrRaise(object input):
     return _rootNodeOrRaise(input)
 
-cdef public api bint hasText(xmlNode* c_node):
+cdef public api bint hasText(xmlNode* c_node) noexcept:
     return _hasText(c_node)
 
-cdef public api bint hasTail(xmlNode* c_node):
+cdef public api bint hasTail(xmlNode* c_node) noexcept:
     return _hasTail(c_node)
 
 cdef public api unicode textOf(xmlNode* c_node):
@@ -118,22 +118,22 @@ cdef public api int delAttributeFromNsName(tree.xmlNode* c_element,
                                            const_xmlChar* c_href, const_xmlChar* c_name):
     return _delAttributeFromNsName(c_element, c_href, c_name)
 
-cdef public api bint hasChild(xmlNode* c_node):
+cdef public api bint hasChild(xmlNode* c_node) noexcept:
     return _hasChild(c_node)
 
-cdef public api xmlNode* findChild(xmlNode* c_node, Py_ssize_t index):
+cdef public api xmlNode* findChild(xmlNode* c_node, Py_ssize_t index) noexcept:
     return _findChild(c_node, index)
 
-cdef public api xmlNode* findChildForwards(xmlNode* c_node, Py_ssize_t index):
+cdef public api xmlNode* findChildForwards(xmlNode* c_node, Py_ssize_t index) noexcept:
     return _findChildForwards(c_node, index)
 
-cdef public api xmlNode* findChildBackwards(xmlNode* c_node, Py_ssize_t index):
+cdef public api xmlNode* findChildBackwards(xmlNode* c_node, Py_ssize_t index) noexcept:
     return _findChildBackwards(c_node, index)
 
-cdef public api xmlNode* nextElement(xmlNode* c_node):
+cdef public api xmlNode* nextElement(xmlNode* c_node) noexcept:
     return _nextElement(c_node)
 
-cdef public api xmlNode* previousElement(xmlNode* c_node):
+cdef public api xmlNode* previousElement(xmlNode* c_node) noexcept:
     return _previousElement(c_node)
 
 cdef public api void appendChild(_Element parent, _Element child):
@@ -176,3 +176,24 @@ cdef public api tree.xmlNs* findOrBuildNodeNsPrefix(
     if doc is None:
         raise TypeError
     return doc._findOrBuildNodeNs(c_node, href, prefix, 0)
+
+
+# Document locking
+
+cdef public api void lock_read(_Document doc) noexcept:
+    doc.lock_read()
+
+cdef public api void unlock_read(_Document doc) noexcept:
+    doc.unlock_read()
+
+cdef public api void lock_write(_Document doc) noexcept:
+    doc.lock_write()
+
+cdef public api void unlock_write(_Document doc) noexcept:
+    doc.unlock_write()
+
+cdef public api void lock_write2(_Document doc1, _Document doc2) noexcept:
+    doc1.lock_write_with(doc2)
+
+cdef public api void unlock_write2(_Document doc1, _Document doc2) noexcept:
+    doc1.unlock_write_with(doc2)

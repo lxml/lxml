@@ -99,7 +99,12 @@ cdef _tostring(_Element element, encoding, doctype, method,
     _assertValidNode(element)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        return _textToString(element._c_node, encoding, with_tail)
+        doc = element._doc
+        doc.lock_read()
+        try:
+            return _textToString(element._c_node, encoding, with_tail)
+        finally:
+            doc.unlock_read()
     if encoding is None or encoding is unicode:
         c_enc = NULL
     else:
@@ -122,15 +127,18 @@ cdef _tostring(_Element element, encoding, doctype, method,
         tree.xmlCharEncCloseFunc(enchandler)
         raise MemoryError()
 
+    doc = element._doc
+    doc.lock_read()
     with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_doctype, c_method,
-                           write_xml_declaration, write_complete_document,
-                           pretty_print, with_tail, standalone)
+                        write_xml_declaration, write_complete_document,
+                        pretty_print, with_tail, standalone)
         tree.xmlOutputBufferFlush(c_buffer)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
         else:
             c_result_buffer = c_buffer.buffer
+    doc.unlock_read()
 
     error_result = c_buffer.error
     if error_result != xmlerror.XML_ERR_OK:
@@ -150,6 +158,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
         _raiseSerialisationError(error_result)
     return result
 
+
 cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, inclusive_ns_prefixes):
     cdef xmlDoc* c_doc
     cdef xmlChar* c_buffer = NULL
@@ -157,27 +166,40 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
     cdef bytes result
     cdef _Document doc
     cdef _Element element
-    cdef xmlChar **c_inclusive_ns_prefixes
+    cdef xmlChar **c_inclusive_ns_prefixes = NULL
 
     if isinstance(element_or_tree, _Element):
-        _assertValidNode(<_Element>element_or_tree)
-        doc = (<_Element>element_or_tree)._doc
-        c_doc = _plainFakeRootDoc(doc._c_doc, (<_Element>element_or_tree)._c_node, 0)
+        element = <_Element> element_or_tree
+        _assertValidNode(element)
+        doc = element._doc
+        doc.lock_fakedoc()
+        try:
+            c_doc = _plainFakeRootDoc(doc._c_doc, element._c_node, 0)
+        except:
+            doc.unlock_fakedoc()
+            raise
     else:
         doc = _documentOrRaise(element_or_tree)
         _assertValidDoc(doc)
+        element = None
+        doc.lock_read()
         c_doc = doc._c_doc
 
-    c_inclusive_ns_prefixes = _convert_ns_prefixes(c_doc.dict, inclusive_ns_prefixes) if inclusive_ns_prefixes else NULL
     try:
-         with nogil:
-             byte_count = c14n.xmlC14NDocDumpMemory(
-                 c_doc, NULL, exclusive, c_inclusive_ns_prefixes, with_comments, &c_buffer)
+        c_inclusive_ns_prefixes = _convert_ns_prefixes(c_doc.dict, inclusive_ns_prefixes) if inclusive_ns_prefixes else NULL
+        with nogil:
+            byte_count = c14n.xmlC14NDocDumpMemory(
+                c_doc, NULL, exclusive, c_inclusive_ns_prefixes, with_comments, &c_buffer)
 
     finally:
-         _destroyFakeDoc(doc._c_doc, c_doc)
-         if c_inclusive_ns_prefixes is not NULL:
-            python.lxml_free(c_inclusive_ns_prefixes)
+        if element is None:
+            doc.unlock_read()
+        else:
+            _destroyFakeDoc(doc._c_doc, c_doc)
+            doc.unlock_fakedoc()
+
+        if c_inclusive_ns_prefixes is not NULL:
+           python.lxml_free(c_inclusive_ns_prefixes)
 
     if byte_count < 0 or c_buffer is NULL:
         if c_buffer is not NULL:
@@ -189,6 +211,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
         tree.xmlFree(c_buffer)
     return result
 
+
 cdef _raiseSerialisationError(int error_result):
     if error_result == xmlerror.XML_ERR_NO_MEMORY:
         raise MemoryError()
@@ -197,14 +220,16 @@ cdef _raiseSerialisationError(int error_result):
         message = f"unknown error {error_result}"
     raise SerialisationError, message
 
+
 ############################################################
-# low-level serialisation functions
+# low-level serialisation functions (no locking)
 
 cdef void _writeDoctype(tree.xmlOutputBuffer* c_buffer,
                         const_xmlChar* c_doctype) noexcept nogil:
     tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
                               <const_char*>c_doctype)
     tree.xmlOutputBufferWriteString(c_buffer, "\n")
+
 
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, const_char* encoding, const_xmlChar* c_doctype,
@@ -267,6 +292,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
     if pretty_print:
         tree.xmlOutputBufferWrite(c_buffer, 1, "\n")
 
+
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     const_xmlChar* version, const_char* encoding,
                                     int standalone) noexcept nogil:
@@ -282,6 +308,7 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
         tree.xmlOutputBufferWrite(c_buffer, 21, "' standalone='yes'?>\n")
     else:
         tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
+
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             xmlDoc* c_doc, const_xmlChar* c_root_name,
@@ -354,6 +381,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
         c_node = c_node.next
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
 
+
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                      const_char* encoding, int c_method, bint pretty_print) noexcept nogil:
     "Write the element tail."
@@ -367,6 +395,7 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
             tree.xmlNodeDumpOutput(
                 c_buffer, c_node.doc, c_node, 0, pretty_print, encoding)
         c_node = c_node.next
+
 
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                              const_char* encoding, bint pretty_print) noexcept nogil:
@@ -385,6 +414,7 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         if pretty_print:
             tree.xmlOutputBufferWriteString(c_buffer, "\n")
         c_sibling = c_sibling.next
+
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                              const_char* encoding, bint pretty_print) noexcept nogil:
@@ -668,6 +698,7 @@ cdef class _FilelikeWriter:
 cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length) noexcept:
     return (<_FilelikeWriter>ctxt).write(c_buffer, length)
 
+
 cdef int _closeFilelikeWriter(void* ctxt) noexcept:
     return (<_FilelikeWriter>ctxt).close()
 
@@ -685,7 +716,12 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        data = _textToString(element._c_node, encoding, with_tail)
+        doc = element._doc
+        doc.lock_read()
+        try:
+            data = _textToString(element._c_node, encoding, with_tail)
+        finally:
+            doc.unlock_read()
         if compression:
             bytes_out = BytesIO()
             with GzipFile(fileobj=bytes_out, mode='wb', compresslevel=compression) as gzip_file:
@@ -712,15 +748,20 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         c_doctype = _xcstr(doctype)
 
     writer = _create_output_buffer(f, c_enc, compression, &c_buffer, close=False)
-    if writer is None:
-        with nogil:
+    doc = element._doc
+    doc.lock_read()
+    try:
+        if writer is None:
+            with nogil:
+                error_result = _serialise_node(
+                    c_buffer, c_doctype, c_enc, element._c_node, c_method,
+                    write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
+        else:
             error_result = _serialise_node(
                 c_buffer, c_doctype, c_enc, element._c_node, c_method,
                 write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
-    else:
-        error_result = _serialise_node(
-            c_buffer, c_doctype, c_enc, element._c_node, c_method,
-            write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
+    finally:
+        doc.unlock_read()
 
     if writer is not None:
         writer._exc_context._raise_if_stored()
@@ -824,12 +865,15 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
     cdef xmlChar **c_inclusive_ns_prefixes = NULL
     cdef char* c_filename
     cdef xmlDoc* c_base_doc
-    cdef xmlDoc* c_doc
+    cdef xmlDoc* c_doc = NULL
     cdef int bytes_count, error = 0
 
-    c_base_doc = element._c_node.doc
-    c_doc = _fakeRootDoc(c_base_doc, element._c_node)
+    doc = element._doc
+    doc.lock_fakedoc()
     try:
+        c_base_doc = element._c_node.doc
+        c_doc = _fakeRootDoc(c_base_doc, element._c_node)
+
         c_inclusive_ns_prefixes = (
             _convert_ns_prefixes(c_doc.dict, inclusive_ns_prefixes)
             if inclusive_ns_prefixes else NULL)
@@ -866,7 +910,9 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
         else:
             raise TypeError(f"File or filename expected, got '{python._fqtypename(f).decode('UTF-8')}'")
     finally:
-        _destroyFakeDoc(c_base_doc, c_doc)
+        if c_doc is not NULL:
+            _destroyFakeDoc(c_base_doc, c_doc)
+        doc.unlock_fakedoc()
         if c_inclusive_ns_prefixes is not NULL:
             python.lxml_free(c_inclusive_ns_prefixes)
 
@@ -1681,9 +1727,16 @@ cdef class _IncrementalFileWriter:
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("cannot append trailing element to complete XML document")
-                _writeNodeToBuffer(self._c_out, (<_Element>content)._c_node,
-                                   self._c_encoding, NULL, c_method,
-                                   False, False, pretty_print, with_tail, False)
+
+                doc = (<_Element>content)._doc
+                doc.lock_read()
+                try:
+                    _writeNodeToBuffer(self._c_out, (<_Element>content)._c_node,
+                                    self._c_encoding, NULL, c_method,
+                                    False, False, pretty_print, with_tail, False)
+                finally:
+                    doc.unlock_read()
+
                 if (<_Element>content)._c_node.type == tree.XML_ELEMENT_NODE:
                     if not self._element_stack:
                         self._status = WRITER_FINISHED
