@@ -97,14 +97,16 @@ jobs:
         run: |
           MATRIX=$(
             {
-              cibuildwheel --print-build-identifiers --platform linux --archs "x86_64,aarch64" \
+              cibuildwheel --print-build-identifiers --platform linux \
               | grep -v musllinux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
-              | sed -e '/aarch64/s|ubuntu-latest|ubuntu-24.04-arm|' \
-              && cibuildwheel --print-build-identifiers --platform macos --archs arm64 \
+              | sed -e '/aarch64\|armv7l/s|ubuntu-latest|ubuntu-24.04-arm|' \
+              && cibuildwheel --print-build-identifiers --platform macos \
               | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
-              && cibuildwheel --print-build-identifiers --platform windows --archs AMD64 \
-              | jq -nRc '{"only": inputs, "os": "windows-2022"}'
+              && cibuildwheel --print-build-identifiers --platform windows  --archs AMD64,x86 \
+              | jq -nRc '{"only": inputs, "os": "windows-2022"}' \
+              && cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
+              | jq -nRc '{"only": inputs, "os": "windows-11-arm"}'
             } | jq -sc
           )
           echo "include=$MATRIX"
@@ -169,10 +171,14 @@ jobs:
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_S390X_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_PYPY_AARCH64_IMAGE: manylinux_2_28
           CIBW_MUSLLINUX_X86_64_IMAGE: musllinux_1_2
           CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_2
+          CIBW_MUSLLINUX_PPC64LE_IMAGE: musllinux_1_2
+          CIBW_MUSLLINUX_S390X_IMAGE: musllinux_1_2
         with:
           only: ${{ matrix.only }}
 
@@ -186,6 +192,9 @@ jobs:
     name: Build abi3 wheels on ${{ matrix.os == 'ubuntu-24.04' && 'ubuntu-qemu' || matrix.os }}
     needs: [ cache_libs ]
     runs-on: ${{ matrix.os }}
+
+    # The Limited API is not currently capable enough to support lxml's proxy back-references.
+    if: false
 
     env:
       ZLIB_VERSION: ${{ needs.cache_libs.outputs.ZLIB_VERSION }}
@@ -245,7 +254,8 @@ jobs:
 
   upload_release_assets:
     name: Upload Release Assets
-    needs: [ sdist, build_wheels, build_abi3_wheels ]
+    #needs: [ sdist, build_wheels, build_abi3_wheels ]
+    needs: [ sdist, build_wheels ]
     runs-on: ubuntu-latest
 
     permissions:
