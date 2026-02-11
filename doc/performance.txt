@@ -537,7 +537,7 @@ The following timings are based on the benchmark script `bench_xpath.py`_.
 
 This part of lxml does not have an equivalent in ElementTree.  However, lxml
 provides more than one way of accessing it and you should take care which part
-of the lxml API you use.  The most straight forward way is to call the
+of the lxml API you use.  The most straightforward way is to call the
 ``xpath()`` method on an Element or ElementTree::
 
   lxe: xpath_method         (--TC T1)    0.2828 msec/pass

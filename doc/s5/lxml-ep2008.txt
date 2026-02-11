@@ -551,7 +551,7 @@ Parsing XML into ...
 Summary of lesson 1
 ===================
 
-* parsing XML/HTML in lxml is mostly straight forward
+* parsing XML/HTML in lxml is mostly straightforward
 
   * simple functions that do the job
 

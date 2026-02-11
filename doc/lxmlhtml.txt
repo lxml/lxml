@@ -111,7 +111,7 @@ also include some extra methods:
 ``.find_class(class_name)``:
     Returns a list of all the elements with the given CSS class name.
     Note that class names are space separated in HTML, so
-    ``doc.find_class_name('highlight')`` will find an element like
+    ``doc.find_class('highlight')`` will find an element like
     ``<div class="sidebar highlight">``.  Class names *are* case
     sensitive.
 
@@ -163,7 +163,7 @@ Running HTML doctests
 One of the interesting modules in the ``lxml.html`` package deals with
 doctests.  It can be hard to compare two HTML pages for equality, as
 whitespace differences aren't meaningful and the structural formatting
-can differ.  This is even more a problem in doctests, where output is
+can differ.  This is even more of a problem in doctests, where output is
 tested for equality and small differences in whitespace or the order
 of attributes can let a test fail.  And given the verbosity of
 tag-based languages, it may take more than a quick look to find the
@@ -190,13 +190,13 @@ document in a doctest, you can do the following:
     ...    </body></html>
     ... ''')
 
-    >>> print lxml.html.tostring(html)
+    >>> print(lxml.html.tostring(html))
     <html><body onload="" color="white"><p>Hi !</p></body></html>
 
-    >>> print lxml.html.tostring(html)
+    >>> print(lxml.html.tostring(html))
     <html> <body color="white" onload=""> <p>Hi    !</p> </body> </html>
 
-    >>> print lxml.html.tostring(html)
+    >>> print(lxml.html.tostring(html))
     <html>
       <body color="white" onload="">
         <p>Hi !</p>
@@ -240,7 +240,7 @@ pages and fragments:
     ...   )
     ... )
 
-    >>> print lxml.html.tostring(html)
+    >>> print(lxml.html.tostring(html))
     <html>
       <head>
         <link href="great.css" rel="stylesheet" type="text/css">
@@ -389,7 +389,7 @@ The form itself has these attributes:
 ``.fields``:
     A dictionary-like object used to access *values* by their name.
     ``form.inputs`` returns elements, this only returns values.
-    Setting values in this dictionary will effect the form inputs.
+    Setting values in this dictionary will affect the form inputs.
     Basically ``form.fields[x]`` is equivalent to
     ``form.inputs[x].value`` and ``form.fields[x] = y`` is equivalent
     to ``form.inputs[x].value = y``.  (Note that sometimes
@@ -507,10 +507,10 @@ Example of ``htmldiff``:
     >>> doc1 = '''<p>Here is some text.</p>'''
     >>> doc2 = '''<p>Here is <b>a lot</b> of <i>text</i>.</p>'''
     >>> doc3 = '''<p>Here is <b>a little</b> <i>text</i>.</p>'''
-    >>> print htmldiff(doc1, doc2)
+    >>> print(htmldiff(doc1, doc2))
     <p>Here is <ins><b>a lot</b> of <i>text</i>.</ins> <del>some text.</del> </p>
-    >>> print html_annotate([(doc1, 'author1'), (doc2, 'author2'),
-    ...                      (doc3, 'author3')])
+    >>> print(html_annotate([(doc1, 'author1'), (doc2, 'author2'),
+    ...                      (doc3, 'author3')]))
     <p><span title="author1">Here is</span>
        <b><span title="author2">a</span>
        <span title="author3">little</span></b>

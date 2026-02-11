@@ -22,7 +22,7 @@ c-importable by extension modules implemented in Cython_.
 Passing generated trees through Python
 --------------------------------------
 
-This is the most simple way to integrate with lxml.  It does not require
+This is the simplest way to integrate with lxml.  It does not require
 any C-level integration but uses a Python function to wrap an externally
 generated libxml2 document in lxml.
 

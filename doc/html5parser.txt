@@ -23,7 +23,7 @@ Differences to regular HTML parsing
 
 There are a few differences in the returned tree to the regular HTML
 parsing functions from ``lxml.html``.  html5lib normalizes some elements
-and element structures to a common format.  For example even if a tables
+and element structures to a common format.  For example, even if a table
 does not have a `tbody` html5lib will inject one automatically:
 
 .. sourcecode:: pycon
@@ -74,7 +74,7 @@ Function Reference
     on whether the string looks like a full document, or just a
     fragment.
 
-Additionally all parsing functions accept an ``parser`` keyword argument
+Additionally all parsing functions accept a ``parser`` keyword argument
 that can be set to a custom parser instance.  To create custom parsers
 you can subclass the ``HTMLParser`` and ``XHTMLParser`` from the same
 module.  Note that these are the parser classes provided by html5lib.
