@@ -659,6 +659,8 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
             #        -> we store Python refs to these, so that is OK
             # XSLT: can it leak when merging trees from multiple sources?
             c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
+            if not c_node:
+                raise MemoryError()
             # FIXME: call _instantiateElementFromXPath() instead?
         results.append(
             _fakeDocElementFactory(doc, c_node))
@@ -706,6 +708,8 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
             # not from a known document at all! => can only make a
             # safety copy here
             c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
+            if not c_node:
+                raise MemoryError()
         else:
             doc = node_doc
     return _fakeDocElementFactory(doc, c_node)
