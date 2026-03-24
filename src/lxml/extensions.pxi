@@ -753,6 +753,8 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
         attrname = _namespacedName(c_node)
         is_tail = 0
         s = tree.xmlNodeGetContent(c_node)
+        if s is NULL:
+            raise MemoryError()
         try:
             value = funicode(s)
         finally:
