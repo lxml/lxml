@@ -841,8 +841,10 @@ cdef void _extension_function_call(_BaseContext context, function,
         args = []
         for i in range(nargs):
             obj = xpath.valuePop(ctxt)
-            o = _unwrapXPathObject(obj, doc, context)
-            _freeXPathObject(obj)
+            try:
+                o = _unwrapXPathObject(obj, doc, context)
+            finally:
+                _freeXPathObject(obj)
             args.append(o)
         args.reverse()
 
