@@ -53,6 +53,8 @@ cdef class _ParserDictionary:
 
     def __cinit__(self):
         self._c_dict = tree.xmlDictCreate()
+        if not self._c_dict:
+            raise MemoryError()
 
     def __dealloc__(self):
         tree.xmlDictFree(self._c_dict)
