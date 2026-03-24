@@ -2090,6 +2090,8 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
+    if not result:
+        raise MemoryError()
 
     assert result.dict is NULL
     tree.xmlDictReference(c_doc.dict)
