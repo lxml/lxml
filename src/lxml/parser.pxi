@@ -60,18 +60,18 @@ cdef class _ParserDictionary:
         tree.xmlDictFree(self._c_dict)
         self._c_dict = NULL
 
-    cdef void disableSizeLimit(self):
+    cdef void disableSizeLimit(self) noexcept:
         tree.xmlDictSetLimit(self._c_dict, 0)
 
-    cdef tree.xmlDict *getDict(self):
+    cdef tree.xmlDict *getDict(self) noexcept:
         return self._c_dict
 
-    cdef tree.xmlDict *getDictRef(self):
+    cdef tree.xmlDict *getDictRef(self) noexcept:
         c_dict = self._c_dict
         tree.xmlDictReference(c_dict)
         return c_dict
 
-    cdef size_t getDictSize(self):
+    cdef size_t getDictSize(self) noexcept:
         return tree.xmlDictSize(self._c_dict)
 
     cdef void initDictRef(self, tree.xmlDict** c_dict_ref) noexcept:
@@ -235,7 +235,7 @@ cdef int _setupPythonUnicode() except -1:
         _PY_UNICODE_ENCODING = enc
     return 0
 
-cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
+cdef const_char* _findEncodingName(const_xmlChar* buffer, int size) noexcept:
     "Work around bug in libxml2: find iconv name of encoding on our own."
     cdef tree.xmlCharEncoding enc
     enc = tree.xmlDetectCharEncoding(buffer, size)
@@ -570,7 +570,7 @@ __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
 
 cdef xmlparser.xmlExternalEntityLoader _register_document_loader() noexcept nogil:
     cdef xmlparser.xmlExternalEntityLoader old = xmlparser.xmlGetExternalEntityLoader()
-    xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_resolver)
+    xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader> _local_resolver)
     return old
 
 cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) noexcept nogil:

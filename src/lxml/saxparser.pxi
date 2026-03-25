@@ -687,7 +687,7 @@ cdef void _handleSaxComment(void* ctxt, const_xmlChar* text) noexcept with gil:
         return  # swallow any further exceptions
 
 
-cdef inline xmlNode* _findLastEventNode(xmlparser.xmlParserCtxt* c_ctxt):
+cdef inline xmlNode* _findLastEventNode(xmlparser.xmlParserCtxt* c_ctxt) noexcept:
     # this mimics what libxml2 creates for comments/PIs
     if c_ctxt.inSubset == 1:
         return c_ctxt.myDoc.intSubset.last

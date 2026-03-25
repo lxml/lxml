@@ -358,7 +358,7 @@ cdef class ObjectifiedElement(ElementBase):
         return _build_descendant_paths(self._c_node, prefix)
 
 
-cdef inline bint _tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
+cdef inline bint _tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name) noexcept:
     if c_node.name != c_name:
         return 0
     if c_href == NULL:
@@ -369,7 +369,7 @@ cdef inline bint _tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_
     return tree.xmlStrcmp(c_node_href, c_href) == 0
 
 
-cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
+cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node) noexcept:
     cdef tree.xmlNode* c_node
     cdef Py_ssize_t count
     c_tag  = c_start_node.name
@@ -391,7 +391,7 @@ cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
 
 cdef tree.xmlNode* _findFollowingSibling(tree.xmlNode* c_node,
                                          const_xmlChar* href, const_xmlChar* name,
-                                         Py_ssize_t index):
+                                         Py_ssize_t index) noexcept:
     cdef tree.xmlNode* (*next)(tree.xmlNode*)
     if index >= 0:
         next = cetree.nextElement
