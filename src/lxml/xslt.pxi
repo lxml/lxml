@@ -553,9 +553,6 @@ cdef class XSLT:
             _convert_xslt_parameters(transform_ctxt, kw, &params)
             c_result = self._run_transform(
                 c_doc, params, context, transform_ctxt)
-            if params is not NULL:
-                # deallocate space for parameters
-                python.lxml_free(params)
 
             if transform_ctxt.state != xslt.XSLT_STATE_OK:
                 if c_result is not NULL:
@@ -568,6 +565,9 @@ cdef class XSLT:
                     profile_doc = _documentFactory(
                         c_profile_doc, input_doc._parser)
         finally:
+            if params is not NULL:
+                # deallocate space for parameters
+                python.lxml_free(params)
             if context is not None:
                 context.free_context()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
