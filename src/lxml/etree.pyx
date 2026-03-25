@@ -421,10 +421,12 @@ cdef class _TempStore:
 @cython.internal
 cdef class _ExceptionContext:
     cdef object _exc_info
+
     cdef int clear(self) except -1:
         self._exc_info = None
         return 0
 
+    @cython.final
     cdef void _store_raised(self) noexcept:
         try:
             self._exc_info = sys.exc_info()
@@ -433,13 +435,16 @@ cdef class _ExceptionContext:
         finally:
             return  # and swallow any further exceptions
 
+    @cython.final
     cdef int _store_exception(self, exception) except -1:
         self._exc_info = (exception, None, None)
         return 0
 
+    @cython.final
     cdef bint _has_raised(self) except -1:
         return self._exc_info is not None
 
+    @cython.final
     cdef int _raise_if_stored(self) except -1:
         if self._exc_info is None:
             return 0
