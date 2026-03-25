@@ -432,7 +432,7 @@ cdef class _FileReaderContext:
                 self._bytes_read = 0
 
             if c_requested > 0:
-                c_start = _cstr(data) + self._bytes_read
+                c_start = _cstr(self._bytes) + self._bytes_read
                 cstring_h.memcpy(c_buffer, c_start, c_requested)
                 c_byte_count += c_requested
                 self._bytes_read += c_requested
