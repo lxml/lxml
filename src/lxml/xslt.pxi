@@ -701,7 +701,8 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
         stylesheet._xslt_resolver_context._c_style_doc, 1)
 
     c_doc = _copyDoc(stylesheet._c_style.doc, 1)
-    new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
+    with nogil:
+        new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
     if new_xslt._c_style is NULL:
         tree.xmlFreeDoc(c_doc)
         raise MemoryError()
