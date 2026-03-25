@@ -163,6 +163,7 @@ cdef class _ResolverContext(_ExceptionContext):
     cdef _ResolverRegistry _resolvers
     cdef _TempStore _storage
 
+    @cython.final
     cdef int clear(self) except -1:
         _ExceptionContext.clear(self)
         self._storage.clear()

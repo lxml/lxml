@@ -49,12 +49,14 @@ cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
     cdef _BaseParser _parser
 
+    @cython.final
     cdef _XSLTResolverContext _copy(self):
         cdef _XSLTResolverContext context
         context = _XSLTResolverContext()
         _initXSLTResolverContext(context, self._parser)
         context._c_style_doc = self._c_style_doc
         return context
+
 
 cdef _initXSLTResolverContext(_XSLTResolverContext context,
                               _BaseParser parser):
