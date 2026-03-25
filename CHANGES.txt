@@ -29,6 +29,8 @@ Other changes
   They remain in ``xmlparser.pxd`` for legacy reasons but Cython code that uses them
   should migrate the import to ``tree.pxd``.
 
+* Binary wheels use zlib 1.3.2.
+
 * Built using Cython 3.2.2.
 
 
