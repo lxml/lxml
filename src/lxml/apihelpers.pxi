@@ -238,6 +238,8 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
                     c_ns.href is NULL or \
                     tree.xmlStrcmp(c_ns.href, c_href) != 0:
                 c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
+                if c_ns is NULL:
+                    raise MemoryError()
             if href_utf == node_ns_utf:
                 tree.xmlSetNs(c_node, c_ns)
                 node_ns_utf = None
