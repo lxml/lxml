@@ -65,7 +65,7 @@ cdef _initXSLTResolverContext(_XSLTResolverContext context,
     context._c_style_doc = NULL
 
 cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
-                                       int parse_options, int* error) with gil:
+                                       int parse_options, int* error) noexcept with gil:
     # call the Python document loaders
     cdef _XSLTResolverContext context
     cdef _ResolverRegistry resolvers
@@ -624,7 +624,7 @@ cdef class XSLT:
 
     cdef xmlDoc* _run_transform(self, xmlDoc* c_input_doc,
                                 const_char** params, _XSLTContext context,
-                                xslt.xsltTransformContext* transform_ctxt):
+                                xslt.xsltTransformContext* transform_ctxt) except? NULL:
         cdef xmlDoc* c_result
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)

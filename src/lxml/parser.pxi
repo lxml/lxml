@@ -223,7 +223,7 @@ cdef int _setupPythonUnicode() except -1:
         _PY_UNICODE_ENCODING = enc
     return 0
 
-cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
+cdef const_char* _findEncodingName(const_xmlChar* buffer, int size) noexcept:
     "Work around bug in libxml2: find iconv name of encoding on our own."
     cdef tree.xmlCharEncoding enc
     enc = tree.xmlDetectCharEncoding(buffer, size)
@@ -527,7 +527,7 @@ __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
 
 cdef xmlparser.xmlExternalEntityLoader _register_document_loader() noexcept nogil:
     cdef xmlparser.xmlExternalEntityLoader old = xmlparser.xmlGetExternalEntityLoader()
-    xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_resolver)
+    xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader> _local_resolver)
     return old
 
 cdef void _reset_document_loader(xmlparser.xmlExternalEntityLoader old) noexcept nogil:
