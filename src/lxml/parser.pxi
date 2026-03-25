@@ -2003,6 +2003,8 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
+    if result is NULL:
+        raise MemoryError()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
 
     with nogil:
