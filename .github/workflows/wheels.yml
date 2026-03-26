@@ -189,7 +189,7 @@ jobs:
           name: lxml-wheel-${{ matrix.only }}
 
   build_abi3_wheels:
-    name: Build abi3 wheels on ${{ matrix.os == 'ubuntu-24.04' && 'ubuntu-qemu' || matrix.os }}
+    name: (disabled) Build abi3 wheels on ${{ matrix.os }}
     needs: [ cache_libs ]
     runs-on: ${{ matrix.os }}
 
