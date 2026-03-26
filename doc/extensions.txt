@@ -46,7 +46,7 @@ and extension elements in XSLT as in the following example:
 XPath Extension functions
 =========================
 
-Here is how an extension function looks like.  As the first argument,
+Here is what an extension function looks like.  As the first argument,
 it always receives a context object (see below).  The other arguments
 are provided by the respective call in the XPath expression, one in
 the following examples.  Any number of arguments is allowed:
@@ -471,7 +471,7 @@ And then you can implement the element in Python like this:
   ...         # just copy own content input to output
   ...         output_parent.extend( list(self_node) )
 
-The arguments passed to the ``.execute()`` method  are
+The arguments passed to the ``.execute()`` method are
 
 context
     The opaque evaluation context.  You need this when calling back

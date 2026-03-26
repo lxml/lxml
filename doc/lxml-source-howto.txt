@@ -75,7 +75,7 @@ checkout.
 
 The main extension modules in lxml are ``lxml.etree`` and
 ``lxml.objectify``.  All main modules have the file extension
-``.pyx``, which shows the descendence from Pyrex.  As usual in Python,
+``.pyx``, which shows the descent from Pyrex.  As usual in Python,
 the main files start with a short description and a couple of imports.
 Cython distinguishes between the run-time ``import`` statement (as
 known from Python) and the compile-time ``cimport`` statement, which
@@ -139,7 +139,7 @@ The easiest way to generate the HTML pages is by calling::
     make html
 
 This will call the script ``doc/mkhtml.py`` to run the ReST processor
-on the files.  After generating an HTML page the script parses it back
+on the files.  After generating an HTML page, the script parses it back
 in to build the side menu, and injects the complete menu into each
 page at the very end.
 
@@ -213,7 +213,7 @@ parsertarget.pxi
 proxy.pxi
     Very low-level functions for memory allocation/deallocation
     and Element proxy handling.  Ignoring this for the beginning
-    will safe your head from exploding.
+    will save your head from exploding.
 
 public-api.pxi
     The set of C functions that are exported to other extension

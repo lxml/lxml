@@ -29,7 +29,7 @@ XML Catalogs
 When loading an external entity for a document, e.g. a DTD, the parser
 is normally configured to prevent network access (see the
 ``no_network`` parser option).  Instead, it will try to load the
-entity from their local file system path or, in the most common case
+entity from its local file system path or, in the most common case
 that the entity uses a network URL as reference, from a local XML
 catalog.
 
@@ -38,7 +38,7 @@ external entities from XML processors.  Most tools will use them, so
 it is worth configuring them properly on a system.  Many Linux
 installations use them by default, but on other systems they may need
 to get enabled manually.  The `libxml2 site`_ has some documentation
-on `how to set up XML catalogs`_
+on `how to set up XML catalogs`_.
 
 .. _`XML catalogs`: http://www.oasis-open.org/committees/entity/spec.html
 .. _`libxml2 site`: http://xmlsoft.org/

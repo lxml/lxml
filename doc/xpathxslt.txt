@@ -756,8 +756,7 @@ create an XSL tree, e.g. from a parsed template, and then add or
 replace parts as you see fit.  Passing an XSL tree into the ``XSLT()``
 constructor multiple times will create independent stylesheets, so
 later modifications of the tree will not be reflected in the already
-created stylesheets.  This makes stylesheet generation very straight
-forward.
+created stylesheets.  This makes stylesheet generation very straightforward.
 
 A third thing to remember is the support for `custom extension
 functions`_ and `XSLT extension elements`_.  Some things are much

@@ -17,7 +17,7 @@ lxml also provides support for ISO-`Schematron`_, based on the pure-XSLT
 .. _Schematron: http://www.schematron.com
 .. _`skeleton implementation`: http://www.schematron.com/implementation.html
 
-There is also basic support for `pre-ISO-Schematron` through the libxml2
+There is also basic support for `pre-ISO-Schematron`_ through the libxml2
 Schematron features. However, this does not currently support error reporting
 in the validation phase due to insufficiencies in the implementation as of
 libxml2 2.6.30.
@@ -359,7 +359,7 @@ XMLSchema
 
 lxml.etree also has XML Schema (XSD) support, using the class
 lxml.etree.XMLSchema.  The API is very similar to the Relax NG and DTD
-classes.  Pass an ElementTree object to construct a XMLSchema validator:
+classes.  Pass an ElementTree object to construct an XMLSchema validator:
 
 .. sourcecode:: pycon
 
@@ -377,8 +377,8 @@ classes.  Pass an ElementTree object to construct a XMLSchema validator:
   >>> xmlschema = etree.XMLSchema(xmlschema_doc)
 
 You can then validate some ElementTree document with this.  Like with RelaxNG,
-you'll get back true if the document is valid against the XML schema, and
-false if not:
+you'll get back True if the document is valid against the XML schema, and
+False if not:
 
 .. sourcecode:: pycon
 
@@ -523,7 +523,7 @@ steps 1) and 2).
 To set parameters for steps 1), 2) and 3) dictionaries containing parameters
 for XSLT can be provided using the keyword arguments ``include_params``,
 ``expand_params`` or ``compile_params``. Schematron automatically converts these
-parameters to stylesheet parameters so you need not worry to set string
+parameters to stylesheet parameters so you need not worry about setting string
 parameters using quotes or to use XSLT.strparam(). If you ever need to pass an
 XPath as argument to the XSLT stylesheet you can pass in an etree.XPath object
 (see XPath and XSLT with lxml: Stylesheet-parameters_ for background on this).
@@ -627,7 +627,7 @@ since lxml 5.0 to detect whether schema file validation is available.
 (Pre-ISO-Schematron)
 --------------------
 
-In libxml2 versions that provide it,  lxml.etree features `pre-ISO-Schematron`_ support,
+In libxml2 versions that provide it, lxml.etree features `pre-ISO-Schematron`_ support,
 using the class lxml.etree.Schematron.  It requires at least libxml2 2.6.21 to
 work but is no longer available in libxml2 2.15.  To test if lxml provides this,
 use ``"schematron" in etree.LIBXML_FEATURES``.

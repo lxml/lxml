@@ -488,7 +488,7 @@ function:
 
     >>> parser = objectify.makeparser(schema = schema)
 
-.. _`returns objectify trees`: #advance-element-class-lookup
+.. _`returns objectify trees`: #advanced-element-class-lookup
 
 Now we can use it to parse a valid document:
 
@@ -648,7 +648,7 @@ As with attribute assignment, ``setattr()`` accepts lists:
 
 
 Note, however, that indexing is only supported in this context if the children
-exist.  Indexing of non existing children will not extend or create a list of
+exist.  Indexing of non-existing children will not extend or create a list of
 such children but raise an exception:
 
 .. sourcecode:: pycon
@@ -885,7 +885,7 @@ How data types are matched
 
 Objectify uses two different types of Elements.  Structural Elements (or tree
 Elements) represent the object tree structure.  Data Elements represent the
-data containers at the leafs.  You can explicitly create tree Elements with
+data containers at the leaves.  You can explicitly create tree Elements with
 the ``objectify.Element()`` factory and data Elements with the
 ``objectify.DataElement()`` factory.
 
@@ -1132,7 +1132,7 @@ XSI type name:
           * py:pytype = 'int'
           * xsi:type = 'xsd:integer'
 
-XML Schema types reside in the XML schema namespace thus ``DataElement()`` 
+XML Schema types reside in the XML schema namespace, thus ``DataElement()`` 
 tries to correctly prefix the xsi:type attribute value for you:
 
 .. sourcecode:: pycon
@@ -1262,12 +1262,12 @@ The registration of data classes uses the ``PyType`` class:
     >>> xmas_type = objectify.PyType('date', checkChristmasDate, ChristmasDate)
 
 The PyType constructor takes a string type name, an (optional) callable type 
-check and the custom data class.  If a type check is provided it must accept a 
+check and the custom data class.  If a type check is provided, it must accept a 
 string as argument and raise ValueError or TypeError if it cannot handle the
 string value.
 
 PyTypes are used if an element carries a ``py:pytype`` attribute denoting its
-data type or, in absence of such an attribute, if the given type check callable
+data type or, in the absence of such an attribute, if the given type check callable
 does not raise a ValueError/TypeError exception when applied to the element
 text. 
 
@@ -1360,7 +1360,7 @@ however, will work fine with the following setup:
 
     >>> parser = objectify.makeparser(remove_blank_text=True)
 
-What this does internally, is:
+What this does internally is:
 
 .. sourcecode:: pycon
 
@@ -1391,7 +1391,7 @@ See the documentation on `class lookup`_ schemes for more information.
 What is different from lxml.etree?
 ==================================
 
-Such a different Element API obviously implies some side effects to the normal
+Such a different Element API obviously implies some side effects on the normal
 behaviour of the rest of the API.
 
 * len(<element>) returns the sibling count, not the number of children of
