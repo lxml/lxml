@@ -67,7 +67,7 @@ ElementTree_.
      7.5  How can I modify the tree during iteration?
 
 
-The code examples below use the `'lxml.etree`` module:
+The code examples below use the ``lxml.etree`` module:
 
 .. sourcecode:: pycon
 
@@ -380,7 +380,7 @@ I'm glad you asked.
 Note that this beautiful quick-and-dirty converter expects children
 to have unique tag names and will silently overwrite any data that
 was contained in preceding siblings with the same name.  For any
-real-world application of xml-to-dict conversion, you would better
+real-world application of xml-to-dict conversion, you had better
 write your own, longer version of this.
 
 
@@ -484,7 +484,7 @@ Why do I get errors about missing UCS4 symbols when installing lxml?
 
 You are using a Python installation that was configured for a different
 internal Unicode representation than the lxml package you are trying to
-install.  CPython versions before 3.3 allowed to switch between two types
+install.  CPython versions before 3.3 allowed switching between two types
 at build time: the 32 bit encoding UCS4 and the 16 bit encoding UCS2.
 Sadly, both are not compatible, so eggs and other binary distributions
 can only support the one they were compiled with.
@@ -550,7 +550,7 @@ subdirectories in the lxml source tree (below the ``src`` directory)
 and the ReST_ `text files`_ in the ``doc`` directory.
 
 We also have a `list of missing features`_ that we would like to
-implement but didn't due to lack if time.  If *you* find the time,
+implement but didn't due to lack of time.  If *you* find the time,
 patches are very welcome.
 
 .. _ReST: http://docutils.sourceforge.net/rst.html
@@ -651,7 +651,7 @@ release you are using.
 
 .. _`current developer changelog`: https://github.com/lxml/lxml/blob/master/CHANGES.txt
 
-Also, the 'crash' section above has a few good advices what to try to see if
+Also, the 'crash' section above has some good advice on what to try to see if
 the problem is really in lxml - and not in your setup.  Believe it or not,
 that happens more often than you might think, especially when old libraries
 or even multiple library versions are installed.
@@ -720,7 +720,7 @@ the respective project, namely:
 On the other hand, everything that seems to be related to Python code,
 including custom resolvers, custom XPath functions, etc. is likely
 outside of the scope of libxml2/libxslt.  If you encounter problems
-here or you are not sure where there the problem may come from, please
+here or you are not sure where the problem may come from, please
 ask on the lxml mailing list first.
 
 In any case, a good explanation of the problem including some simple
@@ -869,7 +869,7 @@ for possible approaches to solve your specific problem:
 * compile lxml without threading support by running ``setup.py`` with the
   ``--without-threading`` option.  While this might be slower in certain
   scenarios on multi-processor systems, it *might* also keep your application
-  from crashing, which should be worth more to you than peek performance.
+  from crashing, which should be worth more to you than peak performance.
   Remember that lxml is fast anyway, so concurrency may not even be worth it.
 
 * look out for fancy XSLT stuff like foreign document access or

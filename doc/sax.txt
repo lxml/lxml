@@ -53,7 +53,7 @@ property of the handler:
   >>> lxml.etree.tostring(tree.getroot())
   b'<a><b foo="bar">Hello world</b></a>'
 
-By passing a ``makeelement`` function the constructor of
+By passing a ``makeelement`` function to the constructor of
 ``ElementTreeContentHandler``, e.g. the one of a parser you configured, you
 can determine which element class lookup scheme should be used.
 
@@ -69,7 +69,7 @@ Let's make a tree we can generate SAX events for:
   >>> tree = lxml.etree.parse(f)
 
 To see whether the correct SAX events are produced, we'll write a custom
-content handler.:
+content handler:
 
 .. sourcecode:: pycon
 

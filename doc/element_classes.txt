@@ -60,7 +60,7 @@ Element initialization
 ======================
 
 There is one thing to know up front.  Element classes *must not* have
-an ``__init___`` or ``__new__`` method.  There should not be any
+an ``__init__`` or ``__new__`` method.  There should not be any
 internal state either, except for the data stored in the underlying
 XML tree.  Element instances are created and garbage collected at
 need, so there is normally no way to predict when and how often a
@@ -98,7 +98,7 @@ cache manually up to date if the tree changes, which can get tricky in
 cases.
 
 For proxy initialisation, ElementBase classes have an ``_init()``
-method that can be overridden, as oppose to the normal ``__init__()``
+method that can be overridden, as opposed to the normal ``__init__()``
 method.  It can be used to modify the XML tree, e.g. to construct
 special children or verify and update attributes.
 
@@ -121,7 +121,7 @@ The semantics of ``_init()`` are as follows:
   before running through the init process.
 
 * Any exceptions raised in ``_init()`` will be propagated through the API
-  call that lead to the creation of the Element.  So be careful with the code
+  call that led to the creation of the Element.  So be careful with the code
   you write here as its exceptions may turn up in various unexpected places.
 
 
@@ -382,7 +382,7 @@ the elements in the tree have been instantiated as Python Element
 proxies.
 
 Luckily, there is a way to do this.  The ``PythonElementClassLookup``
-works similar to the custom lookup scheme:
+works similarly to the custom lookup scheme:
 
 .. sourcecode:: pycon
 
@@ -394,7 +394,7 @@ works similar to the custom lookup scheme:
   >>> parser.set_element_class_lookup(MyLookup())
 
 As before, the first argument to the ``lookup()`` method is the opaque
-document instance that contains the Element.  The second arguments is a
+document instance that contains the Element.  The second argument is a
 lightweight Element proxy implementation that is only valid during the lookup.
 Do not try to keep a reference to it.  Once the lookup is finished, the proxy
 will become invalid.  You will get an ``AssertionError`` if you access any of

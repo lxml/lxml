@@ -2511,7 +2511,7 @@ Bugs fixed
 * When an open file-like object is passed into ``parse()`` or
   ``iterparse()``, the parser will no longer close it after use.  This
   reverts a change in lxml 2.3 where all files would be closed.  It is
-  the users responsibility to properly close the file(-like) object,
+  the user's responsibility to properly close the file(-like) object,
   also in error cases.
 
 * Assertion error in lxml.html.cleaner when discarding top-level elements.
@@ -3166,7 +3166,7 @@ Features added
 
 * lxml.etree now tries to find the absolute path name of files when
   parsing from a file-like object.  This helps custom resolvers when
-  resolving relative URLs, as lixbml2 can prepend them with the path
+  resolving relative URLs, as libxml2 can prepend them with the path
   of the source document.
 
 Bugs fixed
@@ -4128,7 +4128,7 @@ Bugs fixed
 Features added
 --------------
 
-* Module ``lxml.pyclasslookup`` module implements an Element class lookup
+* The ``lxml.pyclasslookup`` module implements an Element class lookup
   scheme that can access the entire tree in read-only mode to help determining
   a suitable Element class
 

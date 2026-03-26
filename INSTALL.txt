@@ -71,7 +71,7 @@ build dependencies of the provided lxml package, e.g.
 
 ::
 
-    sudo apt-get install build-dep python3-lxml
+    sudo apt-get build-dep python3-lxml
 
 
 Installation
@@ -194,7 +194,7 @@ packages, too.
 Source builds on MS Windows
 ---------------------------
 
-Most MS Windows systems lack the necessarily tools to build software,
+Most MS Windows systems lack the necessary tools to build software,
 starting with a C compiler already.  Microsoft leaves it to users to
 install and configure them, which is usually not trivial and means
 that distributors cannot rely on these dependencies being available

@@ -7,7 +7,7 @@ ElementTree.  Nonetheless, some differences and incompatibilities exist:
 
 * Importing etree is obviously different; etree uses a lower-case
   package name, while ElementTree uses a combination of upper-case and
-  lower case in imports:
+  lower-case in imports:
 
   .. sourcecode:: python
 
@@ -160,7 +160,7 @@ ElementTree.  Nonetheless, some differences and incompatibilities exist:
 * ElementTree merges the target of a processing instruction into ``PI.text``,
   while lxml.etree puts it into the ``.target`` property and leaves it out of
   the ``.text`` property.  The ``pi.text`` in ElementTree therefore
-  correspondents to ``pi.target + " " + pi.text`` in lxml.etree.
+  corresponds to ``pi.target + " " + pi.text`` in lxml.etree.
 
 * Because etree is built on top of libxml2, which is namespace prefix aware,
   etree preserves namespaces declarations and prefixes while ElementTree tends
