@@ -29,14 +29,18 @@ Other changes
   They remain in ``xmlparser.pxd`` for legacy reasons but Cython code that uses them
   should migrate the import to ``tree.pxd``.
 
+* Binary wheels use zlib 1.3.2.
+
 * Built using Cython 3.2.2.
 
 
-6.0.3 (2026-??-??)
+6.0.3 (2026-0?-??)
 ==================
 
 Bugs fixed
 ----------
+
+* Several out of memory error cases now raise ``MemoryError`` that were not handled before.
 
 * Slicing with large step values (outside of ``+/- sys.maxsize``) could trigger undefined C behaviour.
 
@@ -45,6 +49,17 @@ Bugs fixed
 * LP#2138421: Memory leak in error cases when setting the ``public_id`` or ``system_url`` of a document.
 
 * Memory leak in case of a memory allocation failure when copying document subtrees.
+
+* When mapping an XPath result to Python failed, the result memory could leak.
+
+* When preparing an XSLT transform failed, the XSLT parameter memory could leak.
+
+Other changes
+-------------
+
+* Built using Cython 3.2.4.
+
+* Binary wheels use zlib 1.3.2.
 
 
 6.0.2 (2025-09-21)

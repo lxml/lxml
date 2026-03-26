@@ -438,25 +438,51 @@ cdef class _TempStore:
 @cython.internal
 cdef class _ExceptionContext:
     cdef object _exc_info
+
     cdef int clear(self) except -1:
         self._exc_info = None
         return 0
 
+    @cython.final
     cdef void _store_raised(self) noexcept:
+        context = None
         try:
+            if self._exc_info is not None:
+                context = self._exc_info[0]
             self._exc_info = sys.exc_info()
+            if context is not None:
+                self._store_context(context)
         except BaseException as e:
             self._store_exception(e)
         finally:
             return  # and swallow any further exceptions
 
+    @cython.final
     cdef int _store_exception(self, exception) except -1:
+        context = None if self._exc_info is None else self._exc_info[0]
         self._exc_info = (exception, None, None)
+        if context is not None:
+            self._store_context(context)
         return 0
 
+    @cython.final
+    cdef void _store_context(self, context) noexcept:
+        try:
+            if self._exc_info is None:
+                # remember at least the context exception
+                self._store_exception(context)
+            else:
+                exc = self._exc_info[0]
+                if python.PyException_GetContext(exc) is NULL:
+                    python.PyException_SetContext(exc, context)
+        finally:
+            return  # and swallow any further exceptions
+
+    @cython.final
     cdef bint _has_raised(self) except -1:
         return self._exc_info is not None
 
+    @cython.final
     cdef int _raise_if_stored(self) except -1:
         if self._exc_info is None:
             return 0

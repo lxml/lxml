@@ -238,6 +238,8 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
                     c_ns.href is NULL or \
                     tree.xmlStrcmp(c_ns.href, c_href) != 0:
                 c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
+                if c_ns is NULL:
+                    raise MemoryError()
             if href_utf == node_ns_utf:
                 tree.xmlSetNs(c_node, c_ns)
                 node_ns_utf = None
@@ -344,12 +346,13 @@ cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,
         _attributeValidOrRaise(name_utf)
     value_utf = _utf8(value)
     if ns_utf is None:
-        tree.xmlNewProp(c_node, _xcstr(name_utf), _xcstr(value_utf))
+        new_attr = tree.xmlNewProp(c_node, _xcstr(name_utf), _xcstr(value_utf))
     else:
         _uriValidOrRaise(ns_utf)
         c_ns = doc._findOrBuildNodeNs(c_node, _xcstr(ns_utf), NULL, 1)
-        tree.xmlNewNsProp(c_node, c_ns,
-                          _xcstr(name_utf), _xcstr(value_utf))
+        new_attr = tree.xmlNewNsProp(c_node, c_ns, _xcstr(name_utf), _xcstr(value_utf))
+    if new_attr is NULL:
+        raise MemoryError()
     return 0
 
 

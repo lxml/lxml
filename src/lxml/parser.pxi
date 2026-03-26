@@ -53,23 +53,25 @@ cdef class _ParserDictionary:
 
     def __cinit__(self):
         self._c_dict = tree.xmlDictCreate()
+        if not self._c_dict:
+            raise MemoryError()
 
     def __dealloc__(self):
         tree.xmlDictFree(self._c_dict)
         self._c_dict = NULL
 
-    cdef void disableSizeLimit(self):
+    cdef void disableSizeLimit(self) noexcept:
         tree.xmlDictSetLimit(self._c_dict, 0)
 
-    cdef tree.xmlDict *getDict(self):
+    cdef tree.xmlDict *getDict(self) noexcept:
         return self._c_dict
 
-    cdef tree.xmlDict *getDictRef(self):
+    cdef tree.xmlDict *getDictRef(self) noexcept:
         c_dict = self._c_dict
         tree.xmlDictReference(c_dict)
         return c_dict
 
-    cdef size_t getDictSize(self):
+    cdef size_t getDictSize(self) noexcept:
         return tree.xmlDictSize(self._c_dict)
 
     cdef void initDictRef(self, tree.xmlDict** c_dict_ref) noexcept:
@@ -233,7 +235,7 @@ cdef int _setupPythonUnicode() except -1:
         _PY_UNICODE_ENCODING = enc
     return 0
 
-cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
+cdef const_char* _findEncodingName(const_xmlChar* buffer, int size) noexcept:
     "Work around bug in libxml2: find iconv name of encoding on our own."
     cdef tree.xmlCharEncoding enc
     enc = tree.xmlDetectCharEncoding(buffer, size)
@@ -430,7 +432,7 @@ cdef class _FileReaderContext:
                 self._bytes_read = 0
 
             if c_requested > 0:
-                c_start = _cstr(data) + self._bytes_read
+                c_start = _cstr(self._bytes) + self._bytes_read
                 cstring_h.memcpy(c_buffer, c_start, c_requested)
                 c_byte_count += c_requested
                 self._bytes_read += c_requested
@@ -2147,6 +2149,8 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
+    if not result:
+        raise MemoryError()
 
     assert result.dict is NULL
     tree.xmlDictReference(c_doc.dict)

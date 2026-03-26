@@ -115,7 +115,7 @@ cdef public api int delAttribute(_Element element, key) except -1:
     return _delAttribute(element, key)
 
 cdef public api int delAttributeFromNsName(tree.xmlNode* c_element,
-                                           const_xmlChar* c_href, const_xmlChar* c_name):
+                                           const_xmlChar* c_href, const_xmlChar* c_name) noexcept:
     return _delAttributeFromNsName(c_element, c_href, c_name)
 
 cdef public api bint hasChild(xmlNode* c_node) noexcept:

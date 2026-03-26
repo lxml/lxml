@@ -49,6 +49,7 @@ cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
     cdef _BaseParser _parser
 
+    @cython.final
     cdef _XSLTResolverContext _copy(self):
         cdef _XSLTResolverContext context
         context = _XSLTResolverContext()
@@ -65,7 +66,7 @@ cdef _initXSLTResolverContext(_XSLTResolverContext context,
 
 
 cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
-                                       int parse_options, int* error) with gil:
+                                       int parse_options, int* error) noexcept with gil:
     # call the Python document loaders
     cdef _XSLTResolverContext context
     cdef _ResolverRegistry resolvers
@@ -588,9 +589,6 @@ cdef class XSLT:
             _convert_xslt_parameters(transform_ctxt, kw, &params)
             c_result = self._run_transform(
                 c_doc, params, context, transform_ctxt)
-            if params is not NULL:
-                # deallocate space for parameters
-                python.lxml_free(params)
 
             if transform_ctxt.state != xslt.XSLT_STATE_OK:
                 if c_result is not NULL:
@@ -603,6 +601,9 @@ cdef class XSLT:
                     profile_doc = _documentFactory(
                         c_profile_doc, input_doc._parser)
         finally:
+            if params is not NULL:
+                # deallocate space for parameters
+                python.lxml_free(params)
             if context is not None:
                 context.free_context()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
@@ -667,7 +668,7 @@ cdef class XSLT:
 
     cdef xmlDoc* _run_transform(self, xmlDoc* c_input_doc,
                                 const_char** params, _XSLTContext context,
-                                xslt.xsltTransformContext* transform_ctxt):
+                                xslt.xsltTransformContext* transform_ctxt) except? NULL:
         cdef xmlDoc* c_result
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
@@ -739,7 +740,8 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
         stylesheet._xslt_resolver_context._c_style_doc, 1)
 
     c_doc = _copyDoc(stylesheet._c_style.doc, 1)
-    new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
+    with nogil:
+        new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
     if new_xslt._c_style is NULL:
         tree.xmlFreeDoc(c_doc)
         raise MemoryError()

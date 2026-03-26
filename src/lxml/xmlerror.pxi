@@ -756,8 +756,12 @@ cdef void _receiveGenericError(void* c_log_handler, int c_domain,
             element_size = cstring_h.strlen(c_element)
             c_message = <char*>stdlib.malloc(
                 (text_size + element_size + 1) * sizeof(char))
-            stdio.sprintf(c_message, msg, c_element)
-            c_error.message = c_message
+            if c_message is not NULL:
+                stdio.sprintf(c_message, msg, c_element)
+                c_error.message = c_message
+            else:
+                # Out of memory, report at least the original message.
+                c_error.message = msg
         else:
             c_error.message = ''
     elif c_element is NULL:

@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       ZLIB_VERSION:
-        default: "1.3.1"
+        default: "1.3.2"
         required: false
         type: string
       LIBICONV_VERSION:
@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       WIN_ZLIB_VERSION:
-        default: "1.3.1"
+        default: "1.3.2"
         required: false
         type: string
       WIN_LIBICONV_VERSION:

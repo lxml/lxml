@@ -134,6 +134,8 @@ cdef extern from "Python.h":
 
     # always returns NULL to pass on the exception
     cdef object PyErr_SetFromErrno(object type)
+    cdef void PyException_SetContext(object exception, object context)
+    cdef PyObject* PyException_GetContext(object exception)
 
     cdef PyObject* PyThreadState_GetDict()
 

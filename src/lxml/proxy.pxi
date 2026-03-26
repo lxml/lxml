@@ -84,7 +84,9 @@ cdef xmlDoc* _plainFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node,
             return c_base_doc
 
     c_doc  = _copyDoc(c_base_doc, 0)                   # non recursive!
-    c_new_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
+    c_new_root = tree.xmlDocCopyNode(c_node, c_doc, 2) if c_doc is not NULL else NULL # non recursive!
+    if c_new_root is NULL:
+        raise MemoryError()
     tree.xmlDocSetRootElement(c_doc, c_new_root)
     _copyParentNamespaces(c_node, c_new_root)
 
