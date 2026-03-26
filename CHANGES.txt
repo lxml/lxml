@@ -25,6 +25,8 @@ Bugs fixed
 Other changes
 -------------
 
+* Built using Cython 3.2.4.
+
 * Binary wheels use zlib 1.3.2.
 
 
