@@ -462,6 +462,7 @@ cdef class _UnicodeStringReader:
     def read(self, int count):
         cdef Py_ssize_t pos = self._pos
         if pos >= len(self._data):
+            self._data = ''  # a good time to clean up
             return b''
         if count < 0:
             # This class is only used when reading from C, so this is not going to happen.
