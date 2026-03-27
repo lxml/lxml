@@ -46,16 +46,16 @@ cdef class iterparse:
        True for XML, ignored otherwise)
      - compact: safe memory for short text content (default: True)
      - resolve_entities: replace entities by their text value (default: True)
-     - huge_tree: disable security restrictions and support very deep trees
+     - huge_tree: disable security restrictions and support very deep trees \
                   and very long text content (only affects libxml2 2.7+)
      - html: parse input as HTML (default: XML)
-     - recover: try hard to parse through broken input (default: True for HTML,
-                False otherwise)
+     - recover: try hard to parse through broken input (default: True for \
+                HTML, False otherwise)
 
     Other keyword arguments:
      - encoding: override the document encoding
      - schema: an XMLSchema to validate against
-     - chunk_size: the number of bytes to read from the 'source' in one chunk
+     - chunk_size: the number of bytes to read from the 'source' in one chunk \
                    (default: 65536)
     """
     cdef _FeedParser _parser
