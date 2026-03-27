@@ -419,11 +419,13 @@ cdef class CustomElementClassLookup(FallbackElementClassLookup):
 
         lookup(self, type, doc, namespace, name)
 
-    to lookup the element class for a node. Arguments of the method:
-    * type:      one of 'element', 'comment', 'PI', 'entity'
-    * doc:       document that the node is in
-    * namespace: namespace URI of the node (or None for comments/PIs/entities)
-    * name:      name of the element/entity, None for comments, target for PIs
+    to lookup the element class for a node.
+
+    Arguments of the method:
+     - type:      one of 'element', 'comment', 'PI', 'entity'
+     - doc:       document that the node is in
+     - namespace: namespace URI of the node (or None for comments/PIs/entities)
+     - name:      name of the element/entity, None for comments, target for PIs
 
     If you return None from this method, the fallback will be called.
     """
