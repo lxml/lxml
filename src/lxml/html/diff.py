@@ -215,7 +215,7 @@ def htmldiff(old_html, new_html):
                             'new_tokens:', f"{len(new_html_tokens)}"                            
                             )
         raise RuntimeError(f"HTML diff algorithm error: {exc}") from exc
-    return fixup_ins_del_tags(result)
+    return fixup_ins_del_tags(result.strip())
 
 
 def htmldiff_tokens(html1_tokens, html2_tokens):
