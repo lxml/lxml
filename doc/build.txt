@@ -34,12 +34,12 @@ Cython versions, which may or may not generate correct code for lxml.
 The pre-generated release sources were tested and therefore are known
 to work.
 
-So, if you want a reliable build of lxml, we suggest to a) use a
-source release of lxml and b) disable or uninstall Cython for the
+So, if you want a reliable build of lxml, we suggest a) using a
+source release of lxml and b) disabling or uninstalling Cython for the
 build.
 
 *Only* if you are interested in building lxml from a checkout of the
-developer sources (e.g. to test a bug fix that has not been release
+developer sources (e.g. to test a bug fix that has not been released
 yet) or if you want to be an lxml developer, then you do need a
 working Cython installation.  You can use pip_ to install it::
 
@@ -255,7 +255,7 @@ install Unix/Linux style package management tools and new software, it
 actually seems to be hard to get libraries set up for exclusive usage
 that MacOS-X ships in an older version.  Alternative distributions
 (like macports) install their libraries in addition to the system
-libraries, but the compiler and the runtime loader on MacOS still sees
+libraries, but the compiler and the runtime loader on MacOS still see
 the system libraries before the new libraries.  This can lead to
 undebuggable crashes where the newer library seems to be loaded but
 the older system library is used.

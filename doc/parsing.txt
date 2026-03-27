@@ -17,7 +17,7 @@ event-driven API (currently only for XML).
    3  The feed parser interface
    4 Incremental event parsing
      4.1 Event types
-     4.1 Modifying the tree
+     4.2 Modifying the tree
      4.3 Selective tag events
      4.4 Comments and PIs
      4.5 Events with custom targets
@@ -491,8 +491,8 @@ parser:
   a
 
 If you do not call ``close()``, the parser will stay locked and
-subsequent feeds will keep appending data, usually resulting in a non
-well-formed document and an unexpected parser error.  So make sure you
+subsequent feeds will keep appending data, usually resulting in a non-well-formed
+document and an unexpected parser error.  So make sure you
 always close the parser after use, also in the exception case.
 
 Another way of achieving the same step-by-step parsing is by writing your own

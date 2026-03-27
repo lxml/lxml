@@ -17,5 +17,5 @@ try:
 except ImportError:
     raise ImportError(
         "lxml.html.clean module is now a separate project lxml_html_clean.\n"
-        "Install lxml[html_clean] or lxml_html_clean directly."
+        "Install lxml[html-clean] or lxml_html_clean directly."
     ) from None

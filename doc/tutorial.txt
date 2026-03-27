@@ -123,7 +123,7 @@ We'll create a little helper function to pretty-print the XML for us:
 Elements are lists
 ------------------
 
-To make the access to these subelements easy and straight forward,
+To make the access to these subelements easy and straightforward,
 elements mimic the behaviour of normal Python lists as closely as
 possible:
 
@@ -165,7 +165,7 @@ an Element to see if it has children, i.e. if the list of children is empty:
        print("The root element has children")
 
 This is no longer supported as people tend to expect that a "something"
-evaluates to True and expect Elements to be "something", may they have
+evaluates to True and expect Elements to be "something", whether they have
 children or not.  So, many users find it surprising that any Element
 would evaluate to False in an if-statement like the above.  Instead,
 use ``len(element)``, which is both more explicit and less error prone.
@@ -687,7 +687,7 @@ might become handy.  Just pass the name ``'unicode'`` as encoding:
    >>> etree.tostring(root, encoding='unicode')
    '<html><head/><body><p>Hello<br/>Wörld</p></body></html>'
 
-The W3C has a good article about the Unicode character set and character encodings
+`The W3C has a good article about the Unicode character set and character encodings
 <http://www.w3.org/International/tutorials/tutorial-char-enc/>`_.
 
 

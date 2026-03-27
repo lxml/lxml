@@ -240,7 +240,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -259,7 +259,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}-${{ matrix.env.LIBXML2_VERSION || env.LIBXML2_VERSION }}-${{ matrix.env.LIBXSLT_VERSION || env.LIBXSLT_VERSION }}
 
       - name: Cache [libs]
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         if: matrix.env.STATIC_DEPS
         with:
           path: |
@@ -278,7 +278,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: matrix.extra_hash == '-docs'
         with:
           name: website_html
@@ -286,7 +286,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: matrix.env.COVERAGE
         with:
           name: pycoverage_html
