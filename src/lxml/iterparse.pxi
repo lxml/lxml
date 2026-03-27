@@ -4,7 +4,8 @@ cdef class iterparse:
     """iterparse(self, source, events=("end",), tag=None, \
                   attribute_defaults=False, dtd_validation=False, \
                   load_dtd=False, no_network=True, remove_blank_text=False, \
-                  remove_comments=False, remove_pis=False, encoding=None, \
+                  compact=True, resolve_entities=True, remove_comments=False, \
+                  remove_pis=False, strip_cdata=True, encoding=None, \
                   html=False, recover=None, huge_tree=False, schema=None, \
                   chunk_size=65536)
 
