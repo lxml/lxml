@@ -21,20 +21,16 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
     Element.  By default, the tag name will be the class name and the
     namespace will be empty.  You can modify this with the following
     class attributes:
-
-    * TAG: the tag name, possibly containing a namespace in Clark
-      notation
-
-    * NAMESPACE: the default namespace URI, unless provided as part
-      of the TAG attribute.
-
-    * HTML: flag if the class is an HTML tag, as opposed to an XML
-      tag.  This only applies to un-namespaced tags and defaults to
-      false (i.e. XML).
-
-    * PARSER: the parser that provides the configuration for the
-      newly created document.  Providing an HTML parser here will
-      default to creating an HTML element.
+     - TAG: the tag name, possibly containing a namespace in Clark
+       notation
+     - NAMESPACE: the default namespace URI, unless provided as part
+       of the TAG attribute.
+     - HTML: flag if the class is an HTML tag, as opposed to an XML
+       tag.  This only applies to un-namespaced tags and defaults to
+       false (i.e. XML).
+     - PARSER: the parser that provides the configuration for the
+       newly created document.  Providing an HTML parser here will
+       default to creating an HTML element.
 
     In user code, the latter three are commonly inherited in class
     hierarchies that implement a common namespace.
