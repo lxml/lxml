@@ -1707,7 +1707,7 @@ cdef class XMLParser(_FeedParser):
                   and very long text content
 
     Other keyword arguments:
-     - resolve_entities: replace entities by their text value: False for keeping the \
+     - resolve_entities: replace entities by their text value. False for keeping the \
            entity references, True for resolving them, and 'internal' for resolving \
            internal definitions only (no external file/URL access). \
            The default used to be True and was changed to 'internal' in lxml 5.0.
