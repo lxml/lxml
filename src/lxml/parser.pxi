@@ -1696,7 +1696,7 @@ cdef class XMLParser(_FeedParser):
                    (default: False, changed in lxml 6.0, disabling only affects libxml2 2.15+)
      - ns_clean: clean up redundant namespace declarations
      - recover: try hard to parse through broken XML
-     - remove_blank_text: discard blank text nodes that appear ignorable. Without \
+     - remove_blank_text: discard blank text nodes that appear ignorable.  Without \
                           DTD/schema, a heuristic preserves blank text nodes \
                           appearing after non-blank content at the same level.
      - remove_comments: discard comments
@@ -1900,7 +1900,7 @@ cdef class HTMLParser(_FeedParser):
      - decompress: automatically decompress gzip input \
                    (default: False, changed in lxml 6.0, disabling only affects libxml2 2.15+)
      - remove_blank_text: discard empty text nodes that are ignorable \
-                          (i.e. not actual text content). Preserves spacing in \
+                          (i.e. not actual text content).  Preserves spacing in \
                           mixed-content elements per HTML structural rules.
      - remove_comments: discard comments
      - remove_pis: discard processing instructions

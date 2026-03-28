@@ -39,10 +39,10 @@ cdef class iterparse:
      - dtd_validation: validate (if DTD is available)
      - load_dtd: use DTD for parsing
      - no_network: prevent network access for related files
-     - remove_blank_text: discard blank text nodes. In XML mode, without \
+     - remove_blank_text: discard blank text nodes.  In XML mode, without \
                           DTD/schema, a heuristic preserves blank text nodes \
                           appearing after non-blank content at the same \
-                          level. In HTML mode, removal follows built-in \
+                          level.  In HTML mode, removal follows built-in \
                           structural rules and does not necessarily require \
                           DTD/schema.
      - remove_comments: discard comments
