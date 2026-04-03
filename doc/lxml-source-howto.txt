@@ -16,7 +16,7 @@ document that describes `how to build lxml from sources`_.
 .. _lxml: https://lxml.de/
 .. _`how to build lxml from sources`: build.html
 .. _`ReStructured Text`: http://docutils.sourceforge.net/rst.html
-.. _epydoc: http://epydoc.sourceforge.net/
+.. _Sphinx: https://www.sphinx-doc.org/
 .. _docutils: http://docutils.sourceforge.net/
 .. _`C-level API`: capi.html
 
@@ -143,11 +143,12 @@ on the files.  After generating an HTML page, the script parses it back
 in to build the side menu, and injects the complete menu into each
 page at the very end.
 
-Running the ``make`` command will also generate the API documentation
-if you have epydoc_ installed.  The epydoc package will import and
-introspect the extension modules and also introspect and parse the
-Python modules of lxml.  The aggregated information will then be
-written out into an HTML documentation site.
+Running ``make html`` will also generate the API documentation if you
+have Sphinx_ installed.  The build first runs ``sphinx-apidoc`` to
+generate API reference pages in `ReStructured Text`_ format.  It then
+runs ``sphinx-build``, which imports and introspects the extension
+and Python modules of lxml and writes the final API documentation
+HTML files.
 
 
 lxml.etree

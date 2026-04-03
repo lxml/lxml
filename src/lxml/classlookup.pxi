@@ -21,20 +21,16 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
     Element.  By default, the tag name will be the class name and the
     namespace will be empty.  You can modify this with the following
     class attributes:
-
-    * TAG - the tag name, possibly containing a namespace in Clark
-      notation
-
-    * NAMESPACE - the default namespace URI, unless provided as part
-      of the TAG attribute.
-
-    * HTML - flag if the class is an HTML tag, as opposed to an XML
-      tag.  This only applies to un-namespaced tags and defaults to
-      false (i.e. XML).
-
-    * PARSER - the parser that provides the configuration for the
-      newly created document.  Providing an HTML parser here will
-      default to creating an HTML element.
+     - TAG: the tag name, possibly containing a namespace in Clark
+       notation
+     - NAMESPACE: the default namespace URI, unless provided as part
+       of the TAG attribute.
+     - HTML: flag if the class is an HTML tag, as opposed to an XML
+       tag.  This only applies to un-namespaced tags and defaults to
+       false (i.e. XML).
+     - PARSER: the parser that provides the configuration for the
+       newly created document.  Providing an HTML parser here will
+       default to creating an HTML element.
 
     In user code, the latter three are commonly inherited in class
     hierarchies that implement a common namespace.
@@ -348,9 +344,9 @@ cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
     class dictionary.
 
     Arguments:
-      - attribute name - '{ns}name' style string
-      - class mapping  - Python dict mapping attribute values to Element classes
-      - fallback       - optional fallback lookup mechanism
+      - attribute name: '{ns}name' style string
+      - class mapping: Python dict mapping attribute values to Element classes
+      - fallback: optional fallback lookup mechanism
 
     A None key in the class mapping will be checked if the attribute is
     missing.
@@ -419,11 +415,13 @@ cdef class CustomElementClassLookup(FallbackElementClassLookup):
 
         lookup(self, type, doc, namespace, name)
 
-    to lookup the element class for a node. Arguments of the method:
-    * type:      one of 'element', 'comment', 'PI', 'entity'
-    * doc:       document that the node is in
-    * namespace: namespace URI of the node (or None for comments/PIs/entities)
-    * name:      name of the element/entity, None for comments, target for PIs
+    to lookup the element class for a node.
+
+    Arguments of the method:
+     - type:      one of 'element', 'comment', 'PI', 'entity'
+     - doc:       document that the node is in
+     - namespace: namespace URI of the node (or None for comments/PIs/entities)
+     - name:      name of the element/entity, None for comments, target for PIs
 
     If you return None from this method, the fallback will be called.
     """
