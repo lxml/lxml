@@ -17,6 +17,15 @@ Features added
 
 * Writing to Python file objects minimises data copying by passing buffers around.
 
+* GH#486: The HTML ARIA accessibility attributes were added to the set of safe attributes
+  in ``lxml.html.defs``.  This allows ``lxml_html_clean`` to pass them through.
+  Patch by oomsveta.
+
+Bugs fixed
+----------
+
+* Reading from file-like objects that start with a UTF-32 BOM failed to detect the BOM.
+
 Other changes
 -------------
 
@@ -29,9 +38,9 @@ Other changes
   They remain in ``xmlparser.pxd`` for legacy reasons but Cython code that uses them
   should migrate the import to ``tree.pxd``.
 
-* Binary wheels use zlib 1.3.2.
+* Built using Cython 3.2.4.
 
-* Built using Cython 3.2.2.
+* Binary wheels use zlib 1.3.2.
 
 
 6.0.3 (2026-0?-??)

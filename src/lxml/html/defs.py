@@ -62,7 +62,7 @@ safe_attrs = frozenset([
     'aria-relevant', 'aria-required', 'aria-roledescription', 'aria-rowcount',
     'aria-rowindex', 'aria-rowindextext', 'aria-rowspan', 'aria-selected',
     'aria-setsize', 'aria-sort', 'aria-valuemax', 'aria-valuemin',
-    'aria-valuenow', 'aria-valuetext', 'role', 'tabindex',
+    'aria-valuenow', 'aria-valuetext', 'role',
     ])
 
 # From http://htmlhelp.com/reference/html40/olist.html
