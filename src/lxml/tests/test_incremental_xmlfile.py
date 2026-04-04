@@ -744,5 +744,9 @@ def test_suite():
     return suite
 
 
+# Hide test base classes from test discovery.
+del _XmlFileTestCaseBase
+
+
 if __name__ == '__main__':
     print('to test use test.py %s' % __file__)

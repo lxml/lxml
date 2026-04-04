@@ -15,7 +15,7 @@ try:
 except ImportError:
     CYTHON_INSTALLED = False
 
-EXT_MODULES = ["lxml.etree", "lxml.objectify"]
+EXT_MODULES = ["lxml.etree", "lxml.objectify", "lxml.tests._testlock"]
 COMPILED_MODULES = [
     "lxml.builder",
     "lxml._elementpath",
@@ -152,6 +152,8 @@ def ext_modules(static_include_dirs, static_library_dirs,
     cythonize_directives = {
         'binding': True,
     }
+    if sys.version_info >= (3,14):
+        cythonize_directives['freethreading_compatible'] = True
     if OPTION_WITH_COVERAGE:
         cythonize_directives['linetrace'] = True
 
@@ -321,6 +323,8 @@ def cflags(static_cflags):
         result.append('-w')
     if OPTION_DEBUG_GCC:
         result.append('-g2')
+    if OPTION_CSTD:
+        result.append(f'/std:{OPTION_CSTD}' if sys.platform == 'win32' else f'-std={OPTION_CSTD}')
 
     if OPTION_STATIC:
         if not static_cflags:
@@ -575,6 +579,7 @@ OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
 OPTION_ZLIB_VERSION = option_value('zlib-version')
 OPTION_MULTICORE = option_value('multicore')
+OPTION_CSTD = option_value('lxml-cstd')
 OPTION_DOWNLOAD_DIR = option_value('download-dir')
 if OPTION_DOWNLOAD_DIR is None:
     OPTION_DOWNLOAD_DIR = 'libs'

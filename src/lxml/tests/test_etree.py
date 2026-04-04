@@ -43,6 +43,7 @@ TESTED VERSION: {etree.__version__}
     Default encoding: {sys.getdefaultencoding()}
     Max Unicode:      {sys.maxunicode}
     PyUCS4 encoding:  {getattr(etree, '_pyucs4_encoding_name', '')}
+    freethreading:    {getattr(etree, '_freethreading_enabled', '')}
 """)
 
 
@@ -5879,6 +5880,10 @@ def test_suite():
     suite.addTests(
         [make_doctest('resolvers.txt')])
     return suite
+
+
+# Hide test base classes from test discovery.
+del _XIncludeTestCase
 
 
 if __name__ == '__main__':

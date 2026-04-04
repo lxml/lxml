@@ -6,7 +6,7 @@ from functools import partial
 
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
-DEFAULT_REPEAT = 9
+DEFAULT_REPEAT = 7
 
 _TEXT  = "some ASCII text" * TREE_FACTOR
 _UTEXT = u"some klingon: \uF8D2" * TREE_FACTOR
@@ -393,16 +393,31 @@ def printSetupTimes(benchmark_suites):
     print('')
 
 
-def autorange(bench_func, min_runtime=0.2, max_number=None, timer=time.perf_counter):
+def autorange(bench_func, min_runtime=0.2, max_number=None):
     i = 1
+    # Quickly scale up by factors of 10.
+    # Note that this will be increasingly off for fast non-linear benchmarks, so we stop an order away.
+    time_taken = bench_func(i)
+    while time_taken * 130 < min_runtime:
+        i *= 10
+        time_taken *= 10
+
+    last_min = 0.
     while True:
         for j in 1, 2, 5:
             number = i * j
             if max_number is not None and number >= max_number:
                 return max_number
             time_taken = bench_func(number)
+
             if time_taken >= min_runtime:
+                if (time_taken - min_runtime) / (time_taken - last_min) > .4:
+                    # Avoid large overshoots due to large j steps.
+                    number -= i // (3 if j == 1 else 2 if j == 2 else 1)
                 return number
+
+            last_min = time_taken
+
         i *= 10
 
 
@@ -449,7 +464,8 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
             t_all_calls = timer() - t_one_call
             return t_all_calls
 
-    time_benchmark(1)  # run once for tree warm-up
+    with nogc():
+        time_benchmark(1)  # run once for tree warm-up
 
     with nogc():
         # Adjust "min_runtime" to avoid long tree rebuild times for short benchmarks.
@@ -464,7 +480,7 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
         with nogc():
             t_one_call = time_benchmark(inner_loops) / inner_loops
             times.append(1000.0 * t_one_call)  # msec
-        gc.collect()
+    gc.collect()
     return times
 
 
