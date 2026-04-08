@@ -38,15 +38,16 @@ cdef void _initThreadLogging() noexcept:
 cdef class _LogEntry:
     """A log message entry from an error log.
 
-    Attributes:
-     - message: the message text
-     - domain: the domain ID (see lxml.etree.ErrorDomains)
-     - type: the message type ID (see lxml.etree.ErrorTypes)
-     - level: the log level ID (see lxml.etree.ErrorLevels)
-     - line: the line at which the message originated (if applicable)
-     - column: the character column at which the message originated (if applicable)
-     - filename: the name of the file in which the message originated (if applicable)
-     - path: the location in which the error was found (if available)
+    **Attributes:**
+
+    - message: the message text
+    - domain: the domain ID (see lxml.etree.ErrorDomains)
+    - type: the message type ID (see lxml.etree.ErrorTypes)
+    - level: the log level ID (see lxml.etree.ErrorLevels)
+    - line: the line at which the message originated (if applicable)
+    - column: the character column at which the message originated (if applicable)
+    - filename: the name of the file in which the message originated (if applicable)
+    - path: the location in which the error was found (if available)
     """
     cdef readonly int domain
     cdef readonly int type

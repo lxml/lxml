@@ -957,16 +957,17 @@ cdef class C14NWriterTarget:
 
     Serialises parse events to XML C14N 2.0.
 
-    Configuration options:
-     - *with_comments*: set to true to include comments
-     - *strip_text*: set to true to strip whitespace before and after text content
-     - *rewrite_prefixes*: set to true to replace namespace prefixes by "n{number}"
-     - *qname_aware_tags*: a set of qname aware tag names in which prefixes \
-                           should be replaced in text content
-     - *qname_aware_attrs*: a set of qname aware attribute names in which \
-                            prefixes should be replaced in text content
-     - *exclude_attrs*: a set of attribute names that should not be serialised
-     - *exclude_tags*: a set of tag names that should not be serialised
+    **Configuration options:**
+
+    - with_comments: set to true to include comments
+    - strip_text: set to true to strip whitespace before and after text content
+    - rewrite_prefixes: set to true to replace namespace prefixes by "n{number}"
+    - qname_aware_tags: a set of qname aware tag names in which prefixes should
+      be replaced in text content
+    - qname_aware_attrs: a set of qname aware attribute names in which prefixes
+      should be replaced in text content
+    - exclude_attrs: a set of attribute names that should not be serialised
+    - exclude_tags: a set of tag names that should not be serialised
     """
     cdef object _write
     cdef list _data
