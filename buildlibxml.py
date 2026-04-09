@@ -1,9 +1,14 @@
+import hashlib
 import json
-import os, re, sys, platform
+import os
+import platform
+import re
+import sys
 import tarfile
 import time
 from contextlib import closing
 from ftplib import FTP
+from pathlib import Path
 
 import urllib.error
 from urllib.parse import urljoin, quote as urlquote, unquote, urlparse
@@ -297,6 +302,22 @@ def tryint(s):
         return s
 
 
+ARCHIVE_HASHES = {
+    # Default hash algorithm is SHA-256.
+    # Prefix hash with e.g. "sha512:" for alternative algorithms.
+    filename: digest
+    for line in """
+    7ce458a0affeb83f0b55f1f4f9e0e55735dbfc1a9de124ee86fb4a66b597203a  libxml2-2.14.6.tar.xz
+    c8b9bc81f8b590c33af8cc6c336dbff2f53409973588a351c95f1c621b13d09d  libxml2-2.15.2.tar.xz
+    5a3d6b383ca5afc235b171118e90f5ff6aa27e9fea3303065231a6d403f0183a  libxslt-1.1.43.tar.xz
+    9acfe68419c4d06a45c550321b3212762d92f41465062ca4ea19e632ee5d216e  libxslt-1.1.45.tar.xz
+    88dd96a8c0464eca144fc791ae60cd31cd8ee78321e67397e25fc095c4a19aa6  libiconv-1.19.tar.gz
+    bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16  zlib-1.3.2.tar.gz
+    """.strip().splitlines()
+    for digest, filename in [line.split()]
+}
+
+
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
     #version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
@@ -362,6 +383,23 @@ def find_max_version(libname, filenames, version_re=None):
     return version_string
 
 
+def file_exists(file_path: Path, size=None, digest=None):
+    if not file_path.exists():
+        return False
+    if size is not None:
+        if file_path.stat().st_size != size:
+            return False
+    if digest is not None and hasattr(hashlib, 'file_digest'):
+        hash_alg = 'sha256'
+        if ':' in digest:
+            hash_alg, _, digest = digest.partition(':')
+        with file_path.open(mode='rb') as f:
+            file_digest = hashlib.file_digest(f, hash_alg)
+        if digest != file_digest.hexdigest():
+            return False
+    return True
+
+
 def download_library(dest_dir, location, name, version_re, filename, version=None):
     if version is None:
         try:
@@ -390,24 +428,31 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
         filename = filename % version
 
     full_url = urljoin(location, filename)
-    dest_filename = os.path.join(dest_dir, filename)
-    if os.path.exists(dest_filename):
-        print(('Using existing %s downloaded into %s '
-               '(delete this file if you want to re-download the package)') % (
-            name, dest_filename))
-        return dest_filename
+    dest_filepath = Path(dest_dir) / filename
+    if file_exists(dest_filepath, digest=ARCHIVE_HASHES.get(filename)):
+        print(f'Using existing {name} downloaded into {dest_filepath} '
+              '(delete this file if you want to re-download the package)')
+        return dest_filepath
 
-    print('Downloading %s into %s from %s' % (name, dest_filename, full_url))
-    try:
-        urlretrieve(full_url, dest_filename)
-    except urllib.error.URLError as exc:
-        # retry once
-        retry_after_seconds = 2
-        print(f"Download failed: {exc}, retrying in {int(retry_after_seconds)} seconds…")
-        time.sleep(retry_after_seconds)
-        urlretrieve(full_url, dest_filename)
+    print('Downloading %s into %s from %s' % (name, dest_filepath, full_url))
+    for retry_after_seconds in (2, 5, 10, None):
+        try:
+            urlretrieve(full_url, dest_filepath)
+        except urllib.error.URLError as exc:
+            if retry_after_seconds is None:
+                print(f"Download failed: {exc}")
+                break
+            else:
+                print(f"Download failed: {exc}, retrying in {int(retry_after_seconds)} seconds…")
+            time.sleep(retry_after_seconds)
+        else:
+            if file_exists(dest_filepath, digest=ARCHIVE_HASHES.get(filename)):
+                return dest_filepath
 
-    return dest_filename
+    if not file_exists(dest_filepath, digest=ARCHIVE_HASHES.get(filename)):
+        raise RuntimeError(f"File download of {filename} failed to write the correct file.")
+
+    return dest_filepath
 
 
 def unpack_tarball(tar_filename, dest) -> str:
