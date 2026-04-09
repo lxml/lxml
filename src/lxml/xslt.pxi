@@ -345,19 +345,18 @@ cdef class XSLT:
         transform = etree.XSLT(xsl_tree)
         result = transform(xml_tree)
 
-    Keyword arguments of the constructor:
+    **Keyword arguments of the constructor:**
 
-    - extensions: a dict mapping ``(namespace, name)`` pairs to
-      extension functions or extension elements
-    - regexp: enable exslt regular expression support in XPath
-      (default: True)
-    - access_control: access restrictions for network or file
-      system (see `XSLTAccessControl`)
+    - extensions: a dict mapping ``(namespace, name)`` pairs to extension
+      functions or extension elements
+    - regexp: enable exslt regular expression support in XPath (default: True)
+    - access_control: access restrictions for network or file system
+      (see `XSLTAccessControl`)
 
-    Keyword arguments of the XSLT call:
+    **Keyword arguments of the XSLT call:**
 
-    - profile_run: enable XSLT profiling and make the profile available
-      as XML document in ``result.xslt_profile`` (default: False)
+    - profile_run: enable XSLT profiling and make the profile available as XML
+      document in ``result.xslt_profile`` (default: False)
 
     Other keyword arguments of the call are passed to the stylesheet
     as parameters.
