@@ -40,7 +40,7 @@ permissions: {}
 
 env:
   ZLIB_VERSION: "1.3.2"
-  LIBICONV_VERSION: "1.18"
+  LIBICONV_VERSION: "1.19"
   LIBXML2_VERSION: "2.14.6"
   LIBXSLT_VERSION: "1.1.43"
 
@@ -70,7 +70,7 @@ jobs:
           libs/*.xz
           libs/*.gz
           libs/*.zip
-        key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+        key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
     - name: Download latest libraries
       env:
@@ -165,7 +165,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
