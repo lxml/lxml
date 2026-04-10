@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import date
 sys.path.insert(0, os.path.abspath('../../src'))
 
 from lxml import __version__ as lxml_version
@@ -7,7 +8,7 @@ from lxml import __version__ as lxml_version
 # -- Project information -----------------------------------------------------
 
 project = 'lxml'
-copyright = '2020, lxml dev team'
+copyright = f'{date.today().year}, lxml dev team'
 author = 'lxml dev team'
 version = lxml_version
 
