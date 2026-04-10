@@ -18,7 +18,8 @@ version = lxml_version
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    'sphinx_rtd_theme',
+    #'sphinx_rtd_theme',
+    'sphinx_book_theme',
 ]
 
 language = 'en'
@@ -28,7 +29,8 @@ exclude_patterns = ['_build']
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = 'sphinx_rtd_theme'
+#html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
 
 html_logo = '../html/python-xml.png'
 
