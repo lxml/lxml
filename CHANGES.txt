@@ -2,6 +2,28 @@
 lxml changelog
 ==============
 
+6.1.0 (2026-0?-??)
+==================
+
+Features added
+--------------
+
+* GH#486: The HTML ARIA accessibility attributes were added to the set of safe attributes
+  in ``lxml.html.defs``.  This allows ``lxml_html_clean`` to pass them through.
+  Patch by oomsveta.
+
+* The default chunk size for reading from file-likes in ``iterparse()`` is now configurable
+  with a new ``chunk_size`` argument.
+
+Bugs fixed
+----------
+
+* LP#2146291: The ``resolve_entities`` option was still set to ``True`` for the
+  parser subclasses ``iterparse`` and ``ETCompatXMLParser``, allowing for external
+  entity injection (XXE) when using these parsers.  The default was now changed to
+  ``'internal'`` only, as for the normal XML and HTML parsers.
+
+
 6.0.4 (2026-04-12)
 ==================
 
