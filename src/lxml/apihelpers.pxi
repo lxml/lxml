@@ -277,8 +277,7 @@ cdef _iter_nsmap(nsmap):
         return nsmap.items()
     if len(nsmap) <= 1:
         return nsmap.items()
-    # nsmap will usually be a plain unordered dict => avoid type checking overhead
-    if type(nsmap) is not dict and isinstance(nsmap, OrderedDict):
+    if isinstance(nsmap, OrderedDict):
         return nsmap.items()  # keep existing order
     if None not in nsmap:
         return sorted(nsmap.items())
