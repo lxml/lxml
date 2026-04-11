@@ -20,8 +20,8 @@ Bugs fixed
 
 * LP#2146291: The ``resolve_entities`` option was still set to ``True`` for the
   parser subclasses ``iterparse`` and ``ETCompatXMLParser``, allowing for external
-  entity injection (XXE) when using these parsers.  The default was now changed to
-  ``'internal'`` only, as for the normal XML and HTML parsers.
+  entity injection (XXE) when using these parsers without setting this option explicitly.
+  The default was now changed to ``'internal'`` only, as for the normal XML and HTML parsers.
 
 
 6.0.4 (2026-04-12)
