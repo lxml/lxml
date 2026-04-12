@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import hashlib
 import json
 import logging
 import shutil
@@ -21,7 +22,7 @@ def find_github_files(version, api_url=GITHUB_API_URL):
     release, _ = read_url(url, accept="application/vnd.github+json", as_json=True)
 
     for asset in release.get('assets', ()):
-        yield asset['browser_download_url']
+        yield (asset['browser_download_url'], asset['size'], asset['digest'])
 
 
 def read_url(url, decode=True, accept=None, as_json=False):
@@ -54,27 +55,28 @@ def _find_content_encoding(response, default='iso8859-1'):
     return charset
 
 
-def download1(wheel_url, dest_dir):
+def download1(wheel_metadata, dest_dir):
+    wheel_url, size, digest = wheel_metadata
     wheel_name = wheel_url.rsplit("/", 1)[1]
+    file_path = dest_dir / wheel_name
+
+    if file_exists(file_path, size=size, digest=digest):
+        logger.info(f"Already have {wheel_name}")
+        return wheel_name
+
     logger.info(f"Downloading {wheel_url} ...")
     with urlopen(wheel_url) as w:
-        file_path = dest_dir / wheel_name
-        if (file_path.exists()
-                and "Content-Length" in w.headers
-                and file_path.stat().st_size == int(w.headers["Content-Length"])):
-            logger.info(f"Already have {wheel_name}")
+        temp_file_path = file_path.with_suffix(".tmp")
+        try:
+            with open(temp_file_path, "wb") as f:
+                shutil.copyfileobj(w, f)
+        except:
+            if temp_file_path.exists():
+                temp_file_path.unlink()
+            raise
         else:
-            temp_file_path = file_path.with_suffix(".tmp")
-            try:
-                with open(temp_file_path, "wb") as f:
-                    shutil.copyfileobj(w, f)
-            except:
-                if temp_file_path.exists():
-                    temp_file_path.unlink()
-                raise
-            else:
-                temp_file_path.replace(file_path)
-                logger.info(f"Finished downloading {wheel_name}")
+            temp_file_path.replace(file_path)
+            logger.info(f"Finished downloading {wheel_name}")
     return wheel_name
 
 
@@ -91,28 +93,29 @@ def download(urls, dest_dir, jobs=PARALLEL_DOWNLOADS):
             raise
 
 
+def file_exists(file_path: Path, size=None, digest=None):
+    if not file_path.exists():
+        return False
+    if size is not None:
+        if file_path.stat().st_size != size:
+            return False
+    if digest is not None:
+        hash_alg = 'sha256'
+        if ':' in digest:
+            hash_alg, _, digest = digest.partition(':')
+        with file_path.open(mode='rb') as f:
+            file_digest = hashlib.file_digest(f, hash_alg)
+        if digest != file_digest.hexdigest():
+            return False
+    return True
+
+
 def dedup(it):
     seen = set()
     for value in it:
         if value not in seen:
             seen.add(value)
             yield value
-
-
-def roundrobin(*iterables):
-    "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
-    # Recipe credited to George Sakkis
-    from itertools import cycle, islice
-    num_active = len(iterables)
-    nexts = cycle(iter(it).__next__ for it in iterables)
-    while num_active:
-        try:
-            for next in nexts:
-                yield next()
-        except StopIteration:
-            # Remove the iterator we just exhausted from the cycle.
-            num_active -= 1
-            nexts = cycle(islice(nexts, num_active))
 
 
 def main(*args):
@@ -126,9 +129,7 @@ def main(*args):
         dest_dir.mkdir()
 
     start_time = datetime.datetime.now().replace(microsecond=0)
-    urls = roundrobin(*map(dedup, [
-        find_github_files(version),
-    ]))
+    urls = dedup(find_github_files(version))
     count = sum(1 for _ in enumerate(download(urls, dest_dir)))
     duration = datetime.datetime.now().replace(microsecond=0) - start_time
     logger.info(f"Downloaded {count} files in {duration}.")
