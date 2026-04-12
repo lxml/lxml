@@ -239,7 +239,19 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
                     tree.xmlStrcmp(c_ns.href, c_href) != 0:
                 c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
                 if c_ns is NULL:
-                    raise MemoryError()
+                    # libxml2 has two error conditions: "out of memory" and "prefix exists already".
+                    # We ignore the latter for compatibility reasons. It currently only appears
+                    # during namespace cleanup.
+                    c_ns = c_node.nsDef
+                    while c_ns is not NULL:
+                        if c_prefix is NULL:
+                            if c_ns.prefix is NULL:
+                                break
+                        elif tree.xmlStrcmp(c_ns.prefix, c_prefix) == 0:
+                            break
+                        c_ns = c_ns.next
+                    else:
+                        raise MemoryError()
             if href_utf == node_ns_utf:
                 tree.xmlSetNs(c_node, c_ns)
                 node_ns_utf = None
@@ -282,8 +294,7 @@ cdef _iter_nsmap(nsmap):
         return nsmap.items()
     if len(nsmap) <= 1:
         return nsmap.items()
-    # nsmap will usually be a plain unordered dict => avoid type checking overhead
-    if type(nsmap) is not dict and isinstance(nsmap, OrderedDict):
+    if isinstance(nsmap, OrderedDict):
         return nsmap.items()  # keep existing order
     if None not in nsmap:
         return sorted(nsmap.items())

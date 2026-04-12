@@ -43,6 +43,15 @@ Other changes
 * Binary wheels use zlib 1.3.2.
 
 
+6.0.4 (2026-04-12)
+==================
+
+Bugs fixed
+----------
+
+* LP#2148019: Spurious MemoryError during namespace cleanup.
+
+
 6.0.3 (2026-04-09)
 ==================
 
