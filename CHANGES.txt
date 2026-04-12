@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+6.0.4 (2026-04-13)
+==================
+
+Bugs fixed
+----------
+
+* LP#2148019: Spurious MemoryError during namespace cleanup.
+
+
 6.0.3 (2026-04-09)
 ==================
 
