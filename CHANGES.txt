@@ -2,8 +2,11 @@
 lxml changelog
 ==============
 
-6.1.0 (2026-0?-??)
+6.1.0 (2026-04-??)
 ==================
+
+This release fixes a possible external entity injection (XXE) vulnerability in
+``iterparse()`` and the ``ETCompatXMLParser``.
 
 Features added
 --------------
@@ -18,10 +21,12 @@ Features added
 Bugs fixed
 ----------
 
-* LP#2146291: The ``resolve_entities`` option was still set to ``True`` for the
-  parser subclasses ``iterparse`` and ``ETCompatXMLParser``, allowing for external
-  entity injection (XXE) when using these parsers without setting this option explicitly.
-  The default was now changed to ``'internal'`` only, as for the normal XML and HTML parsers.
+* LP#2146291: The ``resolve_entities`` option was still set to ``True`` for
+  ``iterparse`` and ``ETCompatXMLParser``, allowing for external entity injection (XXE)
+  when using these parsers without setting this option explicitly.
+  The default was now changed to ``'internal'`` only (as for the normal XML and HTML parsers
+  since lxml 5.0).
+  Issue found by Sihao Qiu.
 
 
 6.0.4 (2026-04-12)
