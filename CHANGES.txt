@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-6.1.0 (2026-04-??)
+6.1.0 (2026-04-13)
 ==================
 
 This release fixes a possible external entity injection (XXE) vulnerability in
