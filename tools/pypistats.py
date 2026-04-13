@@ -8,7 +8,7 @@ PACKAGE = "lxml"
 
 
 def get_stats(stats_type, package=PACKAGE, period="month"):
-    stats_url = f"https://www.pypistats.org/api/packages/{package}/{stats_type}?period={period}"
+    stats_url = f"https://pypistats.org/api/packages/{package}/{stats_type}?period={period}"
 
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
