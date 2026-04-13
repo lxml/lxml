@@ -46,7 +46,7 @@ cdef class iterparse:
        True for XML, ignored otherwise)
      - compact: safe memory for short text content (default: True)
      - resolve_entities: replace entities by their text value
-       (default: 'internal' only)
+       (default: 'internal' only; True before lxml 6.1)
      - huge_tree: disable security restrictions and support very deep trees
                   and very long text content (only affects libxml2 2.7+)
      - html: parse input as HTML (default: XML)

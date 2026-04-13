@@ -1727,6 +1727,9 @@ cdef class ETCompatXMLParser(XMLParser):
 
     This parser has ``remove_comments`` and ``remove_pis`` enabled by default
     and thus ignores comments and processing instructions.
+
+    The default value of ``resolve_entities`` used to be True and was changed to
+    'internal' in lxml 6.1.
     """
     def __init__(self, *, encoding=None, attribute_defaults=False,
                  dtd_validation=False, load_dtd=False, no_network=True, decompress=False,
