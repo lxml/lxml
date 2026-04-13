@@ -73,19 +73,22 @@ Project income report
 lxml has `well over 250 million downloads <https://pypistats.org/packages/lxml>`_
 per month on PyPI.
 
-* Total project income in 2025: EUR 3030.50  (252.54 € / month, 1.15 € / 1,000,000 downloads)
+* Total project income in 2025: EUR 3868.43  (322.37 € / month, 1.46 € / 1,000,000 downloads)
 
   - Tidelift: EUR 2642.35
+  - thanks.dev: EUR 449.78
   - Paypal: EUR 388.15
 
-* Total project income in 2024: EUR 2826.29  (235.52 € / month, 1.96 € / 1,000,000 downloads)
+* Total project income in 2024: EUR 3032.06  (252.57 € / month, 2.09 € / 1,000,000 downloads)
 
   - Tidelift: EUR 2777.34
+  - thanks.dev: EUR 205.77
   - Paypal: EUR 48.95
 
-* Total project income in 2023: EUR 2776.56  (231.38 € / month, 2.89 € / 1,000,000 downloads)
+* Total project income in 2023: EUR 2821,16  (235.09 € / month, 2.93 € / 1,000,000 downloads)
 
   - Tidelift: EUR 2738.46
+  - thanks.dev: EUR 44.60
   - Paypal: EUR 38.10
 
 * Total project income in 2022: EUR 2566.38  (213.87 € / month, 3.56 € / 1,000,000 downloads)
