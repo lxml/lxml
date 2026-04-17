@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-6.1.0 (2026-04-13)
+6.1.0 (2026-04-17)
 ==================
 
 This release fixes a possible external entity injection (XXE) vulnerability in
@@ -26,7 +26,7 @@ Bugs fixed
   when using these parsers without setting this option explicitly.
   The default was now changed to ``'internal'`` only (as for the normal XML and HTML parsers
   since lxml 5.0).
-  Issue found by Sihao Qiu.
+  Issue found by Sihao Qiu as CVE-2026-41066.
 
 
 6.0.4 (2026-04-12)
