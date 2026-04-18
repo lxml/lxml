@@ -705,8 +705,8 @@ cdef inline xmlNode* _findLastEventNode(xmlparser.xmlParserCtxt* c_ctxt) noexcep
 ############################################################
 
 cdef class TreeBuilder(_SaxParserTarget):
-    """TreeBuilder(self, element_factory=None, parser=None,
-                    comment_factory=None, pi_factory=None,
+    """TreeBuilder(self, element_factory=None, parser=None, \
+                    comment_factory=None, pi_factory=None, \
                     insert_comments=True, insert_pis=True)
 
     Parser target that builds a tree from parse event callbacks.

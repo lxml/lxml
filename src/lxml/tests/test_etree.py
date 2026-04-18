@@ -3300,6 +3300,27 @@ class ETreeOnlyTestCase(HelperTestCase):
             b'</root>',
             self.etree.tostring(root))
 
+    def test_namespace_cleanup_replace_default_namespace(self):
+        # LP#2148019, made xmlNewNs() return NULL in _setNodeNamespaces() due to prefix reuse.
+        xml = b'<root xmlns="nsa"><child>childtext</child></root>'
+        root = self.etree.fromstring(xml)
+        self.etree.SubElement(root, '{nsb}newchild').text = 'newtext'
+        self.etree.cleanup_namespaces(root, top_nsmap={None: "nsb"})
+
+    def test_namespace_cleanup_replace_namespaces(self):
+        # LP#2148019, made xmlNewNs() return NULL in _setNodeNamespaces() due to prefix reuse.
+        xml = b'<root xmlns="nsa"><child>childtext</child></root>'
+        root = self.etree.fromstring(xml)
+        self.etree.SubElement(root, '{nsb}newchild').text = 'newtext'
+        self.etree.cleanup_namespaces(root, top_nsmap={None: "nsb", 'pa': "nsa"})
+
+    def test_namespace_cleanup_swap_prefixes(self):
+        # LP#2148019, made xmlNewNs() return NULL in _setNodeNamespaces() due to prefix reuse.
+        xml = b'<a:root xmlns:a="nsa" xmlns:b="nsb"><a:achild>achildtext</a:achild><b:child>bchildtext</b:child></a:root>'
+        root = self.etree.fromstring(xml)
+        self.etree.SubElement(root, '{nsb}newchild').text = 'newtext'
+        self.etree.cleanup_namespaces(root, top_nsmap={'a': "nsb", 'b': "nsa"})
+
     def test_element_nsmap(self):
         etree = self.etree
 

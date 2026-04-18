@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import date
 sys.path.insert(0, os.path.abspath('../../src'))
 
 from lxml import __version__ as lxml_version
@@ -7,7 +8,7 @@ from lxml import __version__ as lxml_version
 # -- Project information -----------------------------------------------------
 
 project = 'lxml'
-copyright = '2020, lxml dev team'
+copyright = f'{date.today().year}, lxml dev team'
 author = 'lxml dev team'
 version = lxml_version
 
@@ -17,7 +18,8 @@ version = lxml_version
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    'sphinx_rtd_theme',
+    #'sphinx_rtd_theme',
+    'sphinx_book_theme',
 ]
 
 language = 'en'
@@ -27,7 +29,8 @@ exclude_patterns = ['_build']
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = 'sphinx_rtd_theme'
+#html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
 
 html_logo = '../html/python-xml.png'
 

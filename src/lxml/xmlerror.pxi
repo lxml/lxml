@@ -38,7 +38,7 @@ cdef void _initThreadLogging() noexcept:
 cdef class _LogEntry:
     """A log message entry from an error log.
 
-    Attributes:
+    **Attributes:**
 
     - message: the message text
     - domain: the domain ID (see lxml.etree.ErrorDomains)

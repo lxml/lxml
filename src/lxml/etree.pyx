@@ -2565,10 +2565,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
               bint exclusive=False, inclusive_ns_prefixes=None,
               bint with_comments=True, bint strip_text=False,
               docstring=None):
-        """write(self, file, encoding=None, method="xml",
-                  pretty_print=False, xml_declaration=None, with_tail=True,
-                  standalone=None, doctype=None, compression=0,
-                  exclusive=False, inclusive_ns_prefixes=None,
+        """write(self, file, encoding=None, method="xml", \
+                  pretty_print=False, xml_declaration=None, with_tail=True, \
+                  standalone=None, doctype=None, compression=0, \
+                  exclusive=False, inclusive_ns_prefixes=None, \
                   with_comments=True, strip_text=False)
 
         Write the tree to a filename, file or file-like object.
@@ -3032,7 +3032,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def write_c14n(self, file, *, bint exclusive=False, bint with_comments=True,
                    compression=0, inclusive_ns_prefixes=None):
-        """write_c14n(self, file, exclusive=False, with_comments=True,
+        """write_c14n(self, file, exclusive=False, with_comments=True, \
                        compression=0, inclusive_ns_prefixes=None)
 
         C14N write of document. Always writes UTF-8.
@@ -4183,11 +4183,11 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
              # method='c14n2'
              bint with_comments=True, bint strip_text=False,
              ):
-    """tostring(element_or_tree, encoding=None, method="xml",
-                 xml_declaration=None, pretty_print=False, with_tail=True,
-                 standalone=None, doctype=None,
-                 exclusive=False, inclusive_ns_prefixes=None,
-                 with_comments=True, strip_text=False,
+    """tostring(element_or_tree, encoding=None, method="xml", \
+                 xml_declaration=None, pretty_print=False, with_tail=True, \
+                 standalone=None, doctype=None, \
+                 exclusive=False, inclusive_ns_prefixes=None, \
+                 with_comments=True, strip_text=False, \
                  )
 
     Serialize an element to an encoded string representation of its XML
@@ -4302,7 +4302,7 @@ def tostringlist(element_or_tree, *args, **kwargs):
 
 def tounicode(element_or_tree, *, method="xml", bint pretty_print=False,
               bint with_tail=True, doctype=None):
-    """tounicode(element_or_tree, method="xml", pretty_print=False,
+    """tounicode(element_or_tree, method="xml", pretty_print=False, \
                   with_tail=True, doctype=None)
 
     Serialize an element to the Python unicode representation of its XML

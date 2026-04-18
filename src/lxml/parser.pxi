@@ -1733,7 +1733,7 @@ cdef class XMLParser(_FeedParser):
     """XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, \
                  load_dtd=False, no_network=True, decompress=False, ns_clean=False, \
                  recover=False, schema: XMLSchema =None, huge_tree=False, \
-                 remove_blank_text=False, resolve_entities=True, \
+                 remove_blank_text=False, resolve_entities='internal', \
                  remove_comments=False, remove_pis=False, strip_cdata=True, \
                  collect_ids=True, target=None, compact=True)
 
@@ -1751,35 +1751,38 @@ cdef class XMLParser(_FeedParser):
     additionally provide an XMLSchema from which the default
     attributes can be read).
 
-    Available boolean keyword arguments:
+    **Available boolean keyword arguments:**
 
-    - attribute_defaults - inject default attributes from DTD or XMLSchema
-    - dtd_validation     - validate against a DTD referenced by the document
-    - load_dtd           - use DTD for parsing
-    - no_network         - prevent network access for related files (default: True)
-    - decompress         - automatically decompress gzip input
-                           (default: False, changed in lxml 6.0, disabling only affects libxml2 2.15+)
-    - ns_clean           - clean up redundant namespace declarations
-    - recover            - try hard to parse through broken XML
-    - remove_blank_text  - discard blank text nodes that appear ignorable
-    - remove_comments    - discard comments
-    - remove_pis         - discard processing instructions
-    - strip_cdata        - replace CDATA sections by normal text content (default: True)
-    - compact            - save memory for short text content (default: True)
-    - collect_ids        - use a hash table of XML IDs for fast access
-                           (default: True, always True with DTD validation)
-    - huge_tree          - disable security restrictions and support very deep trees
-                           and very long text content
+    - attribute_defaults: inject default attributes from DTD or XMLSchema
+    - dtd_validation: validate against a DTD referenced by the document
+    - load_dtd: use DTD for parsing
+    - no_network: prevent network access for related files (default: True)
+    - decompress: automatically decompress gzip input (default: False,
+      changed in lxml 6.0, disabling only affects libxml2 2.15+)
+    - ns_clean: clean up redundant namespace declarations
+    - recover: try hard to parse through broken XML
+    - remove_blank_text: discard blank text nodes that appear ignorable.
+      Without DTD/schema, a heuristic preserves blank text nodes appearing
+      after non-blank content at the same level.
+    - remove_comments: discard comments
+    - remove_pis: discard processing instructions
+    - strip_cdata: replace CDATA sections by normal text content
+      (default: True)
+    - compact: save memory for short text content (default: True)
+    - collect_ids: use a hash table of XML IDs for fast access
+      (default: True, always True with DTD validation)
+    - huge_tree: disable security restrictions and support very deep trees
+      and very long text content
 
-    Other keyword arguments:
+    **Other keyword arguments:**
 
-    - resolve_entities - replace entities by their text value: False for keeping the
-          entity references, True for resolving them, and 'internal' for resolving
-          internal definitions only (no external file/URL access).
-          The default used to be True and was changed to 'internal' in lxml 5.0.
-    - encoding - override the document encoding (note: libiconv encoding name)
-    - target   - a parser target object that will receive the parse events
-    - schema   - an XMLSchema to validate against
+    - resolve_entities: replace entities by their text value. False for keeping
+      the entity references, True for resolving them, and 'internal' for resolving
+      internal definitions only (no external file/URL access).  The default used
+      to be True and was changed to 'internal' in lxml 5.0.
+    - encoding: override the document encoding (note: libiconv encoding name)
+    - target: a parser target object that will receive the parse events
+    - schema: an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
@@ -1866,7 +1869,7 @@ cdef class ETCompatXMLParser(XMLParser):
     """ETCompatXMLParser(self, encoding=None, attribute_defaults=False, \
                  dtd_validation=False, load_dtd=False, no_network=True, decompress=False, \
                  ns_clean=False, recover=False, schema=None, \
-                 huge_tree=False, remove_blank_text=False, resolve_entities=True, \
+                 huge_tree=False, remove_blank_text=False, resolve_entities='internal', \
                  remove_comments=True, remove_pis=True, strip_cdata=True, \
                  target=None, compact=True)
 
@@ -1876,11 +1879,14 @@ cdef class ETCompatXMLParser(XMLParser):
 
     This parser has ``remove_comments`` and ``remove_pis`` enabled by default
     and thus ignores comments and processing instructions.
+
+    The default value of ``resolve_entities`` used to be True and was changed to
+    'internal' in lxml 6.1.
     """
     def __init__(self, *, encoding=None, attribute_defaults=False,
                  dtd_validation=False, load_dtd=False, no_network=True, decompress=False,
                  ns_clean=False, recover=False, schema=None,
-                 huge_tree=False, remove_blank_text=False, resolve_entities=True,
+                 huge_tree=False, remove_blank_text=False, resolve_entities='internal',
                  remove_comments=True, remove_pis=True, strip_cdata=True,
                  target=None, compact=True):
         XMLParser.__init__(self,
@@ -1958,26 +1964,29 @@ cdef class HTMLParser(_FeedParser):
     the capabilities of libxml2.  Use the 'recover' option to switch
     this off.
 
-    Available boolean keyword arguments:
+    **Available boolean keyword arguments:**
 
-    - recover            - try hard to parse through broken HTML (default: True)
-    - no_network         - prevent network access for related files (default: True)
-    - decompress         - automatically decompress gzip input
-                           (default: False, changed in lxml 6.0, disabling only affects libxml2 2.15+)
-    - remove_blank_text  - discard empty text nodes that are ignorable (i.e. not actual text content)
-    - remove_comments    - discard comments
-    - remove_pis         - discard processing instructions
-    - compact            - save memory for short text content (default: True)
-    - default_doctype    - add a default doctype even if it is not found in the HTML (default: True)
-    - collect_ids        - use a hash table of XML IDs for fast access (default: True)
-    - huge_tree          - disable security restrictions and support very deep trees
-                           and very long text content
+    - recover: try hard to parse through broken HTML (default: True)
+    - no_network: prevent network access for related files (default: True)
+    - decompress: automatically decompress gzip input (default: False,
+      changed in lxml 6.0, disabling only affects libxml2 2.15+)
+    - remove_blank_text: discard empty text nodes that are ignorable (i.e.
+      not actual text content).  Preserves spacing in mixed-content elements
+      per HTML structural rules.
+    - remove_comments: discard comments
+    - remove_pis: discard processing instructions
+    - compact: save memory for short text content (default: True)
+    - default_doctype: add a default doctype even if it is not found in the
+      HTML (default: True)
+    - collect_ids: use a hash table of XML IDs for fast access (default: True)
+    - huge_tree: disable security restrictions and support very deep trees and
+      very long text content
 
-    Other keyword arguments:
+    **Other keyword arguments:**
 
-    - encoding - override the document encoding (note: libiconv encoding name)
-    - target   - a parser target object that will receive the parse events
-    - schema   - an XMLSchema to validate against
+    - encoding: override the document encoding (note: libiconv encoding name)
+    - target: a parser target object that will receive the parse events
+    - schema: an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads for performance
     reasons.

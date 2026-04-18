@@ -4,7 +4,8 @@ cdef class iterparse:
     """iterparse(self, source, events=("end",), tag=None, \
                   attribute_defaults=False, dtd_validation=False, \
                   load_dtd=False, no_network=True, remove_blank_text=False, \
-                  remove_comments=False, remove_pis=False, encoding=None, \
+                  compact=True, resolve_entities='internal', remove_comments=False, \
+                  remove_pis=False, strip_cdata=True, encoding=None, \
                   html=False, recover=None, huge_tree=False, schema=None, \
                   chunk_size=65536)
 
@@ -33,29 +34,35 @@ cdef class iterparse:
     libxml2 parser configuration.  A DTD will also be loaded if validation or
     attribute default values are requested.
 
-    Available boolean keyword arguments:
-     - attribute_defaults: read default attributes from DTD
-     - dtd_validation: validate (if DTD is available)
-     - load_dtd: use DTD for parsing
-     - no_network: prevent network access for related files
-     - remove_blank_text: discard blank text nodes
-     - remove_comments: discard comments
-     - remove_pis: discard processing instructions
-     - strip_cdata: replace CDATA sections by normal text content (default:
-       True for XML, ignored otherwise)
-     - compact: safe memory for short text content (default: True)
-     - resolve_entities: replace entities by their text value (default: True)
-     - huge_tree: disable security restrictions and support very deep trees
-                  and very long text content (only affects libxml2 2.7+)
-     - html: parse input as HTML (default: XML)
-     - recover: try hard to parse through broken input (default: True for HTML,
-                False otherwise)
+    **Available boolean keyword arguments:**
 
-    Other keyword arguments:
-     - encoding: override the document encoding
-     - schema: an XMLSchema to validate against
-     - chunk_size: the number of bytes to read from the 'source' in one chunk
-                   (default: 65536)
+    - attribute_defaults: read default attributes from DTD
+    - dtd_validation: validate (if DTD is available)
+    - load_dtd: use DTD for parsing
+    - no_network: prevent network access for related files
+    - remove_blank_text: discard blank text nodes.  In XML mode, without
+      DTD/schema, a heuristic preserves blank text nodes appearing after
+      non-blank content at the same level.  In HTML mode, removal follows
+      built-in structural rules and does not necessarily require DTD/schema.
+    - remove_comments: discard comments
+    - remove_pis: discard processing instructions
+    - strip_cdata: replace CDATA sections by normal text content (default:
+      True for XML, ignored otherwise)
+    - compact: safe memory for short text content (default: True)
+    - resolve_entities: replace entities by their text value
+      (default: 'internal' only; True before lxml 6.1)
+    - huge_tree: disable security restrictions and support very deep trees
+      and very long text content
+    - html: parse input as HTML (default: XML)
+    - recover: try hard to parse through broken input (default: True for
+      HTML, False otherwise)
+
+    **Other keyword arguments:**
+
+    - encoding: override the document encoding
+    - schema: an XMLSchema to validate against
+    - chunk_size: the number of bytes to read from the 'source' in one chunk
+      (default: 65536)
     """
     cdef _FeedParser _parser
     cdef object _tag
@@ -70,7 +77,7 @@ cdef class iterparse:
     def __init__(self, source, events=("end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
-                 compact=True, resolve_entities=True, remove_comments=False,
+                 compact=True, resolve_entities='internal', remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
                  html=False, recover=None, huge_tree=False, collect_ids=True,
                  XMLSchema schema=None, int chunk_size=65536):

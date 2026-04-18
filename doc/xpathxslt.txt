@@ -46,14 +46,15 @@ The usual setup procedure:
 XPath
 =====
 
-lxml.etree supports the simple path syntax of the `find, findall and
-findtext`_ methods on ElementTree and Element, as known from the original
-ElementTree library (ElementPath_).  As an lxml specific extension, these
-classes also provide an ``xpath()`` method that supports expressions in the
+lxml.etree supports the simple path syntax of the
+`find, findall and findtext
+<https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.Element.find>`_
+methods on ElementTree and Element, as known from the original
+ElementTree / ``xml.etree`` library (ElementPath_).  As an lxml specific extension,
+these classes also provide an ``xpath()`` method that supports expressions in the
 complete XPath syntax, as well as `custom extension functions`_.
 
-.. _ElementPath: http://effbot.org/zone/element-xpath.htm
-.. _`find, findall and findtext`: http://effbot.org/zone/element.htm#searching-for-subelements
+.. _ElementPath: https://docs.python.org/3/library/xml.etree.elementtree.html#xpath-support
 .. _`custom extension functions`: extensions.html#xpath-extension-functions
 .. _`XSLT extension elements`: extensions.html#xslt-extension-elements
 

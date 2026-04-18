@@ -127,7 +127,7 @@ ftest_inplace: inplace
 apidoc: apidocclean inplace
 	@[ -x "`command -v sphinx-apidoc`" ] \
 		&& (echo "Generating API docs ..." && \
-			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -o doc/api src/lxml \
+			PYTHONPATH=src:$(PYTHONPATH) sphinx-apidoc -e -P -T -d1 -o doc/api src/lxml \
 				"*includes" "*tests" "*pyclasslookup.py" "*usedoctest.py" "*html/_html5builder.py" \
 				 "*html/_diff*" "*html/_setmixin*" \
 				"*.so" "*.pyd") \

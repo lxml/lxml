@@ -576,10 +576,10 @@ subclasses for elements of this namespace:
 
   >>> print(honk_element[0].honk())
   HONK
-  >>> print(honk_element[0].honking)
+  >>> print(honk_element[0].honking)  # doctest: +ELLIPSIS
   Traceback (most recent call last):
-  ...
-  AttributeError: 'HonkNSElement' object has no attribute 'honking'
+    ...
+  AttributeError: 'HonkNSElement' object has no attribute 'honking'...
 
   >>> print(honk_element[1].text)  # uses fallback for non-elements
   comment

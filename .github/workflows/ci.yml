@@ -110,7 +110,7 @@ jobs:
             extra_hash: "-coverage"
           - os: ubuntu-latest
             python-version: "3.10"
-            env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
+            env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx_book_theme" }
             extra_hash: "-docs"
 
           # Old library setup with minimum version requirements
@@ -266,7 +266,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
@@ -278,7 +278,7 @@ jobs:
         run: make html
 
       - name: Upload docs
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: matrix.extra_hash == '-docs'
         with:
           name: website_html
@@ -286,7 +286,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: matrix.env.COVERAGE
         with:
           name: pycoverage_html
