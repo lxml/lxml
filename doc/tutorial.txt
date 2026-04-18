@@ -1,7 +1,7 @@
 =======================
 The lxml.etree Tutorial
 =======================
- 
+
 .. meta::
   :description: The lxml tutorial on XML processing with Python
   :keywords: XML processing with Python, lxml, lxml.etree, tutorial, ElementTree, Python, XML, HTML
@@ -20,7 +20,7 @@ documentation`_.
 .. _`generated API documentation`: api/index.html
 
 .. contents::
-.. 
+..
    1  The Element class
      1.1  Elements are lists
      1.2  Elements carry attributes
@@ -1381,8 +1381,12 @@ called ElementPath_.  The main difference is that you can use the
 advanced features like value comparison and functions are not
 available.
 
-.. _ElementPath: http://effbot.org/zone/element-xpath.htm
+.. _ElementPath: https://docs.python.org/3/library/xml.etree.elementtree.html#xpath-support
 .. _`full XPath implementation`: xpathxslt.html#xpath
+
+ElementPath was `originally implemented
+<https://web.archive.org/web/20070920063445/http://www.effbot.org/zone/element-xpath.htm>`_
+by Fredrik Lundh
 
 In addition to a `full XPath implementation`_, ``lxml.etree`` supports the
 ElementPath language in the same way ElementTree does, even using

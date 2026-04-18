@@ -1674,7 +1674,7 @@ cdef class XMLParser(_FeedParser):
     """XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, \
                  load_dtd=False, no_network=True, decompress=False, ns_clean=False, \
                  recover=False, schema: XMLSchema =None, huge_tree=False, \
-                 remove_blank_text=False, resolve_entities=True, \
+                 remove_blank_text=False, resolve_entities='internal', \
                  remove_comments=False, remove_pis=False, strip_cdata=True, \
                  collect_ids=True, target=None, compact=True)
 
@@ -1810,7 +1810,7 @@ cdef class ETCompatXMLParser(XMLParser):
     """ETCompatXMLParser(self, encoding=None, attribute_defaults=False, \
                  dtd_validation=False, load_dtd=False, no_network=True, decompress=False, \
                  ns_clean=False, recover=False, schema=None, \
-                 huge_tree=False, remove_blank_text=False, resolve_entities=True, \
+                 huge_tree=False, remove_blank_text=False, resolve_entities='internal', \
                  remove_comments=True, remove_pis=True, strip_cdata=True, \
                  target=None, compact=True)
 
@@ -1820,11 +1820,14 @@ cdef class ETCompatXMLParser(XMLParser):
 
     This parser has ``remove_comments`` and ``remove_pis`` enabled by default
     and thus ignores comments and processing instructions.
+
+    The default value of ``resolve_entities`` used to be True and was changed to
+    'internal' in lxml 6.1.
     """
     def __init__(self, *, encoding=None, attribute_defaults=False,
                  dtd_validation=False, load_dtd=False, no_network=True, decompress=False,
                  ns_clean=False, recover=False, schema=None,
-                 huge_tree=False, remove_blank_text=False, resolve_entities=True,
+                 huge_tree=False, remove_blank_text=False, resolve_entities='internal',
                  remove_comments=True, remove_pis=True, strip_cdata=True,
                  target=None, compact=True):
         XMLParser.__init__(self,

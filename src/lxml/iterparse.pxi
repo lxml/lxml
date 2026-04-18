@@ -4,7 +4,7 @@ cdef class iterparse:
     """iterparse(self, source, events=("end",), tag=None, \
                   attribute_defaults=False, dtd_validation=False, \
                   load_dtd=False, no_network=True, remove_blank_text=False, \
-                  compact=True, resolve_entities=True, remove_comments=False, \
+                  compact=True, resolve_entities='internal', remove_comments=False, \
                   remove_pis=False, strip_cdata=True, encoding=None, \
                   html=False, recover=None, huge_tree=False, schema=None, \
                   chunk_size=65536)
@@ -49,9 +49,10 @@ cdef class iterparse:
     - strip_cdata: replace CDATA sections by normal text content (default:
       True for XML, ignored otherwise)
     - compact: safe memory for short text content (default: True)
-    - resolve_entities: replace entities by their text value (default: True)
+    - resolve_entities: replace entities by their text value
+      (default: 'internal' only; True before lxml 6.1)
     - huge_tree: disable security restrictions and support very deep trees
-      and very long text content (only affects libxml2 2.7+)
+      and very long text content
     - html: parse input as HTML (default: XML)
     - recover: try hard to parse through broken input (default: True for
       HTML, False otherwise)
@@ -76,7 +77,7 @@ cdef class iterparse:
     def __init__(self, source, events=("end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
-                 compact=True, resolve_entities=True, remove_comments=False,
+                 compact=True, resolve_entities='internal', remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
                  html=False, recover=None, huge_tree=False, collect_ids=True,
                  XMLSchema schema=None, int chunk_size=65536):

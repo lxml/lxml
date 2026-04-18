@@ -17,10 +17,6 @@ Features added
 
 * Writing to Python file objects minimises data copying by passing buffers around.
 
-* GH#486: The HTML ARIA accessibility attributes were added to the set of safe attributes
-  in ``lxml.html.defs``.  This allows ``lxml_html_clean`` to pass them through.
-  Patch by oomsveta.
-
 Bugs fixed
 ----------
 
@@ -41,6 +37,33 @@ Other changes
 * Built using Cython 3.2.4.
 
 * Binary wheels use zlib 1.3.2.
+
+
+6.1.0 (2026-04-17)
+==================
+
+This release fixes a possible external entity injection (XXE) vulnerability in
+``iterparse()`` and the ``ETCompatXMLParser``.
+
+Features added
+--------------
+
+* GH#486: The HTML ARIA accessibility attributes were added to the set of safe attributes
+  in ``lxml.html.defs``.  This allows ``lxml_html_clean`` to pass them through.
+  Patch by oomsveta.
+
+* The default chunk size for reading from file-likes in ``iterparse()`` is now configurable
+  with a new ``chunk_size`` argument.
+
+Bugs fixed
+----------
+
+* LP#2146291: The ``resolve_entities`` option was still set to ``True`` for
+  ``iterparse`` and ``ETCompatXMLParser``, allowing for external entity injection (XXE)
+  when using these parsers without setting this option explicitly.
+  The default was now changed to ``'internal'`` only (as for the normal XML and HTML parsers
+  since lxml 5.0).
+  Issue found by Sihao Qiu as CVE-2026-41066.
 
 
 6.0.4 (2026-04-12)
