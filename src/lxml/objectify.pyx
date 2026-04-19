@@ -2056,12 +2056,18 @@ def set_default_parser(new_parser = None):
     Call without arguments to reset to the original parser.
     """
     global objectify_parser
-    if new_parser is None:
-        objectify_parser = __DEFAULT_PARSER
-    elif isinstance(new_parser, etree.XMLParser):
-        objectify_parser = new_parser
-    else:
-        raise TypeError, "parser must inherit from lxml.etree.XMLParser"
+    with cython.critical_section(__DEFAULT_PARSER):
+        if new_parser is None:
+            objectify_parser = __DEFAULT_PARSER
+        elif isinstance(new_parser, etree.XMLParser):
+            objectify_parser = new_parser
+        else:
+            raise TypeError, "parser must inherit from lxml.etree.XMLParser"
+
+
+cdef _get_default_parser():
+    with cython.critical_section(__DEFAULT_PARSER):
+        return objectify_parser
 
 
 def makeparser(**kw):
@@ -2082,7 +2088,7 @@ def makeparser(**kw):
 
 
 cdef _Element _makeElement(tag, text, attrib, nsmap):
-    return cetree.makeElement(tag, None, objectify_parser, text, None, attrib, nsmap)
+    return cetree.makeElement(tag, None, _get_default_parser(), text, None, attrib, nsmap)
 
 
 ################################################################################
@@ -2106,7 +2112,7 @@ def fromstring(xml, parser=None, *, base_url=None):
     (DTD, XInclude, ...).
     """
     if parser is None:
-        parser = objectify_parser
+        parser = _get_default_parser()
     return _fromstring(xml, parser, base_url=base_url)
 
 
@@ -2123,7 +2129,7 @@ def XML(xml, parser=None, *, base_url=None):
     (DTD, XInclude, ...).
     """
     if parser is None:
-        parser = objectify_parser
+        parser = _get_default_parser()
     return _fromstring(xml, parser, base_url=base_url)
 
 
@@ -2142,7 +2148,7 @@ def parse(f, parser=None, *, base_url=None):
     up external entities (DTD, XInclude, ...) with relative paths.
     """
     if parser is None:
-        parser = objectify_parser
+        parser = _get_default_parser()
     return _parse(f, parser, base_url=base_url)
 
 
