@@ -1399,16 +1399,20 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """Element tag
         """
         def __get__(self):
-            if self._tag is not None:
-                return self._tag
+            tag = self._tag
+            if tag is not None:
+                return tag
             _assertValidNode(self)
             doc = self._doc
             doc.lock_read()
             try:
-                self._tag = _namespacedName(self._c_node)
+                with cython.critical_section(self):
+                    tag = self._tag
+                    if tag is None:
+                        self._tag = tag = _namespacedName(self._c_node)
             finally:
                 doc.unlock_read()
-            return self._tag
+            return tag
 
         def __set__(self, value):
             cdef _BaseParser parser
