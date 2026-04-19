@@ -2358,9 +2358,9 @@ cdef class _Entity(__ContentOnlyElement):
             if b'&' in value_utf or b';' in value_utf:
                 raise ValueError, f"Invalid entity name '{value}'"
             doc = self._doc
-            doc.lock_read()
+            doc.lock_write()
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
-            doc.unlock_read()
+            doc.unlock_write()
 
     @property
     def text(self):
