@@ -143,12 +143,13 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
             ns_utf = _utf8(ns_uri)
         else:
             ns_utf = None
-        try:
-            return self._namespace_registries[ns_utf]
-        except KeyError:
-            registry = self._namespace_registries[ns_utf] = \
-                       _ClassNamespaceRegistry(ns_uri)
-            return registry
+        with cython.critical_section(self._namespace_registries):
+            try:
+                return self._namespace_registries[ns_utf]
+            except KeyError:
+                registry = self._namespace_registries[ns_utf] = \
+                        _ClassNamespaceRegistry(ns_uri)
+                return registry
 
 
 cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
@@ -220,12 +221,13 @@ def FunctionNamespace(ns_uri):
     ...     return x + 3
     """
     ns_utf = _utf8(ns_uri) if ns_uri else None
-    try:
-        return __FUNCTION_NAMESPACE_REGISTRIES[ns_utf]
-    except KeyError:
-        registry = __FUNCTION_NAMESPACE_REGISTRIES[ns_utf] = \
-                   _XPathFunctionNamespaceRegistry(ns_uri)
-        return registry
+    with cython.critical_section(__FUNCTION_NAMESPACE_REGISTRIES):
+        try:
+            return __FUNCTION_NAMESPACE_REGISTRIES[ns_utf]
+        except KeyError:
+            registry = __FUNCTION_NAMESPACE_REGISTRIES[ns_utf] = \
+                    _XPathFunctionNamespaceRegistry(ns_uri)
+            return registry
 
 
 @cython.internal
