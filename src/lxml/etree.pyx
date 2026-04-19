@@ -1517,7 +1517,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _assertValidNode(self)
             doc = self._doc
             doc.lock_read()
-            c_line = tree.xmlGetLineNo(self._c_node)
+            with cython.critical_section(self):
+                c_line = tree.xmlGetLineNo(self._c_node)
             doc.unlock_read()
             return c_line if c_line > 0 else None
 
@@ -1528,7 +1529,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 c_line = 0
             elif c_line >= 65535:
                 raise ValueError("Storing line numbers >= 65535 is not supported")
-            self._c_node.line = c_line
+            with cython.critical_section(self):
+                self._c_node.line = c_line
 
     # not in ElementTree, read-only
     @property
