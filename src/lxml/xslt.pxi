@@ -315,7 +315,8 @@ cdef class _XSLTContext(_BaseContext):
         self._register_context(doc)
         self.registerLocalFunctions(xsltCtxt, _register_xslt_function)
         self.registerGlobalFunctions(xsltCtxt, _register_xslt_function)
-        _registerXSLTExtensions(xsltCtxt, self._extension_elements)
+        if self._extension_elements is not EMPTY_DICT:
+            _registerXSLTExtensions(xsltCtxt, self._extension_elements)
 
     cdef free_context(self):
         self._cleanup_context()
