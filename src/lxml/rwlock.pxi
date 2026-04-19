@@ -25,40 +25,39 @@ cdef extern from * nogil:
     #include <stdatomic.h>
 #endif
 
-#if LXML_ATOMICS_ENABLED && (defined(__STDC_VERSION__) && \
-                        (__STDC_VERSION__ >= 201112L) && \
-                        !defined(__STDC_NO_ATOMICS__) && \
-                       ATOMIC_INT_LOCK_FREE == 2)
-    /* C11 atomics are available and  ATOMIC_INT_LOCK_FREE is definitely on */
-    /* Prefer this over pyatomics.h, which enforces strict memory ordering. We only need atomic operations. */
-    #undef __lxml_atomic_int_type
-    #define __lxml_atomic_int_type _Atomic __lxml_nonatomic_int_type
-
-    #define __lxml_atomic_compare_exchange(value, expected, desired)  atomic_compare_exchange_weak((value), (expected), (desired))
-    #define __lxml_atomic_add(value, arg)     atomic_fetch_add_explicit((value), (arg), memory_order_relaxed)
-    #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
-    #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-    #define __lxml_atomic_load(value)         atomic_load((value))
-
-    #if defined(LXML_DEBUG_ATOMICS) && defined(_MSC_VER)
-        #pragma message ("Using standard C11 atomics")
-    #elif defined(LXML_DEBUG_ATOMICS)
-        #warning "Using standard C11 atomics"
-    #endif
-
-#elif LXML_ATOMICS_ENABLED && defined(Py_ATOMIC_H)
+#if LXML_ATOMICS_ENABLED && defined(Py_ATOMIC_H)
     /* "Python.h" included "pyatomics.h" */
 
     #define __lxml_atomic_compare_exchange(value, expected, desired)  _Py_atomic_compare_exchange_int32((value), (expected), (desired))
     #define __lxml_atomic_add(value, arg)     _Py_atomic_add_int32((value), (arg))
-    #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
-    #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-    #define __lxml_atomic_load(value)         _Py_atomic_load_int32((value))
+    #define __lxml_atomic_incr(value)  __lxml_atomic_add((value),  1)
+    #define __lxml_atomic_decr(value)  __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)  _Py_atomic_load_int32((value))
 
     #if defined(LXML_DEBUG_ATOMICS) && defined(_MSC_VER)
         #pragma message ("Using pyatomics.h atomics")
     #elif defined(LXML_DEBUG_ATOMICS)
         #warning "Using pyatomics.h atomics"
+    #endif
+
+#elif LXML_ATOMICS_ENABLED && (defined(__STDC_VERSION__) && \
+                        (__STDC_VERSION__ >= 201112L) && \
+                        !defined(__STDC_NO_ATOMICS__) && \
+                       ATOMIC_INT_LOCK_FREE == 2)
+    /* C11 atomics are available and ATOMIC_INT_LOCK_FREE is definitely on */
+    #undef __lxml_atomic_int_type
+    #define __lxml_atomic_int_type _Atomic __lxml_nonatomic_int_type
+
+    #define __lxml_atomic_compare_exchange(value, expected, desired)  atomic_compare_exchange_strong((value), (expected), (desired))
+    #define __lxml_atomic_add(value, arg)     atomic_fetch_add_explicit((value), (arg), memory_order_seq_cst)
+    #define __lxml_atomic_incr(value)  __lxml_atomic_add((value),  1)
+    #define __lxml_atomic_decr(value)  __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)  atomic_load((value))
+
+    #if defined(LXML_DEBUG_ATOMICS) && defined(_MSC_VER)
+        #pragma message ("Using standard C11 atomics")
+    #elif defined(LXML_DEBUG_ATOMICS)
+        #warning "Using standard C11 atomics"
     #endif
 
 #elif LXML_ATOMICS_ENABLED && (__GNUC__ >= 5 || (__GNUC__ == 4 && \
@@ -67,9 +66,9 @@ cdef extern from * nogil:
 
     /* gcc >= 4.1.2 */
     #define __lxml_atomic_add(value, arg)     __sync_fetch_and_add((value), (arg))
-    #define __lxml_atomic_incr_relaxed(value) __sync_fetch_and_add((value), 1)
-    #define __lxml_atomic_decr_relaxed(value) __sync_fetch_and_sub((value), 1)
-    #define __lxml_atomic_load(value)         __sync_fetch_and_add((value), 0)
+    #define __lxml_atomic_incr(value)  __sync_fetch_and_add((value), 1)
+    #define __lxml_atomic_decr(value)  __sync_fetch_and_sub((value), 1)
+    #define __lxml_atomic_load(value)  __sync_fetch_and_add((value), 0)
 
     /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
@@ -93,9 +92,9 @@ cdef extern from * nogil:
     #pragma intrinsic (_InterlockedExchangeAdd, _InterlockedCompareExchange)
 
     #define __lxml_atomic_add(value, arg) _InterlockedExchangeAdd((value), (arg))
-    #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
-    #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-    #define __lxml_atomic_load(value)          (*(value))
+    #define __lxml_atomic_incr(value)  __lxml_atomic_add((value),  1)
+    #define __lxml_atomic_decr(value)  __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)  (*(value))
 
     /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
@@ -127,9 +126,9 @@ cdef extern from * nogil:
     }
 
     #define __lxml_atomic_add(value, arg)   __lxml_atomic_add_cs(__pyx_v_self, value, arg)
-    #define __lxml_atomic_incr_relaxed(value) __lxml_atomic_add((value),  1)
-    #define __lxml_atomic_decr_relaxed(value) __lxml_atomic_add((value), -1)
-    #define __lxml_atomic_load(value)          (*(value))
+    #define __lxml_atomic_incr(value)  __lxml_atomic_add((value),  1)
+    #define __lxml_atomic_decr(value)  __lxml_atomic_add((value), -1)
+    #define __lxml_atomic_load(value)  (*(value))
 
     /* UNUSED
     static int __lxml_atomic_compare_exchange_cs(PyObject *cs, __lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
@@ -162,9 +161,9 @@ cdef extern from * nogil:
     #define LXML_ATOMICS_ENABLED 0
 
     #define __lxml_atomic_add(value, arg)      ((*(value)) += (arg), (*(value) - (arg)))
-    #define __lxml_atomic_incr_relaxed(value)  (*(value))++
-    #define __lxml_atomic_decr_relaxed(value)  (*(value))--
-    #define __lxml_atomic_load(value)          (*(value))
+    #define __lxml_atomic_incr(value)  (*(value))++
+    #define __lxml_atomic_decr(value)  (*(value))--
+    #define __lxml_atomic_load(value)  (*(value))
 
     /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
@@ -187,7 +186,7 @@ cdef extern from * nogil:
 #endif
 
 #if LXML_LOCK_PERFORMANCE
-    #define __lxml_inc_counter(counter)  __lxml_atomic_incr_relaxed((counter))
+    #define __lxml_inc_counter(counter)  __lxml_atomic_incr((counter))
     typedef struct {
         __lxml_atomic_int_type read_acquired;
         __lxml_atomic_int_type write_acquired;
@@ -213,10 +212,10 @@ cdef extern from * nogil:
     ctypedef long atomic_int "__lxml_atomic_int_type"
     ctypedef long nonatomic_int "__lxml_nonatomic_int_type"
 
-    nonatomic_int atomic_add  "__lxml_atomic_add"          (atomic_int *value, nonatomic_int arg) noexcept
-    nonatomic_int atomic_incr "__lxml_atomic_incr_relaxed" (atomic_int *value) noexcept
-    nonatomic_int atomic_decr "__lxml_atomic_decr_relaxed" (atomic_int *value) noexcept
-    nonatomic_int atomic_load "__lxml_atomic_load"         (atomic_int *value) noexcept
+    nonatomic_int atomic_add  "__lxml_atomic_add"   (atomic_int *value, nonatomic_int arg) noexcept
+    nonatomic_int atomic_incr "__lxml_atomic_incr"  (atomic_int *value) noexcept
+    nonatomic_int atomic_decr "__lxml_atomic_decr"  (atomic_int *value) noexcept
+    nonatomic_int atomic_load "__lxml_atomic_load"  (atomic_int *value) noexcept
     int atomic_compare_exchange "__lxml_atomic_compare_exchange"  (atomic_int *value, nonatomic_int *expected, nonatomic_int desired) noexcept
 
     const bint COUNT_LOCK_PERFORMANCE "LXML_LOCK_PERFORMANCE"
