@@ -77,6 +77,21 @@ class ThreadingTestCase(HelperTestCase):
         self._run_thread(run_thread)
         self.assertEqual(xml, tostring(main_root))
 
+    def test_concurrent_parser_feed(self):
+        parser = self.etree.XMLParser()
+        parser.feed("<root>")
+
+        def feed_chunk():
+            parser.feed("<node>text</node>")
+
+        self._run_threads(15, feed_chunk)
+
+        parser.feed("</root>")
+
+        root = parser.close()
+        self.assertEqual(len(root), 15)
+        self.assertListEqual(['node'] * 15, [child.tag for child in root])
+
     def test_main_xslt_in_thread(self):
         XML = self.etree.XML
         style = XML(b'''\

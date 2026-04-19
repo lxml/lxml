@@ -1496,6 +1496,7 @@ cdef int _detectBOMEncoding(const char* c_text, int c_len, const char** c_encodi
 
 cdef class _FeedParser(_BaseParser):
     cdef bint _feed_parser_running
+    cdef cython.pymutex _feed_lock
 
     @property
     def feed_error_log(self):
@@ -1506,7 +1507,7 @@ cdef class _FeedParser(_BaseParser):
         """
         return self._getPushParserContext()._error_log.copy()
 
-    cpdef feed(self, data):
+    def feed(self, data):
         """feed(self, data)
 
         Feeds data to the parser.  The argument should be an 8-bit string
@@ -1524,6 +1525,11 @@ cdef class _FeedParser(_BaseParser):
         usage.  You can use the same parser as a feed parser and in
         the ``parse()`` function concurrently.
         """
+        with self._feed_lock:
+            self._feed(data)
+
+    @cython.final
+    cdef _feed(self, data):
         cdef _ParserContext context
         cdef bytes bstring
         cdef xmlparser.xmlParserCtxt* pctxt
@@ -1629,7 +1635,7 @@ cdef class _FeedParser(_BaseParser):
             finally:
                 context.cleanup()
 
-    cpdef close(self):
+    def close(self):
         """close(self)
 
         Terminates feeding data to this parser.  This tells the parser to
@@ -1640,6 +1646,11 @@ cdef class _FeedParser(_BaseParser):
         the ``feed()`` method.  It should only be called when using the feed
         parser interface, all other usage is undefined.
         """
+        with self._feed_lock:
+            return self._close()
+
+    @cython.final
+    cdef _close(self):
         if not self._feed_parser_running:
             raise XMLSyntaxError("no element found",
                                  xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0,
