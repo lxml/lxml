@@ -3951,11 +3951,11 @@ def SubElement(_Element _parent not None, _tag,
     appends it to an existing element.
     """
     doc = _parent._doc
-    doc.lock_read()
+    doc.lock_write()
     try:
         return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
     finally:
-        doc.unlock_read()
+        doc.unlock_write()
 
 
 
