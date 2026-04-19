@@ -1029,43 +1029,59 @@ cdef class _BaseParser:
 
     cdef _ParserContext _getParserContext(self):
         cdef xmlparser.xmlParserCtxt* pctxt
-        if self._parser_context is None:
-            self._parser_context = self._createContext(self.target, None)
+        context = self._parser_context
+        if context is not None:
+            return context
 
-            self._parser_context._collect_ids = self._flags.collect_ids
-            if self._parse_options & xmlparser.XML_PARSE_HUGE:
-                self._parser_context._dict.disableSizeLimit()
+        context = self._createContext(self.target, None)
 
-            if self._schema is not None:
-                self._parser_context._validator = \
-                    self._schema._newSaxValidator(
-                        self._parse_options & xmlparser.XML_PARSE_DTDATTR)
+        context._collect_ids = self._flags.collect_ids
+        if self._parse_options & xmlparser.XML_PARSE_HUGE:
+            context._dict.disableSizeLimit()
 
-            pctxt = self._newParserCtxt()
-            _initParserContext(self._parser_context, self._resolvers, pctxt)
-            self._configureSaxContext(pctxt)
-        return self._parser_context
+        if self._schema is not None:
+            context._validator = self._schema._newSaxValidator(
+                self._parse_options & xmlparser.XML_PARSE_DTDATTR)
+
+        pctxt = self._newParserCtxt()
+        _initParserContext(context, self._resolvers, pctxt)
+        self._configureSaxContext(pctxt)
+
+        with cython.critical_section(self):
+            if self._parser_context is None:
+                self._parser_context = context
+            else:
+                # Race condition, discard newly created context and reuse existing one.
+                context = self._parser_context
+        return context
 
     cdef _ParserContext _getPushParserContext(self):
         cdef xmlparser.xmlParserCtxt* pctxt
-        if self._push_parser_context is None:
-            self._push_parser_context = self._createContext(
-                self.target, self._events_to_collect)
+        context = self._push_parser_context
+        if context is not None:
+            return context
 
-            self._push_parser_context._collect_ids = self._flags.collect_ids
-            if self._parse_options & xmlparser.XML_PARSE_HUGE:
-                self._push_parser_context._dict.disableSizeLimit()
+        context = self._createContext(self.target, self._events_to_collect)
 
-            if self._schema is not None:
-                self._push_parser_context._validator = \
-                    self._schema._newSaxValidator(
-                        self._parse_options & xmlparser.XML_PARSE_DTDATTR)
+        context._collect_ids = self._flags.collect_ids
+        if self._parse_options & xmlparser.XML_PARSE_HUGE:
+            context._dict.disableSizeLimit()
 
-            pctxt = self._newPushParserCtxt()
-            _initParserContext(
-                self._push_parser_context, self._resolvers, pctxt)
-            self._configureSaxContext(pctxt)
-        return self._push_parser_context
+        if self._schema is not None:
+            context._validator = self._schema._newSaxValidator(
+                self._parse_options & xmlparser.XML_PARSE_DTDATTR)
+
+        pctxt = self._newPushParserCtxt()
+        _initParserContext(context, self._resolvers, pctxt)
+        self._configureSaxContext(pctxt)
+
+        with cython.critical_section(self):
+            if self._push_parser_context is None:
+                self._push_parser_context = context
+            else:
+                # Race condition, discard newly created context and reuse existing one.
+                context = self._push_parser_context
+        return context
 
     cdef _ParserContext _createContext(self, target, events_to_collect):
         """
