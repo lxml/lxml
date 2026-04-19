@@ -655,8 +655,9 @@ cdef class _ParserContext(_ResolverContext):
     cdef _ParserSchemaValidationContext _validator
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     cdef xmlparser.xmlExternalEntityLoader _orig_loader
-    cdef cython.pymutex _lock
     cdef _Document _doc
+    cdef cython.pymutex _lock
+    cdef unsigned long _lock_owner_tid
     cdef bint _collect_ids
 
     def __cinit__(self):
@@ -705,8 +706,13 @@ cdef class _ParserContext(_ResolverContext):
 
     cdef int prepare(self, bint set_document_loader=True) except -1:
         cdef int result
+        cdef unsigned long current_tid
         if config.ENABLE_THREADING:
+            current_tid = python.PyThread_get_thread_ident() + 1  # allow 0 == no thread
+            if self._lock_owner_tid == current_tid:
+                raise RuntimeError("Parser is already used by this thread. Raising to preventing deadlock.")
             self._lock.acquire()
+            self._lock_owner_tid = current_tid
         self._error_log.clear()
         self._doc = None
         # Connect the lxml error log with libxml2's error handling. In the case of parsing
@@ -734,6 +740,7 @@ cdef class _ParserContext(_ResolverContext):
             self._c_ctxt.sax.serror = NULL
         finally:
             if config.ENABLE_THREADING:
+                self._lock_owner_tid = 0
                 self._lock.release()
         return 0
 

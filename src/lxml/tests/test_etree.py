@@ -748,6 +748,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = XMLParser(target=etree.TreeBuilder())
         self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
 
+    def test_parser_reentry_from_target(self):
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        class Target:
+            def start(self, tag, attrib):
+                etree.fromstring(b"<root />", parser=parser)
+            def close(self):
+                pass
+
+        xml = b'<a><b></b>'
+        parser = XMLParser(target=Target())
+        self.assertRaises(RuntimeError, fromstring, xml, parser)
+
     def test_iterparse_getiterator(self):
         iterparse = self.etree.iterparse
         f = BytesIO(b'<a><b><d/></b><c/></a>')
