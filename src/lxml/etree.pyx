@@ -2164,10 +2164,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         finally:
             doc.unlock_proxies()
 
-    element_class = <type> LOOKUP_ELEMENT_CLASS(
-        ELEMENT_CLASS_LOOKUP_STATE, doc, c_node)
-    if not isinstance(element_class, type):
-        raise TypeError(f"Element class is not a type, got {type(element_class)}")
+    element_class = _look_up_element_class(doc, c_node)
 
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
