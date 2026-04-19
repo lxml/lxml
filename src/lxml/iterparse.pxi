@@ -284,22 +284,22 @@ cdef class iterwalk:
 
         if self._event_filter:
             self._index = 0
-            if self._matcher is not None and self._event_filter & PARSE_EVENT_FILTER_START:
-                self._matcher.cacheTags(root._doc)
-
-            # When processing an ElementTree, add events for the preceding comments/PIs.
-            if self._event_filter & (PARSE_EVENT_FILTER_COMMENT | PARSE_EVENT_FILTER_PI):
-                if isinstance(element_or_tree, _ElementTree):
-                    self._include_siblings = root
-                    for elem in list(root.itersiblings(preceding=True))[::-1]:
-                        if self._event_filter & PARSE_EVENT_FILTER_COMMENT and elem.tag is Comment:
-                            self._events.append(('comment', elem))
-                        elif self._event_filter & PARSE_EVENT_FILTER_PI and elem.tag is PI:
-                            self._events.append(('pi', elem))
-
             doc = root._doc
             doc.lock_read()
             try:
+                if self._matcher is not None and self._event_filter & PARSE_EVENT_FILTER_START:
+                    self._matcher.cacheTags(root._doc)
+
+                # When processing an ElementTree, add events for the preceding comments/PIs.
+                if self._event_filter & (PARSE_EVENT_FILTER_COMMENT | PARSE_EVENT_FILTER_PI):
+                    if isinstance(element_or_tree, _ElementTree):
+                        self._include_siblings = root
+                        for elem in list(root.itersiblings(preceding=True))[::-1]:
+                            if self._event_filter & PARSE_EVENT_FILTER_COMMENT and elem.tag is Comment:
+                                self._events.append(('comment', elem))
+                            elif self._event_filter & PARSE_EVENT_FILTER_PI and elem.tag is PI:
+                                self._events.append(('pi', elem))
+
                 ns_count = self._start_node(root)
             finally:
                 doc.unlock_read()

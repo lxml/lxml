@@ -114,16 +114,17 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
         return
 
     matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag_names)
-    matcher.cacheTags(doc)
-    if matcher.rejectsAll():
-        return
-
-    # For an ElementTree, include PIs and comments next to the root node.
-    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree)
 
     doc = element._doc
     doc.lock_write()
     try:
+        matcher.cacheTags(doc)
+        if matcher.rejectsAll():
+            return
+
+        # For an ElementTree, include PIs and comments next to the root node.
+        include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree)
+
         if include_siblings:
             if matcher.matchesType(tree.XML_COMMENT_NODE):
                 _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, with_tail)
@@ -192,16 +193,17 @@ def strip_tags(tree_or_element, *tag_names):
         return
 
     matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag_names)
-    matcher.cacheTags(doc)
-    if matcher.rejectsAll():
-        return
-
-    # For an ElementTree, include PIs and comments next to the root node.
-    include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree)
 
     doc = element._doc
     doc.lock_write()
     try:
+        matcher.cacheTags(doc)
+        if matcher.rejectsAll():
+            return
+
+        # For an ElementTree, include PIs and comments next to the root node.
+        include_siblings: cython.bint = isinstance(tree_or_element, _ElementTree)
+
         if include_siblings:
             if matcher.matchesType(tree.XML_COMMENT_NODE):
                 _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, 0)
