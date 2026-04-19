@@ -1764,12 +1764,9 @@ cdef class _IncrementalFileWriter:
             if self._element_stack:
                 raise LxmlSyntaxError("pending open tags on close")
         error_result = self._c_out.error
-        if error_result == xmlerror.XML_ERR_OK:
-            error_result = tree.xmlOutputBufferClose(self._c_out)
-            if error_result != -1:
-                error_result = xmlerror.XML_ERR_OK
-        else:
-            tree.xmlOutputBufferClose(self._c_out)
+        close_error_result = tree.xmlOutputBufferClose(self._c_out)
+        if error_result == xmlerror.XML_ERR_OK and close_error_result == -1:
+            error_result = -1
         self._status = WRITER_FINISHED
         self._c_out = NULL
         del self._element_stack[:]
