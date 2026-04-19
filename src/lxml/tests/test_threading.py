@@ -136,6 +136,39 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(b'<a><b>B</b><c>C</c><foo><a>B</a></foo></a>',
                           tostring(root))
 
+    def test_thread_xslt_serialisation(self):
+        XML = self.etree.XML
+        tostring = self.etree.tostring
+        root = XML(b'<a><b>B</b><c>C</c></a>')
+
+        style = XML(b'''\
+    <xsl:stylesheet version="1.0"
+        xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:template match="b|c">
+        <foo><xsl:value-of select="text()" /></foo>
+      </xsl:template>
+      <xsl:template match="*"><xsl:copy><xsl:apply-templates /></xsl:copy></xsl:template>
+    </xsl:stylesheet>''')
+        st = etree.XSLT(style)
+
+        result = st(root)
+        self.assertEqual(type(result).__name__, "_XSLTResultTree")
+
+        def serialise():
+            for i in range(10):
+                s = str(result)
+                self.assertEqual('<?xml version="1.0"?>\n<a><foo>B</foo><foo>C</foo></a>\n', s)
+                b = bytes(result)
+                self.assertEqual(b'<?xml version="1.0"?>\n<a><foo>B</foo><foo>C</foo></a>\n', b)
+                m = memoryview(result)
+                ba = bytearray(m)
+                self.assertEqual(bytearray(b'<?xml version="1.0"?>\n<a><foo>B</foo><foo>C</foo></a>\n'), ba)
+                mb = bytes(m)
+                m = None
+                self.assertEqual(b'<?xml version="1.0"?>\n<a><foo>B</foo><foo>C</foo></a>\n', mb)
+
+        self._run_threads(15, serialise)
+
     def test_thread_xslt_parsing_error_log(self):
         style = self.parse('''\
 <xsl:stylesheet version="1.0"

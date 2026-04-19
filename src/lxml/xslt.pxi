@@ -770,22 +770,18 @@ cdef class _XSLTResultTree(_ElementTree):
         the result as defined by the ``<xsl:output>`` tag.
         """
         cdef _FilelikeWriter writer = None
-        cdef _Document doc
         cdef int r, rclose, c_compression
         cdef const_xmlChar* c_encoding = NULL
         cdef tree.xmlOutputBuffer* c_buffer
 
-        if self._context_node is not None:
-            doc = self._context_node._doc
-        else:
-            doc = None
+        cdef _Document doc = self._get_result_doc()
         if doc is None:
-            doc = self._doc
-            if doc is None:
-                raise XSLTSaveError("No document to serialise")
+            raise XSLTSaveError("No document to serialise")
+
         c_compression = compression or 0
         xslt.LXML_GET_XSLT_ENCODING(c_encoding, self._xslt._c_style)
         writer = _create_output_buffer(file, <const_char*>c_encoding, c_compression, &c_buffer, close=False)
+
         doc.lock_read()
         if writer is None:
             with nogil:
@@ -795,76 +791,81 @@ cdef class _XSLTResultTree(_ElementTree):
             r = xslt.xsltSaveResultTo(c_buffer, doc._c_doc, self._xslt._c_style)
             rclose = tree.xmlOutputBufferClose(c_buffer)
         doc.unlock_read()
+
         if writer is not None:
             writer._exc_context._raise_if_stored()
         if r < 0 or rclose == -1:
             python.PyErr_SetFromErrno(IOError)  # raises IOError
 
-    cdef _saveToStringAndSize(self, xmlChar** s, int* l):
-        cdef _Document doc
+    cdef _Document _get_result_doc(self):
+        return self._context_node._doc if self._context_node is not None else self._doc
+
+    cdef int _saveToStringAndSize(self, xmlDoc *c_doc, xmlChar** s, int* size) noexcept:
         cdef int r
-        if self._context_node is not None:
-            doc = self._context_node._doc
-        else:
-            doc = None
-        if doc is None:
-            doc = self._doc
-            if doc is None:
-                s[0] = NULL
-                return
-        doc.lock_read()
         with nogil:
-            r = xslt.xsltSaveResultToString(s, l, doc._c_doc,
-                                            self._xslt._c_style)
-        doc.unlock_read()
-        if r == -1:
-            raise MemoryError()
+            r = xslt.xsltSaveResultToString(s, size, c_doc, self._xslt._c_style)
+        return r != -1
 
     def __str__(self):
         cdef xmlChar* encoding
         cdef xmlChar* s = NULL
-        cdef int l = 0
-        self._saveToStringAndSize(&s, &l)
-        if s is NULL:
+        cdef int size = 0
+
+        doc = self._get_result_doc()
+        if doc is None:
             return ''
+
+        # XSLT serialisation needs exclusive document access.
+        doc.lock_write()
+        try:
+            if not self._saveToStringAndSize(doc._c_doc, &s, &size):
+                raise MemoryError()
+        finally:
+            doc.unlock_write()
+
         encoding = self._xslt._c_style.encoding
         try:
-            if encoding is NULL:
-                result = s[:l].decode('UTF-8')
-            else:
-                result = s[:l].decode(encoding)
+            result = s[:size].decode('UTF-8') if encoding is NULL else s[:size].decode(encoding)
         finally:
             tree.xmlFree(s)
         return _stripEncodingDeclaration(result)
 
     def __getbuffer__(self, Py_buffer* buffer, int flags):
-        cdef int l = 0
+        cdef int size = 0
         if buffer is NULL:
             return
-        if self._buffer is NULL or flags & python.PyBUF_WRITABLE:
-            self._saveToStringAndSize(<xmlChar**>&buffer.buf, &l)
-            buffer.len = l
-            if self._buffer is NULL and not flags & python.PyBUF_WRITABLE:
-                self._buffer = <xmlChar*>buffer.buf
-                self._buffer_len = l
-                self._buffer_refcnt = 1
-        else:
-            buffer.buf = self._buffer
-            buffer.len = self._buffer_len
-            self._buffer_refcnt += 1
-        if flags & python.PyBUF_WRITABLE:
-            buffer.readonly = 0
-        else:
-            buffer.readonly = 1
-        if flags & python.PyBUF_FORMAT:
-            buffer.format = "B"
-        else:
-            buffer.format = NULL
+
+        doc = self._get_result_doc()
+        if doc is None:
+            raise XSLTSaveError("No document to serialise")
+
+        # XSLT serialisation needs exclusive document access.
+        doc.lock_write()
+        try:
+            with cython.critical_section(self):
+                if self._buffer is NULL or flags & python.PyBUF_WRITABLE:
+                    if not self._saveToStringAndSize(doc._c_doc, <xmlChar**> &buffer.buf, &size):
+                        raise MemoryError()
+                    buffer.len = size
+                    if self._buffer is NULL and not flags & python.PyBUF_WRITABLE:
+                        self._buffer = <xmlChar*> buffer.buf
+                        self._buffer_len = size
+                        self._buffer_refcnt = 1
+                else:
+                    buffer.buf = self._buffer
+                    buffer.len = self._buffer_len
+                    self._buffer_refcnt += 1
+        finally:
+            doc.unlock_write()
+
+        buffer.readonly = (flags & python.PyBUF_WRITABLE) == 0
+        buffer.format = <char*> b"B" if flags & python.PyBUF_FORMAT else NULL
+
         buffer.ndim = 0
         buffer.shape = NULL
         buffer.strides = NULL
         buffer.suboffsets = NULL
-        buffer.itemsize = 1
+        buffer.itemsize = sizeof(xmlChar)
         buffer.internal = NULL
         if buffer.obj is not self: # set by Cython?
             buffer.obj = self
@@ -872,14 +873,19 @@ cdef class _XSLTResultTree(_ElementTree):
     def __releasebuffer__(self, Py_buffer* buffer):
         if buffer is NULL:
             return
-        if <xmlChar*>buffer.buf is self._buffer:
-            self._buffer_refcnt -= 1
-            if self._buffer_refcnt == 0:
-                tree.xmlFree(<char*>self._buffer)
-                self._buffer = NULL
+        cdef void* c_buffer_to_release = NULL
+        if <xmlChar*> buffer.buf is not self._buffer:
+            c_buffer_to_release = buffer.buf
         else:
-            tree.xmlFree(<char*>buffer.buf)
+            with cython.critical_section(self):
+                self._buffer_refcnt -= 1
+                if self._buffer_refcnt == 0:
+                    c_buffer_to_release = self._buffer
+                    self._buffer = NULL
+
         buffer.buf = NULL
+        if c_buffer_to_release is not NULL:
+            tree.xmlFree(c_buffer_to_release)
 
     property xslt_profile:
         """Return an ElementTree with profiling data for the stylesheet run.
