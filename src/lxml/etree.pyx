@@ -3547,10 +3547,15 @@ cdef class _MultiTagMatcher:
         if doc is self._cached_doc and dict_size == self._cached_size:
             # doc and dict didn't change => names already cached
             return 0
+
+        self._cacheTags(doc, force_into_dict)
+        self._cached_doc = doc
+        self._cached_size = dict_size
+        return 0
+
+    cdef int _cacheTags(self, _Document doc, bint force_into_dict=False) except -1:
         self._tag_count = 0
         if not self._py_tags:
-            self._cached_doc = doc
-            self._cached_size = dict_size
             return 0
         if not self._cached_tags:
             self._cached_tags = <qname*>python.lxml_malloc(len(self._py_tags), sizeof(qname))
@@ -3559,8 +3564,6 @@ cdef class _MultiTagMatcher:
                 raise MemoryError()
         self._tag_count = <size_t>_mapTagsToQnameMatchArray(
             doc._c_doc, self._py_tags, self._cached_tags, force_into_dict)
-        self._cached_doc = doc
-        self._cached_size = dict_size
         return 0
 
     cdef inline bint matches(self, xmlNode* c_node) noexcept:
