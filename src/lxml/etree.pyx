@@ -3713,9 +3713,12 @@ cdef class ElementDepthFirstIterator:
         doc.lock_read()
         try:
             self._matcher.cacheTags(node._doc)
+            if inclusive and not self._matcher.matches(node._c_node):
+                inclusive = False
         finally:
             doc.unlock_read()
-        if not inclusive or not self._matcher.matches(node._c_node):
+
+        if not inclusive:
             # find start node (this cannot raise StopIteration, self._next_node != None)
             next(self)
 
