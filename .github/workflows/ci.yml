@@ -250,7 +250,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}-${{ matrix.env.LIBXML2_VERSION || env.LIBXML2_VERSION }}-${{ matrix.env.LIBXSLT_VERSION || env.LIBXSLT_VERSION }}
 
       - name: Cache [libs]
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         if: matrix.env.STATIC_DEPS
         with:
           path: |
