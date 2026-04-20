@@ -25,8 +25,9 @@ COMPILED_MODULES = [
 ]
 HEADER_FILES = ['etree.h', 'etree_api.h']
 
-if hasattr(sys, 'pypy_version_info') or (
-        getattr(sys, 'implementation', None) and sys.implementation.name != 'cpython'):
+IS_PYPY = hasattr(sys, 'pypy_version_info')
+
+if IS_PYPY or (getattr(sys, 'implementation', None) and sys.implementation.name != 'cpython'):
     # disable Cython compilation of Python modules in PyPy and other non-CPythons
     del COMPILED_MODULES[:]
 
@@ -369,6 +370,9 @@ def define_macros():
         macros.append(('LIBEXSLT_STATIC', None))
     # Disable showing C lines in tracebacks, unless explicitly requested.
     macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1' if OPTION_WITH_CLINES else '0'))
+    # PyPy crashes when accessing objects in tp_finalize().
+    if IS_PYPY:
+        macros.append(('CYTHON_USE_TP_FINALIZE', '0'))
     return macros
 
 
