@@ -63,13 +63,15 @@ cdef class XInclude:
             try:
                 doc = node._doc
                 doc.lock_write()
-                with nogil:
-                    if tree.LIBXML_VERSION >= 21400:
-                        result = xinclude.xmlXIncludeProcessNode(xctxt, node._c_node)
-                    else:
-                        result = xinclude.xmlXIncludeProcessTreeFlagsData(
-                            node._c_node, parse_options, context_ptr)
-                doc.unlock_write()
+                try:
+                    with nogil:
+                        if tree.LIBXML_VERSION >= 21400:
+                            result = xinclude.xmlXIncludeProcessNode(xctxt, node._c_node)
+                        else:
+                            result = xinclude.xmlXIncludeProcessTreeFlagsData(
+                                node._c_node, parse_options, context_ptr)
+                finally:
+                    doc.unlock_write()
             finally:
                 _reset_resource_loader(old_loader)
                 self._error_log.disconnect()
