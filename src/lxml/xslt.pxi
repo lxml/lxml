@@ -531,7 +531,7 @@ cdef class XSLT:
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
 
-        cdef bint use_write_lock = self._context.has_user_extensions
+        cdef bint use_write_lock = self._context._extensions
         if use_write_lock:
             input_doc.lock_write()
         else:
