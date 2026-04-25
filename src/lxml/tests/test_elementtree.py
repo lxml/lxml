@@ -5046,5 +5046,10 @@ def test_suite():
         suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementSlicingTest)])
     return suite
 
+
+# Hide test base classes from test discovery.
+del _ETreeTestCaseBase, _ElementSlicingTest, _XMLPullParserTest, _C14NTest
+
+
 if __name__ == '__main__':
     print('to test use test.py %s' % __file__)

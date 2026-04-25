@@ -34,6 +34,13 @@ cdef extern from "Python.h":
       #undef PyUnicode_DATA
       #define PyUnicode_DATA(s)  (0)
     #endif
+
+    #if !defined(Py_mod_gil) && (PY_VERSION_HEX < 0x030d0000 || defined(Py_LIMITED_API) && Py_LIMITED_API < 0x030d0000)
+      #define Py_mod_gil 4
+      #define Py_MOD_GIL_USED  NULL
+      #define Py_MOD_GIL_NOT_USED  NULL
+    #endif
+
     """
 
     ctypedef struct PyObject
@@ -86,6 +93,8 @@ cdef extern from "Python.h":
 
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
+    cdef PyObject* PyDict_GetItemWithError(object d, object key) except? NULL
+    cdef object PyDict_GetItemRef(object d, object key)
     cdef object PyDictProxy_New(object d)
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)
@@ -110,6 +119,19 @@ cdef extern from "Python.h":
     cdef void* PyMem_Realloc(void* p, size_t size)
     cdef void PyMem_Free(void* p)
 
+    const int Py_mod_gil
+    const void* Py_MOD_GIL_USED
+    const void* Py_MOD_GIL_NOT_USED
+
+    ctypedef struct PyModuleDef_Slot:
+        int slot
+        void* value
+
+    ctypedef struct PyModuleDef:
+        PyModuleDef_Slot* m_slots
+
+    cdef PyModuleDef* PyModule_GetDef(object module) except? NULL
+
     # always returns NULL to pass on the exception
     cdef object PyErr_SetFromErrno(object type)
     cdef void PyException_SetContext(object exception, object context)
@@ -133,13 +155,43 @@ cdef extern from "Python.h":
     cdef const int PyBUF_ANY_CONTIGUOUS
     cdef const int PyBUF_INDIRECT
 
+
+cdef extern from *:
+    """
+    #if !CYTHON_COMPILING_IN_CPYTHON || PY_VERSION_HEX < 0x030e0000 || !defined(Py_GIL_DISABLED)
+        #define PyUnstable_EnableTryIncRef(obj)
+        #define PyUnstable_TryIncRef(obj) (Py_INCREF(obj), 1)
+        #define __lxml_HAS_TryIncRef (0)
+    #else
+        #define __lxml_HAS_TryIncRef (1)
+    #endif
+    """
+    cdef const bint HAS_TryIncRef "__lxml_HAS_TryIncRef"
+
+    void PyUnstable_EnableTryIncRef(object o)
+    # Enables subsequent uses of PyUnstable_TryIncRef() on obj.
+    # The caller must hold a strong reference to obj when calling this.
+    #
+    # Added in CPython 3.14.
+
+    bint PyUnstable_TryIncRef(PyObject *o)
+    # Increments the reference count of obj if it is not zero.
+    # Returns 1 if the object’s reference count was successfully incremented.
+    # Otherwise, this function returns 0.
+    #
+    # PyUnstable_EnableTryIncRef() must have been called earlier on obj
+    # or this function may spuriously return 0 in the free threading build.
+    #
+    # Added in CPython 3.14.
+
+
 cdef extern from "pythread.h":
     ctypedef void* PyThread_type_lock
     cdef PyThread_type_lock PyThread_allocate_lock()
     cdef void PyThread_free_lock(PyThread_type_lock lock)
     cdef int  PyThread_acquire_lock(PyThread_type_lock lock, int mode) nogil
-    cdef void PyThread_release_lock(PyThread_type_lock lock)
-    cdef long PyThread_get_thread_ident()
+    cdef void PyThread_release_lock(PyThread_type_lock lock) nogil
+    cdef unsigned long PyThread_get_thread_ident()
 
     ctypedef enum __WaitLock:
         WAIT_LOCK

@@ -43,6 +43,7 @@ TESTED VERSION: {etree.__version__}
     Default encoding: {sys.getdefaultencoding()}
     Max Unicode:      {sys.maxunicode}
     PyUCS4 encoding:  {getattr(etree, '_pyucs4_encoding_name', '')}
+    freethreading:    {getattr(etree, '_freethreading_enabled', '')}
 """)
 
 
@@ -746,6 +747,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml = b'<a><b></b>'
         parser = XMLParser(target=etree.TreeBuilder())
         self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
+    def test_parser_reentry_from_target(self):
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        class Target:
+            def start(self, tag, attrib):
+                etree.fromstring(b"<root />", parser=parser)
+            def close(self):
+                pass
+
+        xml = b'<a><b></b>'
+        parser = XMLParser(target=Target())
+        self.assertRaises(RuntimeError, fromstring, xml, parser)
 
     def test_iterparse_getiterator(self):
         iterparse = self.etree.iterparse
@@ -5900,6 +5915,10 @@ def test_suite():
     suite.addTests(
         [make_doctest('resolvers.txt')])
     return suite
+
+
+# Hide test base classes from test discovery.
+del _XIncludeTestCase
 
 
 if __name__ == '__main__':

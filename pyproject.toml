@@ -3,16 +3,19 @@ requires = ["Cython>=3.2.4", "setuptools"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.2", LIBICONV_VERSION = "1.18", LIBXML2_VERSION = "2.14.6", LIBXSLT_VERSION = "1.1.43"}
-enable = ["pypy", "cpython-prerelease"]
-       # "pypy"
-       # "cpython-prerelease"
-       # "cpython-freethreading"
+environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.2", LIBICONV_VERSION = "1.18", LIBXML2_VERSION = "2.14.6", LIBXSLT_VERSION = "1.1.43", LXML_CSTD = "c11"}
+enable = [
+    "pypy",
+    "cpython-prerelease",
+    "cpython-freethreading",
+]
 skip = [
     "cp38-*",
     "pp38-*",
     "pp*-manylinux_i686",
     "*-musllinux_i686",
+    # FT-Python 3.13t is probably not worth supporting (at least right now).
+    "cp313t-*",
     # Reduce job load and HTTP hit rate on library servers.
     "cp39-*_ppc64le",
     "cp310-*_ppc64le",
@@ -36,7 +39,6 @@ environment.AR = "gcc-ar"
 environment.NM = "gcc-nm"
 environment.RANLIB = "gcc-ranlib"
 environment.LDFLAGS = "-fPIC -flto"
-environment.STATIC_DEPS = "true"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"

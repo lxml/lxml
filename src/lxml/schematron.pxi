@@ -90,7 +90,11 @@ cdef class Schematron(_Validator):
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            self._c_schema_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            doc.lock_read()
+            try:
+                self._c_schema_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            finally:
+                doc.unlock_read()
             parser_ctxt = schematron.xmlSchematronNewDocParserCtxt(self._c_schema_doc)
         elif file is not None:
             filename = _getFilenameForFile(file)
@@ -98,10 +102,8 @@ cdef class Schematron(_Validator):
                 # XXX assume a string object
                 filename = file
             filename = _encodeFilename(filename)
-            with self._error_log:
-                orig_loader = _register_document_loader()
+            with self._error_log, lxml_document_loader:
                 parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
-                _reset_document_loader(orig_loader)
         else:
             raise SchematronParseError, "No tree or file given"
 
@@ -112,10 +114,8 @@ cdef class Schematron(_Validator):
             raise MemoryError()
 
         try:
-            with self._error_log:
-                orig_loader = _register_document_loader()
+            with self._error_log, lxml_document_loader:
                 self._c_schema = schematron.xmlSchematronParse(parser_ctxt)
-                _reset_document_loader(orig_loader)
         finally:
             schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
 
@@ -150,6 +150,7 @@ cdef class Schematron(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
+        doc.lock_fakedoc()
         try:
             self._error_log.clear()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
@@ -160,6 +161,7 @@ cdef class Schematron(_Validator):
                 ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
+            doc.unlock_fakedoc()
             schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
 
         if ret == -1:
