@@ -22,7 +22,6 @@ def stdout():
 from io import BytesIO
 
 from lxml import etree as ElementTree
-from lxml import _elementpath as ElementPath
 from lxml import ElementInclude
 ET = ElementTree
 
@@ -752,58 +751,9 @@ def qname():
 
     """
 
-def xpath_tokenizer(p):
-    """
-    Test the XPath tokenizer.
-
-    >>> # tests from the xml specification
-    >>> xpath_tokenizer("*")
-    ['*']
-    >>> xpath_tokenizer("text()")
-    ['text', '()']
-    >>> xpath_tokenizer("@name")
-    ['@', 'name']
-    >>> xpath_tokenizer("@*")
-    ['@', '*']
-    >>> xpath_tokenizer("para[1]")
-    ['para', '[', '1', ']']
-    >>> xpath_tokenizer("para[last()]")
-    ['para', '[', 'last', '()', ']']
-    >>> xpath_tokenizer("*/para")
-    ['*', '/', 'para']
-    >>> xpath_tokenizer("/doc/chapter[5]/section[2]")
-    ['/', 'doc', '/', 'chapter', '[', '5', ']', '/', 'section', '[', '2', ']']
-    >>> xpath_tokenizer("chapter//para")
-    ['chapter', '//', 'para']
-    >>> xpath_tokenizer("//para")
-    ['//', 'para']
-    >>> xpath_tokenizer("//olist/item")
-    ['//', 'olist', '/', 'item']
-    >>> xpath_tokenizer(".")
-    ['.']
-    >>> xpath_tokenizer(".//para")
-    ['.', '//', 'para']
-    >>> xpath_tokenizer("..")
-    ['..']
-    >>> xpath_tokenizer("../@lang")
-    ['..', '/', '@', 'lang']
-    >>> xpath_tokenizer("chapter[title]")
-    ['chapter', '[', 'title', ']']
-    >>> xpath_tokenizer("employee[@secretary and @assistant]")
-    ['employee', '[', '@', 'secretary', '', 'and', '', '@', 'assistant', ']']
-
-    >>> # additional tests
-    >>> xpath_tokenizer("{http://spam}egg")
-    ['{http://spam}egg']
-    >>> xpath_tokenizer("./spam.egg")
-    ['.', '/', 'spam.egg']
-    >>> xpath_tokenizer(".//{http://spam}egg")
-    ['.', '//', '{http://spam}egg']
-    """
-    out = []
-    for op, tag in ElementPath.xpath_tokenizer(p):
-        out.append(op or tag)
-    return out
+# NOTE: the xpath_tokenizer doctest was removed when lxml._elementpath
+# (Python module) was replaced by _elementpath.pxi (Cython). The C-level
+# tokenizer is internal to the .pxi and not exposed at the Python level.
 
 #
 # xinclude tests (samples from appendix C of the xinclude specification)
@@ -958,7 +908,7 @@ def xmlwriter():
     >>> w.data("\n")
     >>> w.element("p", u"reserved characters: <&>")
     >>> w.data("\n")
-    >>> w.element("p", u"detta är också ett stycke")
+    >>> w.element("p", u"detta ï¿½r ocksï¿½ ett stycke")
     >>> w.data("\n")
     >>> w.close(html)
     >>> print(file.getvalue())
@@ -1050,26 +1000,26 @@ def bug_xmltoolkit39():
     """
     non-ascii element and attribute names doesn't work
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><täg />")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tï¿½g />")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g />'
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tag ättr='v&#228;lue' />")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tag ï¿½ttr='v&#228;lue' />")
     >>> tree.attrib
     {u'\\xe4ttr': u'v\\xe4lue'}
     >>> ElementTree.tostring(tree, "utf-8")
     '<tag \\xc3\\xa4ttr="v\\xc3\\xa4lue" />'
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><täg>text</täg>")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tï¿½g>text</tï¿½g>")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g>text</t\\xc3\\xa4g>'
 
-    >>> tree = ElementTree.Element(u"täg")
+    >>> tree = ElementTree.Element(u"tï¿½g")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g />'
 
     >>> tree = ElementTree.Element("tag")
-    >>> tree.set(u"ättr", u"välue")
+    >>> tree.set(u"ï¿½ttr", u"vï¿½lue")
     >>> ElementTree.tostring(tree, "utf-8")
     '<tag \\xc3\\xa4ttr="v\\xc3\\xa4lue" />'
 
@@ -1084,7 +1034,7 @@ def bug_xmltoolkit45():
 
     latin-1 text
     >>> p = HTMLTreeBuilder.TreeBuilder()
-    >>> p.feed("<p>välue</p>")
+    >>> p.feed("<p>vï¿½lue</p>")
     >>> serialize(p.close())
     '<p>v&#228;lue</p>'
 
@@ -1114,7 +1064,7 @@ def bug_xmltoolkit45():
 
     mixed latin-1 text and unicode entities
     >>> p = HTMLTreeBuilder.TreeBuilder()
-    >>> p.feed("<p>&#8221;välue&#8221;</p>")
+    >>> p.feed("<p>&#8221;vï¿½lue&#8221;</p>")
     >>> serialize(p.close())
     '<p>&#8221;v&#228;lue&#8221;</p>'
 

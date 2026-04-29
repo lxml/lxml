@@ -72,8 +72,9 @@ from io import BytesIO, StringIO, BufferedWriter
 cdef object OrderedDict
 from collections import OrderedDict
 
-cdef object _elementpath
-from lxml import _elementpath
+# NOTE: _elementpath was previously a Python module (lxml/_elementpath.py).
+# It has been replaced by _elementpath.pxi (included below) which builds on
+# iterfind.pxi to drive a pure-C tokenizer/walker over libxml2 nodes.
 
 cdef object sys
 import sys
@@ -1710,7 +1711,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.find(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_find(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findtext(self, path, default=None, namespaces=None):
         """findtext(self, path, default=None, namespaces=None)
@@ -1723,7 +1724,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findtext(self, path, default, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_findtext(self, path, default, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findall(self, path, namespaces=None):
         """findall(self, path, namespaces=None)
@@ -1736,7 +1737,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findall(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_findall(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def iterfind(self, path, namespaces=None):
         """iterfind(self, path, namespaces=None)
@@ -1749,7 +1750,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.iterfind(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_iterfind(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
               smart_strings=True, **_variables):
@@ -3800,6 +3801,8 @@ include "saxparser.pxi"    # SAX-like Parser interface and tree builder
 include "parsertarget.pxi" # ET Parser target
 include "serializer.pxi"   # XML output functions
 include "iterparse.pxi"    # incremental XML parsing
+include "iterfind.pxi"     # ElementPath iterator (pure C-level, xmlNode in/out)
+include "_elementpath.pxi" # Python-facing find/findall/iterfind/findtext
 include "xmlid.pxi"        # XMLID and IDDict
 include "xinclude.pxi"     # XInclude
 include "cleanup.pxi"      # Cleanup and recursive element removal functions
