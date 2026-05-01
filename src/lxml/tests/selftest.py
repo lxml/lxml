@@ -751,9 +751,6 @@ def qname():
 
     """
 
-# NOTE: the xpath_tokenizer doctest was removed when lxml._elementpath
-# (Python module) was replaced by _elementpath.pxi (Cython). The C-level
-# tokenizer is internal to the .pxi and not exposed at the Python level.
 
 #
 # xinclude tests (samples from appendix C of the xinclude specification)
@@ -908,7 +905,7 @@ def xmlwriter():
     >>> w.data("\n")
     >>> w.element("p", u"reserved characters: <&>")
     >>> w.data("\n")
-    >>> w.element("p", u"detta �r ocks� ett stycke")
+    >>> w.element("p", u"detta är också ett stycke")
     >>> w.data("\n")
     >>> w.close(html)
     >>> print(file.getvalue())
@@ -1000,26 +997,26 @@ def bug_xmltoolkit39():
     """
     non-ascii element and attribute names doesn't work
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><t�g />")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><täg />")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g />'
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tag �ttr='v&#228;lue' />")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><tag ättr='v&#228;lue' />")
     >>> tree.attrib
     {u'\\xe4ttr': u'v\\xe4lue'}
     >>> ElementTree.tostring(tree, "utf-8")
     '<tag \\xc3\\xa4ttr="v\\xc3\\xa4lue" />'
 
-    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><t�g>text</t�g>")
+    >>> tree = ElementTree.XML("<?xml version='1.0' encoding='iso-8859-1'?><täg>text</täg>")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g>text</t\\xc3\\xa4g>'
 
-    >>> tree = ElementTree.Element(u"t�g")
+    >>> tree = ElementTree.Element(u"täg")
     >>> ElementTree.tostring(tree, "utf-8")
     '<t\\xc3\\xa4g />'
 
     >>> tree = ElementTree.Element("tag")
-    >>> tree.set(u"�ttr", u"v�lue")
+    >>> tree.set(u"ättr", u"välue")
     >>> ElementTree.tostring(tree, "utf-8")
     '<tag \\xc3\\xa4ttr="v\\xc3\\xa4lue" />'
 
@@ -1034,7 +1031,7 @@ def bug_xmltoolkit45():
 
     latin-1 text
     >>> p = HTMLTreeBuilder.TreeBuilder()
-    >>> p.feed("<p>v�lue</p>")
+    >>> p.feed("<p>välue</p>")
     >>> serialize(p.close())
     '<p>v&#228;lue</p>'
 
@@ -1064,7 +1061,7 @@ def bug_xmltoolkit45():
 
     mixed latin-1 text and unicode entities
     >>> p = HTMLTreeBuilder.TreeBuilder()
-    >>> p.feed("<p>&#8221;v�lue&#8221;</p>")
+    >>> p.feed("<p>&#8221;välue&#8221;</p>")
     >>> serialize(p.close())
     '<p>&#8221;v&#228;lue&#8221;</p>'
 

@@ -25,150 +25,6 @@ class EtreeElementPathTestCase(HelperTestCase):
 
     _empty_namespaces = None
 
-    @unittest.skip("internal _elementpath._cache API removed; replaced by C-level pxi")
-    def test_cache(self):
-        pass
-
-    def _assert_tokens(self, tokens, path, namespaces=None):
-        # The Python xpath_tokenizer is gone; this helper is unused by skipped tests.
-        self.skipTest("internal xpath_tokenizer API removed")
-
-    def test_tokenizer(self):
-        assert_tokens = self._assert_tokens
-        assert_tokens(
-            [('/', '')],
-            '/',
-        )
-        assert_tokens(
-            [('.', ''), ('/', ''), ('', 'a'), ('/', ''), ('', 'b'), ('/', ''), ('', 'c')],
-            './a/b/c',
-        )
-        assert_tokens(
-            [('/', ''), ('', 'a'), ('/', ''), ('', 'b'), ('/', ''), ('', 'c')],
-            '/a/b/c',
-        )
-        assert_tokens(
-            [('/', ''), ('', '{nsx}a'), ('/', ''), ('', '{nsy}b'), ('/', ''), ('', 'c')],
-            '/x:a/y:b/c',
-            {'x': 'nsx', 'y': 'nsy'},
-        )
-        assert_tokens(
-            [('/', ''), ('', '{nsx}a'), ('/', ''), ('', '{nsy}b'), ('/', ''), ('', '{nsnone}c')],
-            '/x:a/y:b/c',
-            {'x': 'nsx', 'y': 'nsy', None: 'nsnone'},
-        )
-
-    def test_tokenizer_predicates(self):
-        assert_tokens = self._assert_tokens
-        assert_tokens(
-            [('', 'a'), ('[', ''), ('', 'b'), (']', '')],
-            'a[b]',
-        )
-        assert_tokens(
-            [('', 'a'), ('[', ''), ('', 'b'), ('=', ''), ('"abc"', ''), (']', '')],
-            'a[b="abc"]',
-        )
-        assert_tokens(
-            [('', 'a'), ('[', ''), ('.', ''), ('', ''), ('=', ''), ('', ''), ('"abc"', ''), (']', '')],
-            'a[. = "abc"]',
-        )
-
-    def test_tokenizer_index(self):
-        assert_tokens = self._assert_tokens
-        assert_tokens(
-            [('/', ''), ('', 'a'), ('/', ''), ('', 'b'), ('/', ''), ('', 'c'), ('[', ''), ('', '1'), (']', '')],
-            '/a/b/c[1]',
-        )
-        assert_tokens(
-            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('/', ''), ('', '{nsnone}c'), ('[', ''), ('', '1'), (']', '')],
-            '/a/b/c[1]',
-            namespaces={None:'nsnone'},
-        )
-        assert_tokens(
-            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('[', ''), ('', '2'), (']', ''), ('/', ''), ('', '{nsnone}c'), ('[', ''), ('', '1'), (']', '')],
-            '/a/b[2]/c[1]',
-            namespaces={None:'nsnone'},
-        )
-        assert_tokens(
-            [('/', ''), ('', '{nsnone}a'), ('/', ''), ('', '{nsnone}b'), ('[', ''), ('', '100'), (']', '')],
-            '/a/b[100]',
-            namespaces={None:'nsnone'}
-        )
-
-    @unittest.skip("internal xpath_tokenizer API removed; replaced by C-level pxi")
-    def test_xpath_tokenizer(self):
-        # Test the XPath tokenizer.  Copied from CPython's "test_xml_etree.py"
-        ElementPath = None
-
-        def check(p, expected, namespaces=self._empty_namespaces):
-            self.assertEqual([op or tag
-                              for op, tag in ElementPath.xpath_tokenizer(p, namespaces)],
-                             expected)
-
-        # tests from the xml specification
-        check("*", ['*'])
-        check("text()", ['text', '()'])
-        check("@name", ['@', 'name'])
-        check("@*", ['@', '*'])
-        check("para[1]", ['para', '[', '1', ']'])
-        check("para[last()]", ['para', '[', 'last', '()', ']'])
-        check("*/para", ['*', '/', 'para'])
-        check("/doc/chapter[5]/section[2]",
-              ['/', 'doc', '/', 'chapter', '[', '5', ']',
-               '/', 'section', '[', '2', ']'])
-        check("chapter//para", ['chapter', '//', 'para'])
-        check("//para", ['//', 'para'])
-        check("//olist/item", ['//', 'olist', '/', 'item'])
-        check(".", ['.'])
-        check(".//para", ['.', '//', 'para'])
-        check("..", ['..'])
-        check("../@lang", ['..', '/', '@', 'lang'])
-        check("chapter[title]", ['chapter', '[', 'title', ']'])
-        check("employee[@secretary and @assistant]", ['employee',
-              '[', '@', 'secretary', '', 'and', '', '@', 'assistant', ']'])
-
-        # additional tests
-        check("@{ns}attr", ['@', '{ns}attr'])
-        check("{http://spam}egg", ['{http://spam}egg'])
-        check("./spam.egg", ['.', '/', 'spam.egg'])
-        check(".//{http://spam}egg", ['.', '//', '{http://spam}egg'])
-
-        # wildcard tags
-        check("{ns}*", ['{ns}*'])
-        check("{}*", ['{}*'])
-        check("{*}tag", ['{*}tag'])
-        check("{*}*", ['{*}*'])
-        check(".//{*}tag", ['.', '//', '{*}tag'])
-
-        # namespace prefix resolution
-        check("./xsd:type", ['.', '/', '{http://www.w3.org/2001/XMLSchema}type'],
-              {'xsd': 'http://www.w3.org/2001/XMLSchema'})
-        check("type", ['{http://www.w3.org/2001/XMLSchema}type'],
-              {'': 'http://www.w3.org/2001/XMLSchema'})
-        check("@xsd:type", ['@', '{http://www.w3.org/2001/XMLSchema}type'],
-              {'xsd': 'http://www.w3.org/2001/XMLSchema'})
-        check("@type", ['@', 'type'],
-              {'': 'http://www.w3.org/2001/XMLSchema'})
-        check("@{*}type", ['@', '{*}type'],
-              {'': 'http://www.w3.org/2001/XMLSchema'})
-        check("@{ns}attr", ['@', '{ns}attr'],
-              {'': 'http://www.w3.org/2001/XMLSchema',
-               'ns': 'http://www.w3.org/2001/XMLSchema'})
-
-        if self.etree is etree:
-            check("/doc/section[2]",
-                ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
-                {"":"http://www.w3.org/2001/XMLSchema"}
-            )
-            check("/doc/section[2]",
-                ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
-                {None:"http://www.w3.org/2001/XMLSchema"}
-            )
-            check("/ns:doc/ns:section[2]",
-                ['/', '{http://www.w3.org/2001/XMLSchema}doc', '/', '{http://www.w3.org/2001/XMLSchema}section', '[', '2', ']'],
-                {"ns":"http://www.w3.org/2001/XMLSchema"}
-            )
-
     def test_find(self):
         """
         Test find methods (including xpath syntax).
@@ -339,15 +195,6 @@ class EtreeElementPathTestCase(HelperTestCase):
             etree.ElementTree(elem).iterfind, "/tag")
 
 
-class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
-    import xml.etree.ElementTree as etree
-    import xml.etree.ElementPath as _elementpath
-
-    test_cache = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_cache)
-    test_tokenizer = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_tokenizer)
-    test_tokenizer_index = unittest.skip("lxml-only")(EtreeElementPathTestCase.test_tokenizer_index)
-
-
 class EtreeElementPathEmptyNamespacesTestCase(EtreeElementPathTestCase):
     _empty_namespaces = {}  # empty dict as opposed to None
 
@@ -359,7 +206,6 @@ class EtreeElementPathNonEmptyNamespacesTestCase(EtreeElementPathTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathTestCase)])
-    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementPathTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathEmptyNamespacesTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathNonEmptyNamespacesTestCase)])
     return suite

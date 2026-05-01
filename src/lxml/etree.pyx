@@ -72,10 +72,6 @@ from io import BytesIO, StringIO, BufferedWriter
 cdef object OrderedDict
 from collections import OrderedDict
 
-# NOTE: _elementpath was previously a Python module (lxml/_elementpath.py).
-# It has been replaced by _elementpath.pxi (included below) which builds on
-# iterfind.pxi to drive a pure-C tokenizer/walker over libxml2 nodes.
-
 cdef object sys
 import sys
 
