@@ -55,7 +55,7 @@
 # you, if needed.
 ##
 
-
+import cython
 import re
 
 xpath_tokenizer_re = re.compile(
@@ -219,20 +219,45 @@ def prepare_predicate(next, token):
                     raise SyntaxError("unsupported expression")
             else:
                 index = -1
-        def select(result):
+
+        reversed: bool = index < 0
+        if reversed:
+            index = -index
+
+        try:
+            c_index: cython.Py_ssize_t = index
+        except OverflowError:
+            # Too large to ever find a child.
+            def select(result):
+                if False: yield
+            return select
+
+        def select(result, _reversed: bool = reversed, _index: cython.Py_ssize_t = c_index):
+            last_parent = None
+            last_tag = None
+            child = None
+
+            i: cython.Py_ssize_t
+
             for elem in result:
                 parent = elem.getparent()
                 if parent is None:
                     continue
-                try:
+                if parent is not last_parent or elem.tag != last_tag:
+                    # Unless we leave the parent/tag context, we already know the current N-th child.
                     # FIXME: what if the selector is "*" ?
-                    elems = list(parent.iterchildren(elem.tag))
-                    if elems[index] is elem:
-                        yield elem
-                except IndexError:
-                    pass
+                    last_parent = parent
+                    last_tag = elem.tag
+                    for i, child in enumerate(parent.iterchildren(last_tag, reversed=True) if _reversed else parent.iterchildren(last_tag)):
+                        if i == _index:
+                            break
+                    else:
+                        continue
+                if child is elem:
+                    yield elem
         return select
     raise SyntaxError("invalid predicate")
+
 
 ops = {
     "": prepare_child,
