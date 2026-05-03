@@ -14,6 +14,7 @@ on:
   push:
     paths:
       - .github/workflows/wheels.yml
+      - .github/workflows/cache_libs.yml
       - requirements.txt
       - pyproject.toml
       - MANIFEST.in
@@ -24,6 +25,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - .github/workflows/wheels.yml
+      - .github/workflows/cache_libs.yml
       - requirements.txt
       - pyproject.toml
       - MANIFEST.in
@@ -118,6 +120,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
+      LXML_CSTD: "c11"
       ZLIB_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
       LIBICONV_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBICONV_VERSION || needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXML2_VERSION || needs.cache_libs.outputs.LIBXML2_VERSION }}

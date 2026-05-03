@@ -1,12 +1,19 @@
 from lxml.includes.tree cimport xmlDoc
+from lxml.includes.xmlparser cimport xmlResourceLoader
 from lxml.includes.xmlerror cimport xmlStructuredErrorFunc
 
+
 cdef extern from "libxml/relaxng.h" nogil:
+    """
+    #if LIBXML_VERSION < 21400
+    #define xmlRelaxNGSetResourceLoader(ctxt, loader, data)  ((void) ((void) ctxt, (void) loader, (void) data))
+    #endif
+    """
     ctypedef struct xmlRelaxNG
     ctypedef struct xmlRelaxNGParserCtxt
-    
+
     ctypedef struct xmlRelaxNGValidCtxt
-    
+
     ctypedef enum xmlRelaxNGValidErr:
         XML_RELAXNG_OK = 0
         XML_RELAXNG_ERR_MEMORY = 1
@@ -48,7 +55,7 @@ cdef extern from "libxml/relaxng.h" nogil:
         XML_RELAXNG_ERR_INTERNAL = 37
         XML_RELAXNG_ERR_ELEMWRONG = 38
         XML_RELAXNG_ERR_TEXTWRONG = 39
-        
+
     cdef xmlRelaxNGValidCtxt* xmlRelaxNGNewValidCtxt(xmlRelaxNG* schema)
     cdef int xmlRelaxNGValidateDoc(xmlRelaxNGValidCtxt* ctxt, xmlDoc* doc)
     cdef xmlRelaxNG* xmlRelaxNGParse(xmlRelaxNGParserCtxt* ctxt)
@@ -62,3 +69,6 @@ cdef extern from "libxml/relaxng.h" nogil:
         xmlRelaxNGValidCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx)
     cdef void xmlRelaxNGSetParserStructuredErrors(
         xmlRelaxNGParserCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx)
+
+    # 2.14+
+    cdef void xmlRelaxNGSetResourceLoader(xmlRelaxNGParserCtxt* ctxt, xmlResourceLoader loader, void* vctxt)

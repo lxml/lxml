@@ -15,7 +15,7 @@ try:
 except ImportError:
     CYTHON_INSTALLED = False
 
-EXT_MODULES = ["lxml.etree", "lxml.objectify"]
+EXT_MODULES = ["lxml.etree", "lxml.objectify", "lxml.tests._testlock"]
 COMPILED_MODULES = [
     "lxml.builder",
     "lxml._elementpath",
@@ -25,8 +25,9 @@ COMPILED_MODULES = [
 ]
 HEADER_FILES = ['etree.h', 'etree_api.h']
 
-if hasattr(sys, 'pypy_version_info') or (
-        getattr(sys, 'implementation', None) and sys.implementation.name != 'cpython'):
+IS_PYPY = hasattr(sys, 'pypy_version_info')
+
+if IS_PYPY or (getattr(sys, 'implementation', None) and sys.implementation.name != 'cpython'):
     # disable Cython compilation of Python modules in PyPy and other non-CPythons
     del COMPILED_MODULES[:]
 
@@ -152,6 +153,8 @@ def ext_modules(static_include_dirs, static_library_dirs,
     cythonize_directives = {
         'binding': True,
     }
+    if sys.version_info >= (3,14):
+        cythonize_directives['freethreading_compatible'] = True
     if OPTION_WITH_COVERAGE:
         cythonize_directives['linetrace'] = True
 
@@ -321,6 +324,8 @@ def cflags(static_cflags):
         result.append('-w')
     if OPTION_DEBUG_GCC:
         result.append('-g2')
+    if OPTION_CSTD:
+        result.append(f'/std:{OPTION_CSTD}' if sys.platform == 'win32' else f'-std={OPTION_CSTD}')
 
     if OPTION_STATIC:
         if not static_cflags:
@@ -357,7 +362,7 @@ def define_macros():
     if OPTION_WITH_COVERAGE:
         macros.append(('CYTHON_TRACE_NOGIL', '1'))
         # coverage.py does not support Cython together with sys.monitoring.
-        # See https://github.com/nedbat/coveragepy/issues/1790
+        # See https://github.com/coveragepy/coveragepy/issues/1790
         macros.append(('CYTHON_USE_SYS_MONITORING', '0'))
     if OPTION_BUILD_LIBXML2XSLT:
         macros.append(('LIBXML_STATIC', None))
@@ -365,6 +370,9 @@ def define_macros():
         macros.append(('LIBEXSLT_STATIC', None))
     # Disable showing C lines in tracebacks, unless explicitly requested.
     macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1' if OPTION_WITH_CLINES else '0'))
+    # PyPy crashes when accessing objects in tp_finalize().
+    if IS_PYPY:
+        macros.append(('CYTHON_USE_TP_FINALIZE', '0'))
     return macros
 
 
@@ -575,6 +583,7 @@ OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
 OPTION_ZLIB_VERSION = option_value('zlib-version')
 OPTION_MULTICORE = option_value('multicore')
+OPTION_CSTD = option_value('lxml-cstd')
 OPTION_DOWNLOAD_DIR = option_value('download-dir')
 if OPTION_DOWNLOAD_DIR is None:
     OPTION_DOWNLOAD_DIR = 'libs'

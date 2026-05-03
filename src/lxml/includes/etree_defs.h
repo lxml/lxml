@@ -14,8 +14,8 @@
 #include "libxml/xmlversion.h"
 #ifndef LIBXML_VERSION
 #  error the development package of libxml2 (header files etc.) is not installed correctly
-#elif LIBXML_VERSION < 20700
-#  error minimum required version of libxml2 is 2.7.0
+#elif LIBXML_VERSION < 20704
+#  error minimum required version of libxml2 is 2.7.4
 #endif
 
 #include "libxslt/xsltconfig.h"
@@ -31,9 +31,9 @@
 #define va_charptr(ap) va_arg(ap, char *)
 
 #ifdef PYPY_VERSION
-#    define IS_PYPY 1
+#    define IS_PYPY (1)
 #else
-#    define IS_PYPY 0
+#    define IS_PYPY (0)
 #endif
 
 /* unused */
