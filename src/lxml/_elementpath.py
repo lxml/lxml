@@ -254,6 +254,7 @@ def prepare_predicate(next, token):
                     else:
                         continue
                 if child is elem:
+                    last_parent = None  # Do not assume the tree to stay unmodified during yield.
                     yield elem
         return select
     raise SyntaxError("invalid predicate")
