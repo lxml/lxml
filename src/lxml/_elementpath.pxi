@@ -1,94 +1,136 @@
 # _elementpath.pxi - Python-facing ElementPath API on top of iterfind.pxi.
 #
-# Replaces the pure-Python lxml._elementpath module. Public functions:
+# Public entry points:
 #   _elementpath_find(elem, path, namespaces=None, with_prefixes=True)
 #   _elementpath_findall(elem, path, namespaces=None, with_prefixes=True)
 #   _elementpath_iterfind(elem, path, namespaces=None, with_prefixes=True)
 #   _elementpath_findtext(elem, path, default=None, namespaces=None, with_prefixes=True)
 #
-# This module performs no path tokenization or prefix substitution itself:
-# the C-level compiler in iterfind.pxi handles ``{uri}name``, ``prefix:name``
-# resolution and default-namespace application directly while building its
-# step structs. Likewise the path-syntax rules (reject leading '/', treat
-# trailing '/' as implicit '/*') live in the C compiler.
+# Each entry point compiles a fresh _IfSearcher chain and drives it via
+# the searcher's own _first / _next methods, which return matched
+# xmlNode* directly (or NULL when exhausted). Chain-driving --
+# descending into ``self.next._first`` on a match, cascading via
+# ``self.prev._next`` on exhaustion -- happens inside the searcher,
+# so callers never see the chain mechanics.
 #
-# Each entry point declares ``elem`` as ``_Element``, so Cython generates a
-# C-level type check on argument unpacking -- equivalent to the old
-# ``isinstance`` guard, just less code and one fewer Python attribute access.
+# Two entry-point shapes:
+#
+#   one-shot (find / findall):
+#       head = _IfSearcher(); leaf = head.compile(path, ns)
+#       match = head._first(elem._c_node)         # first leaf match (or NULL)
+#       while match is not NULL:                  # findall continues
+#           collect(match)
+#           match = leaf._next(match)             # resume from leaf
+#
+#   stateful iterator (iterfind):
+#       _ElementPathIterator inherits _IfSearcher, so the iterator IS
+#       the head. ``_searcher`` caches the leaf returned by compile().
+#       __next__ dispatches: first call -> self._first(root); subsequent
+#       calls -> self._searcher._next(prev_match). On exhaustion
+#       _searcher is set to None so subsequent __next__ calls keep
+#       raising StopIteration (sticky-stop, per Python iterator protocol).
+#
+# Lifetime: every ``step.c_href`` and predicate URI/value pointer
+# borrows into either the path str's UTF-8 cache or a value held by
+# the namespaces dict. The iterator pins both via its own ``_path``
+# and ``_namespaces`` (shallow dict copy) fields; find/findall pin
+# them via the function-local parameters. ``_current_element`` on the
+# iterator additionally anchors the xmlDoc lifetime AND provides
+# ``_c_node`` as the leaf cursor for resume.
 
 
-cdef class _ElementPathIterator(_IterFindResult):
-    """Python iterator over iterfind results.
+@cython.final
+@cython.internal
+cdef class _ElementPathIterator(_IfSearcher):
+    """Python iterator over a path query.
 
-    Inherits the C-level result holder from iterfind.pxi -- the compiled
-    step array and the xmlNode* result list live in the inherited fields,
-    so we avoid an extra heap allocation and one level of indirection on
-    every ``__next__`` call. The base class stays purely C-level; this
-    subclass adds the Python iterator protocol and a _Document anchor that
-    keeps the underlying tree alive while iteration is in progress.
+    Inherits _IfSearcher so the iterator IS the head of the chain.
+    Stores ``_current_element`` to anchor the xmlDoc lifetime AND to
+    provide ``_c_node`` as the resume cursor for the leaf. Updated
+    with each yielded match.
     """
-    cdef _Document _doc
+    cdef _Element _current_element  # latest yielded match (or initial elem before first yield)
+    cdef str _path                  # keeps the path str alive (step.c_tag etc. borrow into it)
+    cdef dict _namespaces           # shallow copy of namespaces dict to keep it alive and unaffected
+    cdef _IfSearcher _searcher      # last searcher in the chain which is the one that will return a result
+    cdef bint _is_first             # True until the first __next__ call dispatches _first
+
+    def __cinit__(self, _Element elem, str path, dict namespaces=None):
+        self._current_element = elem
+        self._path = path
+        self._namespaces = dict(namespaces) if namespaces else None
+        self._searcher = self.compile(path, self._namespaces)
+        self._is_first = True
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        cdef xmlNode* c_node = self._next_node()
-        if c_node is NULL:
+        # Sticky stop: once exhausted, _searcher is None and stays None.
+        if self._searcher is None:
             raise StopIteration
-        return _elementFactory(self._doc, c_node)
+
+        cdef xmlNode* c_input = self._current_element._c_node
+        cdef xmlNode* c_output
+
+        if self._is_first:
+            c_output = self._first(c_input)
+            self._is_first = False
+        else:
+            c_output = self._searcher._next(c_input)
+
+        if c_output is NULL:
+            self._searcher = None
+            raise StopIteration
+
+        self._current_element = _elementFactory(self._current_element._doc, c_output)
+        return self._current_element
 
 
-cdef _ElementPathIterator _elementpath_iterfind(_Element elem, path,
-                                                 namespaces=None,
-                                                 with_prefixes=True):
-    """Iterate over elements of *elem* matching *path*.
-
-    Returns a Python iterator yielding _Element instances.
+cdef _ElementPathIterator _elementpath_iterfind(_Element elem, str path,
+                                                 dict namespaces=None,
+                                                 bint with_prefixes=True):
+    """Iterate over elements of *elem* matching *path*. Returns a Python
+    iterator yielding _Element instances.
     """
-    cdef bytes path_bytes = (<str>path).encode('utf-8')
-    cdef const char* c_path = <const char*>path_bytes
-    cdef _ElementPathIterator it = _ElementPathIterator.__new__(_ElementPathIterator)
-    it._doc = elem._doc
-    _iterfind_compile_into(it, elem._c_node, c_path,
-                           namespaces if with_prefixes else None)
-    return it
+    return _ElementPathIterator(elem, path, namespaces if with_prefixes else None)
 
 
-cdef object _elementpath_find(_Element elem, path,
-                               namespaces=None, with_prefixes=True):
-    """Return the first element matching *path*, or None."""
-    cdef bytes path_bytes = (<str>path).encode('utf-8')
-    cdef const char* c_path = <const char*>path_bytes
-    cdef _IterFindResult res = _iterfind_run(
-        elem._c_node, c_path,
-        namespaces if with_prefixes else None)
-    cdef xmlNode* c_result = res._next_node()
-    if c_result is NULL:
+cdef _Element _elementpath_find(_Element elem, str path,
+                                 dict namespaces=None, bint with_prefixes=True):
+    """Return the first element matching *path*, or None.
+
+    The function-local ``namespaces`` parameter pins all prefix/URI str
+    objects for the call's duration -- which is also the chain's
+    lifetime -- so the borrowed C pointers stored on each step stay
+    valid until we return.
+    """
+    cdef _IfSearcher head = _IfSearcher()
+    head.compile(path, namespaces if with_prefixes else None)
+    cdef xmlNode* matched = head._first(elem._c_node)
+    if matched is NULL:
         return None
-    return _elementFactory(elem._doc, c_result)
+    return _elementFactory(elem._doc, matched)
 
 
-cdef list _elementpath_findall(_Element elem, path,
-                                namespaces=None, with_prefixes=True):
-    """Return a list of all elements matching *path*."""
-    cdef bytes path_bytes = (<str>path).encode('utf-8')
-    cdef const char* c_path = <const char*>path_bytes
-    cdef _IterFindResult res = _iterfind_run(
-        elem._c_node, c_path,
-        namespaces if with_prefixes else None)
-    cdef xmlNode* c_result
+cdef list _elementpath_findall(_Element elem, str path,
+                                dict namespaces=None, bint with_prefixes=True):
+    """Return a list of all elements matching *path*.
+
+    See ``_elementpath_find`` for the namespace-lifetime contract.
+    """
+    cdef _IfSearcher head = _IfSearcher()
+    cdef _IfSearcher searcher = head.compile(path, namespaces if with_prefixes else None)
     cdef list out = []
-    while True:
-        c_result = res._next_node()
-        if c_result is NULL:
-            break
-        out.append(_elementFactory(elem._doc, c_result))
+    cdef xmlNode* matched = head._first(elem._c_node)
+    while matched is not NULL:
+        out.append(_elementFactory(elem._doc, matched))
+        matched = searcher._next(matched)
     return out
 
 
-cdef object _elementpath_findtext(_Element elem, path, default=None,
-                                   namespaces=None, with_prefixes=True):
+cdef object _elementpath_findtext(_Element elem, str path, default=None,
+                                   dict namespaces=None, bint with_prefixes=True):
     """Return the text of the first element matching *path*, or *default*."""
     el = _elementpath_find(elem, path, namespaces, with_prefixes=with_prefixes)
     if el is None:

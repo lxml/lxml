@@ -30,6 +30,7 @@ class EtreeElementPathTestCase(HelperTestCase):
         Test find methods (including xpath syntax).
         Originally copied from 'selftest.py'.
         """
+        etree = self.etree
         elem = etree.XML("""
         <body>
           <tag class='a'>text</tag>
@@ -195,6 +196,10 @@ class EtreeElementPathTestCase(HelperTestCase):
             etree.ElementTree(elem).iterfind, "/tag")
 
 
+class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
+    import xml.etree.ElementTree as etree
+
+
 class EtreeElementPathEmptyNamespacesTestCase(EtreeElementPathTestCase):
     _empty_namespaces = {}  # empty dict as opposed to None
 
@@ -206,6 +211,7 @@ class EtreeElementPathNonEmptyNamespacesTestCase(EtreeElementPathTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(ElementTreeElementPathTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathEmptyNamespacesTestCase)])
     suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(EtreeElementPathNonEmptyNamespacesTestCase)])
     return suite

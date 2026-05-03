@@ -1,27 +1,42 @@
-# iterfind.pxi - ElementTree-compatible iterfind using only libxml2 types
+# iterfind.pxi - ElementTree-compatible iterfind, search-engine half.
 #
 # Implements the limited XPath subset from
 # https://docs.python.org/3/library/xml.etree.elementtree.html#elementtree-xpath
 #
-# Input/output: xmlNode*. No Python element wrappers are created here;
-# callers in _elementpath.pxi wrap results with _elementFactory().
-# All tokenization and iteration use only libxml2 objects and C stdlib.
+# This file owns the C-level path tokenizer / compiler, the predicate
+# evaluator, and a per-step "searcher" class (_IfSearcher). The Python
+# entry points that drive the chain live in _elementpath.pxi.
+#
+# A compiled path becomes a doubly-linked list of _IfSearcher instances,
+# one per step. The chain self-drives: ``_first(scope)`` and
+# ``_next(cursor)`` walk the chain internally (descending into
+# ``self.next._first`` on a match, cascading via ``self.prev._next`` on
+# exhaustion) and return the matched leaf ``xmlNode*`` directly, or
+# NULL when the chain is exhausted. Searchers hold no _Element refs --
+# the caller (iterator field or function-local _Element) anchors the
+# xmlDoc lifetime, and the wrapping into _Element happens once per
+# yielded match in the caller.
 
-from libc.stdlib cimport malloc, realloc, free, strtol
-from libc.string cimport memcpy, memcmp, strlen, strchr
+from libc.stdlib cimport realloc, free, strtol
+from libc.string cimport memcmp
+from cpython.unicode cimport PyUnicode_AsUTF8, PyUnicode_AsUTF8AndSize
+
+# Sentinel for "no namespace" in c_href slots. Encoded as a non-NULL
+# pointer with c_href_len == 0; consumers compare against NULL to detect
+# the wildcard ("any namespace") case, so a stable non-NULL address is
+# enough -- the byte's value is never read.
+cdef char _if_ns_none_byte = 0
+cdef const char* _IF_NS_NONE = &_if_ns_none_byte
 
 # ---- Step / predicate type enums ----
 
 cdef enum _IfStepType:
     STEP_CHILD          # tag  — select children with tag
-    STEP_CHILD_STAR     # *    — select all children
-    STEP_SELF           # .    — current node
+    STEP_SELF           # .    — yield the scope itself (single-shot)
     STEP_PARENT         # ..   — parent element
     STEP_DESCENDANTS    # //tag — all descendants with tag
-    STEP_DESCENDANTS_STAR  # //*  — all descendants
 
 cdef enum _IfPredType:
-    PRED_NONE
     PRED_ATTR_EXISTS      # [@attrib]
     PRED_ATTR_EQ          # [@attrib='value']
     PRED_ATTR_NEQ         # [@attrib!='value']
@@ -35,36 +50,62 @@ cdef enum _IfPredType:
 
 # ---- Compiled step struct ----
 
+cdef struct _IfAttrPredicate:
+    const char* c_attr        # attr name bytes (not NUL-terminated; NULL for [.] text predicate)
+    int c_attr_len
+    const char* c_href       # namespace constraint -- see _if_tag_matches docs for the
+    int c_href_len           # NULL / len==0 / len>0 three-state encoding
+    const char* c_value      # comparison value bytes (NULL for [@attr] existence-only)
+    int c_value_len
+
+cdef struct _IfNodePredicate:
+    const char* c_tag        # child tag local name bytes (NULL for *)
+    int c_tag_len
+    const char* c_href       # namespace constraint -- same three-state encoding as
+    int c_href_len           # _if_tag_matches: NULL=any, len==0=no-ns, len>0=exact
+    const char* c_value      # comparison value bytes (NULL for [tag] existence-only)
+    int c_value_len
+
+cdef struct _IfPosPredicate:
+    int position             # 0-based position index (for PRED_POSITION*)
+
+cdef union _IfPredVariant:
+    _IfAttrPredicate attr
+    _IfNodePredicate node
+    _IfPosPredicate pos
+
 cdef struct _IfPredicate:
     _IfPredType type
-    xmlChar* c_key       # attr name, child tag, or NULL
-    xmlChar* c_key_href  # namespace URI for key, or NULL
-    xmlChar* c_value     # attr/text comparison value, or NULL
-    int position         # 1-based position index (for PRED_POSITION*)
+    _IfPredVariant data
 
 cdef struct _IfStep:
     _IfStepType type
-    xmlChar* c_tag       # tag local name, or NULL for * / self / parent
-    xmlChar* c_href      # namespace URI, or NULL
-    bint match_any_ns    # True if {*}tag was specified
+    const char* c_tag        # tag local name bytes (NULL for *)
+    int c_tag_len
+    const char* c_href       # namespace URI bytes (NULL for *)
+    int c_href_len
     int pred_count
-    _IfPredicate* preds  # array of predicates (malloc'd)
+    _IfPredicate* preds      # array of predicates (malloc'd)
 
 # ---- Namespace lookup table (used by the C tokenizer to resolve prefix:tag) ----
 #
-# This is built once per call from the user-supplied Python ``namespaces`` dict
-# in _elementpath.pxi and passed to _if_compile_path(). The compiler resolves
-# all ``prefix:name`` -> ``{uri}name`` and applies the default namespace
-# directly, so no Python-level (regex-based) preprocessing is needed.
+# This is built once per ``_IfSearcher.compile()`` call from the user-supplied
+# Python ``namespaces`` dict and consulted by the inline tokenizer. The
+# compiler resolves all ``prefix:name`` -> ``{uri}name`` and applies the
+# default namespace directly, so no Python-level (regex-based) preprocessing
+# is needed.
 
 cdef struct _IfNsEntry:
-    xmlChar* prefix      # malloc'd prefix bytes; NULL for the default namespace
-    xmlChar* uri         # malloc'd uri bytes
+    const char* prefix       # ptr into a bytes object held by the head's ns_keepalive
+    int prefix_len           # 0 marks the default namespace (no prefix)
+    const char* uri
+    int uri_len
 
 cdef struct _IfNsTable:
     int count
     _IfNsEntry* entries
-    xmlChar* default_uri   # convenience pointer; NULL if no default ns set
+    const char* default_uri  # ptr into ns_keepalive bytes; NULL if no default ns set
+    int default_uri_len
 
 # ---- Namespace table helpers ----
 
@@ -72,23 +113,43 @@ cdef inline void _if_ns_table_init(_IfNsTable* nst) noexcept nogil:
     nst.count = 0
     nst.entries = NULL
     nst.default_uri = NULL
+    nst.default_uri_len = 0
 
 cdef void _if_ns_table_free(_IfNsTable* nst) noexcept nogil:
-    cdef int i
+    """Release the entries array. The prefix/uri pointers themselves are
+    borrowed (they point into bytes held alive by the head's
+    ns_keepalive list), so we don't free them here."""
     if nst.entries is not NULL:
-        for i in range(nst.count):
-            if nst.entries[i].prefix is not NULL:
-                free(nst.entries[i].prefix)
-            if nst.entries[i].uri is not NULL:
-                free(nst.entries[i].uri)
         free(nst.entries)
     nst.entries = NULL
     nst.count = 0
     nst.default_uri = NULL
+    nst.default_uri_len = 0
+
+cdef inline int _if_ns_value_ptr(object val,
+                                  const char** out_ptr, int* out_len) except -1:
+    """Borrow a (ptr, len) pair from a str (via the cached UTF-8 buffer)
+    or a bytes object (direct buffer). Caller must keep ``val`` alive --
+    the pointer is invalid the moment the underlying object is freed.
+    Raises TypeError on any other type.
+    """
+    cdef Py_ssize_t size
+    if isinstance(val, str):
+        out_ptr[0] = PyUnicode_AsUTF8AndSize(val, &size)
+        out_len[0] = <int>size
+        return 0
+    if isinstance(val, bytes):
+        out_ptr[0] = <const char*><bytes>val
+        out_len[0] = <int>len(<bytes>val)
+        return 0
+    raise TypeError("namespace prefix/URI must be str or bytes, not %s"
+                    % type(val).__name__)
 
 cdef int _if_ns_table_add(_IfNsTable* nst, const char* prefix, int prefix_len,
                           const char* uri, int uri_len) noexcept nogil:
-    """Append a (prefix, uri) entry. prefix==NULL marks the default namespace.
+    """Append a (prefix, uri) entry. ``prefix`` may be NULL to mark the
+    default namespace. The prefix/uri pointers are stored as-is; the
+    caller (compile()) owns the underlying bytes via ns_keepalive.
     Returns 0 on success, -1 on OOM.
     """
     cdef _IfNsEntry* new_entries
@@ -97,51 +158,71 @@ cdef int _if_ns_table_add(_IfNsTable* nst, const char* prefix, int prefix_len,
     if new_entries is NULL:
         return -1
     nst.entries = new_entries
-    nst.entries[nst.count].prefix = NULL
-    nst.entries[nst.count].uri = NULL
-    if prefix is not NULL:
-        nst.entries[nst.count].prefix = _if_strdup(prefix, prefix_len)
-        if nst.entries[nst.count].prefix is NULL:
-            return -1
-    nst.entries[nst.count].uri = _if_strdup(uri, uri_len)
-    if nst.entries[nst.count].uri is NULL:
-        return -1
+    nst.entries[nst.count].prefix = prefix
+    nst.entries[nst.count].prefix_len = prefix_len if prefix is not NULL else 0
+    nst.entries[nst.count].uri = uri
+    nst.entries[nst.count].uri_len = uri_len
     if prefix is NULL:
-        nst.default_uri = nst.entries[nst.count].uri
+        nst.default_uri = uri
+        nst.default_uri_len = uri_len
     nst.count = new_count
     return 0
 
-cdef const xmlChar* _if_ns_lookup(_IfNsTable* nst,
-                                  const char* prefix, int prefix_len) noexcept nogil:
-    """Find the URI bound to ``prefix`` (NULL terminated up to prefix_len).
-    Returns NULL if not bound.
+cdef inline bint _slice_eq(const char* a, int a_len,
+                           const char* b, int b_len) noexcept nogil:
+    """Equality of two non-NUL-terminated byte slices."""
+    if a_len != b_len:
+        return 0
+    if a_len == 0:
+        return 1
+    return memcmp(a, b, a_len) == 0
+
+cdef int _if_ns_lookup(_IfNsTable* nst, const char* prefix, int prefix_len,
+                       const char** out_uri, int* out_uri_len) noexcept nogil:
+    """Resolve ``prefix`` to its URI. Sets out_uri / out_uri_len on
+    success and returns 0; returns -1 if not bound.
     """
     cdef int i
     cdef _IfNsEntry* e
     if nst is NULL or nst.entries is NULL:
-        return NULL
+        return -1
     for i in range(nst.count):
         e = &nst.entries[i]
         if e.prefix is NULL:
             continue
-        if <int>strlen(<const char*>e.prefix) != prefix_len:
-            continue
-        if memcmp(e.prefix, prefix, prefix_len) == 0:
-            return e.uri
-    return NULL
+        if _slice_eq(e.prefix, e.prefix_len, prefix, prefix_len):
+            out_uri[0] = e.uri
+            out_uri_len[0] = e.uri_len
+            return 0
+    return -1
 
 
 # ---- Tag matching helpers (pure libxml2) ----
 
-cdef inline bint _if_tag_matches(xmlNode* c_node,
-                                  const xmlChar* c_href,
-                                  const xmlChar* c_tag,
-                                  bint match_any_ns) noexcept nogil:
-    """Check if c_node matches the given namespace URI and local tag name.
+cdef inline bint _eq_zterm_slice(const xmlChar* zterm,
+                                  const char* slice, int slice_len) noexcept nogil:
+    """Length-aware compare: True if the NUL-terminated ``zterm`` equals
+    the [slice, slice+slice_len) slice exactly. Safe -- never reads past
+    zterm's NUL even if slice_len overshoots zterm's length.
+    """
+    cdef int i
+    if zterm is NULL:
+        return slice_len == 0
+    for i in range(slice_len):
+        if zterm[i] == 0 or zterm[i] != slice[i]:
+            return 0
+    return zterm[slice_len] == 0
 
-    c_tag is NULL means wildcard (match any name).
-    c_href is NULL and not match_any_ns means no namespace (or wildcard if c_tag is also NULL).
-    match_any_ns means match any namespace.
+cdef inline bint _if_tag_matches(xmlNode* c_node,
+                                  const char* c_tag, int c_tag_len,
+                                  const char* c_href, int c_href_len) noexcept nogil:
+    """Check if c_node matches the given tag/namespace constraints.
+
+    c_tag NULL means wildcard local name.
+    c_href encoding:
+        NULL                       -- wildcard ({*} or bare *): match any URI.
+        non-NULL, c_href_len == 0  -- {} sentinel: require no namespace.
+        non-NULL, c_href_len  > 0  -- exact URI match.
     """
     cdef const xmlChar* node_href
     if c_node is NULL:
@@ -149,27 +230,18 @@ cdef inline bint _if_tag_matches(xmlNode* c_node,
     if c_node.type != tree.XML_ELEMENT_NODE:
         return 0
 
-    # Check local name
     if c_tag is not NULL:
-        if tree.xmlStrcmp(c_node.name, c_tag) != 0:
+        if not _eq_zterm_slice(c_node.name, c_tag, c_tag_len):
             return 0
 
-    # Check namespace
-    if match_any_ns:
-        return 1
-    node_href = _getNs(c_node)
     if c_href is NULL:
-        # No namespace specified and c_tag is non-NULL: match only no-namespace nodes.
-        # If c_tag is also NULL (bare *), match everything regardless of ns.
-        if c_tag is not NULL:
-            return node_href is NULL or node_href[0] == 0
-        return 1  # bare * matches everything
-    else:
-        if c_href[0] == 0:
-            return node_href is NULL or node_href[0] == 0
-        if node_href is NULL:
-            return 0
-        return tree.xmlStrcmp(node_href, c_href) == 0
+        return 1  # any namespace
+    node_href = _getNs(c_node)
+    if c_href_len == 0:
+        return node_href is NULL or node_href[0] == 0
+    if node_href is NULL:
+        return 0
+    return _eq_zterm_slice(node_href, c_href, c_href_len)
 
 cdef inline xmlNode* _if_first_child_element(xmlNode* c_node) noexcept nogil:
     """Return the first child element, or NULL."""
@@ -193,19 +265,47 @@ cdef inline bint _if_ns_equal(const xmlChar* a, const xmlChar* b) noexcept nogil
         return 0
     return tree.xmlStrcmp(a, b) == 0
 
-cdef inline xmlChar* _if_get_attr(xmlNode* c_node, _IfPredicate* pred) noexcept nogil:
-    """Fetch the predicate's attribute, namespaced or not."""
-    if pred.c_key_href is not NULL and pred.c_key_href[0] != 0:
-        return tree.xmlGetNsProp(c_node, pred.c_key, pred.c_key_href)
-    return tree.xmlGetNoNsProp(c_node, pred.c_key)
+cdef inline xmlChar* _if_get_attr(xmlNode* c_node, _IfAttrPredicate* a) noexcept nogil:
+    """Find an attribute on c_node matching ``a.c_attr`` plus the
+    namespace constraint encoded in (a.c_href, a.c_href_len), and return
+    its value as a malloc'd xmlChar* (caller must xmlFree). Returns NULL
+    if not found.
 
-cdef inline bint _if_strcmp_match(const xmlChar* c_val, const xmlChar* c_target,
+    Namespace encoding (same convention as _if_tag_matches):
+        c_href NULL                       -- match any namespace.
+        c_href non-NULL, c_href_len == 0  -- require no namespace.
+        c_href non-NULL, c_href_len  > 0  -- exact URI match.
+
+    Walks ``c_node.properties`` directly because libxml2's xmlGetNsProp /
+    xmlGetNoNsProp require NUL-terminated key/href, and our slices come
+    straight from the path bytes.
+    """
+    cdef tree.xmlAttr* attr = c_node.properties
+    while attr is not NULL:
+        if _eq_zterm_slice(attr.name, a.c_attr, a.c_attr_len):
+            if a.c_href is NULL:
+                # any namespace
+                return tree.xmlNodeGetContent(<xmlNode*>attr)
+            if a.c_href_len == 0:
+                # require no namespace
+                if attr.ns is NULL:
+                    return tree.xmlNodeGetContent(<xmlNode*>attr)
+            else:
+                if attr.ns is not NULL and _eq_zterm_slice(
+                        attr.ns.href, a.c_href, a.c_href_len):
+                    return tree.xmlNodeGetContent(<xmlNode*>attr)
+        attr = attr.next
+    return NULL
+
+cdef inline bint _if_strcmp_match(const xmlChar* c_val,
+                                   const char* c_target, int c_target_len,
                                    bint want_eq) noexcept nogil:
-    """Compare c_val to c_target. NULL c_val is treated as 'not equal'
-    (so True for NEQ, False for EQ)."""
+    """Compare NUL-terminated c_val to the [c_target, c_target+c_target_len)
+    slice. NULL c_val is treated as 'not equal' (so True for NEQ, False
+    for EQ)."""
     if c_val is NULL:
         return not want_eq
-    return (tree.xmlStrcmp(c_val, c_target) == 0) == want_eq
+    return _eq_zterm_slice(c_val, c_target, c_target_len) == want_eq
 
 cdef inline bint _if_same_tag(xmlNode* a, xmlNode* b) noexcept nogil:
     """True if a and b share both local name and namespace URI."""
@@ -221,26 +321,28 @@ cdef bint _if_eval_predicate(xmlNode* c_node, _IfPredicate* pred) noexcept nogil
     cdef bint want_eq
     cdef int count
 
-    if pred.type == PRED_NONE:
-        return 1
-
     if pred.type == PRED_ATTR_EXISTS:
-        c_val = _if_get_attr(c_node, pred)
+        c_val = _if_get_attr(c_node, &pred.data.attr)
         if c_val is NULL:
             return 0
         tree.xmlFree(c_val)
         return 1
 
     if pred.type == PRED_ATTR_EQ or pred.type == PRED_ATTR_NEQ:
-        c_val = _if_get_attr(c_node, pred)
-        matched = _if_strcmp_match(c_val, pred.c_value, pred.type == PRED_ATTR_EQ)
+        c_val = _if_get_attr(c_node, &pred.data.attr)
+        matched = _if_strcmp_match(c_val,
+                                    pred.data.attr.c_value, pred.data.attr.c_value_len,
+                                    pred.type == PRED_ATTR_EQ)
         if c_val is not NULL:
             tree.xmlFree(c_val)
         return matched
 
     if pred.type == PRED_TEXT_EQ or pred.type == PRED_TEXT_NEQ:
+        # Text predicates reuse the attr variant for c_value (c_attr unused).
         c_val = tree.xmlNodeGetContent(c_node)
-        matched = _if_strcmp_match(c_val, pred.c_value, pred.type == PRED_TEXT_EQ)
+        matched = _if_strcmp_match(c_val,
+                                    pred.data.attr.c_value, pred.data.attr.c_value_len,
+                                    pred.type == PRED_TEXT_EQ)
         if c_val is not NULL:
             tree.xmlFree(c_val)
         return matched
@@ -249,7 +351,9 @@ cdef bint _if_eval_predicate(xmlNode* c_node, _IfPredicate* pred) noexcept nogil
         c_child = c_node.children
         while c_child is not NULL:
             if c_child.type == tree.XML_ELEMENT_NODE \
-                    and _if_tag_matches(c_child, pred.c_key_href, pred.c_key, 0):
+                    and _if_tag_matches(c_child,
+                                         pred.data.node.c_tag, pred.data.node.c_tag_len,
+                                         pred.data.node.c_href, pred.data.node.c_href_len):
                 return 1
             c_child = c_child.next
         return 0
@@ -261,10 +365,14 @@ cdef bint _if_eval_predicate(xmlNode* c_node, _IfPredicate* pred) noexcept nogil
         c_child = c_node.children
         while c_child is not NULL:
             if c_child.type == tree.XML_ELEMENT_NODE \
-                    and _if_tag_matches(c_child, pred.c_key_href, pred.c_key, 0):
+                    and _if_tag_matches(c_child,
+                                         pred.data.node.c_tag, pred.data.node.c_tag_len,
+                                         pred.data.node.c_href, pred.data.node.c_href_len):
                 c_val = tree.xmlNodeGetContent(c_child)
                 if c_val is not NULL:
-                    matched = (tree.xmlStrcmp(c_val, pred.c_value) == 0) == want_eq
+                    matched = _eq_zterm_slice(c_val,
+                                               pred.data.node.c_value,
+                                               pred.data.node.c_value_len) == want_eq
                     tree.xmlFree(c_val)
                     if matched:
                         return 1
@@ -281,13 +389,13 @@ cdef bint _if_eval_predicate(xmlNode* c_node, _IfPredicate* pred) noexcept nogil
             if c_sib.type == tree.XML_ELEMENT_NODE and _if_same_tag(c_sib, c_node):
                 count += 1
                 if c_sib == c_node:
-                    return count == pred.position
+                    return count == pred.data.pos.position
             c_sib = c_sib.next
         return 0
 
     if pred.type == PRED_POSITION_FROM_END:
-        # Node must have exactly pred.position later same-tag siblings.
-        # pred.position == 0 means [last()]; N means [last()-N].
+        # Node must have exactly pred.data.pos.position later same-tag siblings.
+        # position == 0 means [last()]; N means [last()-N].
         if c_node.parent is NULL:
             return 0
         count = 0
@@ -295,10 +403,10 @@ cdef bint _if_eval_predicate(xmlNode* c_node, _IfPredicate* pred) noexcept nogil
         while c_sib is not NULL:
             if c_sib.type == tree.XML_ELEMENT_NODE and _if_same_tag(c_sib, c_node):
                 count += 1
-                if count > pred.position:
+                if count > pred.data.pos.position:
                     return 0
             c_sib = c_sib.next
-        return count == pred.position
+        return count == pred.data.pos.position
 
     return 0
 
@@ -312,180 +420,57 @@ cdef bint _if_check_all_preds(xmlNode* c_node, _IfStep* step) noexcept nogil:
 
 # ---- Descendant traversal helpers ----
 
-cdef xmlNode* _if_next_descendant_element(xmlNode* c_tree_top,
-                                            xmlNode* c_node) noexcept nogil:
-    """Depth-first pre-order traversal: return the next element node under
-    c_tree_top after c_node. Returns NULL when done."""
+cdef xmlNode* _if_next_descendant_element(xmlNode* c_node,
+                                            int* depth) noexcept nogil:
+    """Depth-first pre-order traversal driven by a depth counter.
+
+    ``depth`` tracks how far below the original scope ``c_node`` lives
+    (1 = direct child of scope, etc.). The walker increments on
+    descend and decrements on backtrack; when a backtrack would take
+    the depth to 0 the search has escaped the scope and we return
+    NULL.
+
+    The caller seeds depth=1 when entering with a first child, and
+    threads the same int slot across resume calls.
+    """
     cdef xmlNode* c_next
 
     # Try to descend into children first
     c_next = c_node.children
     while c_next is not NULL:
         if c_next.type == tree.XML_ELEMENT_NODE:
+            depth[0] += 1
             return c_next
         c_next = c_next.next
 
-    # No children — try siblings, backtracking through parents
-    while c_node != c_tree_top and c_node is not NULL:
+    # No children -- try siblings, backtracking through parents.
+    # depth[0] tells us how many parent-hops remain before we'd escape
+    # the scope; stop when it would reach 0.
+    while depth[0] > 0:
         c_next = c_node.next
         while c_next is not NULL:
             if c_next.type == tree.XML_ELEMENT_NODE:
                 return c_next
             c_next = c_next.next
         c_node = c_node.parent
+        depth[0] -= 1
+        if c_node is NULL:
+            break
 
     return NULL
 
 # ---- C-level path tokenizer / compiler ----
 
-cdef xmlChar* _if_strdup(const char* src, int length) noexcept nogil:
-    """Allocate and copy 'length' bytes from src, null-terminate."""
-    cdef xmlChar* dst
-    if length < 0:
-        length = <int>strlen(src)
-    dst = <xmlChar*>malloc(length + 1)
-    if dst is NULL:
-        return NULL
-    memcpy(dst, src, length)
-    dst[length] = 0
-    return dst
-
-cdef int _if_parse_ns_tag(const char* start, int length,
-                           xmlChar** out_href, xmlChar** out_tag,
-                           bint* out_any_ns,
-                           _IfNsTable* nst, bint apply_default_ns) noexcept nogil:
-    """Parse a namespace-qualified tag and resolve any prefix.
-
-    Accepted forms:
-      ``{uri}name``      explicit namespace
-      ``{*}name``        wildcard namespace
-      ``{}name``         empty namespace (== "no namespace")
-      ``prefix:name``    resolved against ``nst``
-      ``name``           bare local name; if ``apply_default_ns`` and
-                         ``nst`` has a default uri, that uri is applied
-      ``*``              full wildcard
-      ``{ns}*`` / ``prefix:*`` / ``*`` patterns are supported.
-
-    Returns 0 on success, -1 on error.
-    Sets out_href, out_tag. out_tag is NULL means name wildcard.
-    """
-    cdef const char* p = start
-    cdef const char* end = start + length
-    cdef const char* brace_end
-    cdef const char* colon
-    cdef int ns_len
-    cdef int prefix_len
-    cdef int local_len
-    cdef const xmlChar* uri
-    cdef int i
-
-    out_any_ns[0] = 0
-    out_href[0] = NULL
-    out_tag[0] = NULL
-
-    if length == 1 and p[0] == c'*':
-        # bare * — match everything (no default namespace applied to *)
-        return 0
-
-    if p[0] == c'{':
-        p += 1
-        brace_end = <const char*>strchr(p, c'}')
-        if brace_end is NULL or brace_end >= end:
-            return -1
-        ns_len = <int>(brace_end - p)
-
-        # Check for {*}tag
-        if ns_len == 1 and p[0] == c'*':
-            out_any_ns[0] = 1
-        elif ns_len > 0:
-            out_href[0] = _if_strdup(p, ns_len)
-            if out_href[0] is NULL:
-                return -1
-        else:
-            # {} — empty namespace (means "no namespace")
-            out_href[0] = _if_strdup("", 0)
-            if out_href[0] is NULL:
-                return -1
-
-        p = brace_end + 1
-        if p >= end:
-            return -1
-
-        # The tag after the namespace
-        if (end - p) == 1 and p[0] == c'*':
-            # {ns}* — all tags in given namespace
-            out_tag[0] = NULL
-        else:
-            out_tag[0] = _if_strdup(p, <int>(end - p))
-            if out_tag[0] is NULL:
-                return -1
-        return 0
-
-    # No braces. Check for prefix:local form.
-    colon = NULL
-    for i in range(length):
-        if start[i] == c':':
-            colon = start + i
-            break
-
-    if colon is not NULL:
-        prefix_len = <int>(colon - start)
-        local_len = length - prefix_len - 1
-        if prefix_len == 0 or local_len == 0:
-            return -1
-        uri = _if_ns_lookup(nst, start, prefix_len)
-        if uri is NULL:
-            return -1  # unknown prefix
-        out_href[0] = _if_strdup(<const char*>uri, <int>strlen(<const char*>uri))
-        if out_href[0] is NULL:
-            return -1
-        if local_len == 1 and colon[1] == c'*':
-            out_tag[0] = NULL
-        else:
-            out_tag[0] = _if_strdup(colon + 1, local_len)
-            if out_tag[0] is NULL:
-                return -1
-        return 0
-
-    # No namespace — bare tag.
-    if length == 0:
-        return -1
-    out_tag[0] = _if_strdup(start, length)
-    if out_tag[0] is NULL:
-        return -1
-    # Apply default namespace if requested and one is configured.
-    if apply_default_ns and nst is not NULL and nst.default_uri is not NULL:
-        out_href[0] = _if_strdup(<const char*>nst.default_uri,
-                                  <int>strlen(<const char*>nst.default_uri))
-        if out_href[0] is NULL:
-            return -1
-    return 0
 
 cdef void _if_free_step(_IfStep* step) noexcept nogil:
-    """Free allocations inside a step (not the step itself)."""
-    cdef int i
-    if step.c_tag is not NULL:
-        free(step.c_tag)
-    if step.c_href is not NULL:
-        free(step.c_href)
+    """Free the predicates array on a step. The byte pointers (step.c_tag,
+    step.c_href, and the c_attr / c_tag / c_href / c_value slots inside
+    each variant predicate) are borrowed: they point into the path's
+    UTF-8 cache or into namespace str caches held alive by the caller
+    (the iterator's ``_namespaces`` dict, or the find/findall function-
+    local parameter). We never free them here."""
     if step.preds is not NULL:
-        for i in range(step.pred_count):
-            if step.preds[i].c_key is not NULL:
-                free(step.preds[i].c_key)
-            if step.preds[i].c_key_href is not NULL:
-                free(step.preds[i].c_key_href)
-            if step.preds[i].c_value is not NULL:
-                free(step.preds[i].c_value)
         free(step.preds)
-
-cdef void _if_free_steps(_IfStep* steps, int count) noexcept nogil:
-    """Free an array of steps."""
-    cdef int i
-    if steps is NULL:
-        return
-    for i in range(count):
-        _if_free_step(&steps[i])
-    free(steps)
 
 cdef inline void _if_skip_whitespace(const char** pp) noexcept nogil:
     while pp[0][0] == c' ' or pp[0][0] == c'\t' or pp[0][0] == c'\n' or pp[0][0] == c'\r':
@@ -498,34 +483,137 @@ cdef inline bint _if_is_predicate_terminator(char ch) noexcept nogil:
     return (ch == 0 or ch == c']' or ch == c'=' or ch == c'!'
             or ch == c' ' or ch == c'\t')
 
-cdef inline void _if_scan_tag(const char** pp, bint in_predicate) noexcept nogil:
-    """Advance pp over a tag token, treating ``{...}`` (a Clark-notation
-    namespace URI prefix) as opaque so the URI's slashes / brackets are
-    not mistaken for path operators or predicate terminators.
+cdef int _if_scan_ns_tag(const char** pp, bint in_predicate,
+                          const char** out_href, int* out_href_len,
+                          const char** out_tag, int* out_tag_len,
+                          _IfNsTable* nst, bint apply_default_ns) except -1:
+    """Scan a namespaced tag at ``*pp`` and split it into namespace URI +
+    local name as ptr+len pairs (zero-copy: pointers point into either
+    the path bytes or nst URI bytes -- the caller keeps both alive).
+
+    Accepted forms (Clark notation + ElementTree prefix:name):
+        {uri}name, {uri}*, {*}name, {*}*, {}name
+        prefix:name, prefix:*
+        name, *
+
+    Sets:
+        out_href / out_href_len   namespace constraint, encoded as:
+            NULL                  -- match any namespace ({*}, bare *)
+            _IF_NS_NONE / 0       -- require no namespace ({}, bare name
+                                     when no default ns applies)
+            uri ptr / len         -- exact URI match
+        out_tag  / out_tag_len    local name slice (NULL/0 for wildcard)
+
+    ``apply_default_ns`` decides whether bare element names inherit the
+    default namespace registered in ``nst``; attributes never do.
+
+    Raises SyntaxError on unterminated ``{``, an empty tag, or an
+    unknown prefix.
     """
     cdef const char* p = pp[0]
-    while p[0] != 0:
-        if p[0] == c'{':
-            # Skip past the matching '}' (URIs may contain '/', ']', '=' etc.)
+    cdef const char* href_start
+    cdef int href_len
+    cdef bint have_brace = False
+    cdef const char* tag_start
+    cdef const char* colon = NULL
+    cdef const char* local_start
+    cdef int prefix_len
+    cdef int local_len
+    cdef int tag_len
+    cdef const char* uri
+    cdef int uri_len
+
+    out_href[0] = NULL  # default: any namespace (overridden below)
+    out_href_len[0] = 0
+    out_tag[0] = NULL
+    out_tag_len[0] = 0
+
+    # 1. Optional {uri} / {*} / {} prefix.
+    if p[0] == c'{':
+        p += 1
+        href_start = p
+        while p[0] != c'}':
+            if p[0] == 0:
+                raise SyntaxError("unterminated '{' in path expression")
             p += 1
-            while p[0] != 0 and p[0] != c'}':
-                p += 1
-            if p[0] == c'}':
-                p += 1
-            continue
+        href_len = <int>(p - href_start)
+        p += 1  # past '}'
+        have_brace = True
+
+        if href_len == 1 and href_start[0] == c'*':
+            # {*} -- match any namespace; out_href stays NULL.
+            pass
+        elif href_len > 0:
+            out_href[0] = href_start
+            out_href_len[0] = href_len
+        else:
+            # {} -- require no namespace (regardless of any default).
+            out_href[0] = _IF_NS_NONE
+
+    # 2. Scan the tag part. If we did NOT see a '{', a single ':' may
+    #    appear and split the token into prefix + local name.
+    tag_start = p
+    while p[0] != 0:
         if in_predicate:
             if _if_is_predicate_terminator(p[0]):
                 break
         else:
             if _if_is_step_terminator(p[0]):
                 break
+        if p[0] == c':' and colon is NULL and not have_brace:
+            colon = p
         p += 1
     pp[0] = p
 
-cdef int _if_parse_quoted_value(const char** pp, xmlChar** out_value) noexcept nogil:
+    # 3. Resolve.
+    if colon is not NULL:
+        # prefix:name (no '{' was seen).
+        prefix_len = <int>(colon - tag_start)
+        local_start = colon + 1
+        local_len = <int>(p - local_start)
+        if prefix_len == 0 or local_len == 0:
+            raise SyntaxError("invalid prefix:name in path expression")
+        if _if_ns_lookup(nst, tag_start, prefix_len, &uri, &uri_len) < 0:
+            raise SyntaxError("unknown namespace prefix in path expression")
+        out_href[0] = uri
+        out_href_len[0] = uri_len
+        if local_len == 1 and local_start[0] == c'*':
+            out_tag[0] = NULL
+            out_tag_len[0] = 0
+        else:
+            out_tag[0] = local_start
+            out_tag_len[0] = local_len
+        return 0
+
+    # Bare name or brace-prefixed name.
+    tag_len = <int>(p - tag_start)
+    if tag_len == 0:
+        raise SyntaxError("empty tag in path expression")
+    if tag_len == 1 and tag_start[0] == c'*':
+        # Wildcard local name. With no brace, this is bare ``*``: match
+        # anything in any namespace -- out_href stays NULL.
+        out_tag[0] = NULL
+        out_tag_len[0] = 0
+    else:
+        out_tag[0] = tag_start
+        out_tag_len[0] = tag_len
+        if not have_brace:
+            # Bare name: inherit default ns if one is registered, else
+            # require no namespace.
+            if (apply_default_ns
+                    and nst is not NULL and nst.default_uri is not NULL):
+                out_href[0] = nst.default_uri
+                out_href_len[0] = nst.default_uri_len
+            else:
+                out_href[0] = _IF_NS_NONE
+    return 0
+
+cdef int _if_parse_quoted_value(const char** pp,
+                                  const char** out_value, int* out_value_len) noexcept nogil:
     """Parse `'value'` or `"value"` followed by a closing `]`. Stores a
-    malloc'd copy of the value in *out_value, advances *pp past the `]`.
-    Returns 0 on success, -1 on syntax / OOM error.
+    ptr+len slice into the path bytes (zero-copy) in *out_value /
+    *out_value_len, advances *pp past the `]`.
+    Returns 0 on success, -1 on syntax error.
     """
     cdef const char* p = pp[0]
     cdef const char* start
@@ -540,9 +628,8 @@ cdef int _if_parse_quoted_value(const char** pp, xmlChar** out_value) noexcept n
         p += 1
     if p[0] != quote:
         return -1
-    out_value[0] = _if_strdup(start, <int>(p - start))
-    if out_value[0] is NULL:
-        return -1
+    out_value[0] = start
+    out_value_len[0] = <int>(p - start)
     p += 1
     _if_skip_whitespace(&p)
     if p[0] != c']':
@@ -553,38 +640,29 @@ cdef int _if_parse_quoted_value(const char** pp, xmlChar** out_value) noexcept n
 
 
 cdef int _if_parse_predicate(const char** pp, _IfPredicate* pred,
-                              _IfNsTable* nst) noexcept nogil:
+                              _IfNsTable* nst) except *:
     """Parse a predicate: the char after '['. Advances pp past ']'.
-    Returns 0 on success, -1 on error."""
+    Returns 0 on success, -1 on a non-fatal parse mismatch (caller turns
+    that into a SyntaxError); may also raise SyntaxError directly via
+    the inner _if_scan_ns_tag."""
     cdef const char* p = pp[0]
     cdef const char* start
-    cdef int tag_len
     cdef char* endptr
     cdef long val
-    cdef bint dummy_any_ns
-
-    pred.type = PRED_NONE
-    pred.c_key = NULL
-    pred.c_key_href = NULL
-    pred.c_value = NULL
-    pred.position = 0
 
     _if_skip_whitespace(&p)
 
     if p[0] == c'@':
-        # Attribute predicate: [@attr] or [@attr='val'] or [@attr!='val']
+        # Attribute predicate: [@attr] or [@attr='val'] or [@attr!='val'].
+        # Attributes never receive the default namespace.
         p += 1
         _if_skip_whitespace(&p)
-        start = p
-        _if_scan_tag(&p, 1)  # in_predicate=True; handles {uri}name opaquely
-        tag_len = <int>(p - start)
-        if tag_len == 0:
-            return -1
-
-        # Attributes never receive the default namespace.
-        if _if_parse_ns_tag(start, tag_len, &pred.c_key_href, &pred.c_key,
-                             &dummy_any_ns, nst, 0) < 0:
-            return -1
+        pred.data.attr.c_value = NULL
+        pred.data.attr.c_value_len = 0
+        _if_scan_ns_tag(&p, 1,
+                         &pred.data.attr.c_href, &pred.data.attr.c_href_len,
+                         &pred.data.attr.c_attr, &pred.data.attr.c_attr_len,
+                         nst, 0)
 
         _if_skip_whitespace(&p)
 
@@ -604,15 +682,20 @@ cdef int _if_parse_predicate(const char** pp, _IfPredicate* pred,
             return -1
 
         _if_skip_whitespace(&p)
-        if _if_parse_quoted_value(&p, &pred.c_value) < 0:
+        if _if_parse_quoted_value(&p,
+                                   &pred.data.attr.c_value,
+                                   &pred.data.attr.c_value_len) < 0:
             return -1
         pp[0] = p
         return 0
 
     elif p[0] == c'.':
-        # Text predicate: [.='text'] or [.!='text']
+        # Text predicate: [.='text'] or [.!='text']. Reuses the attr
+        # variant for c_value (c_attr stays NULL).
         p += 1
         _if_skip_whitespace(&p)
+        pred.data.attr.c_attr = NULL
+        pred.data.attr.c_attr_len = 0
         if p[0] == c'=':
             pred.type = PRED_TEXT_EQ
             p += 1
@@ -623,7 +706,9 @@ cdef int _if_parse_predicate(const char** pp, _IfPredicate* pred,
             return -1
 
         _if_skip_whitespace(&p)
-        if _if_parse_quoted_value(&p, &pred.c_value) < 0:
+        if _if_parse_quoted_value(&p,
+                                   &pred.data.attr.c_value,
+                                   &pred.data.attr.c_value_len) < 0:
             return -1
         pp[0] = p
         return 0
@@ -639,7 +724,7 @@ cdef int _if_parse_predicate(const char** pp, _IfPredicate* pred,
             _if_skip_whitespace(&p)
             pred.type = PRED_POSITION_FROM_END
             if p[0] == c']':
-                pred.position = 0
+                pred.data.pos.position = 0
                 p += 1
                 pp[0] = p
                 return 0
@@ -653,7 +738,7 @@ cdef int _if_parse_predicate(const char** pp, _IfPredicate* pred,
                 _if_skip_whitespace(&p)
                 if p[0] != c']':
                     return -1
-                pred.position = <int>val
+                pred.data.pos.position = <int>val
                 p += 1
                 pp[0] = p
                 return 0
@@ -668,22 +753,20 @@ cdef int _if_parse_predicate(const char** pp, _IfPredicate* pred,
                 _if_skip_whitespace(&p)
                 if p[0] == c']':
                     pred.type = PRED_POSITION
-                    pred.position = <int>val
+                    pred.data.pos.position = <int>val
                     p += 1
                     pp[0] = p
                     return 0
 
-        # Tag predicate: [tag] or [tag='text'] or [tag!='text']
-        p = start
-        _if_scan_tag(&p, 1)  # in_predicate=True; handles {uri}name opaquely
-        tag_len = <int>(p - start)
-        if tag_len == 0:
-            return -1
-
+        # Tag predicate: [tag] or [tag='text'] or [tag!='text'].
         # Element-name predicates inherit the default namespace.
-        if _if_parse_ns_tag(start, tag_len, &pred.c_key_href, &pred.c_key,
-                             &dummy_any_ns, nst, 1) < 0:
-            return -1
+        p = start
+        pred.data.node.c_value = NULL
+        pred.data.node.c_value_len = 0
+        _if_scan_ns_tag(&p, 1,
+                         &pred.data.node.c_href, &pred.data.node.c_href_len,
+                         &pred.data.node.c_tag, &pred.data.node.c_tag_len,
+                         nst, 1)
 
         _if_skip_whitespace(&p)
 
@@ -703,7 +786,9 @@ cdef int _if_parse_predicate(const char** pp, _IfPredicate* pred,
             return -1
 
         _if_skip_whitespace(&p)
-        if _if_parse_quoted_value(&p, &pred.c_value) < 0:
+        if _if_parse_quoted_value(&p,
+                                   &pred.data.node.c_value,
+                                   &pred.data.node.c_value_len) < 0:
             return -1
         pp[0] = p
         return 0
@@ -721,394 +806,365 @@ cdef int _if_add_pred_to_step(_IfStep* step, _IfPredicate* pred) noexcept nogil:
     return 0
 
 
-cdef _IfStep* _if_compile_path(const char* path, int* out_count,
-                                _IfNsTable* nst) noexcept nogil:
-    """Compile a path string into an array of _IfStep structs.
+# ---- Per-step searcher: cdef class, linked list ----
+#
+# A compiled path becomes a doubly-linked list of _IfSearcher instances,
+# one per step. The chain self-drives: each searcher's _first / _next
+# walks the chain internally and returns a leaf match (or NULL).
+#
+#     _first(scope) -> xmlNode*
+#         Fresh entry into ``scope``. Captures the scope, runs the
+#         type-specific entry, then walks at this level: on each
+#         candidate match either returns it (if leaf) or recurses
+#         into ``self.next._first(candidate)`` and returns its leaf
+#         match. If next exhausts in that scope, advances at this
+#         level and retries. Returns NULL when this level's scope
+#         is exhausted -- the caller (the prev step's ``_scan`` loop,
+#         or the entry point in _elementpath.pxi) decides what to do.
+#         Does NOT cascade past prev: it's a one-shot in this scope.
+#
+#     _next(cursor) -> xmlNode*
+#         Resume in the current scope from ``cursor`` (the previous
+#         match this searcher returned). Same scan/descend logic as
+#         _first, but on exhaustion cascades up via
+#         ``self.prev._next(self._scope_c)``. The cascade key
+#         invariant: ``self._scope_c`` IS prev's cursor, because
+#         prev's last match WAS the scope it handed us. Returns NULL
+#         when the head's prev chain runs out -- the chain is done.
+#
+# State held across calls on a searcher:
+#
+#     _depth   -- STEP_DESCENDANTS only; counts hops below the scope
+#                 so ``_if_next_descendant_element`` stops when a
+#                 backtrack would escape the scope boundary.
+#     _scope_c -- captured by ``_first`` (overwriting any leftover
+#                 from a prior fresh entry) and used by ``_next`` on
+#                 exhaustion to feed prev's resume input. Reset to
+#                 NULL after that hand-off. (Redundant with
+#                 ``cursor.parent`` for STEP_CHILD, but the uniform
+#                 capture/return shape avoids per-type recovery.)
+#
+# All four methods (compile, _first, _next, _scan) are @cython.final
+# so the per-yield calls are direct, not vtable-dispatched.
 
-    All ``prefix:name`` references are resolved against ``nst`` and the
-    default namespace (if any) is applied to bare element names. Attribute
-    names are never rewritten.
-
-    Returns NULL on error. Sets out_count to the number of steps.
-    Caller must free the result with _if_free_steps().
-    """
-    cdef const char* p = path
-    cdef _IfStep* steps = NULL
-    cdef int count = 0
-    cdef int capacity = 0
+@cython.internal
+cdef class _IfSearcher:
     cdef _IfStep step
-    cdef _IfPredicate pred
-    cdef const char* tag_start
-    cdef int tag_len
-    cdef _IfStep* new_steps
-    cdef bint any_ns
-    cdef bint failed = 0
-
-    out_count[0] = 0
-
-    # ElementTree path-syntax rule: a leading '/' (absolute path) is not
-    # valid when searching from a context element. Reject up front rather
-    # than letting the per-step '/' separator silently swallow it.
-    if p[0] == c'/':
-        return NULL
-
-    while p[0] != 0:
-        # Initialize step
-        step.c_tag = NULL
-        step.c_href = NULL
-        step.match_any_ns = 0
-        step.pred_count = 0
-        step.preds = NULL
-
-        # Skip leading /
-        if p[0] == c'/':
-            if p[1] == c'/':
-                # //
-                p += 2
-                if p[0] == 0:
-                    failed = 1
-                elif p[0] == c'*':
-                    step.type = STEP_DESCENDANTS_STAR
-                    p += 1
-                else:
-                    step.type = STEP_DESCENDANTS
-                    tag_start = p
-                    _if_scan_tag(&p, 0)  # in_predicate=False
-                    tag_len = <int>(p - tag_start)
-                    if tag_len == 0:
-                        failed = 1
-                    elif _if_parse_ns_tag(tag_start, tag_len, &step.c_href,
-                                          &step.c_tag, &any_ns, nst, 1) < 0:
-                        failed = 1
-                    else:
-                        step.match_any_ns = any_ns
-            else:
-                # Single /
-                p += 1
-                if p[0] == 0:
-                    # Trailing '/': ElementTree convention is "implicit *",
-                    # i.e. select all immediate children of the current
-                    # context. Emit a CHILD_STAR step here rather than
-                    # rewriting the path string Python-side.
-                    step.type = STEP_CHILD_STAR
-                else:
-                    continue  # next iteration handles the tag after /
-        elif p[0] == c'.':
-            if p[1] == c'.':
-                step.type = STEP_PARENT
-                p += 2
-            elif p[1] == c'/' or p[1] == 0:
-                step.type = STEP_SELF
-                p += 1
-            else:
-                # tag starting with '.' (e.g., .name — treat as tag)
-                step.type = STEP_SELF
-                p += 1
-        elif p[0] == c'*':
-            step.type = STEP_CHILD_STAR
-            p += 1
-        else:
-            # Tag name
-            step.type = STEP_CHILD
-            tag_start = p
-            _if_scan_tag(&p, 0)  # in_predicate=False
-            tag_len = <int>(p - tag_start)
-            if tag_len == 0:
-                failed = 1
-            elif _if_parse_ns_tag(tag_start, tag_len, &step.c_href,
-                                  &step.c_tag, &any_ns, nst, 1) < 0:
-                failed = 1
-            else:
-                step.match_any_ns = any_ns
-
-        if failed:
-            _if_free_step(&step)
-            break
-
-        # Parse predicates [...]
-        while p[0] == c'[':
-            p += 1
-            if _if_parse_predicate(&p, &pred, nst) < 0:
-                failed = 1
-                break
-            if _if_add_pred_to_step(&step, &pred) < 0:
-                failed = 1
-                break
-
-        if failed:
-            _if_free_step(&step)
-            break
-
-        # Add step to array
-        if count >= capacity:
-            capacity = capacity * 2 if capacity > 0 else 8
-            new_steps = <_IfStep*>realloc(steps, capacity * sizeof(_IfStep))
-            if new_steps is NULL:
-                _if_free_step(&step)
-                failed = 1
-                break
-            steps = new_steps
-        steps[count] = step
-        count += 1
-
-    if failed:
-        _if_free_steps(steps, count)
-        return NULL
-
-    out_count[0] = count
-    return steps
-
-
-# ---- Lazy pipeline executor: per-step cursor + depth-first walk ----
-#
-# Each step in the compiled path is paired with a cursor that yields one
-# matching node at a time. A walker state holds N cursors (one per step)
-# arranged like nested for-loops with backtracking:
-#
-#   advance the deepest cursor:
-#     if it yielded a node and there are deeper steps, push a fresh cursor
-#       rooted at that node and advance it next time;
-#     if it yielded a node and we are at the last step, return that node;
-#     if it is exhausted, pop and re-advance the cursor above.
-#
-# This means find('item/name') stops after the first item -> first name
-# match (~2 node visits) instead of materialising every item and every
-# name first. iterfind() pulls one match per __next__ call from the same
-# state machine.
-
-cdef struct _IfCursor:
-    xmlNode* scope         # the input node for this step (= previous step's match)
-    xmlNode* current       # NULL = exhausted; == scope = fresh; else = last-yielded
-
-cdef xmlNode* _if_cursor_next(_IfStep* step, _IfCursor* cur) noexcept nogil:
-    """Return the next xmlNode* this step yields against ``cur.scope``,
-    or NULL when the cursor is exhausted. Calling repeatedly walks every
-    match in document order, then returns NULL forever.
-    """
-    cdef xmlNode* node
-    cdef bint fresh
-
-    if cur.current is NULL:
-        return NULL
-    fresh = cur.current == cur.scope
-
-    if step.type == STEP_SELF:
-        cur.current = NULL
-        if _if_check_all_preds(cur.scope, step):
-            return cur.scope
-        return NULL
-
-    if step.type == STEP_PARENT:
-        cur.current = NULL
-        node = cur.scope.parent
-        if node is not NULL and node.type == tree.XML_ELEMENT_NODE \
-                and _if_check_all_preds(node, step):
-            return node
-        return NULL
-
-    if step.type == STEP_CHILD or step.type == STEP_CHILD_STAR:
-        cur.current = cur.scope.children if fresh else cur.current.next
-        while cur.current is not NULL:
-            if cur.current.type == tree.XML_ELEMENT_NODE \
-                    and (step.type == STEP_CHILD_STAR
-                         or _if_tag_matches(cur.current, step.c_href, step.c_tag, step.match_any_ns)) \
-                    and _if_check_all_preds(cur.current, step):
-                return cur.current
-            cur.current = cur.current.next
-        return NULL
-
-    if step.type == STEP_DESCENDANTS or step.type == STEP_DESCENDANTS_STAR:
-        cur.current = (_if_first_child_element(cur.scope) if fresh
-                       else _if_next_descendant_element(cur.scope, cur.current))
-        while cur.current is not NULL:
-            if (step.type == STEP_DESCENDANTS_STAR
-                    or _if_tag_matches(cur.current, step.c_href, step.c_tag, step.match_any_ns)) \
-                    and _if_check_all_preds(cur.current, step):
-                return cur.current
-            cur.current = _if_next_descendant_element(cur.scope, cur.current)
-        return NULL
-
-    cur.current = NULL
-    return NULL
-
-
-# ---- C-level result holder ----
-
-cdef class _IterFindResult:
-    """Pure C-level result iterator over a compiled ElementPath subset.
-
-    Owns the compiled steps array and a stack of cursors -- one per step.
-    Each call to ``_next_node()`` advances the cursor stack and returns
-    the next matching ``xmlNode*`` in document order, or NULL when no
-    further match is reachable. Lazy: a path like ``item/name`` stops at
-    the first item / first name and returns; subsequent calls keep
-    walking from there.
-
-    Exposes only cdef methods -- it does NOT implement Python's iterator
-    protocol and does NOT wrap nodes into _Element. Callers (e.g.
-    _elementpath.pxi) wrap results via _elementFactory() as needed.
-    """
-    # The compiled steps array AND the per-step cursor stack share a
-    # single allocation. The buffer layout is::
-    #
-    #     [_IfStep × N][_IfCursor × N]
-    #
-    # so ``_cursors`` is just a pointer into the second half. One malloc
-    # and one free per _IterFindResult instead of two.
-    cdef _IfStep* _steps
-    cdef int _step_count
-    cdef _IfCursor* _cursors      # interior pointer into the steps buffer
-    cdef int _depth               # current cursor index, -1 == exhausted
+    cdef _IfSearcher prev
+    cdef _IfSearcher next
+    cdef int _depth                # STEP_DESCENDANTS hops below scope; 0 means "back at scope"
+    cdef xmlNode* _scope_c         # scope captured by _first; returned on exhaust
 
     def __cinit__(self):
-        self._steps = NULL
-        self._step_count = 0
-        self._cursors = NULL
-        self._depth = -1
+        self.step.c_tag = NULL
+        self.step.c_tag_len = 0
+        self.step.c_href = NULL
+        self.step.c_href_len = 0
+        self.step.pred_count = 0
+        self.step.preds = NULL
+        self._depth = 0
+        self._scope_c = NULL
 
     def __dealloc__(self):
-        # _cursors lives in the same buffer as _steps; freed together.
-        _if_free_steps(self._steps, self._step_count)
-
-    cdef int _compile_and_run(self, xmlNode* c_node, const char* path,
-                                _IfNsTable* nst) except -1:
-        """Compile the path and prepare the cursor stack rooted at
-        ``c_node``. No matching work is performed here -- _next_node()
-        drives the lazy walk.
-        """
-        cdef _IfStep* steps
-        cdef _IfStep* fused
-        cdef int step_count = 0
-        cdef int total
-        cdef int i
-
-        steps = _if_compile_path(path, &step_count, nst)
-        if steps is NULL:
-            raise SyntaxError("invalid path expression")
-
-        if step_count == 0:
-            self._steps = steps
-            return 0
-
-        # Realloc the steps buffer to also hold the cursors at the end.
-        # On failure the original block is *not* freed by realloc, so we
-        # have to free it explicitly before raising.
-        total = step_count * <int>sizeof(_IfStep) + step_count * <int>sizeof(_IfCursor)
-        fused = <_IfStep*>realloc(steps, total)
-        if fused is NULL:
-            _if_free_steps(steps, step_count)
-            raise MemoryError()
-
-        self._steps = fused
-        self._step_count = step_count
-        self._cursors = <_IfCursor*>(<char*>fused + step_count * <int>sizeof(_IfStep))
-        for i in range(step_count):
-            self._cursors[i].scope = NULL
-            self._cursors[i].current = NULL    # NULL = exhausted until scope is set
-        self._cursors[0].scope = c_node
-        self._cursors[0].current = c_node      # current == scope marks "fresh"
-        self._depth = 0
-        return 0
+        _if_free_step(&self.step)
 
     @cython.final
-    cdef xmlNode* _next_node(self) noexcept:
-        """Advance the cursor stack and return the next matching xmlNode*,
-        or NULL when no further match is reachable.
-        """
-        cdef int last = self._step_count - 1
-        cdef _IfCursor* cur
-        cdef _IfCursor* child
-        cdef xmlNode* m
+    cdef _IfSearcher compile(self, str path, dict namespaces):
+        """Tokenise ``path`` and load it into self + a chain of new
+        _IfSearcher instances linked via .next/.prev. ``self`` becomes
+        the head; later steps are fresh _IfSearcher() instances linked
+        via prev/next. Returns the leaf searcher (the tail of the
+        chain), which the caller drives via ``_next`` to resume
+        iteration after each yield.
 
-        if self._depth < 0:
+        ``namespaces`` may be None or a dict mapping prefix (str) to URI
+        (str). The dict's None or '' key (if any) is treated as the default
+        namespace that is applied to bare element names.
+
+        Lifetime: the caller MUST keep ``namespaces`` (and ``path``) alive
+        for at least the searcher chain's lifetime. Every ``step.c_href``
+        (and any predicate URI/key) borrows into ``path``'s UTF-8 cache
+        or into the cache of a str value held by ``namespaces``, both of
+        which are obtained via ``PyUnicode_AsUTF8AndSize``. The lookup
+        table itself is a stack-local that's freed before this method
+        returns.
+
+        Raises SyntaxError on a malformed path.
+        """
+        cdef const char* c_path = PyUnicode_AsUTF8(path)
+        cdef const char* p
+        cdef _IfNsTable nst
+        cdef _IfPredicate pred
+        cdef _IfSearcher s
+        cdef _IfSearcher prev_s
+        cdef bint have_step
+        cdef bint is_first_step
+        cdef bint any_step
+        cdef const char* prefix_c
+        cdef const char* uri_c
+        cdef int prefix_len
+        cdef int uri_len
+        cdef object default_uri
+
+        # An absolute path doesn't make sense when searching from an
+        # element context; raise the same specific message the old
+        # Python _elementpath module raised so callers depending on
+        # that text keep working.
+        if c_path[0] == c'/':
+            raise SyntaxError("cannot use absolute path on element")
+
+        _if_ns_table_init(&nst)
+        try:
+            # Populate the table from the user's namespaces dict. The
+            # prefix/URI byte pointers point into each str's internal
+            # UTF-8 cache (PyUnicode_AsUTF8AndSize), so the str objects
+            # -- and therefore the dict that holds them -- must outlive
+            # the searcher chain. Iterators keep a copy on themselves;
+            # find/findall keep the dict alive via the function-local
+            # parameter.
+            if namespaces:
+                default_uri = namespaces.get(None)
+                if default_uri is None:
+                    default_uri = namespaces.get('')
+                elif '' in namespaces and namespaces[''] != default_uri:
+                    raise ValueError(
+                        "Ambiguous default namespace: %r vs %r" % (
+                            default_uri, namespaces['']))
+
+                if default_uri:
+                    _if_ns_value_ptr(default_uri, &uri_c, &uri_len)
+                    if _if_ns_table_add(&nst, NULL, 0, uri_c, uri_len) < 0:
+                        raise MemoryError()
+
+                for key, val in namespaces.items():
+                    if key is None or key == '':
+                        continue
+                    if val is None:
+                        continue
+                    _if_ns_value_ptr(key, &prefix_c, &prefix_len)
+                    _if_ns_value_ptr(val, &uri_c, &uri_len)
+                    if _if_ns_table_add(&nst, prefix_c, prefix_len, uri_c, uri_len) < 0:
+                        raise MemoryError()
+
+            # Tokenise and build the chain in one pass.
+            #
+            # For each iteration we allocate the step's searcher up front
+            # (the head reuses self) and parse straight into s.step. If
+            # parsing raises, s is GC-reachable as a local and Cython
+            # tears its allocations down via __dealloc__ -- no manual
+            # cleanup needed.
+            #
+            # A single '/' separator that precedes a tag (e.g. the second
+            # '/' in ``a/b``) sets ``have_step = False`` and ``continue``;
+            # the just-allocated s is dropped (one searcher's worth of
+            # GC churn per separator, only at compile time).
+            self.prev = None
+            prev_s = None
+            is_first_step = True
+            any_step = False
+            p = c_path
+
+            while p[0] != 0:
+                if is_first_step:
+                    s = self
+                else:
+                    s = _IfSearcher()
+                have_step = True
+
+                if p[0] == c'/':
+                    if p[1] == c'/':
+                        # //... -- a wildcard ('*') leaves c_tag NULL,
+                        # which _if_tag_matches treats as "any name".
+                        p += 2
+                        if p[0] == 0:
+                            raise SyntaxError("invalid path expression")
+                        s.step.type = STEP_DESCENDANTS
+                        if p[0] == c'*':
+                            p += 1
+                        else:
+                            _if_scan_ns_tag(&p, 0,
+                                             &s.step.c_href, &s.step.c_href_len,
+                                             &s.step.c_tag, &s.step.c_tag_len,
+                                             &nst, 1)
+                    else:
+                        # Single /. Trailing '/' is implicit '*'; otherwise
+                        # just a separator -- skip and let the next
+                        # iteration parse the tag.
+                        p += 1
+                        if p[0] == 0:
+                            s.step.type = STEP_CHILD  # c_tag NULL == wildcard
+                        else:
+                            have_step = False
+                elif p[0] == c'.':
+                    if p[1] == c'.':
+                        s.step.type = STEP_PARENT
+                        p += 2
+                    else:
+                        # '.' alone yields the current scope. Standalone
+                        # path "." needs this; embedded "./tag" produces
+                        # a redundant-but-harmless SELF step before the
+                        # next step.
+                        s.step.type = STEP_SELF
+                        p += 1
+                elif p[0] == c'*':
+                    s.step.type = STEP_CHILD  # c_tag NULL == wildcard
+                    p += 1
+                else:
+                    # Tag name
+                    s.step.type = STEP_CHILD
+                    _if_scan_ns_tag(&p, 0,
+                                     &s.step.c_href, &s.step.c_href_len,
+                                     &s.step.c_tag, &s.step.c_tag_len,
+                                     &nst, 1)
+
+                if not have_step:
+                    # Drop s; the next iteration allocates a fresh one.
+                    continue
+
+                # Parse predicates [...] directly into s.step.preds.
+                while p[0] == c'[':
+                    p += 1
+                    if _if_parse_predicate(&p, &pred, &nst) < 0:
+                        raise SyntaxError("invalid path expression")
+                    if _if_add_pred_to_step(&s.step, &pred) < 0:
+                        raise MemoryError()
+
+                # Link s into the chain.
+                if not is_first_step:
+                    s.prev = prev_s
+                    prev_s.next = s
+                prev_s = s
+                is_first_step = False
+                any_step = True
+
+            if not any_step:
+                # Empty path -- no steps produced.
+                raise SyntaxError("invalid path expression")
+        finally:
+            _if_ns_table_free(&nst)
+
+        # Return the tail of the chain (the leaf) so the caller can
+        # resume iteration via leaf._next() after each yield.
+        return prev_s
+
+    @cython.final
+    cdef xmlNode* _first(self, xmlNode* c_scope):
+        """Find the first leaf match starting from ``c_scope``.
+
+        Captures the scope, runs the type-specific entry, then walks
+        forward until a candidate matches at this level. On match,
+        either returns the candidate (if this is the leaf) or descends
+        into ``self.next._first(candidate)`` and returns its leaf
+        match. If the descended chain has no match, advances at this
+        level and tries again. Returns NULL if nothing matches in this
+        scope -- the caller (``self.prev``'s _scan loop, or the entry
+        point) decides what to do.
+        """
+        cdef xmlNode* c_node = NULL
+        cdef _IfStepType step_type = self.step.type
+
+        self._scope_c = c_scope
+
+        if step_type == STEP_CHILD:
+            c_node = c_scope.children
+        elif step_type == STEP_DESCENDANTS:
+            c_node = _if_first_child_element(c_scope)
+            self._depth = 1 if c_node is not NULL else 0
+        elif step_type == STEP_SELF:
+            # Single-shot: yield the scope itself (predicates apply).
+            if _if_check_all_preds(c_scope, &self.step):
+                if self.next is None:
+                    return c_scope
+                return self.next._first(c_scope)
+            return NULL
+        elif step_type == STEP_PARENT:
+            c_node = c_scope.parent
+            if c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE \
+                    and _if_check_all_preds(c_node, &self.step):
+                if self.next is None:
+                    return c_node
+                return self.next._first(c_node)
             return NULL
 
-        while True:
-            cur = &self._cursors[self._depth]
-            m = _if_cursor_next(&self._steps[self._depth], cur)
-            if m is not NULL:
-                if self._depth == last:
-                    return m
-                # Descend: initialise the next-step cursor rooted at m
-                self._depth += 1
-                child = &self._cursors[self._depth]
-                child.scope = m
-                child.current = m                  # current == scope marks "fresh"
-            else:
-                # Backtrack
-                if self._depth == 0:
-                    self._depth = -1
-                    return NULL
-                self._depth -= 1
+        return self._scan(c_node)
 
+    @cython.final
+    cdef xmlNode* _next(self, xmlNode* c_cursor):
+        """Resume from ``c_cursor`` (this searcher's previous match).
 
-cdef int _iterfind_compile_into(_IterFindResult res, xmlNode* c_node,
-                                 const char* c_path, object namespaces) except -1:
-    """Build a namespace table from ``namespaces`` and run the compiled
-    path against ``c_node`` into ``res``. ``res`` may be a subclass of
-    ``_IterFindResult`` (e.g. _ElementPathIterator), in which case its
-    extra fields must already be set by the caller.
+        Advances at this level; on match, descends into
+        ``self.next._first`` and returns its leaf match, advancing
+        again if next exhausts in that scope. When this scope is
+        exhausted, cascades to ``self.prev._next(self._scope_c)`` --
+        ``self._scope_c`` IS prev's cursor (= prev's last match).
+        Returns NULL when the chain is fully exhausted (head has no
+        more matches).
+        """
+        cdef xmlNode* c_node = NULL
+        cdef xmlNode* match
+        cdef xmlNode* c_prev_cursor
+        cdef _IfStepType step_type = self.step.type
 
-    ``namespaces`` may be None or a dict mapping prefix (str) to URI (str).
-    The dict's None or '' key (if any) is treated as the default namespace
-    that is applied to bare element names. The dict is converted to a
-    C-level namespace table once; the inner pipeline runs without the GIL.
+        if step_type == STEP_CHILD:
+            c_node = c_cursor.next
+        elif step_type == STEP_DESCENDANTS:
+            c_node = _if_next_descendant_element(c_cursor, &self._depth)
+        # STEP_SELF / STEP_PARENT: single-shot -- c_node stays NULL.
 
-    Raises SyntaxError on an invalid path.
-    """
-    cdef _IfNsTable nst
-    cdef bytes prefix_bytes
-    cdef bytes uri_bytes
-    cdef const char* prefix_c
-    cdef const char* uri_c
-    cdef int prefix_len
-    cdef int uri_len
-    cdef object default_uri
+        match = self._scan(c_node)
+        if match is not NULL:
+            return match
 
-    _if_ns_table_init(&nst)
-    try:
-        if namespaces:
-            default_uri = namespaces.get(None)
-            if default_uri is None:
-                default_uri = namespaces.get('')
-            elif '' in namespaces and namespaces[''] != default_uri:
-                raise ValueError(
-                    "Ambiguous default namespace: %r vs %r" % (
-                        default_uri, namespaces['']))
+        # Exhausted at this level. Reset our state for any future fresh
+        # entry, then cascade up via prev._next(prev_cursor).
+        c_prev_cursor = self._scope_c
+        self._scope_c = NULL
+        self._depth = 0
+        if self.prev is None:
+            return NULL
+        return self.prev._next(c_prev_cursor)
 
-            if default_uri:
-                uri_bytes = default_uri.encode('utf-8') if isinstance(default_uri, str) else default_uri
-                uri_c = <const char*>uri_bytes
-                uri_len = <int>len(uri_bytes)
-                if _if_ns_table_add(&nst, NULL, 0, uri_c, uri_len) < 0:
-                    raise MemoryError()
+    @cython.final
+    cdef xmlNode* _scan(self, xmlNode* c_node):
+        """Shared scan loop: walk forward from ``c_node`` at this level,
+        and on each candidate match either return (if leaf) or descend
+        into ``self.next._first``, retrying at this level if next
+        exhausts in the descended scope.
 
-            for key, val in namespaces.items():
-                if key is None or key == '':
-                    continue
-                if val is None:
-                    continue
-                prefix_bytes = key.encode('utf-8') if isinstance(key, str) else key
-                uri_bytes = val.encode('utf-8') if isinstance(val, str) else val
-                prefix_c = <const char*>prefix_bytes
-                uri_c = <const char*>uri_bytes
-                prefix_len = <int>len(prefix_bytes)
-                uri_len = <int>len(uri_bytes)
-                if _if_ns_table_add(&nst, prefix_c, prefix_len, uri_c, uri_len) < 0:
-                    raise MemoryError()
+        Returns the leaf-matched xmlNode on success, NULL when this
+        level's scope is exhausted. Caller (``_first`` returning to
+        its caller, or ``_next`` cascading via prev) handles "nothing
+        in this scope".
+        """
+        cdef _IfStepType step_type = self.step.type
+        cdef xmlNode* leaf_match
 
-        res._compile_and_run(c_node, c_path, &nst)
-    finally:
-        _if_ns_table_free(&nst)
-    return 0
+        if step_type == STEP_CHILD:
+            while c_node is not NULL:
+                if c_node.type == tree.XML_ELEMENT_NODE \
+                        and _if_tag_matches(c_node,
+                                            self.step.c_tag, self.step.c_tag_len,
+                                            self.step.c_href, self.step.c_href_len) \
+                        and _if_check_all_preds(c_node, &self.step):
+                    if self.next is None:
+                        return c_node
+                    leaf_match = self.next._first(c_node)
+                    if leaf_match is not NULL:
+                        return leaf_match
+                    # next exhausted in this scope; advance and retry
+                c_node = c_node.next
+        elif step_type == STEP_DESCENDANTS:
+            while c_node is not NULL:
+                if _if_tag_matches(c_node,
+                                   self.step.c_tag, self.step.c_tag_len,
+                                   self.step.c_href, self.step.c_href_len) \
+                        and _if_check_all_preds(c_node, &self.step):
+                    if self.next is None:
+                        return c_node
+                    leaf_match = self.next._first(c_node)
+                    if leaf_match is not NULL:
+                        return leaf_match
+                    # next exhausted in this scope; advance and retry
+                c_node = _if_next_descendant_element(c_node, &self._depth)
 
-
-cdef _IterFindResult _iterfind_run(xmlNode* c_node, const char* c_path,
-                                    object namespaces):
-    """Convenience wrapper: create a fresh _IterFindResult and run the path
-    into it. Used by callers that don't need their own subclass instance
-    (e.g. find / findall, which consume the result list directly).
-    """
-    cdef _IterFindResult res = _IterFindResult()
-    _iterfind_compile_into(res, c_node, c_path, namespaces)
-    return res
+        return NULL
