@@ -1,64 +1,58 @@
+# Copyright(c) The Maintainers of Nanvix.
+# Licensed under the MIT License.
+
 name: Nanvix CI
 
 on:
+  schedule:
+    - cron: "0 9 * * *"
   push:
     branches: ["nanvix/**"]
   pull_request:
     branches: ["nanvix/**"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  actions: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name || github.ref || 'default' }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        mode: [multi-process, single-process, standalone]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build
-        run: |
-          docker pull nanvix/toolchain:latest-minimal
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace/.nanvix \
-            nanvix/toolchain:latest-minimal \
-            make -f Makefile.nanvix \
-              PLATFORM=microvm \
-              MODE=${{ matrix.mode }} \
-              MEMORY=256mb
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: lxml-microvm-${{ matrix.mode }}-256mb
-          path: build/lxml-microvm-${{ matrix.mode }}-256mb.tar.bz2
+  ci:
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    uses: nanvix/workflows/.github/workflows/nanvix-ci.yml@v1.14.0
+    with:
+      zutil-version: "v0.7.43"
+      platforms: '["microvm"]'
+      process-modes: '["multi-process","single-process","standalone"]'
+      memory-sizes: '["256mb"]'
+      matrix-exclude: '[]'
+      windows-matrix-exclude: '[{"platform":"microvm"}]'
+      skip-full-test-modes: '["multi-process","single-process","standalone"]'
+      caller-event-name: ${{ github.event_name }}
+      windows-test: false
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+      DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
 
-  release:
-    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'nanvix/')
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Create Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="5.3.0"
-          NANVIX_VERSION="0.12.506"
-          TAG="lxml-${VERSION}-nanvix-${NANVIX_VERSION}"
-          TITLE="lxml ${VERSION} (nanvix ${NANVIX_VERSION})"
-
-          # Collect tarballs
-          FILES=()
-          for f in artifacts/lxml-*/*.tar.bz2; do
-            FILES+=("$f")
-          done
-
-          gh release delete "${TAG}" --yes 2>/dev/null || true
-          gh release create "${TAG}" "${FILES[@]}" \
-            --title "${TITLE}" \
-            --notes "lxml ${VERSION} built for Nanvix ${NANVIX_VERSION}"
+  ci-scheduled:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    uses: nanvix/workflows/.github/workflows/nanvix-ci.yml@v1.14.0
+    with:
+      zutil-version: "v0.7.43"
+      platforms: '["microvm"]'
+      process-modes: '["multi-process","single-process","standalone"]'
+      memory-sizes: '["256mb"]'
+      matrix-exclude: '[]'
+      windows-matrix-exclude: '[{"platform":"microvm"}]'
+      skip-full-test-modes: '["multi-process","single-process","standalone"]'
+      caller-event-name: 'schedule'
+      windows-test: false
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+      DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}

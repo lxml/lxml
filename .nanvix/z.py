@@ -1,68 +1,98 @@
-"""Nanvix build integration for lxml."""
+# Copyright(c) The Maintainers of Nanvix.
+# Licensed under the MIT License.
 
-from __future__ import annotations
+"""Nanvix build script for lxml.
 
-import subprocess
+Usage:
+    ./z setup     # Download Nanvix sysroot
+    ./z build     # Cross-compile lxml C extensions
+    ./z test      # Run test suite (smoke)
+    ./z release   # Package release tarball
+    ./z clean     # Remove build artifacts
+"""
+
+import sys
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# zutil bootstrap helpers
-# ---------------------------------------------------------------------------
-import importlib, sys
-_HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(_HERE))
+from nanvix_zutil import CFG_SYSROOT, CFG_TOOLCHAIN, EXIT_MISSING_DEP, ZScript, log
 
-def _zutil_import(name: str):
-    return importlib.import_module(name)
+IS_WINDOWS = sys.platform == "win32"
 
-try:
-    from nanvix.zutil import ZScript
-except ImportError:
-    ZScript = None  # type: ignore[misc,assignment]
+_MAKE_VAR_CONFIG = "CONFIG_NANVIX"
+_MAKE_VAR_HOME = "NANVIX_HOME"
+_MAKE_VAR_TOOLCHAIN = "NANVIX_TOOLCHAIN"
+_MAKE_VAR_PLATFORM = "PLATFORM"
+_MAKE_VAR_PROCESS_MODE = "PROCESS_MODE"
+_MAKE_VAR_MEMORY_SIZE = "MEMORY_SIZE"
 
-DOCKER_IMAGE = "nanvix/toolchain:latest-minimal"
 
-class LxmlBuild:
-    def __init__(self) -> None:
-        self.root = _HERE.parent
-        self.nanvix_dir = _HERE
-        self.makefile = _HERE / "Makefile.nanvix"
+class LxmlBuild(ZScript):
+    """Build script for nanvix/lxml."""
 
-    def build(self, platform: str = "microvm", mode: str = "multi-process", memory: str = "256mb") -> Path:
-        build_dir = self.root / "build"
-        build_dir.mkdir(exist_ok=True)
+    def _make_args(self, *targets: str) -> list[str]:
+        """Build the common make argument list."""
+        sysroot = self.config.get(CFG_SYSROOT, "")
+        if not sysroot:
+            log.fatal(
+                f"{CFG_SYSROOT} is not set.",
+                code=EXIT_MISSING_DEP,
+                hint="Run `./z setup` first to download the sysroot.",
+            )
+        toolchain = self.config.get(CFG_TOOLCHAIN, "/opt/nanvix") or "/opt/nanvix"
+        sysroot_p = self.translate_path(Path(sysroot))
+        toolchain_p = self.translate_path(Path(toolchain))
 
-        cmd = [
-            "docker", "run", "--rm",
-            "-v", f"{self.root}:/workspace",
-            "-w", "/workspace/.nanvix",
-            DOCKER_IMAGE,
-            "make", "-f", "Makefile.nanvix",
-            f"PLATFORM={platform}",
-            f"MODE={mode}",
-            f"MEMORY={memory}",
+        args = [
+            "make",
+            "-f",
+            ".nanvix/Makefile.nanvix",
+            f"{_MAKE_VAR_CONFIG}=y",
+            f"{_MAKE_VAR_HOME}={sysroot_p}",
+            f"{_MAKE_VAR_TOOLCHAIN}={toolchain_p}",
         ]
-        print(f"[lxml] Running: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
 
-        tarball = build_dir / f"lxml-{platform}-{mode}-{memory}.tar.bz2"
-        if not tarball.is_file():
-            raise RuntimeError(f"Expected tarball not found: {tarball}")
-        return tarball
+        args.extend(
+            [
+                f"{_MAKE_VAR_PLATFORM}={self.config.machine}",
+                f"{_MAKE_VAR_PROCESS_MODE}={self.config.deployment_mode}",
+                f"{_MAKE_VAR_MEMORY_SIZE}={self.config.memory_size}",
+            ]
+        )
 
+        args.extend(targets)
+        return args
 
-def main() -> None:
-    import argparse
-    parser = argparse.ArgumentParser(description="Build lxml for Nanvix")
-    parser.add_argument("--platform", default="microvm")
-    parser.add_argument("--mode", default="multi-process")
-    parser.add_argument("--memory", default="256mb")
-    args = parser.parse_args()
+    def setup(self) -> bool:
+        """Download the Nanvix sysroot."""
+        return super().setup()
 
-    builder = LxmlBuild()
-    tarball = builder.build(args.platform, args.mode, args.memory)
-    print(f"[lxml] Built: {tarball}")
+    def build(self) -> None:
+        """Cross-compile lxml C extensions for Nanvix."""
+        self.run(*self._make_args("all"), cwd=self.repo_root)
+
+    def test(self) -> None:
+        """Run the lxml test suite."""
+        if IS_WINDOWS:
+            print("Skipping tests on Windows (no runtime test binaries for lxml).")
+            return
+        targets = self.targets if self.targets else ["test"]
+        self.run(*self._make_args(*targets), cwd=self.repo_root)
+
+    def release(self) -> None:
+        """Package the lxml release tarball and verify it."""
+        self.run(*self._make_args("package"), cwd=self.repo_root)
+        self.run(*self._make_args("verify-package"), cwd=self.repo_root)
+
+    def clean(self) -> None:
+        """Remove build artifacts."""
+        self.run(
+            "make",
+            "-f",
+            ".nanvix/Makefile.nanvix",
+            "clean",
+            cwd=self.repo_root,
+        )
 
 
 if __name__ == "__main__":
-    main()
+    LxmlBuild.main()

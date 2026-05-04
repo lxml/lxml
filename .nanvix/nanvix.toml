@@ -1,10 +1,13 @@
-[nanvix]
-nanvix-version = "0.12.506"
-zutil-version = "0.7.43"
-
-[project]
+[package]
 name = "lxml"
 version = "5.3.0"
+nanvix-version = "0.12.506"
+
+[builds]
+[builds.matrix]
+platforms = ["microvm"]
+modes = ["multi-process", "single-process", "standalone"]
+memory = ["256mb"]
 
 [dependencies]
 libxml2 = "2.12.9"
