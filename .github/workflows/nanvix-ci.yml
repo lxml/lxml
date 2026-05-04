@@ -1,0 +1,64 @@
+name: Nanvix CI
+
+on:
+  push:
+    branches: ["nanvix/**"]
+  pull_request:
+    branches: ["nanvix/**"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [multi-process, single-process, standalone]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          docker pull nanvix/toolchain:latest-minimal
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/.nanvix \
+            nanvix/toolchain:latest-minimal \
+            make -f Makefile.nanvix \
+              PLATFORM=microvm \
+              MODE=${{ matrix.mode }} \
+              MEMORY=256mb
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lxml-microvm-${{ matrix.mode }}-256mb
+          path: build/lxml-microvm-${{ matrix.mode }}-256mb.tar.bz2
+
+  release:
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'nanvix/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="5.3.0"
+          NANVIX_VERSION="0.12.506"
+          TAG="lxml-${VERSION}-nanvix-${NANVIX_VERSION}"
+          TITLE="lxml ${VERSION} (nanvix ${NANVIX_VERSION})"
+
+          # Collect tarballs
+          FILES=()
+          for f in artifacts/lxml-*/*.tar.bz2; do
+            FILES+=("$f")
+          done
+
+          gh release delete "${TAG}" --yes 2>/dev/null || true
+          gh release create "${TAG}" "${FILES[@]}" \
+            --title "${TITLE}" \
+            --notes "lxml ${VERSION} built for Nanvix ${NANVIX_VERSION}"

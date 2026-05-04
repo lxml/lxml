@@ -1,0 +1,94 @@
+SHELL := /bin/bash
+
+# Project settings
+PROJECT_NAME := lxml
+PROJECT_VERSION := 5.3.0
+NANVIX_VERSION := 0.12.506
+
+# Build settings
+PLATFORM ?= microvm
+MODE ?= multi-process
+MEMORY ?= 256mb
+DOCKER_IMAGE := nanvix/toolchain:latest-minimal
+
+# Paths
+BUILD_DIR := $(CURDIR)/../build
+SYSROOT := $(BUILD_DIR)/sysroot
+INSTALL_DIR := $(BUILD_DIR)/install
+SRC_DIR := $(CURDIR)/..
+TARBALL_NAME := $(PROJECT_NAME)-$(PLATFORM)-$(MODE)-$(MEMORY).tar.bz2
+
+# Dependencies
+LIBXML2_VERSION := 2.12.9
+LIBXML2_RELEASE_TAG := libxml2-$(LIBXML2_VERSION)-nanvix-$(NANVIX_VERSION)
+LIBXML2_TARBALL := libxml2-$(PLATFORM)-$(MODE)-$(MEMORY).tar.bz2
+LIBXML2_URL := https://github.com/nanvix/libxml2/releases/download/$(LIBXML2_RELEASE_TAG)/$(LIBXML2_TARBALL)
+
+LIBXSLT_VERSION := 1.1.42
+LIBXSLT_RELEASE_TAG := libxslt-$(LIBXSLT_VERSION)-nanvix-$(NANVIX_VERSION)
+LIBXSLT_TARBALL := libxslt-$(PLATFORM)-$(MODE)-$(MEMORY).tar.bz2
+LIBXSLT_URL := https://github.com/nanvix/libxslt/releases/download/$(LIBXSLT_RELEASE_TAG)/$(LIBXSLT_TARBALL)
+
+# CPython headers (vendored)
+CPYTHON_HEADERS := $(SRC_DIR)/nanvix-port/cpython-headers
+
+# Compiler settings
+CC := i686-nanvix-gcc
+AR := i686-nanvix-ar
+RANLIB := i686-nanvix-ranlib
+COMMON_CFLAGS := -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections
+
+# lxml CFLAGS: needs Python.h, libxml2/libxslt headers, lxml source includes
+LXML_CFLAGS := $(COMMON_CFLAGS) \
+	-I$(CPYTHON_HEADERS) \
+	-I$(SYSROOT)/include \
+	-I$(SYSROOT)/include/libxml2 \
+	-I$(SRC_DIR)/src \
+	-I$(SRC_DIR)/src/lxml/includes
+
+.PHONY: all clean deps build package
+
+all: package
+
+deps:
+	@echo "=== Downloading dependencies ==="
+	mkdir -p $(SYSROOT)
+	curl -sL $(LIBXML2_URL) -o $(BUILD_DIR)/$(LIBXML2_TARBALL)
+	tar -xjf $(BUILD_DIR)/$(LIBXML2_TARBALL) -C $(SYSROOT) --strip-components=1
+	curl -sL $(LIBXSLT_URL) -o $(BUILD_DIR)/$(LIBXSLT_TARBALL)
+	tar -xjf $(BUILD_DIR)/$(LIBXSLT_TARBALL) -C $(SYSROOT) --strip-components=1
+	@echo "=== Dependencies ready ==="
+
+build: deps
+	@echo "=== Building lxml C extensions ==="
+	mkdir -p $(BUILD_DIR)/obj
+	$(CC) $(LXML_CFLAGS) -c $(SRC_DIR)/src/lxml/etree.c -o $(BUILD_DIR)/obj/lxml_etree.o
+	$(CC) $(LXML_CFLAGS) -c $(SRC_DIR)/src/lxml/_elementpath.c -o $(BUILD_DIR)/obj/lxml_elementpath.o
+	$(AR) rcs $(BUILD_DIR)/obj/liblxml_etree.a $(BUILD_DIR)/obj/lxml_etree.o
+	$(AR) rcs $(BUILD_DIR)/obj/liblxml_elementpath.a $(BUILD_DIR)/obj/lxml_elementpath.o
+	$(RANLIB) $(BUILD_DIR)/obj/liblxml_etree.a
+	$(RANLIB) $(BUILD_DIR)/obj/liblxml_elementpath.a
+	@echo "=== C extensions built ==="
+
+package: build
+	@echo "=== Packaging ==="
+	# Static libraries
+	mkdir -p $(INSTALL_DIR)/sysroot/lib
+	cp $(BUILD_DIR)/obj/liblxml_etree.a $(INSTALL_DIR)/sysroot/lib/
+	cp $(BUILD_DIR)/obj/liblxml_elementpath.a $(INSTALL_DIR)/sysroot/lib/
+	# Python package files
+	mkdir -p $(INSTALL_DIR)/sysroot/python-packages/lxml
+	cp $(SRC_DIR)/src/lxml/*.py $(INSTALL_DIR)/sysroot/python-packages/lxml/
+	cp -r $(SRC_DIR)/src/lxml/html $(INSTALL_DIR)/sysroot/python-packages/lxml/
+	cp -r $(SRC_DIR)/src/lxml/isoschematron $(INSTALL_DIR)/sysroot/python-packages/lxml/
+	cp -r $(SRC_DIR)/src/lxml/includes $(INSTALL_DIR)/sysroot/python-packages/lxml/
+	# Create shim modules
+	printf '%s\n' 'from _lxml_etree import *' > $(INSTALL_DIR)/sysroot/python-packages/lxml/etree.py
+	printf '%s\n' 'from _lxml_etree import _Element, _ElementTree, _Comment, _ProcessingInstruction, ElementBase, QName, _Attrib' >> $(INSTALL_DIR)/sysroot/python-packages/lxml/etree.py
+	printf '%s\n' 'from _lxml_elementpath import *' > $(INSTALL_DIR)/sysroot/python-packages/lxml/_elementpath.py
+	# Create tarball
+	cd $(INSTALL_DIR) && tar -cjf $(BUILD_DIR)/$(TARBALL_NAME) sysroot/
+	@echo "=== Package ready: $(BUILD_DIR)/$(TARBALL_NAME) ==="
+
+clean:
+	rm -rf $(BUILD_DIR)
