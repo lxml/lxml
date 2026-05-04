@@ -11,7 +11,10 @@ Usage:
     ./z clean     # Remove build artifacts
 """
 
+import subprocess
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 from nanvix_zutil import CFG_SYSROOT, CFG_TOOLCHAIN, EXIT_MISSING_DEP, ZScript, log
@@ -73,10 +76,82 @@ class LxmlBuild(ZScript):
     def test(self) -> None:
         """Run the lxml test suite."""
         if IS_WINDOWS:
-            print("Skipping tests on Windows (no runtime test binaries for lxml).")
+            self._run_tests_windows()
             return
         targets = self.targets if self.targets else ["test"]
         self.run(*self._make_args(*targets), cwd=self.repo_root)
+
+    def _run_tests_windows(self) -> None:
+        """Run tests natively on Windows via nanvixd.exe."""
+        if self.config.deployment_mode != "standalone":
+            print(f"Skipping tests on Windows for mode '{self.config.deployment_mode}' (requires linuxd).")
+            return
+
+        sysroot = self.config.get(CFG_SYSROOT, "")
+        if not sysroot:
+            log.fatal(f"{CFG_SYSROOT} is not set.", code=EXIT_MISSING_DEP, hint="Run `./z setup` first.")
+        sysroot_path = Path(sysroot)
+        nanvixd = sysroot_path / "bin" / "nanvixd.exe"
+        mkramfs = sysroot_path / "bin" / "mkramfs.exe"
+        if not nanvixd.is_file():
+            log.fatal("nanvixd.exe not found.", code=EXIT_MISSING_DEP, hint="Run `./z setup` first.")
+        if not mkramfs.is_file():
+            log.fatal("mkramfs.exe not found.", code=EXIT_MISSING_DEP, hint="Run `./z setup` first.")
+
+        test_allowlist = {"test_lxml.elf"}
+        test_binaries: list[Path] = []
+        for candidate in [self.repo_root, self.repo_root / "build"]:
+            if candidate.is_dir():
+                for elf in sorted(candidate.glob("*.elf")):
+                    if elf.name in test_allowlist and elf.name not in {x.name for x in test_binaries}:
+                        test_binaries.append(elf)
+
+        if not test_binaries:
+            print("No test binaries found; skipping Windows tests.")
+            return
+
+        failed: list[str] = []
+        for binary in test_binaries:
+            name = binary.stem
+            print(f"RUN  {name}...")
+            with tempfile.TemporaryDirectory(prefix=f"nanvix_{name}_") as tmpdir:
+                tmpdir_path = Path(tmpdir)
+                ramfs_dir = tmpdir_path / "ramfs"
+                ramfs_dir.mkdir()
+                (ramfs_dir / "tmp").mkdir(exist_ok=True)
+                shutil.copy2(binary, ramfs_dir / binary.name)
+                ramfs_img = tmpdir_path / f"rootfs_{name}.img"
+                try:
+                    subprocess.run(
+                        [str(mkramfs.resolve()), "-o", str(ramfs_img), str(ramfs_dir)],
+                        check=True, timeout=60,
+                    )
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+                    print(f"FAIL {name} (mkramfs: {e})")
+                    failed.append(name)
+                    continue
+                try:
+                    result = subprocess.run(
+                        [
+                            str(nanvixd.resolve()),
+                            "-bin-dir", str((sysroot_path / "bin").resolve()),
+                            "-ramfs", str(ramfs_img),
+                            "--", f"./{binary.name}",
+                        ],
+                        stdin=subprocess.DEVNULL, timeout=120,
+                    )
+                    if result.returncode != 0:
+                        print(f"FAIL {name} (exit code {result.returncode})")
+                        failed.append(name)
+                    else:
+                        print(f"OK   {name}")
+                except subprocess.TimeoutExpired:
+                    print(f"FAIL {name} (timeout)")
+                    failed.append(name)
+
+        if failed:
+            raise RuntimeError(f"{len(failed)} test(s) failed: {' '.join(failed)}")
+        print(f"\t\t*** All {len(test_binaries)} tests PASSED ***")
 
     def release(self) -> None:
         """Package the lxml release tarball and verify it."""

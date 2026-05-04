@@ -133,8 +133,28 @@ test-smoke: $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH)
 	@test -f dist/obj/liblxml_elementpath.a || { echo "FAIL: liblxml_elementpath.a not found"; exit 1; }
 	@echo "  PASS: lxml smoke tests"
 
+TEST_PROG = test_lxml.elf
+
 test-integration: test-smoke
-	@echo "  PASS: lxml integration tests (static library only)"
+	@echo "=== lxml integration tests ==="
+	$(RUN_CMD) sh -c '\
+	  export PATH="$(EFFECTIVE_TOOLCHAIN)/bin:$$PATH" && \
+	  i686-nanvix-gcc \
+	    -I$(EFFECTIVE_BUILDROOT)/include/libxml2 \
+	    -I$(EFFECTIVE_BUILDROOT)/include \
+	    -I$(EFFECTIVE_SYSROOT)/include \
+	    .nanvix/test/test_lxml.c \
+	    -L$(EFFECTIVE_BUILDROOT)/lib -L$(EFFECTIVE_SYSROOT)/lib \
+	    -T$(EFFECTIVE_SYSROOT)/lib/user.ld -static -Wl,-z,noexecstack \
+	    -lxslt -lxml2 -lz \
+	    -Wl,--start-group \
+	    $(EFFECTIVE_SYSROOT)/lib/libposix.a \
+	    $(EFFECTIVE_TOOLCHAIN)/i686-nanvix/lib/libc.a \
+	    $(EFFECTIVE_TOOLCHAIN)/i686-nanvix/lib/libm.a \
+	    -Wl,--end-group \
+	    -o test_lxml.elf'
+	@echo "  OK: test_lxml.elf built"
+	@echo "  PASS: lxml integration tests"
 
 test-functional: test-integration
 	@echo "  PASS: lxml functional tests (library only, no runtime tests)"
@@ -184,6 +204,6 @@ install: $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH)
 	cp -r $(SRC_DIR)/src/lxml/*.py "$(DESTDIR)$(PREFIX)/python-packages/lxml/"
 
 clean:
-	rm -rf dist/
+	rm -rf dist/ test_lxml.elf
 
 .PHONY: all clean test test-smoke test-integration test-functional package verify-package install
