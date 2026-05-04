@@ -42,27 +42,33 @@ ifdef CONFIG_NANVIX
 
   EXE = .elf
   SYSROOT_PATH := $(abspath $(NANVIX_HOME))
+  BUILDROOT_PATH := $(abspath $(CURDIR)/.nanvix/buildroot)
 
   ifdef CONFIG_NANVIX_DOCKER
     DOCKER_TOOLCHAIN_PATH := /opt/nanvix
     DOCKER_SYSROOT_PATH := /mnt/sysroot
+    DOCKER_BUILDROOT_PATH := /mnt/buildroot
     DOCKER_WORKSPACE_PATH := /mnt/workspace
     DOCKER_UID := $(shell id -u)
     DOCKER_GID := $(shell id -g)
     DOCKER_RUN := docker run --rm --user $(DOCKER_UID):$(DOCKER_GID) \
       -v $(CURDIR):$(DOCKER_WORKSPACE_PATH) \
       -v $(SYSROOT_PATH):$(DOCKER_SYSROOT_PATH):ro \
+      -v $(BUILDROOT_PATH):$(DOCKER_BUILDROOT_PATH):ro \
       -w $(DOCKER_WORKSPACE_PATH) \
       -e HOME=/tmp \
       $(NANVIX_DOCKER_IMAGE)
     EFFECTIVE_SYSROOT := $(DOCKER_SYSROOT_PATH)
+    EFFECTIVE_BUILDROOT := $(DOCKER_BUILDROOT_PATH)
     EFFECTIVE_TOOLCHAIN := $(DOCKER_TOOLCHAIN_PATH)
     RUN_CMD := $(DOCKER_RUN)
   else
     EFFECTIVE_SYSROOT := $(SYSROOT_PATH)
+    EFFECTIVE_BUILDROOT := $(BUILDROOT_PATH)
     EFFECTIVE_TOOLCHAIN := $(NANVIX_TOOLCHAIN)
     RUN_CMD :=
   endif
+
 else
   ifneq ($(MAKECMDGOALS),clean)
     $(error CONFIG_NANVIX must be set to 'y')
@@ -98,15 +104,17 @@ $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH):
 	  mkdir -p dist/obj && \
 	  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
 	    -I$(SRC_DIR)/nanvix-port/cpython-headers \
+	    -I$(EFFECTIVE_BUILDROOT)/include \
+	    -I$(EFFECTIVE_BUILDROOT)/include/libxml2 \
 	    -I$(EFFECTIVE_SYSROOT)/include \
-	    -I$(EFFECTIVE_SYSROOT)/include/libxml2 \
 	    -I$(SRC_DIR)/src \
 	    -I$(SRC_DIR)/src/lxml/includes \
 	    -c $(SRC_DIR)/src/lxml/etree.c -o dist/obj/lxml_etree.o && \
 	  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
 	    -I$(SRC_DIR)/nanvix-port/cpython-headers \
+	    -I$(EFFECTIVE_BUILDROOT)/include \
+	    -I$(EFFECTIVE_BUILDROOT)/include/libxml2 \
 	    -I$(EFFECTIVE_SYSROOT)/include \
-	    -I$(EFFECTIVE_SYSROOT)/include/libxml2 \
 	    -I$(SRC_DIR)/src \
 	    -I$(SRC_DIR)/src/lxml/includes \
 	    -c $(SRC_DIR)/src/lxml/_elementpath.c -o dist/obj/lxml_elementpath.o && \
