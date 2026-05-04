@@ -50,7 +50,7 @@ ifdef CONFIG_NANVIX
     DOCKER_UID := $(shell id -u)
     DOCKER_GID := $(shell id -g)
     DOCKER_RUN := docker run --rm --user $(DOCKER_UID):$(DOCKER_GID) \
-      -v $(CURDIR)/..:/mnt/workspace \
+      -v $(CURDIR):$(DOCKER_WORKSPACE_PATH) \
       -v $(SYSROOT_PATH):$(DOCKER_SYSROOT_PATH):ro \
       -w $(DOCKER_WORKSPACE_PATH) \
       -e HOME=/tmp \
@@ -80,7 +80,7 @@ NPROC := $(shell nproc 2>/dev/null || echo 4)
 # Project Settings
 # ===========================================================================
 
-SRC_DIR := $(CURDIR)/..
+SRC_DIR := $(CURDIR)
 CPYTHON_HEADERS := $(SRC_DIR)/nanvix-port/cpython-headers
 
 # ===========================================================================
@@ -93,89 +93,89 @@ STATICLIB_ELEMENTPATH = dist/obj/liblxml_elementpath.a
 all: $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH)
 
 $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH):
-$(RUN_CMD) sh -c '\
-  export PATH="$(EFFECTIVE_TOOLCHAIN)/bin:$$PATH" && \
-  mkdir -p dist/obj && \
-  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
-    -I$(SRC_DIR)/nanvix-port/cpython-headers \
-    -I$(EFFECTIVE_SYSROOT)/include \
-    -I$(EFFECTIVE_SYSROOT)/include/libxml2 \
-    -I$(SRC_DIR)/src \
-    -I$(SRC_DIR)/src/lxml/includes \
-    -c $(SRC_DIR)/src/lxml/etree.c -o dist/obj/lxml_etree.o && \
-  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
-    -I$(SRC_DIR)/nanvix-port/cpython-headers \
-    -I$(EFFECTIVE_SYSROOT)/include \
-    -I$(EFFECTIVE_SYSROOT)/include/libxml2 \
-    -I$(SRC_DIR)/src \
-    -I$(SRC_DIR)/src/lxml/includes \
-    -c $(SRC_DIR)/src/lxml/_elementpath.c -o dist/obj/lxml_elementpath.o && \
-  i686-nanvix-ar rcs dist/obj/liblxml_etree.a dist/obj/lxml_etree.o && \
-  i686-nanvix-ar rcs dist/obj/liblxml_elementpath.a dist/obj/lxml_elementpath.o && \
-  i686-nanvix-ranlib dist/obj/liblxml_etree.a && \
-  i686-nanvix-ranlib dist/obj/liblxml_elementpath.a'
+	$(RUN_CMD) sh -c '\
+	  export PATH="$(EFFECTIVE_TOOLCHAIN)/bin:$$PATH" && \
+	  mkdir -p dist/obj && \
+	  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
+	    -I$(SRC_DIR)/nanvix-port/cpython-headers \
+	    -I$(EFFECTIVE_SYSROOT)/include \
+	    -I$(EFFECTIVE_SYSROOT)/include/libxml2 \
+	    -I$(SRC_DIR)/src \
+	    -I$(SRC_DIR)/src/lxml/includes \
+	    -c $(SRC_DIR)/src/lxml/etree.c -o dist/obj/lxml_etree.o && \
+	  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
+	    -I$(SRC_DIR)/nanvix-port/cpython-headers \
+	    -I$(EFFECTIVE_SYSROOT)/include \
+	    -I$(EFFECTIVE_SYSROOT)/include/libxml2 \
+	    -I$(SRC_DIR)/src \
+	    -I$(SRC_DIR)/src/lxml/includes \
+	    -c $(SRC_DIR)/src/lxml/_elementpath.c -o dist/obj/lxml_elementpath.o && \
+	  i686-nanvix-ar rcs dist/obj/liblxml_etree.a dist/obj/lxml_etree.o && \
+	  i686-nanvix-ar rcs dist/obj/liblxml_elementpath.a dist/obj/lxml_elementpath.o && \
+	  i686-nanvix-ranlib dist/obj/liblxml_etree.a && \
+	  i686-nanvix-ranlib dist/obj/liblxml_elementpath.a'
 
 # ===========================================================================
 # Test Targets
 # ===========================================================================
 
 test-smoke: $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH)
-@echo "=== lxml smoke tests ==="
-@test -f dist/obj/liblxml_etree.a || { echo "FAIL: liblxml_etree.a not found"; exit 1; }
-@test -f dist/obj/liblxml_elementpath.a || { echo "FAIL: liblxml_elementpath.a not found"; exit 1; }
-@echo "  PASS: lxml smoke tests"
+	@echo "=== lxml smoke tests ==="
+	@test -f dist/obj/liblxml_etree.a || { echo "FAIL: liblxml_etree.a not found"; exit 1; }
+	@test -f dist/obj/liblxml_elementpath.a || { echo "FAIL: liblxml_elementpath.a not found"; exit 1; }
+	@echo "  PASS: lxml smoke tests"
 
 test-integration: test-smoke
-@echo "  PASS: lxml integration tests (static library only)"
+	@echo "  PASS: lxml integration tests (static library only)"
 
 test-functional: test-integration
-@echo "  PASS: lxml functional tests (library only, no runtime tests)"
+	@echo "  PASS: lxml functional tests (library only, no runtime tests)"
 
 test: test-smoke test-integration test-functional
-@echo "=== All lxml tests PASSED ==="
+	@echo "=== All lxml tests PASSED ==="
 
 # ===========================================================================
 # Package Target
 # ===========================================================================
 
 package: all
-@echo "=== Packaging lxml release ==="
-$(eval ARTIFACT_NAME := lxml-$(PLATFORM)-$(PROCESS_MODE)-$(MEMORY_SIZE))
-rm -rf dist/$(ARTIFACT_NAME)
-mkdir -p dist/$(ARTIFACT_NAME)/sysroot/lib \
-         dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/html \
-         dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/isoschematron \
-         dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/includes
-cp -f dist/obj/liblxml_etree.a dist/$(ARTIFACT_NAME)/sysroot/lib/
-cp -f dist/obj/liblxml_elementpath.a dist/$(ARTIFACT_NAME)/sysroot/lib/
-cp -f $(SRC_DIR)/src/lxml/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/
--cp -f $(SRC_DIR)/src/lxml/html/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/html/ 2>/dev/null || true
--cp -f $(SRC_DIR)/src/lxml/isoschematron/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/isoschematron/ 2>/dev/null || true
--cp -rf $(SRC_DIR)/src/lxml/includes/* dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/includes/ 2>/dev/null || true
-tar -cjf dist/$(ARTIFACT_NAME).tar.bz2 -C dist/$(ARTIFACT_NAME) sysroot
-@echo "  Package: dist/$(ARTIFACT_NAME).tar.bz2"
+	@echo "=== Packaging lxml release ==="
+	$(eval ARTIFACT_NAME := lxml-$(PLATFORM)-$(PROCESS_MODE)-$(MEMORY_SIZE))
+	rm -rf dist/$(ARTIFACT_NAME)
+	mkdir -p dist/$(ARTIFACT_NAME)/sysroot/lib \
+	         dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/html \
+	         dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/isoschematron \
+	         dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/includes
+	cp -f dist/obj/liblxml_etree.a dist/$(ARTIFACT_NAME)/sysroot/lib/
+	cp -f dist/obj/liblxml_elementpath.a dist/$(ARTIFACT_NAME)/sysroot/lib/
+	cp -f $(SRC_DIR)/src/lxml/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/
+	-cp -f $(SRC_DIR)/src/lxml/html/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/html/ 2>/dev/null || true
+	-cp -f $(SRC_DIR)/src/lxml/isoschematron/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/isoschematron/ 2>/dev/null || true
+	-cp -rf $(SRC_DIR)/src/lxml/includes/* dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/includes/ 2>/dev/null || true
+	tar -cjf dist/$(ARTIFACT_NAME).tar.bz2 -C dist/$(ARTIFACT_NAME) sysroot
+	@echo "  Package: dist/$(ARTIFACT_NAME).tar.bz2"
 
 verify-package:
-@echo "=== Verifying lxml package ==="
-$(eval ARTIFACT_NAME := lxml-$(PLATFORM)-$(PROCESS_MODE)-$(MEMORY_SIZE))
-@test -f "dist/$(ARTIFACT_NAME).tar.bz2" || { echo "FAIL: tarball not found"; exit 1; }
-@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/lib/liblxml_etree.a' || { echo "FAIL: missing liblxml_etree.a"; exit 1; }
-@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/lib/liblxml_elementpath.a' || { echo "FAIL: missing liblxml_elementpath.a"; exit 1; }
-@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/python-packages/lxml/' || { echo "FAIL: missing python-packages"; exit 1; }
-@echo "  PASS: lxml package verification"
+	@echo "=== Verifying lxml package ==="
+	$(eval ARTIFACT_NAME := lxml-$(PLATFORM)-$(PROCESS_MODE)-$(MEMORY_SIZE))
+	@test -f "dist/$(ARTIFACT_NAME).tar.bz2" || { echo "FAIL: tarball not found"; exit 1; }
+	@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/lib/liblxml_etree.a' || { echo "FAIL: missing liblxml_etree.a"; exit 1; }
+	@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/lib/liblxml_elementpath.a' || { echo "FAIL: missing liblxml_elementpath.a"; exit 1; }
+	@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/python-packages/lxml/' || { echo "FAIL: missing python-packages"; exit 1; }
+	@echo "  PASS: lxml package verification"
 
 # ===========================================================================
 # Install / Clean
 # ===========================================================================
 
 install: $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH)
-mkdir -p "$(DESTDIR)$(PREFIX)/lib" \
-         "$(DESTDIR)$(PREFIX)/python-packages/lxml"
-install -m644 dist/obj/liblxml_etree.a "$(DESTDIR)$(PREFIX)/lib/"
-install -m644 dist/obj/liblxml_elementpath.a "$(DESTDIR)$(PREFIX)/lib/"
-cp -r $(SRC_DIR)/src/lxml/*.py "$(DESTDIR)$(PREFIX)/python-packages/lxml/"
+	mkdir -p "$(DESTDIR)$(PREFIX)/lib" \
+	         "$(DESTDIR)$(PREFIX)/python-packages/lxml"
+	install -m644 dist/obj/liblxml_etree.a "$(DESTDIR)$(PREFIX)/lib/"
+	install -m644 dist/obj/liblxml_elementpath.a "$(DESTDIR)$(PREFIX)/lib/"
+	cp -r $(SRC_DIR)/src/lxml/*.py "$(DESTDIR)$(PREFIX)/python-packages/lxml/"
 
 clean:
-rm -rf dist/
+	rm -rf dist/
 
 .PHONY: all clean test test-smoke test-integration test-functional package verify-package install
