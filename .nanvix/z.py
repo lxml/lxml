@@ -84,26 +84,42 @@ class LxmlBuild(ZScript):
     def _run_tests_windows(self) -> None:
         """Run tests natively on Windows via nanvixd.exe."""
         if self.config.deployment_mode != "standalone":
-            print(f"Skipping tests on Windows for mode '{self.config.deployment_mode}' (requires linuxd).")
+            print(
+                f"Skipping tests on Windows for mode '{self.config.deployment_mode}' (requires linuxd)."
+            )
             return
 
         sysroot = self.config.get(CFG_SYSROOT, "")
         if not sysroot:
-            log.fatal(f"{CFG_SYSROOT} is not set.", code=EXIT_MISSING_DEP, hint="Run `./z setup` first.")
+            log.fatal(
+                f"{CFG_SYSROOT} is not set.",
+                code=EXIT_MISSING_DEP,
+                hint="Run `./z setup` first.",
+            )
         sysroot_path = Path(sysroot)
         nanvixd = sysroot_path / "bin" / "nanvixd.exe"
         mkramfs = sysroot_path / "bin" / "mkramfs.exe"
         if not nanvixd.is_file():
-            log.fatal("nanvixd.exe not found.", code=EXIT_MISSING_DEP, hint="Run `./z setup` first.")
+            log.fatal(
+                "nanvixd.exe not found.",
+                code=EXIT_MISSING_DEP,
+                hint="Run `./z setup` first.",
+            )
         if not mkramfs.is_file():
-            log.fatal("mkramfs.exe not found.", code=EXIT_MISSING_DEP, hint="Run `./z setup` first.")
+            log.fatal(
+                "mkramfs.exe not found.",
+                code=EXIT_MISSING_DEP,
+                hint="Run `./z setup` first.",
+            )
 
         test_allowlist = {"test_lxml.elf"}
         test_binaries: list[Path] = []
         for candidate in [self.repo_root, self.repo_root / "build"]:
             if candidate.is_dir():
                 for elf in sorted(candidate.glob("*.elf")):
-                    if elf.name in test_allowlist and elf.name not in {x.name for x in test_binaries}:
+                    if elf.name in test_allowlist and elf.name not in {
+                        x.name for x in test_binaries
+                    }:
                         test_binaries.append(elf)
 
         if not test_binaries:
@@ -124,7 +140,8 @@ class LxmlBuild(ZScript):
                 try:
                     subprocess.run(
                         [str(mkramfs.resolve()), "-o", str(ramfs_img), str(ramfs_dir)],
-                        check=True, timeout=60,
+                        check=True,
+                        timeout=60,
                     )
                 except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                     print(f"FAIL {name} (mkramfs: {e})")
@@ -134,11 +151,15 @@ class LxmlBuild(ZScript):
                     result = subprocess.run(
                         [
                             str(nanvixd.resolve()),
-                            "-bin-dir", str((sysroot_path / "bin").resolve()),
-                            "-ramfs", str(ramfs_img),
-                            "--", f"./{binary.name}",
+                            "-bin-dir",
+                            str((sysroot_path / "bin").resolve()),
+                            "-ramfs",
+                            str(ramfs_img),
+                            "--",
+                            f"./{binary.name}",
                         ],
-                        stdin=subprocess.DEVNULL, timeout=120,
+                        stdin=subprocess.DEVNULL,
+                        timeout=120,
                     )
                     if result.returncode != 0:
                         print(f"FAIL {name} (exit code {result.returncode})")
