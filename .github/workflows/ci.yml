@@ -2,11 +2,15 @@ name: CI
 
 on:
   push:
+    branches-ignore:
+      - 'nanvix/**'
     paths:
       - '**'
       - '!.github/**'
       - '.github/workflows/ci.yml'
   pull_request:
+    branches-ignore:
+      - 'nanvix/**'
     paths:
       - '**'
       - '!.github/**'
