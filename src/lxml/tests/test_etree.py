@@ -5050,6 +5050,8 @@ class ETreeOnlyTestCase(HelperTestCase):
 
 
 class _XIncludeTestCase(HelperTestCase):
+    __test__ = False
+
     def test_xinclude_text(self):
         filename = fileInTestDir('test_broken.xml')
         root = etree.XML('''\
@@ -5154,11 +5156,13 @@ class _XIncludeTestCase(HelperTestCase):
 
 
 class ETreeXIncludeTestCase(_XIncludeTestCase):
+    __test__ = True
     def include(self, tree):
         tree.xinclude()
 
 
 class ElementIncludeTestCase(_XIncludeTestCase):
+    __test__ = True
     from lxml import ElementInclude
 
     def include(self, tree, loader=None, max_depth=None):

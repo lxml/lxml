@@ -19,6 +19,7 @@ from .common_imports import etree, HelperTestCase
 
 
 class _XmlFileTestCaseBase(HelperTestCase):
+    __test__ = False
     _file = None  # to be set by specific subtypes below
 
     def test_element(self):
@@ -383,6 +384,8 @@ class _XmlFileTestCaseBase(HelperTestCase):
 
 
 class BytesIOXmlFileTestCase(_XmlFileTestCaseBase):
+    __test__ = True
+
     def setUp(self):
         self._file = BytesIO()
 
@@ -394,12 +397,16 @@ class BytesIOXmlFileTestCase(_XmlFileTestCaseBase):
 
 
 class TempXmlFileTestCase(_XmlFileTestCaseBase):
+    __test__ = True
+
     def setUp(self):
         self._file = tempfile.TemporaryFile()
 
 
 @skipIf(sys.platform.startswith("win"), "Can't reopen temporary files on Windows")
 class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
+    __test__ = True
+
     def setUp(self):
         self._tmpfile = tempfile.NamedTemporaryFile()
         self._file = self._tmpfile.name
@@ -429,6 +436,8 @@ class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
 
 
 class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
+    __test__ = True
+
     class SimpleFileLike:
         def __init__(self, target):
             self._target = target
@@ -503,6 +512,8 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
 
 
 class HtmlFileTestCase(_XmlFileTestCaseBase):
+    __test__ = True
+
     def setUp(self):
         self._file = BytesIO()
 

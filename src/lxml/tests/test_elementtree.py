@@ -53,6 +53,7 @@ def et_exclude_pyversion(*version):
 
 
 class _ETreeTestCaseBase(helper_base):
+    __test__ = False
     etree = None
     required_versions_ET = {}
 
@@ -4218,6 +4219,7 @@ class _ETreeTestCaseBase(helper_base):
 
 
 class _ElementSlicingTest(unittest.TestCase):
+    __test__ = False
     etree = None
 
     def _elem_tags(self, elemlist):
@@ -4370,6 +4372,7 @@ class _ElementSlicingTest(unittest.TestCase):
 
 
 class _XMLPullParserTest(unittest.TestCase):
+    __test__ = False
     etree = None
 
     def _close_and_return_root(self, parser):
@@ -4666,6 +4669,7 @@ class _XMLPullParserTest(unittest.TestCase):
 
 
 class _C14NTest(unittest.TestCase):
+    __test__ = False
     etree = None
     maxDiff = None
 
@@ -4922,15 +4926,19 @@ class _C14NTest(unittest.TestCase):
 
 if etree:
     class ETreeTestCase(_ETreeTestCaseBase):
+        __test__ = True
         etree = etree
 
     class ETreePullTestCase(_XMLPullParserTest):
+        __test__ = True
         etree = etree
 
     class ETreeElementSlicingTest(_ElementSlicingTest):
+        __test__ = True
         etree = etree
 
     class ETreeC14NTest(_C14NTest):
+        __test__ = True
         etree = etree
 
     class ETreeC14N2WriteTest(ETreeC14NTest):
@@ -4966,6 +4974,7 @@ if etree:
 
 if ElementTree:
     class ElementTreeTestCase(_ETreeTestCaseBase):
+        __test__ = True
         etree = ElementTree
 
         @classmethod
@@ -5014,17 +5023,20 @@ if ElementTree:
 
     if hasattr(ElementTree, 'XMLPullParser'):
         class ElementTreePullTestCase(_XMLPullParserTest):
+            __test__ = True
             etree = ElementTree
     else:
         ElementTreePullTestCase = None
 
     if hasattr(ElementTree, 'canonicalize'):
         class ElementTreeC14NTest(_C14NTest):
+            __test__ = True
             etree = ElementTree
     else:
         ElementTreeC14NTest = None
 
     class ElementTreeElementSlicingTest(_ElementSlicingTest):
+        __test__ = True
         etree = ElementTree
 
 
