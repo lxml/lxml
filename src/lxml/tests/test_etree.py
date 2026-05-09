@@ -12,6 +12,7 @@ import os.path
 import unittest
 import contextlib
 import copy
+import itertools
 import sys
 import re
 import gc
@@ -3928,6 +3929,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, root.findall, '')
         self.assertRaises(SyntaxError, root.findall, '//')  # absolute path on Element
         self.assertRaises(SyntaxError, root.findall, './//')
+
+    def test_iterfind_tree_modifications(self):
+        def insert_prev(it, tag='tagname'):
+            for element in it:
+                yield element
+                element.addprevious(element.makeelement(tag))
+
+        tostring = self.etree.tostring
+        root = self.etree.XML('<root><a>A</a><b>B</b><c>C</c></root>')
+        it = root.iterfind('./*')
+        tags = [element.tag for element in itertools.islice(insert_prev(it, tag='x'), 4)]
+        self.assertEqual(tostring(root), b'<root><x/><a>A</a><x/><b>B</b><x/><c>C</c></root>')
+        self.assertListEqual(tags, ['a', 'b', 'c'])
+
+        root = self.etree.XML('<root><a>A</a><b>B</b><c>C</c></root>')
+        it = root.iterfind('./b[1]')
+        tags = [element.tag for element in insert_prev(it, tag='b')]
+        self.assertListEqual(tags, ['b'])
 
     def test_index(self):
         etree = self.etree
