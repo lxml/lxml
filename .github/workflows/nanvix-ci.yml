@@ -28,12 +28,9 @@ jobs:
     uses: nanvix/workflows/.github/workflows/nanvix-ci.yml@v1.14.0
     with:
       zutil-version: "v0.7.48"
-      platforms: '["hyperlight","microvm"]'
+      platforms: '["microvm"]'
       process-modes: '["multi-process","single-process","standalone"]'
       memory-sizes: '["256mb"]'
-      matrix-exclude: >-
-        [{"platform":"hyperlight","process-mode":"multi-process"},
-        {"platform":"hyperlight","process-mode":"single-process"}]
       windows-matrix-exclude: '[]'
       skip-full-test-modes: '["multi-process","single-process","standalone"]'
       caller-event-name: ${{ github.event_name }}
@@ -47,12 +44,9 @@ jobs:
     uses: nanvix/workflows/.github/workflows/nanvix-ci.yml@v1.14.0
     with:
       zutil-version: "v0.7.48"
-      platforms: '["hyperlight","microvm"]'
+      platforms: '["microvm"]'
       process-modes: '["multi-process","single-process","standalone"]'
       memory-sizes: '["256mb"]'
-      matrix-exclude: >-
-        [{"platform":"hyperlight","process-mode":"multi-process"},
-        {"platform":"hyperlight","process-mode":"single-process"}]
       windows-matrix-exclude: '[]'
       skip-full-test-modes: '["multi-process","single-process","standalone"]'
       caller-event-name: 'schedule'
