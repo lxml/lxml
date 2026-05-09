@@ -1696,8 +1696,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Creates a new element associated with the same document.
         """
         _assertValidDoc(self._doc)
-        return _makeElement(_tag, NULL, self._doc, None, None, None,
-                            attrib, nsmap, _extra)
+        return _makeElement(
+            _tag, NULL, self._doc,
+            parser=None, text=None, tail=None,
+            attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
 
     def find(self, path, namespaces=None):
         """find(self, path, namespaces=None)
@@ -3241,8 +3243,9 @@ class Element(ABC):
     create an Element within a specific document or parser context.
     """
     def __new__(cls, _tag, attrib=None, nsmap=None, **_extra):
-          return _makeElement(_tag, NULL, None, None, None, None,
-                              attrib, nsmap, _extra)
+        return _makeElement(
+            _tag, NULL, doc=None, parser=None, text=None, tail=None,
+            attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
 
 # Register _Element as a virtual subclass of Element
 Element.register(_Element)
@@ -3351,7 +3354,9 @@ def SubElement(_Element _parent not None, _tag,
     Subelement factory.  This function creates an element instance, and
     appends it to an existing element.
     """
-    return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
+    return _makeSubElement(
+        _parent, _tag,
+        text=None, tail=None, attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
 
 
 from typing import Generic, TypeVar

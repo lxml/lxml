@@ -775,10 +775,13 @@ cdef class TreeBuilder(_SaxParserTarget):
                 _appendChild(self._element_stack[-1], self._last)
         elif self._element_stack:
             self._last = _makeSubElement(
-                self._element_stack[-1], tag, None, None, attrib, nsmap, None)
+                self._element_stack[-1], tag,
+                text=None, tail=None, attrib=attrib, nsmap=nsmap)
         else:
             self._last = _makeElement(
-                tag, NULL, None, self._parser, None, None, attrib, nsmap, None)
+                tag, NULL,
+                doc=None, parser=self._parser,
+                text=None, tail=None, attrib=attrib, nsmap=nsmap)
         self._element_stack.append(self._last)
         self._in_tail = 0
         return self._last

@@ -1158,8 +1158,9 @@ cdef class _BaseParser:
 
         Creates a new element associated with this parser.
         """
-        return _makeElement(_tag, NULL, None, self, None, None,
-                            attrib, nsmap, _extra)
+        return _makeElement(
+            _tag, NULL, doc=None, parser=self,
+            text=None, tail=None, attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
 
     # internal parser methods
 

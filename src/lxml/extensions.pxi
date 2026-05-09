@@ -581,8 +581,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
                         value = _utf8(value)
                     if isinstance(value, bytes):
                         if fake_node is None:
-                            fake_node = _makeElement("text-root", NULL, doc, None,
-                                                     None, None, None, None, None)
+                            fake_node = _makeElement("text-root", NULL, doc)
                             context._hold(fake_node)
                         else:
                             # append a comment node to keep the text nodes separate
