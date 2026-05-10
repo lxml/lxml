@@ -32,6 +32,10 @@ _MAKE_VAR_MEMORY_SIZE = "MEMORY_SIZE"
 class LxmlBuild(ZScript):
     """Build script for nanvix/lxml."""
 
+    def docker_image(self) -> str:
+        """Return the Docker image for cross-compilation."""
+        return "ghcr.io/nanvix/toolchain-gcc"
+
     def _make_args(self, *targets: str) -> list[str]:
         """Build the common make argument list."""
         sysroot = self.config.get(CFG_SYSROOT, "")

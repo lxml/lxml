@@ -7,7 +7,7 @@
 # Toolchain Detection
 # ===========================================================================
 
-NANVIX_DOCKER_IMAGE ?= nanvix/toolchain:latest-minimal
+NANVIX_DOCKER_IMAGE ?= ghcr.io/nanvix/toolchain-gcc
 
 ifdef CONFIG_NANVIX
   NANVIX_TOOLCHAIN ?= /opt/nanvix
@@ -18,11 +18,15 @@ ifdef CONFIG_NANVIX
       DOCKER_AVAILABLE := $(shell command -v docker 2>/dev/null)
       ifdef DOCKER_AVAILABLE
         DOCKER_IMAGE_EXISTS := $(shell docker image inspect $(NANVIX_DOCKER_IMAGE) >/dev/null 2>&1 && echo yes)
+        ifndef DOCKER_IMAGE_EXISTS
+          $(info [nanvix] Pulling Docker image $(NANVIX_DOCKER_IMAGE)...)
+          DOCKER_IMAGE_EXISTS := $(shell docker pull -q $(NANVIX_DOCKER_IMAGE) >/dev/null 2>&1 && echo yes)
+        endif
         ifdef DOCKER_IMAGE_EXISTS
           CONFIG_NANVIX_DOCKER := y
           $(info [nanvix] Using Docker (native toolchain not found at $(NANVIX_TOOLCHAIN)))
         else
-          $(error Docker image $(NANVIX_DOCKER_IMAGE) not found. Run: docker pull $(NANVIX_DOCKER_IMAGE))
+          $(error Docker image $(NANVIX_DOCKER_IMAGE) not found and pull failed. Run: docker pull $(NANVIX_DOCKER_IMAGE))
         endif
       else
         $(error Nanvix toolchain not found at $(NANVIX_TOOLCHAIN) and Docker not available)
@@ -35,7 +39,11 @@ ifdef CONFIG_NANVIX
     endif
     DOCKER_IMAGE_EXISTS := $(shell docker image inspect $(NANVIX_DOCKER_IMAGE) >/dev/null 2>&1 && echo yes)
     ifndef DOCKER_IMAGE_EXISTS
-      $(error Docker image $(NANVIX_DOCKER_IMAGE) not found. Run: docker pull $(NANVIX_DOCKER_IMAGE))
+      $(info [nanvix] Pulling Docker image $(NANVIX_DOCKER_IMAGE)...)
+      DOCKER_IMAGE_EXISTS := $(shell docker pull -q $(NANVIX_DOCKER_IMAGE) >/dev/null 2>&1 && echo yes)
+    endif
+    ifndef DOCKER_IMAGE_EXISTS
+      $(error Docker image $(NANVIX_DOCKER_IMAGE) not found and pull failed. Run: docker pull $(NANVIX_DOCKER_IMAGE))
     endif
     $(info [nanvix] Using Docker (explicitly requested))
   endif
@@ -61,11 +69,13 @@ ifdef CONFIG_NANVIX
     EFFECTIVE_SYSROOT := $(DOCKER_SYSROOT_PATH)
     EFFECTIVE_BUILDROOT := $(DOCKER_BUILDROOT_PATH)
     EFFECTIVE_TOOLCHAIN := $(DOCKER_TOOLCHAIN_PATH)
+    EFFECTIVE_SRC_DIR := $(DOCKER_WORKSPACE_PATH)
     RUN_CMD := $(DOCKER_RUN)
   else
     EFFECTIVE_SYSROOT := $(SYSROOT_PATH)
     EFFECTIVE_BUILDROOT := $(BUILDROOT_PATH)
     EFFECTIVE_TOOLCHAIN := $(NANVIX_TOOLCHAIN)
+    EFFECTIVE_SRC_DIR := $(CURDIR)
     RUN_CMD :=
   endif
 
@@ -103,21 +113,21 @@ $(STATICLIB_ETREE) $(STATICLIB_ELEMENTPATH):
 	  export PATH="$(EFFECTIVE_TOOLCHAIN)/bin:$$PATH" && \
 	  mkdir -p dist/obj && \
 	  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
-	    -I$(SRC_DIR)/nanvix-port/cpython-headers \
+	    -I$(EFFECTIVE_SRC_DIR)/nanvix-port/cpython-headers \
 	    -I$(EFFECTIVE_BUILDROOT)/include \
 	    -I$(EFFECTIVE_BUILDROOT)/include/libxml2 \
 	    -I$(EFFECTIVE_SYSROOT)/include \
-	    -I$(SRC_DIR)/src \
-	    -I$(SRC_DIR)/src/lxml/includes \
-	    -c $(SRC_DIR)/src/lxml/etree.c -o dist/obj/lxml_etree.o && \
+	    -I$(EFFECTIVE_SRC_DIR)/src \
+	    -I$(EFFECTIVE_SRC_DIR)/src/lxml/includes \
+	    -c $(EFFECTIVE_SRC_DIR)/src/lxml/etree.c -o dist/obj/lxml_etree.o && \
 	  i686-nanvix-gcc -m32 -march=pentiumpro -Os -fdata-sections -ffunction-sections \
-	    -I$(SRC_DIR)/nanvix-port/cpython-headers \
+	    -I$(EFFECTIVE_SRC_DIR)/nanvix-port/cpython-headers \
 	    -I$(EFFECTIVE_BUILDROOT)/include \
 	    -I$(EFFECTIVE_BUILDROOT)/include/libxml2 \
 	    -I$(EFFECTIVE_SYSROOT)/include \
-	    -I$(SRC_DIR)/src \
-	    -I$(SRC_DIR)/src/lxml/includes \
-	    -c $(SRC_DIR)/src/lxml/_elementpath.c -o dist/obj/lxml_elementpath.o && \
+	    -I$(EFFECTIVE_SRC_DIR)/src \
+	    -I$(EFFECTIVE_SRC_DIR)/src/lxml/includes \
+	    -c $(EFFECTIVE_SRC_DIR)/src/lxml/_elementpath.c -o dist/obj/lxml_elementpath.o && \
 	  i686-nanvix-ar rcs dist/obj/liblxml_etree.a dist/obj/lxml_etree.o && \
 	  i686-nanvix-ar rcs dist/obj/liblxml_elementpath.a dist/obj/lxml_elementpath.o && \
 	  i686-nanvix-ranlib dist/obj/liblxml_etree.a && \
@@ -180,16 +190,16 @@ package: all
 	-cp -f $(SRC_DIR)/src/lxml/html/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/html/ 2>/dev/null || true
 	-cp -f $(SRC_DIR)/src/lxml/isoschematron/*.py dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/isoschematron/ 2>/dev/null || true
 	-cp -rf $(SRC_DIR)/src/lxml/includes/* dist/$(ARTIFACT_NAME)/sysroot/python-packages/lxml/includes/ 2>/dev/null || true
-	tar -cjf dist/$(ARTIFACT_NAME).tar.bz2 -C dist/$(ARTIFACT_NAME) sysroot
-	@echo "  Package: dist/$(ARTIFACT_NAME).tar.bz2"
+	tar -czf dist/$(ARTIFACT_NAME).tar.gz -C dist/$(ARTIFACT_NAME) sysroot
+	@echo "  Package: dist/$(ARTIFACT_NAME).tar.gz"
 
 verify-package:
 	@echo "=== Verifying lxml package ==="
 	$(eval ARTIFACT_NAME := lxml-$(PLATFORM)-$(PROCESS_MODE)-$(MEMORY_SIZE))
-	@test -f "dist/$(ARTIFACT_NAME).tar.bz2" || { echo "FAIL: tarball not found"; exit 1; }
-	@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/lib/liblxml_etree.a' || { echo "FAIL: missing liblxml_etree.a"; exit 1; }
-	@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/lib/liblxml_elementpath.a' || { echo "FAIL: missing liblxml_elementpath.a"; exit 1; }
-	@tar tjf "dist/$(ARTIFACT_NAME).tar.bz2" | grep -q 'sysroot/python-packages/lxml/' || { echo "FAIL: missing python-packages"; exit 1; }
+	@test -f "dist/$(ARTIFACT_NAME).tar.gz" || { echo "FAIL: tarball not found"; exit 1; }
+	@tar tzf "dist/$(ARTIFACT_NAME).tar.gz" | grep -q 'sysroot/lib/liblxml_etree.a' || { echo "FAIL: missing liblxml_etree.a"; exit 1; }
+	@tar tzf "dist/$(ARTIFACT_NAME).tar.gz" | grep -q 'sysroot/lib/liblxml_elementpath.a' || { echo "FAIL: missing liblxml_elementpath.a"; exit 1; }
+	@tar tzf "dist/$(ARTIFACT_NAME).tar.gz" | grep -q 'sysroot/python-packages/lxml/' || { echo "FAIL: missing python-packages"; exit 1; }
 	@echo "  PASS: lxml package verification"
 
 # ===========================================================================
