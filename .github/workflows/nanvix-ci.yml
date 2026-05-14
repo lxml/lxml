@@ -17,6 +17,7 @@ permissions:
   actions: write
   issues: write
   pull-requests: write
+  packages: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name || github.ref || 'default' }}
