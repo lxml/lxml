@@ -11,7 +11,7 @@ Assumptions:
 
 import os
 import pathlib
-from typing import List, Optional
+from typing import List, Tuple, Optional
 
 
 def _parse_patch_file_path(file_path: str) -> Optional[str]:
@@ -27,7 +27,7 @@ def _write_file(path: pathlib.Path, lines_without_linebreaks):
             f.write(line + "\n")
 
 
-def _parse_hunk_header(hdr: str) -> tuple[int, int, int, int]:
+def _parse_hunk_header(hdr: str) -> Tuple[int, int, int, int]:
     """
     Parse a unified diff hunk header like:
       @@ -old_start,old_count +new_start,new_count @@ optional
