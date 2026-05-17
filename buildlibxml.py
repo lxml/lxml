@@ -599,7 +599,31 @@ def download_libs(
     libxml2_dir  = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
     libxslt_dir  = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
 
+    # Patch after unpacking to assure a clean target directory.
+    _patch_library(zlib_dir)
+    _patch_library(libiconv_dir)
+    _patch_library(libxml2_dir)
+    _patch_library(libxslt_dir)
+
     return zlib_dir, libiconv_dir, libxml2_dir, libxslt_dir
+
+
+LIBRARY_PATCHES = {
+    "libxslt-1.1.43": "libxslt-1.1.43-backport1.patch",
+}
+
+
+def _patch_library(libdir):
+    if not libdir:
+        return
+    dirname = os.path.basename(libdir)
+    if dirname not in LIBRARY_PATCHES:
+        return
+    patch_file = LIBRARY_PATCHES[dirname]
+
+    from patch_lxml_deplibs import apply_patch_file
+    print(f"Applying patch {patch_file} to {libdir}")
+    apply_patch_file(patch_file, libdir)
 
 
 def build_libs(
