@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+6.1.1 (2026-05-18)
+==================
+
+Bugs fixed
+----------
+
+* The known link attributes in ``lxml.html.defs.link_attrs`` were missing ``xlink:href``,
+  which can be used for URL bypass attacks in embedded SVG/MathML/etc. content.
+  https://github.com/fedora-python/lxml_html_clean/security/advisories/GHSA-4jhm-jv67-739f
+
+* The Linux wheels use a patched libxslt 1.1.43, fixing CVE-2025-7424 and CVE-2025-11731.
+
+* The Windows wheels use libxslt 1.1.45, fixing CVE-2025-7424 and CVE-2025-11731.
+
+
 6.1.0 (2026-04-17)
 ==================
 
