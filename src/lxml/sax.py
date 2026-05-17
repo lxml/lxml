@@ -158,7 +158,7 @@ class ElementTreeContentHandler(ContentHandler):
 
     ignorableWhitespace = characters
 
-    # Allow subscripting sax.ElementTreeContentHandler in type annotions (PEP 560)
+    # Allow subscripting sax.ElementTreeContentHandler in type annotations (PEP 560)
     def __class_getitem__(cls, item):
         return _GenericAlias(cls, item)
 

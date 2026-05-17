@@ -234,7 +234,7 @@ class ElementMaker:
     def __getattr__(self, tag):
         return partial(self, tag)
 
-    # Allow subscripting ElementMaker in type annotions (PEP 560)
+    # Allow subscripting ElementMaker in type annotations (PEP 560)
     def __class_getitem__(cls, item):
         return _GenericAlias(cls, item)
 
