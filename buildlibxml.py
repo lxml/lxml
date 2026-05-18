@@ -777,4 +777,4 @@ if __name__ == '__main__':
     if args:
         # change global sys_platform setting
         sys_platform = args[0]
-    main(download_only=download_only, platform=sys_platform)
+    main(download_only=download_only)
