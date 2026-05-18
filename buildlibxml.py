@@ -731,14 +731,15 @@ def main(with_zlib=True, download_only=False, platform=None):
     static_library_dirs = []
     download_dir = "libs"
 
-    if platform is None:
+    arch = None
+    if platform in ('win32', 'win64', 'win_arm64'):
+        arch = platform
+    elif platform is None:
         platform = sys_platform
 
     if platform.startswith('win'):
         return get_prebuilt_libxml2xslt(
-            download_dir, static_include_dirs, static_library_dirs,
-            arch='win32' if platform != sys.platform else None,
-        )
+            download_dir, static_include_dirs, static_library_dirs, arch=arch)
 
     get_env = os.environ.get
     zlib_version = get_env('ZLIB_VERSION')
