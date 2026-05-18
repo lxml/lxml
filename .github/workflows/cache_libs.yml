@@ -64,7 +64,8 @@ jobs:
           - "ubuntu-22.04"
           - "ubuntu-22.04-arm"
           - "macos-latest"
-          - "windows-2022"
+          - "windows-2022"    # win32
+          - "windows-latest"  # win_amd64
           - "windows-11-arm"
 
     runs-on: ${{ matrix.os }}
@@ -85,12 +86,12 @@ jobs:
           libs/*.xz
           libs/*.gz
           libs/*.zip
-        key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+        key: libs-${{ runner.os }}-${{ matrix.os == 'windows-2022' && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
     - name: Download latest libraries
       env:
         GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python3 buildlibxml.py --download-only
+      run: python3 buildlibxml.py --download-only  ${{ matrix.os == 'windows-2022' && 'win32' || '' }}
 
     - name: Check Windows library versions
       if: ${{ contains(matrix.os, 'windows-') }}

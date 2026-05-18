@@ -1,4 +1,6 @@
-# Copied from CPython 3.14b2+.
+# Copied from CPython 3.14b2+ under PSF-License 2.0.
+# See https://docs.python.org/3/license.html
+
 # cython: infer_types=True
 
 """
