@@ -4,6 +4,13 @@ doc/licenses/BSD.txt), with the following exceptions:
 Some code, such a selftest.py, selftest2.py and
 src/lxml/_elementpath.py are derived from ElementTree and
 cElementTree. See doc/licenses/elementtree.txt for the license text.
+Newer versions reuse code from CPython's 'xml.etree' implementation,
+licensed under the PSF-License v2.
+See https://docs.python.org/3/license.html
+
+A copy of difflib is used as part of lxml.html, forked from the CPython
+standard library and licensed under the PSF-License v2.
+See https://docs.python.org/3/license.html
 
 lxml.cssselect and lxml.html are copyright Ian Bicking and distributed
 under the BSD license (see doc/licenses/BSD.txt).
@@ -16,14 +23,14 @@ of the rest of the package.
 
 The isoschematron implementation uses several XSL and RelaxNG resources:
  * The (XML syntax) RelaxNG schema for schematron, copyright International
-   Organization for Standardization (see 
+   Organization for Standardization (see
    src/lxml/isoschematron/resources/rng/iso-schematron.rng for the license
    text)
  * The skeleton iso-schematron-xlt1 pure-xslt schematron implementation
    xsl stylesheets, copyright Rick Jelliffe and Academia Sinica Computing
-   Center, Taiwan (see the xsl files here for the license text: 
+   Center, Taiwan (see the xsl files here for the license text:
    src/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/)
  * The xsd/rng schema schematron extraction xsl transformations are unlicensed
-   and copyright the respective authors as noted (see 
+   and copyright the respective authors as noted (see
    src/lxml/isoschematron/resources/xsl/RNG2Schtrn.xsl and
    src/lxml/isoschematron/resources/xsl/XSD2Schtrn.xsl)
