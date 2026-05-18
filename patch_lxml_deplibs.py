@@ -38,7 +38,7 @@ def _parse_hunk_header(hdr: str) -> Tuple[int, int, int, int]:
     parts = hdr.split()
     old = parts[1]  # like -12,3 or -12
     new = parts[2]  # like +12,4 or +12
-    def pr(r: str) -> tuple[int, int]:
+    def pr(r: str) -> Tuple[int, int]:
         r = r[1:]
         if ',' in r:
             a, b = r.split(',', 1)
