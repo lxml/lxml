@@ -48,15 +48,15 @@ def read_file_digest(file):
     return 'sha256:' + filehash.hexdigest()
 
 
-def download_and_extract_windows_binaries(destdir):
+def download_and_extract_windows_binaries(destdir, arch=None):
     # Check for native ARM64 build or the environment variable that is set by
     # Visual Studio for cross-compilation (same variable as setuptools uses)
     if platform.machine() == 'ARM64' or os.getenv('VSCMD_ARG_TGT_ARCH') == 'arm64':
         arch = "win-arm64"
-    elif sys.maxsize > 2**32:
-        arch = "win64"
-    else:
+    elif arch == 'win32' or (arch != 'win64' and sys.maxsize <= 2**32):
         arch = "win32"
+    else:
+        arch = "win64"
 
     def build_libzip_name(libname, version):
         return f"{libname}-{version}.{arch}.zip"
@@ -148,9 +148,9 @@ def unpack_zipfile(zipfn, destdir):
     return extracted_dir
 
 
-def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs):
+def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs, arch=None):
     assert sys_platform.startswith('win')
-    libs = download_and_extract_windows_binaries(download_dir)
+    libs = download_and_extract_windows_binaries(download_dir, arch=arch)
     for libname, path in libs.items():
         i = os.path.join(path, 'include')
         l = os.path.join(path, 'lib')
@@ -736,7 +736,9 @@ def main(with_zlib=True, download_only=False, platform=None):
 
     if platform.startswith('win'):
         return get_prebuilt_libxml2xslt(
-            download_dir, static_include_dirs, static_library_dirs)
+            download_dir, static_include_dirs, static_library_dirs,
+            arch='win32' if platform != sys.platform else None,
+        )
 
     get_env = os.environ.get
     zlib_version = get_env('ZLIB_VERSION')
