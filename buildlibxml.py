@@ -750,10 +750,10 @@ def main(with_zlib=True, download_only=False, platform=None):
     download_dir = "libs"
 
     arch = None
-    if platform in ('win32', 'win64', 'win_arm64'):
-        arch = platform
-    elif platform is None:
+    if platform is None:
         platform = sys_platform
+    elif platform in ('win32', 'win64', 'win_arm64'):
+        arch = platform
 
     if platform.startswith('win'):
         return get_prebuilt_libxml2xslt(
@@ -792,7 +792,8 @@ if __name__ == '__main__':
     download_only = '--download-only' in args
     if download_only:
         args.remove('--download-only')
-    if args:
+    platform = args[0] if args else None
+    if platform:
         # change global sys_platform setting
         sys_platform = args[0]
-    main(download_only=download_only)
+    main(download_only=download_only, platform=platform)
