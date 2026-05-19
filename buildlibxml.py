@@ -774,8 +774,8 @@ if __name__ == '__main__':
     download_only = '--download-only' in args
     if download_only:
         args.remove('--download-only')
-    platform = args[0] if args else None
-    if platform:
+    platform_arg = args[0] if args else None
+    if platform_arg:
         # change global sys_platform setting
-        sys_platform = args[0]
-    main(download_only=download_only, platform=platform)
+        sys_platform = platform_arg
+    main(download_only=download_only, platform=platform_arg)
