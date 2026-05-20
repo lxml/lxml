@@ -41,10 +41,10 @@ jobs:
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
       CCACHE_MAXSIZE: "100M"
-      ZLIB_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
-      LIBICONV_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBICONV_VERSION || needs.cache_libs.outputs.LIBICONV_VERSION }}
-      LIBXML2_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXML2_VERSION || needs.cache_libs.outputs.LIBXML2_VERSION }}
-      LIBXSLT_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXSLT_VERSION || needs.cache_libs.outputs.LIBXSLT_VERSION }}
+      ZLIB_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
+      LIBICONV_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBICONV_VERSION || needs.cache_libs.outputs.LIBICONV_VERSION }}
+      LIBXML2_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXML2_VERSION || needs.cache_libs.outputs.LIBXML2_VERSION }}
+      LIBXSLT_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXSLT_VERSION || needs.cache_libs.outputs.LIBXSLT_VERSION }}
 
     strategy:
       # Allows for matrix sub-jobs to fail without canceling the rest
