@@ -66,6 +66,7 @@ environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "x86"]
+environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.2", LIBICONV_VERSION = "1.17.1", LIBXML2_VERSION = "2.11.9", LIBXSLT_VERSION = "1.1.45"}
 
 [tool.cibuildwheel.macos]
 # https://cibuildwheel.readthedocs.io/en/stable/faq/#what-to-provide suggests to provide
