@@ -265,15 +265,31 @@ jobs:
     permissions:
       contents: write
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: ./release_upload
+          pattern: lxml-wheel-*
           merge-multiple: true
 
       - name: List downloaded artifacts
-        run: ls -la ./release_upload
+        run: |
+          cd ./release_upload
+          ls -la
+          echo; echo "Wheels built: "; ls *.whl | wc -l
+          echo; echo "Validating wheel success…"
+          RESULT_CODE=0
+          for PYVERSION in  39  310  311  312  313  314 ; do \
+            for WHEEL_ARCH in  "win32"  "win_amd64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
+              ls *-cp${PYVERSION}-*${WHEEL_ARCH}*.whl >/dev/null 2>&1  ||  { echo "MISSING WHEEL: cp${PYVERSION}-${WHEEL_ARCH}" ; RESULT_CODE=1; } ; \
+            done; \
+          done; \
+          exit ${RESULT_CODE}
 
       - name: Upload wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
