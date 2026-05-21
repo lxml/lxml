@@ -110,7 +110,7 @@ jobs:
               | jq -nRc '{"only": inputs, "os": "windows-2022"}' \
               && cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
               | jq -nRc '{"only": inputs, "os": "windows-11-arm"}'
-            } | jq -sc
+            } | jq -sc 'map(. + {"platform": (.only | sub("^[^-]+-";"")), "python_version": (.only | sub("-.+";""))})'
           )
           echo "include=$MATRIX"
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
@@ -121,6 +121,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
+      STATIC_DEPS: "true"
       ZLIB_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
       LIBICONV_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBICONV_VERSION || needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXML2_VERSION || needs.cache_libs.outputs.LIBXML2_VERSION }}
@@ -149,6 +150,21 @@ jobs:
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
         with:
           platforms: all
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        with:
+          max-size: 100M
+          create-symlink: true
+          key: ccache-${{ matrix.platform }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+
+      - name: Set up ccache host directory
+        if: runner.os == 'Linux'
+        run: |
+          HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"
+          DIST_INSTALL="${{ startsWith(matrix.platform, 'musllinux') && 'apk add' || endsWith(matrix.platform, 'armv7l') && 'apt-get update && apt-get install -y' || 'dnf -y install' }}"
+          echo "CIBW_BEFORE_BUILD_LINUX=${DIST_INSTALL} ccache && ccache -o cache_dir=/host${HOST_CCACHE_DIR} && ccache -p && for dir in /host/usr/lib/ccache /host/usr/local/opt/ccache/libexec; do ls -l \$dir || true; done" | tee -a "${GITHUB_ENV}"
 
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1

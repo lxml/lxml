@@ -31,6 +31,7 @@ repair-wheel-command = "auditwheel repair --strip -w {dest_dir} {wheel}"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_*"
 inherit.environment = "append"
+environment.PATH = "/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
 environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto"
 environment.AR = "gcc-ar"
 environment.NM = "gcc-nm"
