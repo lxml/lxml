@@ -30,12 +30,12 @@ cdef public api _Element elementFactory(_Document doc, xmlNode* c_node):
 
 cdef public api _Element makeElement(tag, _Document doc, parser,
                                      text, tail, attrib, nsmap):
-    return _makeElement(tag, NULL, doc, parser, text, tail, attrib, nsmap, None)
+    return _makeElement(tag, NULL, doc, parser, text, tail, attrib, nsmap)
 
 cdef public api _Element makeSubElement(_Element parent, tag, text, tail,
                                         attrib, nsmap):
     _assertValidNode(parent)
-    return _makeSubElement(parent, tag, text, tail, attrib, nsmap, None)
+    return _makeSubElement(parent, tag, text, tail, attrib, nsmap)
 
 cdef public api void setElementClassLookupFunction(
     _element_class_lookup_function function, state):

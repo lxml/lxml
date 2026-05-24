@@ -547,9 +547,9 @@ cdef class _ExsltRegExp:
         result_list = []
         root = Element('matches')
         for s_match in results:
-            if python.PyTuple_CheckExact(s_match):
+            if isinstance(s_match, tuple):
                 s_match = ''.join(s_match)
-            elem = SubElement(root, 'match')
+            elem = _makeSubElement(root, 'match')
             elem.text = s_match
             result_list.append(elem)
         return result_list
@@ -608,8 +608,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
                         value = _utf8(value)
                     if isinstance(value, bytes):
                         if fake_node is None:
-                            fake_node = _makeElement("text-root", NULL, doc, None,
-                                                     None, None, None, None, None)
+                            fake_node = _makeElement("text-root", NULL, doc)
                             context._hold(fake_node)
                         else:
                             # append a comment node to keep the text nodes separate

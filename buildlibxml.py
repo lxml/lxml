@@ -48,15 +48,15 @@ def read_file_digest(file):
     return 'sha256:' + filehash.hexdigest()
 
 
-def download_and_extract_windows_binaries(destdir):
+def download_and_extract_windows_binaries(destdir, arch=None):
     # Check for native ARM64 build or the environment variable that is set by
     # Visual Studio for cross-compilation (same variable as setuptools uses)
     if platform.machine() == 'ARM64' or os.getenv('VSCMD_ARG_TGT_ARCH') == 'arm64':
         arch = "win-arm64"
-    elif sys.maxsize > 2**32:
-        arch = "win64"
-    else:
+    elif arch == 'win32' or (arch != 'win64' and sys.maxsize <= 2**32):
         arch = "win32"
+    else:
+        arch = "win64"
 
     def build_libzip_name(libname, version):
         return f"{libname}-{version}.{arch}.zip"
@@ -166,9 +166,9 @@ def unpack_zipfile(zipfn, destdir):
     return extracted_dir
 
 
-def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs):
+def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs, arch=None):
     assert sys_platform.startswith('win')
-    libs = download_and_extract_windows_binaries(download_dir)
+    libs = download_and_extract_windows_binaries(download_dir, arch=arch)
     for libname, path in libs.items():
         i = os.path.join(path, 'include')
         l = os.path.join(path, 'lib')
@@ -599,7 +599,31 @@ def download_libs(
     libxml2_dir  = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
     libxslt_dir  = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
 
+    # Patch after unpacking to assure a clean target directory.
+    _patch_library(zlib_dir)
+    _patch_library(libiconv_dir)
+    _patch_library(libxml2_dir)
+    _patch_library(libxslt_dir)
+
     return zlib_dir, libiconv_dir, libxml2_dir, libxslt_dir
+
+
+LIBRARY_PATCHES = {
+    "libxslt-1.1.43": "libxslt-1.1.43-backport1.patch",
+}
+
+
+def _patch_library(libdir):
+    if not libdir:
+        return
+    dirname = os.path.basename(libdir)
+    if dirname not in LIBRARY_PATCHES:
+        return
+    patch_file = LIBRARY_PATCHES[dirname]
+
+    from patch_lxml_deplibs import apply_patch_file
+    print(f"Applying patch {patch_file} to {libdir}")
+    apply_patch_file(patch_file, libdir)
 
 
 def build_libs(
@@ -725,12 +749,15 @@ def main(with_zlib=True, download_only=False, platform=None):
     static_library_dirs = []
     download_dir = "libs"
 
+    arch = None
     if platform is None:
         platform = sys_platform
+    elif platform in ('win32', 'win64', 'win_arm64'):
+        arch = platform
 
     if platform.startswith('win'):
         return get_prebuilt_libxml2xslt(
-            download_dir, static_include_dirs, static_library_dirs)
+            download_dir, static_include_dirs, static_library_dirs, arch=arch)
 
     get_env = os.environ.get
     zlib_version = get_env('ZLIB_VERSION')
@@ -765,7 +792,8 @@ if __name__ == '__main__':
     download_only = '--download-only' in args
     if download_only:
         args.remove('--download-only')
-    if args:
+    platform_arg = args[0] if args else None
+    if platform_arg:
         # change global sys_platform setting
-        sys_platform = args[0]
-    main(download_only=download_only, platform=sys_platform)
+        sys_platform = platform_arg
+    main(download_only=download_only, platform=platform_arg)

@@ -53,7 +53,8 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - name: Check out the repo
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -91,16 +92,18 @@ jobs:
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out the repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
       - name: Install cibuildwheel
         # Nb. keep cibuildwheel version pin consistent with job below
-        run: pipx install cibuildwheel==3.3.0
+        run: pipx install cibuildwheel==3.4.1
+
       - id: set-matrix
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
-              | grep -v musllinux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
               | sed -e '/aarch64\|armv7l/s|ubuntu-latest|ubuntu-24.04-arm|' \
               && cibuildwheel --print-build-identifiers --platform macos \
@@ -109,7 +112,7 @@ jobs:
               | jq -nRc '{"only": inputs, "os": "windows-2022"}' \
               && cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
               | jq -nRc '{"only": inputs, "os": "windows-11-arm"}'
-            } | jq -sc
+            } | jq -sc 'map(. + {"platform": (.only | sub("^[^-]+-";"")), "python_version": (.only | sub("-.+";""))})'
           )
           echo "include=$MATRIX"
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
@@ -121,10 +124,11 @@ jobs:
 
     env:
       LXML_CSTD: "c11"
-      ZLIB_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
-      LIBICONV_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBICONV_VERSION || needs.cache_libs.outputs.LIBICONV_VERSION }}
-      LIBXML2_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXML2_VERSION || needs.cache_libs.outputs.LIBXML2_VERSION }}
-      LIBXSLT_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXSLT_VERSION || needs.cache_libs.outputs.LIBXSLT_VERSION }}
+      STATIC_DEPS: "true"
+      ZLIB_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
+      LIBICONV_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBICONV_VERSION || needs.cache_libs.outputs.LIBICONV_VERSION }}
+      LIBXML2_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXML2_VERSION || needs.cache_libs.outputs.LIBXML2_VERSION }}
+      LIBXSLT_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXSLT_VERSION || needs.cache_libs.outputs.LIBXSLT_VERSION }}
 
     strategy:
       fail-fast: false
@@ -133,25 +137,40 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Cache [libs]
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+          key: libs-${{ runner.os }}-${{ contains(matrix.only, 'win32') && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
         with:
           platforms: all
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        with:
+          max-size: 100M
+          create-symlink: true
+          key: ccache-${{ matrix.platform }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+
+      - name: Set up ccache host directory
+        if: runner.os == 'Linux'
+        run: |
+          HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"
+          DIST_INSTALL="${{ startsWith(matrix.platform, 'musllinux') && 'apk add' || endsWith(matrix.platform, 'armv7l') && 'apt-get update && apt-get install -y' || 'dnf -y install' }}"
+          echo "CIBW_BEFORE_BUILD_LINUX=${DIST_INSTALL} ccache && ccache -o cache_dir=/host${HOST_CCACHE_DIR} && ccache -p && for dir in /host/usr/lib/ccache /host/usr/local/opt/ccache/libexec; do ls -l \$dir || true; done" | tee -a "${GITHUB_ENV}"
+
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         with:
           only: ${{ matrix.only }}
 
@@ -159,7 +178,7 @@ jobs:
         if: >-
           contains(matrix.only, '-manylinux_') &&
           (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           CIBW_MANYLINUX_i686_IMAGE: manylinux2014
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
@@ -170,7 +189,7 @@ jobs:
       - name: Build faster Linux wheels
         # also build wheels with the most recent manylinux images and gcc
         if: runner.os == 'Linux' && (contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
@@ -218,10 +237,10 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Cache [libs]
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             libs/*.xz
@@ -231,12 +250,12 @@ jobs:
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
         with:
           platforms: all
 
       - name: Build ABI3 wheels
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           # Smaller set of platforms that we only provide Stable ABI wheels for
           CIBW_BUILD: |
@@ -264,15 +283,31 @@ jobs:
     permissions:
       contents: write
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: ./release_upload
+          pattern: lxml-wheel-*
           merge-multiple: true
 
       - name: List downloaded artifacts
-        run: ls -la ./release_upload
+        run: |
+          cd ./release_upload
+          ls -la
+          echo; echo "Wheels built: "; ls *.whl | wc -l
+          echo; echo "Validating wheel success…"
+          RESULT_CODE=0
+          for PYVERSION in  39  310  311  312  313  314 ; do \
+            for WHEEL_ARCH in  "win32"  "win_amd64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
+              ls *-cp${PYVERSION}-*${WHEEL_ARCH}*.whl >/dev/null 2>&1  ||  { echo "MISSING WHEEL: cp${PYVERSION}-${WHEEL_ARCH}" ; RESULT_CODE=1; } ; \
+            done; \
+          done; \
+          exit ${RESULT_CODE}
 
       - name: Upload wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -281,7 +316,7 @@ jobs:
           name: all_wheels
 
       - name: Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         if: github.ref_type == 'tag'
         with:
           files: |

@@ -1,4 +1,6 @@
-# Copied from CPython 3.14b2+.
+# Copied from CPython 3.14b2+ under PSF-License 2.0.
+# See https://docs.python.org/3/license.html
+
 # cython: infer_types=True
 
 """
@@ -655,8 +657,7 @@ class SequenceMatcher:
         # avail[x] is the number of times x appears in 'b' less the
         # number of times we've seen it in 'a' so far ... kinda
         avail = {}
-        matches: cython.Py_ssize_t
-        matches = 0
+        matches: cython.Py_ssize_t = 0
         for elt in self.a:
             if elt in avail:
                 numb = avail[elt]
@@ -664,7 +665,7 @@ class SequenceMatcher:
                 numb = fullbcount.get(elt, 0)
             avail[elt] = numb - 1
             if numb > 0:
-                matches = matches + 1
+                matches += 1
         return _calculate_ratio(matches, len(self.a) + len(self.b))
 
     def real_quick_ratio(self):
@@ -721,10 +722,12 @@ def get_close_matches(word, possibilities, n=3, cutoff=0.6):
     s.set_seq2(word)
     for x in possibilities:
         s.set_seq1(x)
-        if s.real_quick_ratio() >= cutoff and \
-           s.quick_ratio() >= cutoff and \
-           s.ratio() >= cutoff:
-            result.append((s.ratio(), x))
+        if s.real_quick_ratio() < cutoff or s.quick_ratio() < cutoff:
+            continue
+
+        ratio = s.ratio()
+        if ratio >= cutoff:
+            result.append((ratio, x))
 
     # Move the best scorers to head of list
     result = _nlargest(n, result)
@@ -959,10 +962,12 @@ class Differ:
                 cruncher.set_seq1(a[i])
                 # Ordering by cheapest to most expensive ratio is very
                 # valuable, most often getting out early.
-                if (crqr() > best_ratio
-                      and cqr() > best_ratio
-                      and cr() > best_ratio):
-                    best_i, best_j, best_ratio = i, j, cr()
+                if crqr() <= best_ratio or cqr() <= best_ratio:
+                    continue
+
+                ratio = cr()
+                if ratio > best_ratio:
+                    best_i, best_j, best_ratio = i, j, ratio
 
             if best_i is None:
                 # found nothing to synch on yet - move to next j

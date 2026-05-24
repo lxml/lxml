@@ -32,7 +32,7 @@ on:
         required: false
         type: string
       WIN_LIBXSLT_VERSION:
-        default: "1.1.39"
+        default: "1.1.45"
         required: false
         type: string
 
@@ -64,7 +64,8 @@ jobs:
           - "ubuntu-22.04"
           - "ubuntu-22.04-arm"
           - "macos-latest"
-          - "windows-2022"
+          - "windows-2022"    # win32
+          - "windows-latest"  # win_amd64
           - "windows-11-arm"
 
     runs-on: ${{ matrix.os }}
@@ -76,21 +77,21 @@ jobs:
       LIBXSLT_VERSION: ${{ contains(matrix.os, 'windows-') && inputs.WIN_LIBXSLT_VERSION || inputs.LIBXSLT_VERSION }}
 
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Cache [libs]
-      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: |
           libs/*.xz
           libs/*.gz
           libs/*.zip
-        key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+        key: libs-${{ runner.os }}-${{ matrix.os == 'windows-2022' && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
     - name: Download latest libraries
       env:
         GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python3 buildlibxml.py --download-only
+      run: python3 buildlibxml.py --download-only  ${{ matrix.os == 'windows-2022' && 'win32' || '' }}
 
     - name: Check Windows library versions
       if: ${{ contains(matrix.os, 'windows-') }}

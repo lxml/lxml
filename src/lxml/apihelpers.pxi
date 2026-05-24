@@ -80,9 +80,8 @@ cdef bint _isAncestorOrSame(xmlNode* c_ancestor, xmlNode* c_node) noexcept:
     return False
 
 
-cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
-                           _BaseParser parser, text, tail, attrib, nsmap,
-                           dict extra_attrs):
+cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc, _BaseParser parser=None,
+                           text=None, tail=None, attrib=None, nsmap=None, dict extra_attrs=None):
     """Create a new element and initialize text content, namespaces and
     attributes.
 
@@ -172,8 +171,8 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
     return 0
 
 
-cdef _Element _makeSubElement(_Element parent, tag, text, tail,
-                              attrib, nsmap, dict extra_attrs):
+cdef _Element _makeSubElement(_Element parent, tag, text=None, tail=None,
+                              attrib=None, nsmap=None, dict extra_attrs=None):
     """Create a new child element and initialize text content, namespaces and
     attributes.
     """

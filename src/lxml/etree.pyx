@@ -2071,7 +2071,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         doc = self._doc
         doc.lock_read()
         try:
-            return _makeElement(_tag, NULL, self._doc, None, None, None, attrib, nsmap, _extra)
+            return _makeElement(
+                _tag, NULL, self._doc,
+                parser=None, text=None, tail=None,
+                attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
         finally:
             doc.unlock_read()
 
@@ -3853,7 +3856,9 @@ class Element(ABC):
     create an Element within a specific document or parser context.
     """
     def __new__(cls, _tag, attrib=None, nsmap=None, **_extra):
-        return _makeElement(_tag, NULL, None, None, None, None, attrib, nsmap, _extra)
+        return _makeElement(
+            _tag, NULL, doc=None, parser=None, text=None, tail=None,
+            attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
 
 # Register _Element as a virtual subclass of Element
 Element.register(_Element)
@@ -3965,10 +3970,11 @@ def SubElement(_Element _parent not None, _tag,
     doc = _parent._doc
     doc.lock_write()
     try:
-        return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
+        return _makeSubElement(
+            _parent, _tag,
+            text=None, tail=None, attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
     finally:
         doc.unlock_write()
-
 
 
 from typing import Generic, TypeVar

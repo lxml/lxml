@@ -1238,8 +1238,9 @@ cdef class _BaseParser:
 
         Creates a new element associated with this parser.
         """
-        return _makeElement(_tag, NULL, None, self, None, None,
-                            attrib, nsmap, _extra)
+        return _makeElement(
+            _tag, NULL, doc=None, parser=self,
+            text=None, tail=None, attrib=attrib, nsmap=nsmap, extra_attrs=_extra)
 
     # internal parser methods
 
@@ -1865,7 +1866,7 @@ cdef class XMLParser(_FeedParser):
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding, resolve_external)
 
-    # Allow subscripting XMLParser in type annotions (PEP 560)
+    # Allow subscripting XMLParser in type annotations (PEP 560)
     def __class_getitem__(cls, item):
         return _GenericAlias(cls, item)
 
@@ -2056,7 +2057,7 @@ cdef class HTMLParser(_FeedParser):
                              remove_comments, remove_pis, strip_cdata,
                              collect_ids, target, encoding)
 
-    # Allow subscripting HTMLParser in type annotions (PEP 560)
+    # Allow subscripting HTMLParser in type annotations (PEP 560)
     def __class_getitem__(cls, item):
         return _GenericAlias(cls, item)
 

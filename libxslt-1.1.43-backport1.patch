@@ -1,0 +1,62 @@
+Patch created by git with "-U0" to discard context lines.
+
+diff --git a/libexslt/functions.c b/libexslt/functions.c
+index 8d35a7ae..a54ee70c 100644
+--- a/libexslt/functions.c
++++ b/libexslt/functions.c
+@@ -620,2 +620,7 @@ exsltFuncResultComp (xsltStylesheetPtr style, xmlNodePtr inst,
+-	if (IS_XSLT_ELEM(test) &&
+-	    IS_XSLT_NAME(test, "stylesheet")) {
++	if (/* Traversal has reached the top-level document without
++         * finding a func:function ancestor. */
++        (test != NULL && test->type == XML_DOCUMENT_NODE) ||
++        /* Traversal reached a stylesheet-namespace node,
++         * and has left the function namespace. */
++        (IS_XSLT_ELEM(test) &&
++         IS_XSLT_NAME(test, "stylesheet"))) {
+diff --git a/libxslt/functions.c b/libxslt/functions.c
+index 72a58dc4..11ec039f 100644
+--- a/libxslt/functions.c
++++ b/libxslt/functions.c
+@@ -36,0 +37 @@
++#include "transformInternals.h"
+@@ -128 +129,14 @@ xsltDocumentFunctionLoadDocument(xmlXPathParserContextPtr ctxt,
+-	    doc = tctxt->style->doc;
++	    doc = xmlCopyDoc(tctxt->style->doc, 1);
++	    if (doc == NULL) {
++		xsltTransformError(tctxt, NULL, NULL,
++		    "document() : failed to copy style doc\n");
++		goto out_fragment;
++	    }
++	    xsltCleanupSourceDoc(doc); /* Remove psvi fields. */
++	    idoc = xsltNewDocument(tctxt, doc);
++	    if (idoc == NULL) {
++		xsltTransformError(tctxt, NULL, NULL,
++		    "document() : failed to create xsltDocument\n");
++		xmlFreeDoc(doc);
++		goto out_fragment;
++	    }
+diff --git a/libxslt/transform.c b/libxslt/transform.c
+index 54ef821b..38c2dce6 100644
+--- a/libxslt/transform.c
++++ b/libxslt/transform.c
+@@ -45,0 +46 @@
++#include "transformInternals.h"
+@@ -5760 +5761 @@ xsltCountKeys(xsltTransformContextPtr ctxt)
+-static void
++void
+diff --git a/libxslt/transformInternals.h b/libxslt/transformInternals.h
+new file mode 100644
+index 00000000..d0f42823
+--- /dev/null
++++ b/libxslt/transformInternals.h
+@@ -0,0 +1,9 @@
++/*
++ * Summary: set of internal interfaces for the XSLT engine transformation part.
++ *
++ * Copy: See Copyright for the status of this software.
++ *
++ * Author: David Kilzer <ddkilzer@apple.com>
++ */
++
++void xsltCleanupSourceDoc(xmlDocPtr doc);
