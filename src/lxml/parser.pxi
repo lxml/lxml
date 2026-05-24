@@ -710,7 +710,7 @@ cdef class _ParserContext(_ResolverContext):
         if config.ENABLE_THREADING:
             current_tid = python.PyThread_get_thread_ident() + 1  # allow 0 == no thread
             if self._lock_owner_tid == current_tid:
-                raise RuntimeError("Parser is already used by this thread. Raising to preventing deadlock.")
+                raise RuntimeError("Parser is already used by this thread. Raising to prevent deadlock.")
             self._lock.acquire()
             self._lock_owner_tid = current_tid
         self._error_log.clear()
