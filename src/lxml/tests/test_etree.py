@@ -23,7 +23,7 @@ import textwrap
 import zlib
 import gzip
 
-from .common_imports import etree, HelperTestCase, needs_feature
+from .common_imports import etree, HelperTestCase, needs_feature, IS_PYPY
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url, tmpfile
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
@@ -749,6 +749,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = XMLParser(target=etree.TreeBuilder())
         self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
 
+    @unittest.skipIf(IS_PYPY, "currently crashes PyPy")
     def test_parser_reentry_from_target(self):
         fromstring = self.etree.fromstring
         XMLParser = self.etree.XMLParser
@@ -4950,6 +4951,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         result = tostring(a, encoding='unicode', pretty_print=True)
         self.assertEqual(result, "<a>\n  <b/>\n  <c/>\n</a>\n")
 
+    @unittest.skipIf(IS_PYPY, "currently crashes PyPy")
     def test_pypy_proxy_collect(self):
         root = etree.Element('parent')
         etree.SubElement(root, 'child')
