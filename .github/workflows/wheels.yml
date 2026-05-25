@@ -163,23 +163,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"
-          DIST_INSTALL="${{ startsWith(matrix.platform, 'musllinux') && 'apk add' || endsWith(matrix.platform, 'armv7l') && 'apt-get update && apt-get install -y' || 'dnf -y install' }}"
+          DIST_INSTALL="${{ startsWith(matrix.platform, 'musllinux') && 'apk add' || endsWith(matrix.platform, 'armv7l') && 'apt-get update && apt-get install -y' || 'dnf check-update && dnf -y install' }}"
           echo "CIBW_BEFORE_BUILD_LINUX=${DIST_INSTALL} ccache && ccache -o cache_dir=/host${HOST_CCACHE_DIR} && ccache -p && for dir in /host/usr/lib/ccache /host/usr/local/opt/ccache/libexec; do ls -l \$dir || true; done" | tee -a "${GITHUB_ENV}"
 
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
-        with:
-          only: ${{ matrix.only }}
-
-      - name: Build old Linux wheels
-        if: >-
-          contains(matrix.only, '-manylinux_') &&
-          (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
-        env:
-          CIBW_MANYLINUX_i686_IMAGE: manylinux2014
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
         with:
           only: ${{ matrix.only }}
 
@@ -198,6 +186,24 @@ jobs:
           CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_2
           CIBW_MUSLLINUX_PPC64LE_IMAGE: musllinux_1_2
           CIBW_MUSLLINUX_S390X_IMAGE: musllinux_1_2
+        with:
+          only: ${{ matrix.only }}
+
+      - name: Set up ccache host directory for old wheels
+        if: >-
+          contains(matrix.only, '-manylinux_') &&
+          (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
+        run: echo "CIBW_BEFORE_BUILD_LINUX=${CIBW_BEFORE_BUILD_LINUX//dnf /yum }" | tee -a "${GITHUB_ENV}"
+
+      - name: Build old Linux wheels
+        if: >-
+          contains(matrix.only, '-manylinux_') &&
+          (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+        env:
+          CIBW_MANYLINUX_i686_IMAGE: manylinux2014
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
         with:
           only: ${{ matrix.only }}
 
