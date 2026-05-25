@@ -39,8 +39,6 @@ cdef class RelaxNG(_Validator):
     filename through the ``file`` keyword argument.
     """
     cdef relaxng.xmlRelaxNG* _c_schema
-    def __cinit__(self):
-        self._c_schema = NULL
 
     def __init__(self, etree=None, *, file=None):
         cdef _Document doc
@@ -51,7 +49,12 @@ cdef class RelaxNG(_Validator):
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            doc.lock_fakedoc()
+            try:
+                fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            except:
+                doc.unlock_fakedoc()
+                raise
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
             if _isString(file):
@@ -63,10 +66,8 @@ cdef class RelaxNG(_Validator):
                 else:
                     doc = None
                     filename = _encodeFilename(file)
-                    with self._error_log:
-                        orig_loader = _register_document_loader()
+                    with self._error_log, lxml_document_loader:
                         parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
-                        _reset_document_loader(orig_loader)
             elif (_getFilenameForFile(file) or '')[-4:].lower() == '.rnc':
                 _require_rnc2rng()
                 rng_data_utf8 = _utf8(_rnc2rng.dumps(_rnc2rng.load(file)))
@@ -82,6 +83,7 @@ cdef class RelaxNG(_Validator):
         if parser_ctxt is NULL:
             if fake_c_doc is not NULL:
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
+                doc.unlock_fakedoc()
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
                     "Document is not parsable as Relax NG"),
@@ -91,19 +93,21 @@ cdef class RelaxNG(_Validator):
         relaxng.xmlRelaxNGSetParserStructuredErrors(
             parser_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
         _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGP)
+        old_resource_loader = _register_relaxng_resource_loader(parser_ctxt)
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
+        _reset_resource_loader(old_resource_loader)
         _connectGenericErrorLog(None)
 
         relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
+        if fake_c_doc is not NULL:
+            _destroyFakeDoc(doc._c_doc, fake_c_doc)
+            doc.unlock_fakedoc()
+
         if self._c_schema is NULL:
-            if fake_c_doc is not NULL:
-                _destroyFakeDoc(doc._c_doc, fake_c_doc)
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
                     "Document is not valid Relax NG"),
                 self._error_log)
-        if fake_c_doc is not NULL:
-            _destroyFakeDoc(doc._c_doc, fake_c_doc)
 
     def __dealloc__(self):
         relaxng.xmlRelaxNGFree(self._c_schema)
@@ -128,6 +132,7 @@ cdef class RelaxNG(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
+        doc.lock_fakedoc()
         try:
             self._error_log.clear()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
@@ -139,6 +144,7 @@ cdef class RelaxNG(_Validator):
                 ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
+            doc.unlock_fakedoc()
             _connectGenericErrorLog(None)
             relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
 
@@ -163,3 +169,11 @@ cdef class RelaxNG(_Validator):
         _require_rnc2rng()
         rng_str = utf8(_rnc2rng.dumps(_rnc2rng.loads(src)))
         return cls(_parseMemoryDocument(rng_str, parser=None, url=base_url))
+
+
+cdef xmlparser.xmlExternalEntityLoader _register_relaxng_resource_loader(relaxng.xmlRelaxNGParserCtxt *rng_ctxt) noexcept nogil:
+    if tree.LIBXML_VERSION < 21400:
+        return _register_resource_loader()
+    # libxml2 2.14 has per-context document loaders.
+    relaxng.xmlRelaxNGSetResourceLoader(rng_ctxt, <xmlparser.xmlResourceLoader> _local_resource_loader, NULL)
+    return NULL

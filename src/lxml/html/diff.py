@@ -7,6 +7,7 @@ except ImportError:
         compiled = False
         def cfunc(self, func): return func
         def cclass(self, func): return func
+        def final(self, func): return func
         def declare(self, _, value): return value
         def __getattr__(self, type_name): return "object"
 

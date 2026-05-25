@@ -1,5 +1,6 @@
 import collections
 import io
+import itertools
 import logging
 import os
 import pathlib
@@ -18,7 +19,11 @@ BENCHMARK_FILES = sorted(BENCHMARKS_DIR.glob("bench_*.py"))
 
 ALL_BENCHMARKS = [bm.stem for bm in BENCHMARK_FILES]
 
-LIMITED_API_VERSION = max((3, 12), sys.version_info[:2])
+LIMITED_API_VERSION = max((3, 11), sys.version_info[:2])
+
+PYTHON_VERSION = "%d.%d.%d" % sys.version_info[:3]
+if hasattr(sys, '_is_gil_enabled') and not sys._is_gil_enabled():
+    PYTHON_VERSION += 't'
 
 
 try:
@@ -37,17 +42,20 @@ parse_timings = re.compile(
 ).match
 
 
-def run(command, cwd=None, pythonpath=None, c_macros=None):
+def run(command, cwd=None, pythonpath=None, c_macros=None, extra_env=None, capture_output=True):
     env = None
     if pythonpath:
-        env = os.environ.copy()
+        env = env or os.environ.copy()
         env['PYTHONPATH'] = pythonpath
+    if extra_env:
+        env = env or os.environ.copy()
+        env.update(extra_env)
     if c_macros:
         env = env or os.environ.copy()
         env['CFLAGS'] = env.get('CFLAGS', '') + " " + ' '.join(f" -D{macro}" for macro in c_macros)
 
     try:
-        return subprocess.run(command, cwd=cwd, check=True, capture_output=True, env=env)
+        return subprocess.run(command, cwd=cwd, check=True, capture_output=capture_output, env=env)
     except subprocess.CalledProcessError as exc:
         logging.error(f"Command failed: {' '.join(map(str, command))}\nOutput:\n{exc.stderr.decode()}")
         raise
@@ -67,13 +75,15 @@ def copy_benchmarks(bm_dir: pathlib.Path, benchmarks=None):
     return bm_files
 
 
-def compile_lxml(lxml_dir: pathlib.Path, c_macros=None):
+def compile_lxml(lxml_dir: pathlib.Path, c_macros=None, env_vars=None):
     rev_hash = get_git_rev(rev_dir=lxml_dir)
     logging.info(f"Compiling lxml gitrev {rev_hash}")
     run(
         [sys.executable, "setup.py", "build_ext", "-i", "-j6"],
         cwd=lxml_dir,
         c_macros=c_macros,
+        extra_env=env_vars,
+        #capture_output=False,
     )
 
 
@@ -165,7 +175,7 @@ def run_benchmarks(bm_dir, benchmarks, pythonpath=None, profiler=None):
 
 
 def benchmark_revisions(benchmarks, revisions, profiler=None, limited_revisions=(), deps_zipfile=None):
-    python_version = "Python %d.%d.%d" % sys.version_info[:3]
+    python_version = f"Python {PYTHON_VERSION}"
     logging.info(f"### Comparing revisions in {python_version}: {' '.join(revisions)}.")
     logging.info(f"CFLAGS={os.environ.get('CFLAGS', DISTUTILS_CFLAGS)}")
 
@@ -180,28 +190,36 @@ def benchmark_revisions(benchmarks, revisions, profiler=None, limited_revisions=
 
         logging.info(f"### Preparing benchmark run for lxml '{revision}'.")
         timings[revision] = benchmark_revision(
-            revision, benchmarks, profiler, deps_zipfile=deps_zipfile)
+            revision, benchmarks, profiler,
+            deps_zipfile=deps_zipfile,
+        )
 
         if revision in limited_revisions:
             logging.info(
                 f"### Preparing benchmark run for lxml '{revision}' (Limited API {LIMITED_API_VERSION[0]}.{LIMITED_API_VERSION[1]}).")
             timings['L-' + revision] = benchmark_revision(
                 revision, benchmarks, profiler,
-                c_macros=["Py_LIMITED_API=0x%02x%02x0000" % LIMITED_API_VERSION],
                 deps_zipfile=deps_zipfile,
+                extra_env={
+                    'LXML_LIMITED_API': f'{LIMITED_API_VERSION[0]}.{LIMITED_API_VERSION[1]}',
+                }
             )
 
     return timings
 
 
-def cache_libs(lxml_dir, deps_zipfile):
-    for dir_path, _, filenames in (lxml_dir / "build" / "tmp").walk():
+def cache_libs(lxml_dir, deps_zipfile, file_suffixes=None):
+    zip_content = set(deps_zipfile.namelist())
+    for dir_path, _, filenames in itertools.chain((lxml_dir / "build" / "tmp").walk(), (lxml_dir / "libs").walk()):
         for filename in filenames:
             path = dir_path / filename
-            deps_zipfile.write(path, path.relative_to(lxml_dir))
+            if file_suffixes is None or path.suffix in file_suffixes:
+                rel_path = path.relative_to(lxml_dir)
+                if str(rel_path) not in zip_content:
+                    deps_zipfile.write(path, rel_path)
 
 
-def benchmark_revision(revision, benchmarks, profiler=None, c_macros=None, deps_zipfile=None):
+def benchmark_revision(revision, benchmarks, profiler=None, c_macros=None, extra_env=None, deps_zipfile=None):
     with tempfile.TemporaryDirectory() as base_dir_str:
         base_dir = pathlib.Path(base_dir_str)
         lxml_dir = base_dir / "lxml" / revision
@@ -212,20 +230,19 @@ def benchmark_revision(revision, benchmarks, profiler=None, c_macros=None, deps_
         bm_dir.mkdir(parents=True)
         bm_files = copy_benchmarks(bm_dir, benchmarks)
 
-        deps_zip_is_empty = deps_zipfile and not deps_zipfile.namelist()
-        if deps_zipfile and not deps_zip_is_empty:
+        if deps_zipfile:
             deps_zipfile.extractall(lxml_dir)
 
-        compile_lxml(lxml_dir, c_macros=c_macros)
+        compile_lxml(lxml_dir, c_macros=c_macros, env_vars=extra_env)
 
-        if deps_zipfile and deps_zip_is_empty:
+        if deps_zipfile:
             cache_libs(lxml_dir, deps_zipfile)
 
         logging.info(f"### Running benchmarks for {revision}: {' '.join(bm.stem for bm in bm_files)}")
         return run_benchmarks(bm_dir, benchmarks, pythonpath=f"{bm_dir}:{lxml_dir / 'src'}", profiler=profiler)
 
 
-def report_revision_timings(rev_timings):
+def report_revision_timings(rev_timings, csv_out=None):
     units = {"nsec": 1e-9, "usec": 1e-6, "msec": 1e-3, "sec": 1.0}
     scales = [(scale, unit) for unit, scale in reversed(units.items())]  # biggest first
 
@@ -236,7 +253,7 @@ def report_revision_timings(rev_timings):
                 break
         else:
             raise RuntimeError(f"Timing is below nanoseconds: {t:f}")
-        return f"{t / scale :+.3f} {unit}"
+        return f"{t / scale :.3f} {unit}"
 
     timings_by_benchmark = collections.defaultdict(list)
     setup_times = []
@@ -247,8 +264,6 @@ def report_revision_timings(rev_timings):
                 timings_by_benchmark[(benchmark_module, benchmark_name, params)].append((lib, revision_name, best_time, result_text))
 
     setup_times.sort()
-    for timings in timings_by_benchmark.values():
-        timings.sort()
 
     for benchmark_module, revision_name, output in setup_times:
         result = '\n'.join(output)
@@ -267,6 +282,15 @@ def report_revision_timings(rev_timings):
             logging.info(
                 f"    {lib:3} / {revision_name[:25]:25} = {bm_time:8.4f} {result_text}{diff_str}"
             )
+            if csv_out is not None:
+                is_limited = revision_name.startswith('L-')
+                csv_out.writerow([
+                    benchmark_module, benchmark_name, params,
+                    revision_name[2:] if is_limited else revision_name,
+                    PYTHON_VERSION,
+                    'L' if is_limited else '',
+                    format_time(bm_time / 1000), diff_str,
+                ])
 
     for (lib, revision_name), diffs in differences.items():
         diffs.sort(reverse=True)
@@ -318,6 +342,11 @@ def parse_args(args):
         help="Run Valgrind's callgrind profiler on the benchmark process.",
     )
     parser.add_argument(
+        "--report",
+        dest="report_csv", default=None, metavar="FILE",
+        help="Write a CSV report of the timings to FILE."
+    )
+    parser.add_argument(
         "revisions",
         nargs="*", default=[],
         help="The git revisions to check out and benchmark.",
@@ -343,6 +372,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     deps_zipfile = zipfile.ZipFile(io.BytesIO(), mode='w')
+    cache_libs(BENCHMARKS_DIR.parent, deps_zipfile, file_suffixes=('.xz', '.gz', '.zip'))
 
     revisions = list({rev: rev for rev in (options.revisions + options.with_limited_api)})  # deduplicate in order
     timings = benchmark_revisions(
@@ -351,4 +381,10 @@ if __name__ == '__main__':
         limited_revisions=options.with_limited_api,
         deps_zipfile=deps_zipfile,
     )
-    report_revision_timings(timings)
+
+    if options.report_csv:
+        with open(options.report_csv, "w") as f:
+            import csv
+            report_revision_timings(timings, csv_out=csv.writer(f))
+    else:
+        report_revision_timings(timings)

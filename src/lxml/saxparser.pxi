@@ -73,7 +73,6 @@ cdef class _SaxParserTarget:
 
 #@cython.final
 @cython.internal
-@cython.no_gc_clear  # Required because parent class uses it - Cython bug.
 cdef class _SaxParserContext(_ParserContext):
     """This class maps SAX2 events to parser target events.
     """

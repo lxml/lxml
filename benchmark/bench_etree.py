@@ -146,21 +146,21 @@ class BenchMark(benchbase.TreeBenchMark):
 
     def bench_rotate_children(self, root):
         # == "1 2 3" # runs on any single tree independently
-        for i in range(100):
+        for i in range(50):
             el = root[0]
             del root[0]
             root.append(el)
 
     @widetree
     def bench_reorder(self, root):
-        for i in range(1,len(root)//2):
+        for i in range(1,len(root)//2, 3):
             el = root[0]
             del root[0]
             root[-i:-i] = [ el ]
 
     @widetree
     def bench_reorder_slice(self, root):
-        for i in range(1,len(root)//2):
+        for i in range(1,len(root)//2, 3):
             els = root[0:1]
             del root[0]
             root[-i:-i] = els
@@ -223,12 +223,12 @@ class BenchMark(benchbase.TreeBenchMark):
 
     @widetree
     def bench_remove_children(self, root):
-        for child in root:
+        for child in islice(root, 0, 2**30, 7):
             root.remove(child)
 
     @widetree
     def bench_remove_children_reversed(self, root):
-        for child in reversed(root):
+        for child in islice(reversed(root), 0, 2**30, 7):
             root.remove(child)
 
     @widetree
@@ -291,7 +291,7 @@ class BenchMark(benchbase.TreeBenchMark):
     @with_attributes(True, False)
     @with_text(utext=True, text=True, no_text=True)
     def bench_deepcopy(self, children):
-        for child in children:
+        for child in islice(children, 0, 2**30, 7):
             copy.deepcopy(child)
 
     @nochange
@@ -329,7 +329,7 @@ class BenchMark(benchbase.TreeBenchMark):
     @children
     def bench_text_repeat(self, children):
         for child in children:
-            for i in self.repeat500:
+            for i in self.repeat100:
                 child.text
 
     @widetree
@@ -369,31 +369,31 @@ class BenchMark(benchbase.TreeBenchMark):
 
     @nochange
     def bench_iter_all(self, root):
-        list(root.iter())
+        all(el is not None for el in root.iter())
 
     @nochange
     def bench_iter_one_at_a_time(self, root):
-        list(islice(root.iter(), 2**30, None))
+        all(el is not None for el in islice(root.iter(), 2**30, None, 3))
 
     @nochange
     def bench_iter_islice(self, root):
-        list(islice(root.iter(), 10, 110))
+        all(el is not None for el in islice(root.iter(), 10, 110))
 
     @nochange
     def bench_iter_tag(self, root):
-        list(islice(root.iter(self.SEARCH_TAG), 3, 10))
+        all(el is not None for el in islice(root.iter(self.SEARCH_TAG), 3, 10))
 
     @nochange
     def bench_iter_tag_all(self, root):
-        list(root.iter(self.SEARCH_TAG))
+        all(el is not None for el in root.iter(self.SEARCH_TAG))
 
     @nochange
     def bench_iter_tag_one_at_a_time(self, root):
-        list(islice(root.iter(self.SEARCH_TAG), 2**30, None))
+        all(el is not None for el in islice(root.iter(self.SEARCH_TAG), 2**30, None, 3))
 
     @nochange
     def bench_iter_tag_none(self, root):
-        list(root.iter("{ThisShould}NeverExist"))
+        all(el is not None for el in root.iter("{ThisShould}NeverExist"))
 
     @nochange
     def bench_iter_tag_text(self, root):
@@ -424,15 +424,15 @@ class BenchMark(benchbase.TreeBenchMark):
 
     @nochange
     def bench_iterfind(self, root):
-        list(root.iterfind(".//*"))
+        all(el is not None for el in root.iterfind(".//*"))
 
     @nochange
     def bench_iterfind_tag(self, root):
-        list(root.iterfind(".//" + self.SEARCH_TAG))
+        all(el is not None for el in root.iterfind(".//" + self.SEARCH_TAG))
 
     @nochange
     def bench_iterfind_islice(self, root):
-        list(islice(root.iterfind(".//*"), 10, 110))
+        all(el is not None for el in islice(root.iterfind(".//*"), 10, 110))
 
     _bench_xpath_single_xpath = None
 

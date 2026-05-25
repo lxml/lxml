@@ -12,6 +12,11 @@ cdef extern from "libxslt/xsltconfig.h":
     cdef int LIBXSLT_VERSION
 
 cdef extern from "libxslt/xsltInternals.h" nogil:
+    """
+    #if LIBXSLT_VERSION < 10134
+        #define xsltParseStylesheetUser(style, doc)  (-1)
+    #endif
+    """
     ctypedef enum xsltTransformState:
         XSLT_STATE_OK       # 0
         XSLT_STATE_ERROR    # 1
@@ -42,7 +47,9 @@ cdef extern from "libxslt/xsltInternals.h" nogil:
 
     ctypedef struct xsltTemplate
 
+    cdef xsltStylesheet* xsltNewStylesheet()
     cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc)
+    cdef int xsltParseStylesheetUser(xsltStylesheet* style, xmlDoc* doc)
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet)
 
 cdef extern from "libxslt/imports.h" nogil:
@@ -64,7 +71,7 @@ cdef extern from "libxslt/extensions.h" nogil:
     cdef int xsltUnregisterExtModuleFunction(const_xmlChar* name, const_xmlChar* URI)
     cdef xmlXPathFunction xsltExtModuleFunctionLookup(
         const_xmlChar* name, const_xmlChar* URI)
-    cdef int xsltRegisterExtPrefix(xsltStylesheet* style, 
+    cdef int xsltRegisterExtPrefix(xsltStylesheet* style,
                                    const_xmlChar* prefix, const_xmlChar* URI)
     cdef int xsltRegisterExtElement(xsltTransformContext* ctxt,
                                     const_xmlChar* name, const_xmlChar* URI,
@@ -121,8 +128,8 @@ cdef extern from "libxslt/xsltutils.h" nogil:
     cdef void xsltSetTransformErrorFunc(
         xsltTransformContext*, void* ctxt,
         void (*handler)(void* ctxt, char* msg, ...) nogil)
-    cdef void xsltTransformError(xsltTransformContext* ctxt, 
-                                 xsltStylesheet* style, 
+    cdef void xsltTransformError(xsltTransformContext* ctxt,
+                                 xsltStylesheet* style,
                                  xmlNode* node, char* msg, ...)
     cdef void xsltSetCtxtParseOptions(
         xsltTransformContext* ctxt, int options)

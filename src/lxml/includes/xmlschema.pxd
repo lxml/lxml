@@ -1,8 +1,13 @@
 from lxml.includes.tree cimport xmlDoc
-from lxml.includes.xmlparser cimport xmlSAXHandler
+from lxml.includes.xmlparser cimport xmlSAXHandler, xmlResourceLoader
 from lxml.includes.xmlerror cimport xmlStructuredErrorFunc
 
 cdef extern from "libxml/xmlschemas.h" nogil:
+    """
+    #if LIBXML_VERSION < 21400
+        #define xmlSchemaSetResourceLoader(ctxt, loader, data)  ((void) ((void) ctxt, (void) loader, (void) data))
+    #endif
+    """
     ctypedef struct xmlSchema
     ctypedef struct xmlSchemaParserCtxt
 
@@ -12,9 +17,12 @@ cdef extern from "libxml/xmlschemas.h" nogil:
     ctypedef enum xmlSchemaValidOption:
         XML_SCHEMA_VAL_VC_I_CREATE = 1
 
-    cdef xmlSchemaValidCtxt* xmlSchemaNewValidCtxt(xmlSchema* schema) nogil
+    cdef void xmlSchemaSetResourceLoader(xmlSchemaParserCtxt* ctxt,
+        xmlResourceLoader loader, void *ctx)
     cdef void xmlSchemaSetParserStructuredErrors(xmlSchemaParserCtxt* ctxt,
         xmlStructuredErrorFunc serror, void *ctx)
+
+    cdef xmlSchemaValidCtxt* xmlSchemaNewValidCtxt(xmlSchema* schema) nogil
     cdef void xmlSchemaSetValidStructuredErrors(xmlSchemaValidCtxt* ctxt,
         xmlStructuredErrorFunc serror, void *ctx)
 

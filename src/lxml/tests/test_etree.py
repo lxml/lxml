@@ -23,7 +23,7 @@ import textwrap
 import zlib
 import gzip
 
-from .common_imports import etree, HelperTestCase, needs_feature
+from .common_imports import etree, HelperTestCase, needs_feature, IS_PYPY
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url, tmpfile
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from .common_imports import canonicalize, _str, _bytes
@@ -44,6 +44,7 @@ TESTED VERSION: {etree.__version__}
     Default encoding: {sys.getdefaultencoding()}
     Max Unicode:      {sys.maxunicode}
     PyUCS4 encoding:  {getattr(etree, '_pyucs4_encoding_name', '')}
+    freethreading:    {getattr(etree, '_freethreading_enabled', '')}
 """)
 
 
@@ -747,6 +748,21 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml = b'<a><b></b>'
         parser = XMLParser(target=etree.TreeBuilder())
         self.assertRaises(self.etree.XMLSyntaxError, fromstring, xml, parser)
+
+    @unittest.skipIf(IS_PYPY, "currently crashes PyPy")
+    def test_parser_reentry_from_target(self):
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        class Target:
+            def start(self, tag, attrib):
+                etree.fromstring(b"<root />", parser=parser)
+            def close(self):
+                pass
+
+        xml = b'<a><b></b>'
+        parser = XMLParser(target=Target())
+        self.assertRaises(RuntimeError, fromstring, xml, parser)
 
     def test_iterparse_getiterator(self):
         iterparse = self.etree.iterparse
@@ -4935,6 +4951,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         result = tostring(a, encoding='unicode', pretty_print=True)
         self.assertEqual(result, "<a>\n  <b/>\n  <c/>\n</a>\n")
 
+    @unittest.skipIf(IS_PYPY, "currently crashes PyPy")
     def test_pypy_proxy_collect(self):
         root = etree.Element('parent')
         etree.SubElement(root, 'child')
@@ -5923,6 +5940,10 @@ def test_suite():
     suite.addTests(
         [make_doctest('resolvers.txt')])
     return suite
+
+
+# Hide test base classes from test discovery.
+del _XIncludeTestCase
 
 
 if __name__ == '__main__':

@@ -30,6 +30,8 @@ def make_version_tuple(version_string):
 IS_PYPY = (getattr(sys, 'implementation', None) == 'pypy' or
            getattr(sys, 'pypy_version_info', None) is not None)
 
+IS_FT_PYTHON = not getattr(sys, '_is_gil_enabled', lambda : True)()
+
 from xml.etree import ElementTree
 
 if hasattr(ElementTree, 'VERSION'):
