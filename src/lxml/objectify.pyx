@@ -461,7 +461,6 @@ cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node) noexcept:
 cdef tree.xmlNode* _findFollowingSibling(tree.xmlNode* c_node,
                                          const_xmlChar* href, const_xmlChar* name,
                                          Py_ssize_t index) noexcept:
-    cdef tree.xmlNode* (*next)(tree.xmlNode*)
     if index >= 0:
         next = cetree.nextElement
     else:
