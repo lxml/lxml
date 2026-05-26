@@ -454,22 +454,33 @@ cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) noexcept wi
 @cython.internal
 cdef class _UnicodeStringReader:
     cdef str _data
-    cdef Py_ssize_t _pos
+    cdef size_t _pos
+    cdef size_t _remaining
 
     def __cinit__(self, unicode_string: str):
         self._data = unicode_string
+        self._remaining = <size_t> len(unicode_string)
 
-    def read(self, int count):
-        cdef Py_ssize_t pos = self._pos
-        if pos >= len(self._data):
-            self._data = ''  # a good time to clean up
+    def read(self, Py_ssize_t count):
+        if self._remaining == 0:
             return b''
-        if count < 0:
-            # This class is only used when reading from C, so this is not going to happen.
-            # But if it did happen, we'd miscount the position, so do something sensible instead.
-            count = len(self._data) - pos
-        self._pos = pos + count
-        return self._data[pos: pos+count].encode('utf8')
+
+        if <size_t> count > self._remaining:
+            # On negative or large counts, clip to the end of the string.
+            # Python's files do that for negative counts, too.
+            count = self._remaining
+            self._remaining = 0
+        else:
+            self._remaining -= <size_t> count
+
+        cdef size_t pos = self._pos
+        self._pos = pos + <size_t> count
+
+        data = self._data[pos: pos+count].encode('utf8')
+
+        if self._remaining == 0:
+            self._data = ''  # a good time to clean up
+        return data
 
 
 ############################################################
