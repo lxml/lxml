@@ -2,13 +2,16 @@
 lxml changelog
 ==============
 
-7.0.0 (2025-??-??)
-==================
+7.0.0a1 (2026-05-??)
+====================
 
 Features added
 --------------
 
-* The shared parser name dict is now local to a parser (as opposed to global),
+* GH#477,LP#2111289: Experimental support for freethreading Python is enabled
+  in Python 3.14t and later.
+
+* GH#466: The shared parser name dict is now local to a parser (as opposed to global),
   which allows to control its lifetime and cross-document usage more easily.
   It is now also unbounded in size if the ``huge_tree=True`` option is provided.
 
@@ -16,6 +19,13 @@ Features added
   from 32 KiB to 64 KiB and is now configurable with a new ``chunk_size`` argument.
 
 * Writing to Python file objects minimises data copying by passing buffers around.
+
+* GH#502: Predicate evaluation in ``ElementPath`` (``.find*()``) is faster.
+
+* HTML diffing is faster, following optimisations in CPython 3.15.
+
+* If multiple Python exceptions get raised from within an lxml operation, they no longer
+  overwrite old ones but get stacked in the exception context of the latest exception.
 
 Bugs fixed
 ----------
@@ -28,15 +38,16 @@ Other changes
 * Support for Python 3.8 was removed.  Python 3.9 will continue to be supported for
   several years due to its usage in LTS Linux distributions.
 
+* Usage on PyPy can currently crash due to the Freethreading Python changes.
+  This is expected to get fixed in the further releases towards 7.0 final.
+
 * Some internal adaptations were made for libxml2 2.14.x and 2.15.x.
 
 * The ``xmlDict...`` C functions of libxml2 are now declared in ``tree.pxd``.
   They remain in ``xmlparser.pxd`` for legacy reasons but Cython code that uses them
   should migrate the import to ``tree.pxd``.
 
-* Built using Cython 3.2.4.
-
-* Binary wheels use zlib 1.3.2.
+* Built using Cython 3.2.5.
 
 
 6.1.1 (2026-05-18)
