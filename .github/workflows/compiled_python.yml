@@ -133,7 +133,7 @@ jobs:
           ${GITHUB_WORKSPACE}/cpython_install/bin/python3 -m venv ${GITHUB_WORKSPACE}/venv_pydebug
 
       - name: Cache [libs]
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             libs/*.xz
@@ -156,7 +156,7 @@ jobs:
 
       - name: Archive logs
         if: ${{ inputs.sanitize && always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{inputs.sanitize}}-logs
           path: san_log.*
