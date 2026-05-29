@@ -165,9 +165,9 @@ jobs:
             }
             extra_hash: "-latestlibs"
           - os: ubuntu-latest
-            python-version: pypy-3.11-v7.3.21  # TODO remove pin when https://github.com/pypy/pypy/issues/5472 is fixed in a release
+            python-version: pypy-3.11
             #python-version: pypy-3.11
-            #allowed_failure: true
+            allowed_failure: true
             env: {
               STATIC_DEPS: true,
               LIBXML2_VERSION: "",
