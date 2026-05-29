@@ -160,8 +160,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 6.1.1`_, released 2026-05-18
-(`changes for 6.1.1`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 7.0.0a1`_, released 2026-05-29
+(`changes for 7.0.0a1`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -229,6 +229,7 @@ Old Versions
 ------------
 
 See the websites of lxml
+`6.1 <https://lxml.de/6.1/>`_,
 `6.0 <https://lxml.de/6.0/>`_,
 `5.4 <https://lxml.de/5.4/>`_,
 `5.3 <https://lxml.de/5.3/>`_,
@@ -263,7 +264,7 @@ See the websites of lxml
 ..
    and the `latest in-development version <https://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-6.1.1.pdf
+.. _`PDF documentation`: lxmldoc-7.0.0a1.pdf
 
 * `lxml 6.1.1`_, released 2026-05-18 (`changes for 6.1.1`_)
 
@@ -279,16 +280,9 @@ See the websites of lxml
 
 * `lxml 6.0.0`_, released 2025-06-26 (`changes for 6.0.0`_)
 
-* `lxml 5.4.0`_, released 2025-04-22 (`changes for 5.4.0`_)
+* `older releases <https://lxml.de/6.0/#old-versions>`_
 
-* `lxml 5.3.2`_, released 2025-04-05 (`changes for 5.3.2`_)
-
-* `lxml 5.3.1`_, released 2025-02-05 (`changes for 5.3.1`_)
-
-* `lxml 5.3.0`_, released 2024-08-10 (`changes for 5.3.0`_)
-
-* `older releases <https://lxml.de/5.3/#old-versions>`_
-
+.. _`lxml 7.0.0a1`: /files/lxml-7.0.0a1.tgz
 .. _`lxml 6.1.1`: /files/lxml-6.1.1.tgz
 .. _`lxml 6.1.0`: /files/lxml-6.1.0.tgz
 .. _`lxml 6.0.4`: /files/lxml-6.0.4.tgz
@@ -296,11 +290,8 @@ See the websites of lxml
 .. _`lxml 6.0.2`: /files/lxml-6.0.2.tgz
 .. _`lxml 6.0.1`: /files/lxml-6.0.1.tgz
 .. _`lxml 6.0.0`: /files/lxml-6.0.0.tgz
-.. _`lxml 5.4.0`: /files/lxml-5.4.0.tgz
-.. _`lxml 5.3.2`: /files/lxml-5.3.2.tgz
-.. _`lxml 5.3.1`: /files/lxml-5.3.1.tgz
-.. _`lxml 5.3.0`: /files/lxml-5.3.0.tgz
 
+.. _`changes for 7.0.0a1`: /changes-7.0.0a1.html
 .. _`changes for 6.1.1`: /changes-6.1.1.html
 .. _`changes for 6.1.0`: /changes-6.1.0.html
 .. _`changes for 6.0.4`: /changes-6.0.4.html
@@ -308,7 +299,3 @@ See the websites of lxml
 .. _`changes for 6.0.2`: /changes-6.0.2.html
 .. _`changes for 6.0.1`: /changes-6.0.1.html
 .. _`changes for 6.0.0`: /changes-6.0.0.html
-.. _`changes for 5.4.0`: /changes-5.4.0.html
-.. _`changes for 5.3.2`: /changes-5.3.2.html
-.. _`changes for 5.3.1`: /changes-5.3.1.html
-.. _`changes for 5.3.0`: /changes-5.3.0.html
