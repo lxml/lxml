@@ -76,6 +76,7 @@ jobs:
       with:
         name: sdist
         path: dist/*.tar.gz
+        compression-level: 0
 
     - name: Upload website
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -216,6 +217,7 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
           name: lxml-wheel-${{ matrix.only }}
+          compression-level: 0
 
   build_abi3_wheels:
     name: (disabled) Build abi3 wheels on ${{ matrix.os }}
@@ -280,6 +282,7 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
           name: lxml-wheel-abi3-${{ matrix.os }}
+          compression-level: 0
 
   upload_release_assets:
     name: Upload Release Assets
@@ -295,12 +298,18 @@ jobs:
         shell: bash
 
     steps:
-      - name: Download artifacts
+      - name: Download wheels
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: ./release_upload
           pattern: lxml-wheel-*
           merge-multiple: true
+
+      - name: Download sdist
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ./release_upload
+          name: sdist
 
       - name: List downloaded artifacts
         run: |
