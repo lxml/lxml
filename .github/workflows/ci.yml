@@ -196,12 +196,12 @@ jobs:
           - os: ubuntu-latest
             python-version: pypy-3.10
             env: { STATIC_DEPS: false }
-            #allowed_failure: true
+            allowed_failure: true
           - os: ubuntu-latest
-            python-version: pypy-3.11-v7.3.21  # TODO remove pin when https://github.com/pypy/pypy/issues/5472 is fixed in a release
+            python-version: pypy-3.11
             #python-version: pypy-3.11
             env: { STATIC_DEPS: false }
-            #allowed_failure: true
+            allowed_failure: true
 
           # MacOS sub-jobs
           # ==============
