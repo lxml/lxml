@@ -47,6 +47,9 @@ Other changes
   They remain in ``xmlparser.pxd`` for legacy reasons but Cython code that uses them
   should migrate the import to ``tree.pxd``.
 
+* The list of software licenses in LICENSES.txt was clarified and updated
+  to match the actual set of software being shipped.
+
 * Built using Cython 3.2.5.
 
 
