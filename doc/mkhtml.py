@@ -280,8 +280,9 @@ def publish(dirname, lxml_path, release, with_donations=True):
                 build_menu(tree, basename, section_head)
 
     # also convert CHANGES.txt
-    convert_changelog(lxml_path, os.path.join(dirname, 'changes-%s.html' % release),
-                      script, stylesheet_url)
+    changelog_path = os.path.join(dirname, f'changes-{release}.html')
+    convert_changelog(lxml_path, changelog_path, script, stylesheet_url)
+    trees[f'changelog'] = (parse(changelog_path), 'changelog', changelog_path)
 
     # generate sitemap from menu
     sitemap = XML(textwrap.dedent('''\
