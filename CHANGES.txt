@@ -8,7 +8,7 @@ lxml changelog
 Features added
 --------------
 
-* GH#477,LP#2111289: Experimental support for freethreading Python is enabled
+* GH#477, LP#2111289: Experimental support for freethreading Python is enabled
   in Python 3.14t and later.
 
 * GH#466: The shared parser name dict is now local to a parser (as opposed to global),
