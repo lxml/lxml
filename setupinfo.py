@@ -370,6 +370,8 @@ def define_macros():
         macros.append(('LIBEXSLT_STATIC', None))
     # Disable showing C lines in tracebacks, unless explicitly requested.
     macros.append(('CYTHON_CLINE_IN_TRACEBACK', '1' if OPTION_WITH_CLINES else '0'))
+    # Use compact type specs to reduce the declaration size of our many extension types.
+    macros.append(('CYTHON_USE_TYPE_SPECS', '1'))
     # PyPy crashes when accessing objects in tp_finalize().
     if IS_PYPY:
         macros.append(('CYTHON_USE_TP_FINALIZE', '0'))
