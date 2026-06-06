@@ -58,6 +58,7 @@
 import cython
 import re
 
+'''## Original ElementTree spelling for easier comparison with CPython:
 xpath_tokenizer_re = re.compile(
     "("
     "'[^']*'|\"[^\"]*\"|"
@@ -69,6 +70,29 @@ xpath_tokenizer_re = re.compile(
     r"((?:\{[^}]+\})?[^/\[\]\(\)@=\s]+)|"
     r"\s+"
     )
+'''
+
+xpath_tokenizer_re = re.compile(
+    "("
+    # quoted strings (single or double)
+    r"'[^']*'|"
+    r'"[^"]*"|'
+    # operators: ::, /, //, .., ()
+    r"::|"
+    r"//?|"
+    r"\.\.|"
+    r"\(\)|"
+    # single-char punctuation
+    r"[.*:\[\]\(\)@=]"
+    ")|"
+    # names, with optional {namespace}name
+    "("
+    r"\{[^}]+\}[^{/\[\]\(\)@=\s]+|"
+    r"[^{/\[\]\(\)@=\s]+"
+    ")|"
+    # ignored whitespace
+    r"\s+"
+)
 
 def xpath_tokenizer(pattern, namespaces=None, with_prefixes=True):
     # ElementTree uses '', lxml used None originally.
