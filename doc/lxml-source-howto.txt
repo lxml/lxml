@@ -286,9 +286,6 @@ doctestcompare.py
 ElementInclude.py
     XInclude-like document inclusion, compatible with ElementTree.
 
-_elementpath.py
-    XPath-like path language, compatible with ElementTree.
-
 sax.py
     SAX2 compatible interfaces to copy lxml trees from/to SAX compatible
     tools.

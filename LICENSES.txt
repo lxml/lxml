@@ -2,7 +2,7 @@ lxml is copyright Infrae and distributed under the BSD license (see
 doc/licenses/BSD.txt), with the following exceptions:
 
 Some code, such a selftest.py, selftest2.py and
-src/lxml/_elementpath.py are derived from ElementTree and
+src/lxml/elementpath.pxi are derived from ElementTree and
 cElementTree. See doc/licenses/elementtree.txt for the license text.
 Newer versions reuse code from CPython's 'xml.etree' implementation,
 licensed under the PSF-License v2.
