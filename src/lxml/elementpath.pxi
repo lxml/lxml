@@ -89,7 +89,7 @@ cdef object _tokenize_xpath = re.compile(
     # names, with optional {namespace}name
     "("
     r"\{[^}]*\}[^{/\[\]\(\)@!=\s]+|"
-    r"[^{/\[\]\(\)@!=\s]+"
+    r"[^/\[\]\(\)@!=\s]+"
     ")|"
     # ignored whitespace
     r"\s+"
