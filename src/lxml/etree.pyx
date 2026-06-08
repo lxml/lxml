@@ -73,9 +73,6 @@ from io import BytesIO, StringIO, BufferedWriter
 cdef object OrderedDict
 from collections import OrderedDict
 
-cdef object _elementpath
-from lxml import _elementpath
-
 cdef object sys
 import sys
 
@@ -2089,7 +2086,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.find(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_find(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findtext(self, path, default=None, namespaces=None):
         """findtext(self, path, default=None, namespaces=None)
@@ -2102,7 +2099,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findtext(self, path, default, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_findtext(self, path, default, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def findall(self, path, namespaces=None):
         """findall(self, path, namespaces=None)
@@ -2115,7 +2112,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findall(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_findall(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def iterfind(self, path, namespaces=None):
         """iterfind(self, path, namespaces=None)
@@ -2128,7 +2125,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.iterfind(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
+        return _elementpath_iterfind(self, path, namespaces, with_prefixes=not _isHtmlDocument(self))
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
               smart_strings=True, **_variables):
@@ -3448,325 +3445,6 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
         self._storeNext(current_node)
         return current_node
 
-@cython.final
-@cython.internal
-cdef class _MultiTagMatcher:
-    """
-    Match an xmlNode against a list of tags.
-    """
-    cdef list _py_tags
-    cdef qname* _cached_tags
-    cdef size_t _tag_count
-    cdef size_t _cached_size
-    cdef _Document _cached_doc
-    cdef int _node_types
-
-    def __cinit__(self, tags):
-        self._py_tags = []
-        self.initTagMatch(tags)
-
-    def __dealloc__(self):
-        self._clear()
-
-    cdef bint rejectsAll(self) noexcept:
-        return not self._tag_count and not self._node_types
-
-    cdef bint rejectsAllAttributes(self) noexcept:
-        return not self._tag_count
-
-    cdef bint matchesType(self, int node_type) noexcept:
-        if node_type == tree.XML_ELEMENT_NODE and self._tag_count:
-            return True
-        return self._node_types & (1 << node_type)
-
-    cdef void _clear(self) noexcept:
-        cdef size_t i, count
-        count = self._tag_count
-        self._tag_count = 0
-        if self._cached_tags:
-            for i in range(count):
-                cpython.ref.Py_XDECREF(self._cached_tags[i].href)
-            python.lxml_free(self._cached_tags)
-            self._cached_tags = NULL
-
-    cdef initTagMatch(self, tags):
-        self._cached_doc = None
-        del self._py_tags[:]
-        self._clear()
-        if tags is None or tags == ():
-            # no selection in tags argument => match anything
-            self._node_types = (
-                1 << tree.XML_COMMENT_NODE |
-                1 << tree.XML_PI_NODE |
-                1 << tree.XML_ENTITY_REF_NODE |
-                1 << tree.XML_ELEMENT_NODE)
-        else:
-            self._node_types = 0
-            self._storeTags(tags, set())
-
-    cdef _storeTags(self, tag, set seen):
-        if tag is Comment:
-            self._node_types |= 1 << tree.XML_COMMENT_NODE
-        elif tag is ProcessingInstruction:
-            self._node_types |= 1 << tree.XML_PI_NODE
-        elif tag is Entity:
-            self._node_types |= 1 << tree.XML_ENTITY_REF_NODE
-        elif tag is Element:
-            self._node_types |= 1 << tree.XML_ELEMENT_NODE
-        elif python._isString(tag):
-            if tag in seen:
-                return
-            seen.add(tag)
-            if tag in ('*', '{*}*'):
-                self._node_types |= 1 << tree.XML_ELEMENT_NODE
-            else:
-                href, name = _getNsTag(tag)
-                if name == b'*':
-                    name = None
-                if href is None:
-                    href = b''  # no namespace
-                elif href == b'*':
-                    href = None  # wildcard: any namespace, including none
-                self._py_tags.append((href, name))
-        elif isinstance(tag, QName):
-            self._storeTags(tag.text, seen)
-        else:
-            # support a sequence of tags
-            for item in tag:
-                self._storeTags(item, seen)
-
-    cdef inline int cacheTags(self, _Document doc, bint force_into_dict=False) except -1:
-        """
-        Look up the tag names in the doc dict to enable string pointer comparisons.
-        """
-        cdef size_t dict_size = tree.xmlDictSize(doc._c_doc.dict)
-        if doc is self._cached_doc and dict_size == self._cached_size:
-            # doc and dict didn't change => names already cached
-            return 0
-
-        self._cacheTags(doc, force_into_dict)
-        self._cached_doc = doc
-        self._cached_size = dict_size
-        return 0
-
-    cdef int _cacheTags(self, _Document doc, bint force_into_dict=False) except -1:
-        self._tag_count = 0
-        if not self._py_tags:
-            return 0
-        if not self._cached_tags:
-            self._cached_tags = <qname*>python.lxml_malloc(len(self._py_tags), sizeof(qname))
-            if not self._cached_tags:
-                self._cached_doc = None
-                raise MemoryError()
-        self._tag_count = <size_t>_mapTagsToQnameMatchArray(
-            doc._c_doc, self._py_tags, self._cached_tags, force_into_dict)
-        return 0
-
-    cdef inline bint matches(self, xmlNode* c_node) noexcept:
-        cdef qname* c_qname
-        if self._node_types & (1 << c_node.type):
-            return True
-        elif c_node.type == tree.XML_ELEMENT_NODE:
-            for c_qname in self._cached_tags[:self._tag_count]:
-                if _tagMatchesExactly(c_node, c_qname):
-                    return True
-        return False
-
-    cdef inline bint matchesNsTag(self, const_xmlChar* c_href,
-                                  const_xmlChar* c_name) noexcept:
-        cdef qname* c_qname
-        if self._node_types & (1 << tree.XML_ELEMENT_NODE):
-            return True
-        for c_qname in self._cached_tags[:self._tag_count]:
-            if _nsTagMatchesExactly(c_href, c_name, c_qname):
-                return True
-        return False
-
-    cdef inline bint matchesAttribute(self, xmlAttr* c_attr) noexcept:
-        """Attribute matches differ from Element matches in that they do
-        not care about node types.
-        """
-        cdef qname* c_qname
-        for c_qname in self._cached_tags[:self._tag_count]:
-            if _tagMatchesExactly(<xmlNode*>c_attr, c_qname):
-                return True
-        return False
-
-cdef class _ElementMatchIterator:
-    cdef _Element _node
-    cdef _node_to_node_function _next_element
-    cdef _MultiTagMatcher _matcher
-
-    @cython.final
-    cdef _initTagMatcher(self, tags):
-        self._matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tags)
-
-    def __iter__(self):
-        return self
-
-    @cython.final
-    cdef int _storeNext(self, _Element node) except -1:
-        doc = node._doc
-        doc.lock_read()
-        try:
-            self._matcher.cacheTags(doc)
-            c_node = self._next_element(node._c_node)
-            while c_node is not NULL and not self._matcher.matches(c_node):
-                c_node = self._next_element(c_node)
-            # store Python ref to next node to make sure it's kept alive
-            self._node = _elementFactory(doc, c_node) if c_node is not NULL else None
-        finally:
-            doc.unlock_read()
-        return 0
-
-    def __next__(self):
-        cdef _Element current_node = self._node
-        if current_node is None:
-            raise StopIteration
-        self._storeNext(current_node)
-        return current_node
-
-cdef class ElementChildIterator(_ElementMatchIterator):
-    """ElementChildIterator(self, node, tag=None, reversed=False)
-    Iterates over the children of an element.
-    """
-    def __cinit__(self, _Element node not None, tag=None, *, bint reversed=False):
-        cdef xmlNode* c_node
-        _assertValidNode(node)
-        self._initTagMatcher(tag)
-
-        doc = node._doc
-        doc.lock_read()
-        try:
-            if reversed:
-                c_node = _findChildBackwards(node._c_node, 0)
-                self._next_element = _previousElement
-            else:
-                c_node = _findChildForwards(node._c_node, 0)
-                self._next_element = _nextElement
-            self._matcher.cacheTags(node._doc)
-            while c_node is not NULL and not self._matcher.matches(c_node):
-                c_node = self._next_element(c_node)
-            # store Python ref to next node to make sure it's kept alive
-            self._node = _elementFactory(node._doc, c_node) if c_node is not NULL else None
-        finally:
-            doc.unlock_read()
-
-cdef class SiblingsIterator(_ElementMatchIterator):
-    """SiblingsIterator(self, node, tag=None, preceding=False)
-    Iterates over the siblings of an element.
-
-    You can pass the boolean keyword ``preceding`` to specify the direction.
-    """
-    def __cinit__(self, _Element node not None, tag=None, *, bint preceding=False):
-        _assertValidNode(node)
-        self._initTagMatcher(tag)
-        if preceding:
-            self._next_element = _previousElement
-        else:
-            self._next_element = _nextElement
-        self._storeNext(node)
-
-cdef class AncestorsIterator(_ElementMatchIterator):
-    """AncestorsIterator(self, node, tag=None)
-    Iterates over the ancestors of an element (from parent to parent).
-    """
-    def __cinit__(self, _Element node not None, tag=None):
-        _assertValidNode(node)
-        self._initTagMatcher(tag)
-        self._next_element = _parentElement
-        self._storeNext(node)
-
-cdef class ElementDepthFirstIterator:
-    """ElementDepthFirstIterator(self, node, tag=None, inclusive=True)
-    Iterates over an element and its sub-elements in document order (depth
-    first pre-order).
-
-    Note that this also includes comments, entities and processing
-    instructions.  To filter them out, check if the ``tag`` property
-    of the returned element is a string (i.e. not None and not a
-    factory function), or pass the ``Element`` factory for the ``tag``
-    argument to receive only Elements.
-
-    If the optional ``tag`` argument is not None, the iterator returns only
-    the elements that match the respective name and namespace.
-
-    The optional boolean argument 'inclusive' defaults to True and can be set
-    to False to exclude the start element itself.
-
-    Note that the behaviour of this iterator is completely undefined if the
-    tree it traverses is modified during iteration.
-    """
-    # we keep Python references here to control GC
-    # keep the next Element after the one we return, and the (s)top node
-    cdef _Element _next_node
-    cdef _Element _top_node
-    cdef _MultiTagMatcher _matcher
-
-    def __cinit__(self, _Element node not None, tag=None, *, bint inclusive=True):
-        _assertValidNode(node)
-        self._top_node  = node
-        self._next_node = node
-        self._matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag)
-        doc = node._doc
-        doc.lock_read()
-        try:
-            self._matcher.cacheTags(node._doc)
-            if inclusive and not self._matcher.matches(node._c_node):
-                inclusive = False
-        finally:
-            doc.unlock_read()
-
-        if not inclusive:
-            # find start node (this cannot raise StopIteration, self._next_node != None)
-            next(self)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        cdef xmlNode* c_node
-        cdef _Element current_node = self._next_node
-        if current_node is None:
-            raise StopIteration
-        doc = current_node._doc
-        doc.lock_read()
-        try:
-            c_node = current_node._c_node
-            self._matcher.cacheTags(current_node._doc)
-            if not self._matcher._tag_count:
-                # no tag name was found in the dict => not in document either
-                # try to match by node type
-                c_node = self._nextNodeAnyTag(c_node)
-            else:
-                c_node = self._nextNodeMatchTag(c_node)
-            if c_node is NULL:
-                self._next_node = None
-            else:
-                self._next_node = _elementFactory(current_node._doc, c_node)
-        finally:
-            doc.unlock_read()
-        return current_node
-
-    @cython.final
-    cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node) noexcept:
-        cdef int node_types = self._matcher._node_types
-        if not node_types:
-            return NULL
-        tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
-        if node_types & (1 << c_node.type):
-            return c_node
-        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-        return NULL
-
-    @cython.final
-    cdef xmlNode* _nextNodeMatchTag(self, xmlNode* c_node) noexcept:
-        tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
-        if self._matcher.matches(c_node):
-            return c_node
-        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-        return NULL
-
 
 cdef class ElementTextIterator:
     """ElementTextIterator(self, element, tag=None, with_tail=True)
@@ -4426,6 +4104,7 @@ include "serializer.pxi"   # XML output functions
 include "iterparse.pxi"    # incremental XML parsing
 include "xmlid.pxi"        # XMLID and IDDict
 include "xinclude.pxi"     # XInclude
+include "elementpath.pxi"  # ElementPath: ElementTree-compatible path expressions
 include "cleanup.pxi"      # Cleanup and recursive element removal functions
 
 
