@@ -408,6 +408,10 @@ class BenchMark(benchbase.TreeBenchMark):
         root.findall(".//*/" + self.SEARCH_TAG)
 
     @nochange
+    def bench_findall_child_predicate(self, root):
+        root.findall(f".//*[{self.SEARCH_TAG}]")
+
+    @nochange
     def bench_findall_tag(self, root):
         root.findall(".//" + self.SEARCH_TAG)
 
@@ -429,6 +433,14 @@ class BenchMark(benchbase.TreeBenchMark):
     @nochange
     def bench_iterfind_tag(self, root):
         all(el is not None for el in root.iterfind(".//" + self.SEARCH_TAG))
+
+    @nochange
+    def bench_iterfind_child_predicate(self, root):
+        all(el is not None for el in root.iterfind(f".//*[{self.SEARCH_TAG}]"))
+
+    @nochange
+    def bench_iterfind_child_text_predicate(self, root):
+        all(el is not None for el in root.iterfind(f".//*[{self.SEARCH_TAG} = '']"))
 
     @nochange
     def bench_iterfind_islice(self, root):
