@@ -542,16 +542,18 @@ cdef class _ChildPathEvaluator(_PathEvaluator):
     cdef _MultiTagMatcher _matcher
 
     def __cinit__(self, tag):
-        self._matcher = _newMultiTagMatcher(tag)
+        if type(tag) is _MultiTagMatcher:
+            # Special .copy() bypass.
+            self._matcher = <_MultiTagMatcher> tag
+        else:
+            self._matcher = _newMultiTagMatcher(tag)
 
     def __repr__(self):
         return f"child::({self._matcher})"
 
     cdef _ChildPathEvaluator copy(self):
-        evaluator: _ChildPathEvaluator = <_ChildPathEvaluator> _ChildPathEvaluator.__new__(
-            _ChildPathEvaluator, None)
-        evaluator._matcher = self._matcher.copy()
-        return evaluator
+        return <_ChildPathEvaluator> _ChildPathEvaluator.__new__(
+            _ChildPathEvaluator, self._matcher.copy())
 
     cdef int prepare_match(self, _Document doc):
         self._matcher.cacheTags(doc)
@@ -623,16 +625,18 @@ cdef class _DescendantPathEvaluator(_PathEvaluator):
     cdef xmlNode* _top_node
 
     def __cinit__(self, tag):
-        self._matcher = _newMultiTagMatcher(tag)
+        if type(tag) is _MultiTagMatcher:
+            # Special .copy() bypass.
+            self._matcher = <_MultiTagMatcher> tag
+        else:
+            self._matcher = _newMultiTagMatcher(tag)
 
     def __repr__(self):
         return f"descendant::({self._matcher})"
 
     cdef _DescendantPathEvaluator copy(self):
-        evaluator: _DescendantPathEvaluator = <_DescendantPathEvaluator> _DescendantPathEvaluator.__new__(
-            _DescendantPathEvaluator, None)
-        evaluator._matcher = self._matcher.copy()
-        return evaluator
+        return <_DescendantPathEvaluator> _DescendantPathEvaluator.__new__(
+            _DescendantPathEvaluator, self._matcher.copy())
 
     cdef int prepare_match(self, _Document doc):
         self._matcher.cacheTags(doc)
@@ -795,16 +799,18 @@ cdef class _ChildPredicatePathEvaluator(_PredicatePathEvaluator):
     cdef _MultiTagMatcher _matcher
 
     def __cinit__(self, tag):
-        self._matcher = _newMultiTagMatcher(tag)
+        if type(tag) is _MultiTagMatcher:
+            # Special .copy() bypass.
+            self._matcher = <_MultiTagMatcher> tag
+        else:
+            self._matcher = _newMultiTagMatcher(tag)
 
     def __repr__(self):
         return f"[child::({self._matcher})]"
 
     cdef _ChildPredicatePathEvaluator copy(self):
-        evaluator: _ChildPredicatePathEvaluator = <_ChildPredicatePathEvaluator> _ChildPredicatePathEvaluator.__new__(
-            _ChildPredicatePathEvaluator, None)
-        evaluator._matcher = self._matcher.copy()
-        return evaluator
+        return <_ChildPredicatePathEvaluator> _ChildPredicatePathEvaluator.__new__(
+            _ChildPredicatePathEvaluator, self._matcher.copy())
 
     cdef int prepare_match(self, _Document doc):
         self._matcher.cacheTags(doc)
@@ -849,9 +855,9 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
     cdef bint negated
 
     def __cinit__(self, text, child_tag, bint negated=False):
-        if isinstance(child_tag, _MultiTagMatcher):
+        if type(child_tag) is _MultiTagMatcher:
             # Special .copy() bypass.
-            self._matcher = child_tag
+            self._matcher = <_MultiTagMatcher> child_tag
         else:
             self._matcher = _newMultiTagMatcher(child_tag)
         self.text = _utf8orNone(text)
