@@ -1055,7 +1055,7 @@ cdef _build_path_iterator(path, namespaces, with_prefixes=True):
     while 1:
         try:
             op: str = token[0]
-            if op == '':
+            if not op:
                 selector = _ChildPathEvaluator(token[1])
             else:
                 first_char = op[0]
@@ -1064,8 +1064,15 @@ cdef _build_path_iterator(path, namespaces, with_prefixes=True):
                 elif first_char == '*':
                     selector = _StarPathEvaluator()
                 elif first_char == '.':
-                    selector = _ParentPathEvaluator() if op == '..' else None  # _SelfPathEvaluator()
-                elif op == '//':
+                    if op == '..':
+                        selector = _ParentPathEvaluator()
+                    elif not selectors:
+                        # An initial "." doesn't hurt and is required if it's the only evaluator.
+                        selector = _SelfPathEvaluator()
+                    else:
+                        # Later "." operators can be discarded as redundant.
+                        selector = None
+                elif first_char == '/' and op == '//':
                     selector = _prepare_path_descendant(token=_next())
                 else:
                     raise SyntaxError("invalid path")
