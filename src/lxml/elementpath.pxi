@@ -66,8 +66,9 @@ xpath_tokenizer_re = (
     "//?|"
     r"\.\.|"
     r"\(\)|"
+    r"!=|"
     r"[/.*:\[\]\(\)@=])|"
-    r"((?:\{[^}]+\})?[^/\[\]\(\)@=\s]+)|"
+    r"((?:\{[^}]+\})?[^/\[\]\(\)@!=\s]+)|"
     r"\s+"
     )
 
@@ -81,13 +82,14 @@ cdef object _tokenize_xpath = re.compile(
     r"//?|"
     r"\.\.|"
     r"\(\)|"
+    r"!=|"
     # single-char punctuation
     r"[.*:\[\]\(\)@=]"
     ")|"
     # names, with optional {namespace}name
     "("
-    r"\{[^}]*\}[^{/\[\]\(\)@=\s]+|"
-    r"[^{/\[\]\(\)@=\s]+"
+    r"\{[^}]*\}[^{/\[\]\(\)@!=\s]+|"
+    r"[^{/\[\]\(\)@!=\s]+"
     ")|"
     # ignored whitespace
     r"\s+"
@@ -745,13 +747,15 @@ cdef class _AttributePredicatePathEvaluator(_PredicatePathEvaluator):
     cdef const_xmlChar* c_href
     cdef const_xmlChar* c_name
     cdef const_xmlChar* c_value
+    cdef bint negated
 
-    def __cinit__(self, name, value):
+    def __cinit__(self, name, value, bint negated=False):
         self.href, self.name = _getNsTag(name)
         self.c_name = self.name
         self.c_href = <const_xmlChar*> self.href if self.href is not None else NULL
         self.value = _utf8orNone(value)
         self.c_value = <const_xmlChar*> self.value if self.value is not None else NULL
+        self.negated = negated
 
     def __repr__(self):
         name = self.name.decode('utf8')
@@ -777,6 +781,8 @@ cdef class _AttributePredicatePathEvaluator(_PredicatePathEvaluator):
                 # FIXME: Might also have been a memory allocation failure.
                 return NULL
             has_attr = tree.xmlStrcmp(c_attr_value, self.c_value) == 0
+            if self.negated:
+                has_attr = not has_attr
             tree.xmlFree(c_attr_value)
 
         return c_node if has_attr else NULL
@@ -816,16 +822,21 @@ cdef class _TextPredicatePathEvaluator(_PredicatePathEvaluator):
     """Evaluator for text predicate path expressions."""
     cdef bytes text
     cdef const_xmlChar* c_text
+    cdef bint negated
 
-    def __cinit__(self, text):
+    def __cinit__(self, text, bint negated=False):
         self.text = _utf8orNone(text)
         self.c_text = <const_xmlChar*> self.text if self.text else NULL
+        self.negated = negated
 
     def __repr__(self):
         return f"[. = {self.text.decode('utf8') if self.text else ''!r}]"
 
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        return c_node if _node_has_text(c_node, self.text, self.c_text) else NULL
+        has_text = _node_has_text(c_node, self.text, self.c_text)
+        if self.negated:
+            has_text = not has_text
+        return c_node if has_text else NULL
 
 
 @cython.final
@@ -835,8 +846,9 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
     cdef _MultiTagMatcher _matcher
     cdef bytes text
     cdef const_xmlChar* c_text
+    cdef bint negated
 
-    def __cinit__(self, text, child_tag):
+    def __cinit__(self, text, child_tag, bint negated=False):
         if isinstance(child_tag, _MultiTagMatcher):
             # Special .copy() bypass.
             self._matcher = child_tag
@@ -844,13 +856,15 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
             self._matcher = _newMultiTagMatcher(child_tag)
         self.text = _utf8orNone(text)
         self.c_text = <const_xmlChar*> self.text if self.text else NULL
+        self.negated = negated
 
     def __repr__(self):
         return f"[child::({self._matcher}) = {self.text.decode('utf8') if self.text else ''!r}]"
 
     cdef _ChildTextPredicatePathEvaluator copy(self):
         evaluator: _ChildTextPredicatePathEvaluator = <_ChildTextPredicatePathEvaluator> (
-            _ChildTextPredicatePathEvaluator.__new__(_ChildTextPredicatePathEvaluator, None, self._matcher.copy()))
+            _ChildTextPredicatePathEvaluator.__new__(
+                _ChildTextPredicatePathEvaluator, None, self._matcher.copy(), self.negated))
         evaluator.text = self.text
         evaluator.c_text = self.c_text
         return evaluator
@@ -865,7 +879,10 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
             if c_child is NULL:
                 return NULL
             if self._matcher.matches(c_child):
-                if _node_has_text(c_child, self.text, self.c_text):
+                has_text = _node_has_text(c_child, self.text, self.c_text)
+                if self.negated:
+                    has_text = not has_text
+                if has_text:
                     return c_node
             c_child = c_child.next
 
@@ -934,20 +951,24 @@ cdef _prepare_path_predicate(next):
         # [@attribute] predicate
         key = predicate[1]
         return _AttributePredicatePathEvaluator(key, None)
-    if signature == "@-='":
-        # [@attribute='value']
+    if signature == "@-='" or signature == "@-!='":
+        # [@attribute='value'] or [@attribute!='value']
         key = predicate[1]
         value = predicate[-1]
-        return _AttributePredicatePathEvaluator(key, value)
+        negated = '!=' in signature
+        return _AttributePredicatePathEvaluator(key, value, negated)
     if signature == "-" and not re.match(r"-?\d+$", predicate[0]):
         # [tag]
         tag = predicate[0]
         return _ChildPredicatePathEvaluator(tag)
-    if signature == ".='" or (signature == "-='" and not re.match(r"-?\d+$", predicate[0])):
-        # [.='value'] or [tag='value']
+    if signature == ".='" or signature == ".!='" or (
+            (signature == "-='" or signature == "-!='")
+            and not re.match(r"\-?\d+$", predicate[0])):
+        # [.='value'] or [tag='value'] or [.!='value'] or [tag!='value']
         tag = predicate[0]
         value = predicate[-1]
-        return _ChildTextPredicatePathEvaluator(value, tag) if tag else _TextPredicatePathEvaluator(value)
+        negated = '!=' in signature
+        return _ChildTextPredicatePathEvaluator(value, tag, negated) if tag else _TextPredicatePathEvaluator(value, negated)
     if signature == "-" or signature == "-()" or signature == "-()-":
         # [index] or [last()] or [last()-index]
         if signature == "-":
