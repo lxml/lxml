@@ -1050,7 +1050,7 @@ cdef _build_path_iterator(path, namespaces, with_prefixes=True):
     try:
         token = _next()
     except StopIteration:
-        raise SyntaxError("empty path expression")
+        raise SyntaxError("empty path expression") from None
     selectors = []
     while 1:
         try:
@@ -1073,7 +1073,7 @@ cdef _build_path_iterator(path, namespaces, with_prefixes=True):
             if selector is not None:
                 selectors.append(selector)
         except StopIteration:
-            raise SyntaxError("invalid path")
+            raise SyntaxError("invalid path") from None
         try:
             token = _next()
             if token[0] == "/":
