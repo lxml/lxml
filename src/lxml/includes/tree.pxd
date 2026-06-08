@@ -356,6 +356,7 @@ cdef extern from "libxml/tree.h" nogil:
                                const_xmlChar* name, const_xmlChar* value)
     cdef xmlChar* xmlGetNoNsProp(xmlNode* node, const_xmlChar* name)
     cdef xmlChar* xmlGetNsProp(xmlNode* node, const_xmlChar* name, const_xmlChar* nameSpace)
+    cdef xmlChar* xmlGetProp(xmlNode* node, const_xmlChar* name)
     cdef void xmlSetNs(xmlNode* node, xmlNs* ns)
     cdef xmlAttr* xmlSetProp(xmlNode* node, const_xmlChar* name, const_xmlChar* value)
     cdef xmlAttr* xmlSetNsProp(xmlNode* node, xmlNs* ns,
