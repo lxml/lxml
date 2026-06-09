@@ -59,6 +59,7 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
         c_node._private = NULL
     proxy._c_node = NULL
     proxy._doc = None
+    proxy._tag = None
     return 0
 
 
