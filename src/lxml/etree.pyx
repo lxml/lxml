@@ -2175,17 +2175,10 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
 
     element_class = _look_up_element_class(doc, c_node)
 
-    if hasProxy(c_node):
-        # prevent re-entry race condition - we just called into Python
-        doc.lock_proxies()
-        try:
-            result = getProxy(c_node)
-            if result is not None:
-                return result
-        finally:
-            doc.unlock_proxies()
-
-    result = element_class.__new__(element_class)
+    if element_class is _Element:
+        result = _Element.__new__(_Element)  # fast direct call
+    else:
+        result = element_class.__new__(element_class)
 
     doc.lock_proxies()
     try:
