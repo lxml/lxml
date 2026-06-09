@@ -243,6 +243,7 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
         self.fallback = lookup
         self._fallback_function = lookup._lookup_function
         if self._fallback_function is NULL:
+            self.fallback = None
             self._fallback_function = _lookupDefaultElementClass
 
     def set_fallback(self, ElementClassLookup lookup not None):
