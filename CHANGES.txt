@@ -2,6 +2,23 @@
 lxml changelog
 ==============
 
+7.0.0a2 (2026-06-09)
+====================
+
+Features added
+--------------
+
+* GH#511: The ElementPath implementation (``.find()`` etc) was rewritten based on
+  native traversal of the libxml2 tree instead of passing through Element proxy
+  objects.  This makes some path operations like child steps or predicate evaluation
+  several times faster.  Indexing can be more than 100x faster.
+
+  Note that some operations are also slower due to the new lock usages in lxml 7.0.
+  Usually, the more selective the path, the faster it runs.
+
+  Original idea and implementation by mahomaho.
+
+
 7.0.0a1 (2026-05-29)
 ====================
 
