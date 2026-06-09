@@ -87,8 +87,8 @@ xpath_tokenizer_re = re.compile(
     ")|"
     # names, with optional {namespace}name
     "("
-    r"\{[^}]+\}[^{/\[\]\(\)@=\s]+|"
-    r"[^{/\[\]\(\)@=\s]+"
+    r"\{[^}]*\}[^{/\[\]\(\)@=\s]+|"
+    r"[^/\[\]\(\)@=\s]+"
     ")|"
     # ignored whitespace
     r"\s+"
