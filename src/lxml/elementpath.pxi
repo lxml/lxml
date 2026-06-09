@@ -1202,11 +1202,7 @@ cdef _elementpath_iterfind(elem: _Element, path, namespaces=None, with_prefixes=
 # Find first matching object.
 
 cdef _elementpath_find(elem, path, namespaces=None, with_prefixes=True):
-    it = _elementpath_iterfind(elem, path, namespaces, with_prefixes=with_prefixes)
-    try:
-        return next(it)
-    except StopIteration:
-        return None
+    return next(_elementpath_iterfind(elem, path, namespaces, with_prefixes=with_prefixes), None)
 
 
 ##
