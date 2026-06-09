@@ -72,7 +72,7 @@ class ProxyTestCase(HelperTestCase):
         self.assertEqual('ElementBase', root[0].tag)
 
     def test_element_base_children(self):
-        el = self.etree.ElementBase(etree.ElementBase())
+        el = self.etree.ElementBase(self.etree.ElementBase())
         self.assertEqual('ElementBase', el.tag)
         self.assertEqual(1, len(el))
         self.assertEqual('ElementBase', el[0].tag)
