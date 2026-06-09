@@ -444,7 +444,7 @@ class ElementFindTest(unittest.TestCase):
         self.assertEqual(e.find('./tag[last()-1]').attrib['class'], 'c')
         self.assertEqual(e.find('./tag[last()-2]').attrib['class'], 'b')
 
-        """  # Error message differs in lxml.
+        """  # Error messages differ in lxml.
         self.assertRaisesRegex(SyntaxError, 'XPath', e.find, './tag[0]')
         self.assertRaisesRegex(SyntaxError, 'XPath', e.find, './tag[-1]')
         self.assertRaisesRegex(SyntaxError, 'XPath', e.find, './tag[last()-0]')
@@ -452,8 +452,8 @@ class ElementFindTest(unittest.TestCase):
         """
         self.assertRaises(SyntaxError, e.find, './tag[0]')
         self.assertRaises(SyntaxError, e.find, './tag[-1]')
-        #self.assertRaises(SyntaxError, e.find, './tag[last()-0]')
-        #self.assertRaises(SyntaxError, e.find, './tag[last()+1]')
+        self.assertRaises(SyntaxError, e.find, './tag[last()-0]')
+        self.assertRaises(SyntaxError, e.find, './tag[last()+1]')
 
     def test_findall(self):
         e = ET.XML(SAMPLE_XML)

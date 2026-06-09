@@ -969,7 +969,7 @@ cdef _prepare_path_predicate(next):
         return _ChildPredicatePathEvaluator(tag)
     if signature == ".='" or signature == ".!='" or (
             (signature == "-='" or signature == "-!='")
-            and not re.match(r"\-?\d+$", predicate[0])):
+            and not re.match(r"-?\d+$", predicate[0])):
         # [.='value'] or [tag='value'] or [.!='value'] or [tag!='value']
         tag = predicate[0]
         value = predicate[-1]
@@ -994,6 +994,8 @@ cdef _prepare_path_predicate(next):
                     index = int(predicate[2]) - 1
                 except ValueError:
                     raise SyntaxError("unsupported expression")
+                if index > -2:
+                    raise SyntaxError("path offset from last() must be negative")
             else:
                 index = -1
 
