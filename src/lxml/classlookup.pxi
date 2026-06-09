@@ -572,7 +572,10 @@ cdef void _setElementClassLookupFunction(
 
 cdef type _look_up_element_class(_Document doc, xmlNode* c_node):
     with cython.critical_section(DEFAULT_ELEMENT_CLASS_LOOKUP):
-        element_class = LOOKUP_ELEMENT_CLASS(ELEMENT_CLASS_LOOKUP_STATE, doc, c_node)
+        lookup_function = LOOKUP_ELEMENT_CLASS
+        state = ELEMENT_CLASS_LOOKUP_STATE
+
+    element_class = lookup_function(state, doc, c_node)
 
     if not isinstance(element_class, type):
         raise TypeError(f"Element class is not a type, got {type(element_class)}")
