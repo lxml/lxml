@@ -160,8 +160,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 7.0.0a1`_, released 2026-05-29
-(`changes for 7.0.0a1`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 7.0.0a2`_, released 2026-06-09
+(`changes for 7.0.0a2`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -264,7 +264,11 @@ See the websites of lxml
 ..
    and the `latest in-development version <https://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-7.0.0a1.pdf
+.. _`PDF documentation`: lxmldoc-7.0.0a2.pdf
+
+* `lxml 7.0.0a2`_, released 2026-06-09 (`changes for 7.0.0a2`_)
+
+* `lxml 7.0.0a1`_, released 2026-05-29 (`changes for 7.0.0a1`_)
 
 * `lxml 6.1.1`_, released 2026-05-18 (`changes for 6.1.1`_)
 
@@ -282,6 +286,7 @@ See the websites of lxml
 
 * `older releases <https://lxml.de/6.0/#old-versions>`_
 
+.. _`lxml 7.0.0a2`: /files/lxml-7.0.0a2.tgz
 .. _`lxml 7.0.0a1`: /files/lxml-7.0.0a1.tgz
 .. _`lxml 6.1.1`: /files/lxml-6.1.1.tgz
 .. _`lxml 6.1.0`: /files/lxml-6.1.0.tgz
@@ -291,6 +296,7 @@ See the websites of lxml
 .. _`lxml 6.0.1`: /files/lxml-6.0.1.tgz
 .. _`lxml 6.0.0`: /files/lxml-6.0.0.tgz
 
+.. _`changes for 7.0.0a2`: /changes-7.0.0a2.html
 .. _`changes for 7.0.0a1`: /changes-7.0.0a1.html
 .. _`changes for 6.1.1`: /changes-6.1.1.html
 .. _`changes for 6.1.0`: /changes-6.1.0.html
