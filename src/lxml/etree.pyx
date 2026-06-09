@@ -3804,7 +3804,7 @@ cdef class ElementTextIterator:
         return result
 
 
-cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
+cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) noexcept:
     cdef xmlNode* c_node
     c_node = tree.xmlNewDocNode(c_doc, NULL, _xcstr(name_utf), NULL)
     return c_node
