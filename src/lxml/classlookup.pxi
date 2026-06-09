@@ -260,7 +260,8 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
 
         Sets the fallback scheme for this lookup method.
         """
-        self._setFallback(lookup)
+        with cython.critical_section(self):
+            self._setFallback(lookup)
 
 
 cdef inline object _callLookupFallback(FallbackElementClassLookup lookup,
