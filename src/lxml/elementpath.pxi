@@ -1124,7 +1124,7 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
     # The yielded element is never stored on the stack, thus path length - 1.
     cdef Py_ssize_t end_of_path = len(path_selectors) - 1
     proxy_stack: list = ([None] * end_of_path) if expect_modifications else []
-    cdef xmlNode** c_node_stack = <xmlNode**> python.lxml_malloc(end_of_path, sizeof(xmlNode*))
+    cdef xmlNode** c_node_stack = <xmlNode**> python.lxml_malloc(end_of_path + 1, sizeof(xmlNode*))
     if c_node_stack is NULL:
         raise MemoryError
 
@@ -1156,7 +1156,7 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
                     # Continue with late nodeset result from negative indexing.
                     c_node_stack[i] = NULL  # exhausted
                     i += 1
-                    c_node_stack[i] = NULL  # exhausted after c_next
+                    c_node_stack[i] = NULL  # exhausted after c_next (may write to index "end_of_path")
                     next_first = i + 1
 
             if c_next is NULL:
