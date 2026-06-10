@@ -1102,7 +1102,7 @@ cdef _build_path_iterator(path, namespaces, with_prefixes=True):
 
 # --------------------------------------------------------------------
 
-cdef object _evaluate_path
+cdef object _evaluate_path  # keep generator function internal
 
 def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element):
     """Generator to evaluate a sequence of path selectors against a start element."""
@@ -1110,26 +1110,26 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
     cdef xmlNode* c_next
     _assertValidNode(start_element)
 
-    # Copy evaluator list to use independent evaluation state and make it thread-local.
-    path_selectors = [(<_PathEvaluator?> evaluator).copy() for evaluator in path_selectors]
-
-    life_parent = start_element
     doc = start_element._doc
     c_node = start_element._c_node
 
-    cdef xmlNode** c_node_stack = NULL
-    cdef Py_ssize_t end_of_path = len(path_selectors)
+    # Copy evaluator list to use independent evaluation state and make it thread-local.
+    path_selectors = [(<_PathEvaluator?> evaluator).copy() for evaluator in path_selectors]
+
+    # The yielded element is never stored on the stack, thus path length - 1.
+    cdef Py_ssize_t end_of_path = len(path_selectors) - 1
+    proxy_stack: list = [None] * end_of_path
+    cdef xmlNode** c_node_stack = <xmlNode**> python.lxml_malloc(end_of_path, sizeof(xmlNode*))
+    if c_node_stack is NULL:
+        raise MemoryError
+
     cdef Py_ssize_t i = 0, next_first = 0
-    cdef Py_ssize_t selectors_initialised = 0, cached_min = -1, cached_max = 0
+    cdef Py_ssize_t cached_min = -1, cached_max = 0
 
     doc.lock_read()
     try:
-        c_node_stack = <xmlNode**> python.lxml_malloc(end_of_path, sizeof(xmlNode*))
-        if c_node_stack is NULL:
-            raise MemoryError
-
         while i >= 0:
-            selector: _PathEvaluator = <_PathEvaluator> path_selectors[i]
+            selector = <_PathEvaluator> path_selectors[i]
             if i >= cached_max:
                 selector.prepare_match(doc)
                 cached_max = i + 1
@@ -1144,7 +1144,7 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
             else:
                 c_next = selector.next_node(c_node)
 
-            if c_next is NULL and i + 1 < end_of_path:
+            if c_next is NULL and i < end_of_path:
                 # Reset nodeset context when leaving it.
                 c_next = (<_PathEvaluator> path_selectors[i+1]).reset_nodeset()
                 if c_next is not NULL:
@@ -1163,30 +1163,49 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
                 continue
 
             # step to next path level
-            i += 1
             if i == end_of_path:
-                if c_next.parent is not life_parent._c_node and c_next.parent is not NULL and _isElement(c_next.parent):
-                    # Keep at least the current node's parent alive to reduce the risk
-                    # of deallocating the tree due to tree modifications while we're yielding.
-                    life_parent = _elementFactory(doc, c_next.parent)
-                last_node = _elementFactory(doc, c_next)
+                match_element = _elementFactory(doc, c_next)
+                # Guard the C node stack against deallocation during tree modifications by creating proxies at need.
+                _guard_path_cnodes(doc, c_node_stack, end_of_path, proxy_stack)
                 doc.unlock_read()
                 try:
-                    yield last_node
+                    yield match_element
+                    # Keep 'match_element' (and thus the current 'c_next') alive until we found its successor.
                 finally:
+                    if doc is not match_element._doc:
+                        doc = match_element._doc  # Element was moved by the user.
                     doc.lock_read()
-                next_first = i
-                i -= 1
+                next_first = i + 1
                 # Reset the document dict caches to allow for tree modifications.
                 cached_min = cached_max = i
             else:
-                c_node_stack[i-1] = c_next
+                c_node_stack[i] = c_next
+                i += 1
                 next_first = i
             c_node = c_next
 
     finally:
         python.lxml_free(c_node_stack)
         doc.unlock_read()
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef int _guard_path_cnodes(_Document doc, xmlNode **c_node_stack, Py_ssize_t c_node_count, proxy_stack: list):
+    """Make sure there is a live proxy for each C node in 'c_node_stack'."""
+    cdef Py_ssize_t i
+
+    for i in range(c_node_count):
+        if c_node_stack[i] is NULL:
+            proxy_stack[i] = None
+        else:
+            proxy = proxy_stack[i]
+            if proxy is None or (<_Element> proxy)._c_node is not c_node_stack[i]:
+                # You might think that using the _Document of the newest node
+                # could mismatch those of previously found elements after tree modifications,
+                # but those will already have their proxy and we won't even get here.
+                proxy_stack[i] = _elementFactory(doc, c_node_stack[i])
+    return 0
 
 
 ##
