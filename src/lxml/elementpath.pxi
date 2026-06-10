@@ -1174,7 +1174,6 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
                 try:
                     yield last_node
                 finally:
-                    last_node = None
                     doc.lock_read()
                 next_first = i
                 i -= 1
