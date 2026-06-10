@@ -434,7 +434,7 @@ cdef inline bint _tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_
     c_node_href = tree._getNs(c_node)
     if c_node_href == NULL:
         return c_href[0] == c'\0'
-    return tree.xmlStrcmp(c_node_href, c_href) == 0
+    return tree.xmlStrEqual(c_node_href, c_href)
 
 
 cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node) noexcept:
@@ -1972,7 +1972,7 @@ cdef int _annotate_element(tree.xmlNode* c_node, _Document doc,
                     prefix, name = typename_utf8.split(b':', 1)
                     if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
                         typename_utf8 = name
-                    elif tree.xmlStrcmp(_xcstr(prefix), c_ns.prefix) != 0:
+                    elif not tree.xmlStrEqual(_xcstr(prefix), c_ns.prefix):
                         typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + name
                 elif c_ns.prefix is not NULL and c_ns.prefix[0] != c'\0':
                     typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + typename_utf8

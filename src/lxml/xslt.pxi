@@ -81,7 +81,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
     c_doc = context._c_style_doc
     try:
         if c_doc is not NULL and c_doc.URL is not NULL:
-            if tree.xmlStrcmp(c_uri, c_doc.URL) == 0:
+            if tree.xmlStrEqual(c_uri, c_doc.URL):
                 c_return_doc = _copyDoc(c_doc, 1)
                 return c_return_doc  # 'goto', see 'finally' below
 

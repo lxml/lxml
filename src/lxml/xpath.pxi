@@ -103,13 +103,13 @@ cdef void _registerExsltFunctionsForNamespaces(
     c_href = <const_xmlChar*> _c_href
     ctxt = <xpath.xmlXPathContext*> _ctxt
 
-    if tree.xmlStrcmp(c_href, xslt.EXSLT_DATE_NAMESPACE) == 0:
+    if tree.xmlStrEqual(c_href, xslt.EXSLT_DATE_NAMESPACE):
         xslt.exsltDateXpathCtxtRegister(ctxt, c_prefix)
-    elif tree.xmlStrcmp(c_href, xslt.EXSLT_SETS_NAMESPACE) == 0:
+    elif tree.xmlStrEqual(c_href, xslt.EXSLT_SETS_NAMESPACE):
         xslt.exsltSetsXpathCtxtRegister(ctxt, c_prefix)
-    elif tree.xmlStrcmp(c_href, xslt.EXSLT_MATH_NAMESPACE) == 0:
+    elif tree.xmlStrEqual(c_href, xslt.EXSLT_MATH_NAMESPACE):
         xslt.exsltMathXpathCtxtRegister(ctxt, c_prefix)
-    elif tree.xmlStrcmp(c_href, xslt.EXSLT_STRINGS_NAMESPACE) == 0:
+    elif tree.xmlStrEqual(c_href, xslt.EXSLT_STRINGS_NAMESPACE):
         xslt.exsltStrXpathCtxtRegister(ctxt, c_prefix)
 
 

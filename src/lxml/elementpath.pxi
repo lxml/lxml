@@ -784,7 +784,7 @@ cdef class _AttributePredicatePathEvaluator(_PredicatePathEvaluator):
             if c_attr_value is NULL:
                 # FIXME: Might also have been a memory allocation failure.
                 return NULL
-            has_attr = tree.xmlStrcmp(c_attr_value, self.c_value) == 0
+            has_attr = tree.xmlStrEqual(c_attr_value, self.c_value)
             if self.negated:
                 has_attr = not has_attr
             tree.xmlFree(c_attr_value)
@@ -911,7 +911,7 @@ cdef bint _node_has_text(xmlNode* c_node, bytes text, const_xmlChar* c_text):
     if c_text is NULL:
         return False
     if scount == 1:
-        return tree.xmlStrcmp(c_node_text, c_text) == 0
+        return tree.xmlStrEqual(c_node_text, c_text)
 
     # Collecting multiple text nodes is costly either way, so let's not optimise it much.
     result = b''

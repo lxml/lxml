@@ -11,6 +11,11 @@ cdef extern from "libxml/xmlversion.h":
 
 
 cdef extern from "libxml/xmlstring.h" nogil:
+    """
+    static CYTHON_INLINE int __lx_xmlStrEq(const xmlChar* str1, const xmlChar* str2) {
+        return (str1 == str2) || (strcmp((const char*) str1, (const char*) str2) == 0);
+    }
+    """
     ctypedef unsigned char xmlChar
     ctypedef const xmlChar const_xmlChar "const xmlChar"
     cdef int xmlStrlen(const_xmlChar* str)
@@ -20,6 +25,7 @@ cdef extern from "libxml/xmlstring.h" nogil:
     cdef int xmlStrcasecmp(const xmlChar *str1, const xmlChar *str2)
     cdef const_xmlChar* xmlStrstr(const_xmlChar* str1, const_xmlChar* str2)
     cdef const_xmlChar* xmlStrchr(const_xmlChar* str1, xmlChar ch)
+    cdef int xmlStrEqual "__lx_xmlStrEq" (const_xmlChar* str1, const_xmlChar* str2)
     cdef const_xmlChar* _xcstr "(const xmlChar*)__Pyx_PyBytes_AsString" (object s)
 
 cdef extern from "libxml/encoding.h" nogil:

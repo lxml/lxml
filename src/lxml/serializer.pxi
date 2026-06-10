@@ -326,7 +326,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
         if tree.xmlStrcasecmp(c_root_name, c_dtd.name) != 0:
             return
     else:
-        if tree.xmlStrcmp(c_root_name, c_dtd.name) != 0:
+        if not tree.xmlStrEqual(c_root_name, c_dtd.name):
             return
 
     tree.xmlOutputBufferWrite(c_buffer, 10, "<!DOCTYPE ")

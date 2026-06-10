@@ -235,7 +235,7 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
             c_ns = tree.xmlSearchNs(doc._c_doc, c_node, c_prefix)
             if c_ns is NULL or \
                     c_ns.href is NULL or \
-                    tree.xmlStrcmp(c_ns.href, c_href) != 0:
+                    not tree.xmlStrEqual(c_ns.href, c_href):
                 c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
                 if c_ns is NULL:
                     # libxml2 has two error conditions: "out of memory" and "prefix exists already".
@@ -246,7 +246,7 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
                         if c_prefix is NULL:
                             if c_ns.prefix is NULL:
                                 break
-                        elif tree.xmlStrcmp(c_ns.prefix, c_prefix) == 0:
+                        elif tree.xmlStrEqual(c_ns.prefix, c_prefix):
                             break
                         c_ns = c_ns.next
                     else:
@@ -479,7 +479,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attr
     cdef xmlNode* c_element
     if c_href is NULL or c_node is NULL or c_node.type == tree.XML_ENTITY_REF_NODE:
         return NULL
-    if tree.xmlStrcmp(c_href, tree.XML_XML_NAMESPACE) == 0:
+    if tree.xmlStrEqual(c_href, tree.XML_XML_NAMESPACE):
         # no special cases here, let libxml2 handle this
         return tree.xmlSearchNsByHref(c_node.doc, c_node, c_href)
     if c_node.type == tree.XML_ATTRIBUTE_NODE:
@@ -491,7 +491,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attr
         if c_node.type == tree.XML_ELEMENT_NODE:
             c_ns = c_node.nsDef
             while c_ns is not NULL:
-                if c_ns.href is not NULL and tree.xmlStrcmp(c_href, c_ns.href) == 0:
+                if c_ns.href is not NULL and tree.xmlStrEqual(c_href, c_ns.href):
                     if c_ns.prefix is NULL and is_attribute:
                         # for attributes, continue searching a named
                         # prefix, but keep the first default namespace
@@ -506,7 +506,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attr
             if c_node is not c_element and c_node.ns is not NULL:
                 # optimise: the node may have the namespace itself
                 c_ns = c_node.ns
-                if c_ns.href is not NULL and tree.xmlStrcmp(c_href, c_ns.href) == 0:
+                if c_ns.href is not NULL and tree.xmlStrEqual(c_href, c_ns.href):
                     if c_ns.prefix is NULL and is_attribute:
                         # for attributes, continue searching a named
                         # prefix, but keep the first default namespace
@@ -984,17 +984,17 @@ cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlCh
             if c_node_href is NULL:
                 return c_href[0] == c'\0'
             else:
-                return tree.xmlStrcmp(c_node_href, c_href) == 0
+                return tree.xmlStrEqual(c_node_href, c_href)
     elif c_href is NULL:
         if _getNs(c_node) is not NULL:
             return 0
-        return c_node.name == c_name or tree.xmlStrcmp(c_node.name, c_name) == 0
-    elif c_node.name == c_name or tree.xmlStrcmp(c_node.name, c_name) == 0:
+        return tree.xmlStrEqual(c_node.name, c_name)
+    elif tree.xmlStrEqual(c_node.name, c_name):
         c_node_href = _getNs(c_node)
         if c_node_href is NULL:
             return c_href[0] == c'\0'
         else:
-            return tree.xmlStrcmp(c_node_href, c_href) == 0
+            return tree.xmlStrEqual(c_node_href, c_href)
     else:
         return 0
 
@@ -1049,7 +1049,7 @@ cdef inline bint _nsTagMatchesExactly(const_xmlChar* c_node_href,
     elif c_node_href is NULL:
         return 0
     else:
-        return tree.xmlStrcmp(<const_xmlChar*>c_href, c_node_href) == 0
+        return tree.xmlStrEqual(<const_xmlChar*>c_href, c_node_href)
 
 cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
                                           qname* c_ns_tags, bint force_into_dict) except -1:
