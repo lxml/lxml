@@ -1104,8 +1104,13 @@ cdef _build_path_iterator(path, namespaces, with_prefixes=True):
 
 cdef object _evaluate_path  # keep generator function internal
 
-def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element):
-    """Generator to evaluate a sequence of path selectors against a start element."""
+def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element, expect_modifications: bool = True):
+    """Generator to evaluate a sequence of path selectors against a start element.
+
+    If 'expect_modifications' is true, the generator will do extrac work to keep the
+    intermediate tree nodes alive during yields.  Can be disabled if the nodes remain
+    purely internal, in which case the document read lock will not be released around yield.
+    """
     cdef xmlNode* c_node
     cdef xmlNode* c_next
     _assertValidNode(start_element)
@@ -1118,7 +1123,7 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
 
     # The yielded element is never stored on the stack, thus path length - 1.
     cdef Py_ssize_t end_of_path = len(path_selectors) - 1
-    proxy_stack: list = [None] * end_of_path
+    proxy_stack: list = ([None] * end_of_path) if expect_modifications else []
     cdef xmlNode** c_node_stack = <xmlNode**> python.lxml_malloc(end_of_path, sizeof(xmlNode*))
     if c_node_stack is NULL:
         raise MemoryError
@@ -1165,19 +1170,23 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
             # step to next path level
             if i == end_of_path:
                 match_element = _elementFactory(doc, c_next)
-                # Guard the C node stack against deallocation during tree modifications by creating proxies at need.
-                _guard_path_cnodes(doc, c_node_stack, end_of_path, proxy_stack)
-                doc.unlock_read()
-                try:
+                if expect_modifications:
+                    # Guard the C node stack against deallocation during tree modifications
+                    # by creating proxies of everything that we may still need to touch later.
+                    _guard_path_cnodes(doc, c_node_stack, end_of_path, proxy_stack)
+                    doc.unlock_read()
+                    try:
+                        yield match_element
+                        # Keep 'match_element' (the current 'c_next') alive until we found its successor.
+                    finally:
+                        if doc is not match_element._doc:
+                            doc = match_element._doc  # Element was moved by the user.
+                        doc.lock_read()
+                    # Reset the document dict caches to allow for tree modifications.
+                    cached_min = cached_max = i
+                else:
                     yield match_element
-                    # Keep 'match_element' (and thus the current 'c_next') alive until we found its successor.
-                finally:
-                    if doc is not match_element._doc:
-                        doc = match_element._doc  # Element was moved by the user.
-                    doc.lock_read()
                 next_first = i + 1
-                # Reset the document dict caches to allow for tree modifications.
-                cached_min = cached_max = i
             else:
                 c_node_stack[i] = c_next
                 i += 1
@@ -1213,21 +1222,33 @@ cdef int _guard_path_cnodes(_Document doc, xmlNode **c_node_stack, Py_ssize_t c_
 
 cdef _elementpath_iterfind(elem: _Element, path, namespaces=None, with_prefixes=True):
     selectors = _build_path_iterator(path, namespaces, with_prefixes=with_prefixes)
-    return _evaluate_path(selectors, elem) if selectors else iter([elem])
+    if not selectors:
+        return iter([elem])
+    return _evaluate_path(selectors, elem)
 
 
 ##
 # Find first matching object.
 
 cdef _elementpath_find(elem, path, namespaces=None, with_prefixes=True):
-    return next(_elementpath_iterfind(elem, path, namespaces, with_prefixes=with_prefixes), None)
+    selectors = _build_path_iterator(path, namespaces, with_prefixes=with_prefixes)
+    if not selectors:
+        return elem
+    gen = _evaluate_path(selectors, elem, expect_modifications=False)
+    match = next(gen, None)
+    if match is not None:
+        gen.close()  # Free generator state immediately.
+    return match
 
 
 ##
 # Find all matching objects.
 
 cdef _elementpath_findall(elem, path, namespaces=None, with_prefixes=True):
-    return list(_elementpath_iterfind(elem, path, namespaces, with_prefixes))
+    selectors = _build_path_iterator(path, namespaces, with_prefixes=with_prefixes)
+    if not selectors:
+        return [elem]
+    return list(_evaluate_path(selectors, elem, expect_modifications=False))
 
 
 ##
