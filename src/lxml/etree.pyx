@@ -519,6 +519,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef int _ns_counter
     cdef bytes _prefix_tail
     cdef xmlDoc* _c_doc
+    # -- End of public part, '_c_doc' is the only publicly exposed struct field.
     cdef _BaseParser _parser
     cdef RWLock _lock
     # Short-lived lock to guard proxy link changes.
