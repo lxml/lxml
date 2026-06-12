@@ -226,8 +226,7 @@ cdef _raiseSerialisationError(int error_result):
 
 cdef void _writeDoctype(tree.xmlOutputBuffer* c_buffer,
                         const_xmlChar* c_doctype) noexcept nogil:
-    tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
-                              <const_char*>c_doctype)
+    tree.xmlOutputBufferWrite(c_buffer, cstring_h.strlen(<const char*> c_doctype), <const_char*> c_doctype)
     tree.xmlOutputBufferWriteString(c_buffer, "\n")
 
 
@@ -350,7 +349,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
         tree.xmlOutputBufferWrite(c_buffer, 8, ' SYSTEM ')
 
     if sys_url:
-        quotechar = c"'" if tree.xmlStrchr(sys_url, b'"') else c'"'
+        quotechar = c"'" if cstring_h.strchr(<const char*> sys_url, b'"') else c'"'
         tree.xmlOutputBufferWrite(c_buffer, 1, &quotechar)
         tree.xmlOutputBufferWriteString(c_buffer, <const_char*>sys_url)
         tree.xmlOutputBufferWrite(c_buffer, 1, &quotechar)

@@ -18,15 +18,16 @@ cdef extern from "libxml/xmlstring.h" nogil:
     """
     ctypedef unsigned char xmlChar
     ctypedef const xmlChar const_xmlChar "const xmlChar"
-    cdef int xmlStrlen(const_xmlChar* str)
     cdef xmlChar* xmlStrdup(const_xmlChar* cur)
-    cdef int xmlStrncmp(const_xmlChar* str1, const_xmlChar* str2, int length)
-    cdef int xmlStrcmp(const_xmlChar* str1, const_xmlChar* str2)
     cdef int xmlStrcasecmp(const xmlChar *str1, const xmlChar *str2)
-    cdef const_xmlChar* xmlStrstr(const_xmlChar* str1, const_xmlChar* str2)
-    cdef const_xmlChar* xmlStrchr(const_xmlChar* str1, xmlChar ch)
     cdef int xmlStrEqual "__lx_xmlStrEq" (const_xmlChar* str1, const_xmlChar* str2)
     cdef const_xmlChar* _xcstr "(const xmlChar*)__Pyx_PyBytes_AsString" (object s)
+    # now unused, replaced by <string.h>:
+    cdef int xmlStrlen(const_xmlChar* str)
+    cdef int xmlStrncmp(const_xmlChar* str1, const_xmlChar* str2, int length)
+    cdef int xmlStrcmp(const_xmlChar* str1, const_xmlChar* str2)
+    cdef const_xmlChar* xmlStrstr(const_xmlChar* str1, const_xmlChar* str2)
+    cdef const_xmlChar* xmlStrchr(const_xmlChar* str1, xmlChar ch)
 
 cdef extern from "libxml/encoding.h" nogil:
     ctypedef enum xmlCharEncoding:

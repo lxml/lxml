@@ -87,7 +87,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
 
         # delegate to the Python resolvers
         resolvers = context._resolvers
-        if tree.xmlStrncmp(<unsigned char*>'string://__STRING__XSLT__/', c_uri, 26) == 0:
+        if cstring_h.strncmp('string://__STRING__XSLT__/', <const char*> c_uri, 26) == 0:
             c_uri += 26
         uri = _decodeFilename(c_uri)
         doc_ref = resolvers.resolve(uri, None, context)

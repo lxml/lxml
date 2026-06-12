@@ -165,12 +165,12 @@ cdef list _parse_object_path_list(path):
             index = 0
         else:
             ns, name = cetree.getNsTag(item)
-            c_name = _xcstr(name)
-            index_pos = tree.xmlStrchr(c_name, c'[')
+            c_name = python._cstr(name)
+            index_pos = cstring_h.strchr(c_name, c'[')
             if index_pos is NULL:
                 index = 0
             else:
-                index_end = tree.xmlStrchr(index_pos + 1, c']')
+                index_end = cstring_h.strchr(index_pos + 1, c']')
                 if index_end is NULL:
                     raise ValueError, "index must be enclosed in []"
                 index = int(index_pos[1:index_end - index_pos])
