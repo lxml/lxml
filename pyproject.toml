@@ -7,7 +7,6 @@ environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.3.2", LIBICONV_VERSION = "1
 enable = [
     "pypy",
     "cpython-prerelease",
-    "cpython-freethreading",
 ]
 skip = [
     "cp38-*",
