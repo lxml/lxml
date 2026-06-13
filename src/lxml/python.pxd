@@ -48,6 +48,8 @@ cdef extern from "Python.h":
     cdef const Py_ssize_t PY_SSIZE_T_MAX
     cdef const int PY_VERSION_HEX
     cdef const bint IN_LIMITED_API "LXML_IN_LIMITED_API"
+    cdef bint PY_BIG_ENDIAN
+    cdef bint PY_LITTLE_ENDIAN
 
     cdef void Py_INCREF(object o)
     cdef void Py_DECREF(object o)
@@ -155,35 +157,6 @@ cdef extern from "Python.h":
     cdef const int PyBUF_INDIRECT
 
 
-cdef extern from *:
-    """
-    #if !CYTHON_COMPILING_IN_CPYTHON || PY_VERSION_HEX < 0x030e0000 || !defined(Py_GIL_DISABLED)
-        #define PyUnstable_EnableTryIncRef(obj)
-        #define PyUnstable_TryIncRef(obj) (Py_INCREF(obj), 1)
-        #define __lxml_HAS_TryIncRef (0)
-    #else
-        #define __lxml_HAS_TryIncRef (1)
-    #endif
-    """
-    cdef const bint HAS_TryIncRef "__lxml_HAS_TryIncRef"
-
-    void PyUnstable_EnableTryIncRef(object o)
-    # Enables subsequent uses of PyUnstable_TryIncRef() on obj.
-    # The caller must hold a strong reference to obj when calling this.
-    #
-    # Added in CPython 3.14.
-
-    bint PyUnstable_TryIncRef(PyObject *o)
-    # Increments the reference count of obj if it is not zero.
-    # Returns 1 if the object’s reference count was successfully incremented.
-    # Otherwise, this function returns 0.
-    #
-    # PyUnstable_EnableTryIncRef() must have been called earlier on obj
-    # or this function may spuriously return 0 in the free threading build.
-    #
-    # Added in CPython 3.14.
-
-
 cdef extern from "pythread.h":
     ctypedef void* PyThread_type_lock
     cdef PyThread_type_lock PyThread_allocate_lock()
@@ -206,23 +179,3 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef str _fqtypename "__lxml_fqtypename" (object t)
     cdef bint IS_PYPY
     cdef object PyOS_FSPath(object obj)
-
-
-cdef extern from *:
-    """
-    #ifndef PY_BIG_ENDIAN
-
-    #ifdef _MSC_VER
-    typedef unsigned __int32 uint32_t;
-    #else
-    #include <stdint.h>
-    #endif
-
-    static CYTHON_INLINE int _lx__is_big_endian(void) {
-        union {uint32_t i; char c[4];} x = {0x01020304};
-        return x.c[0] == 1;
-    }
-    #define PY_BIG_ENDIAN _lx__is_big_endian()
-    #endif
-    """
-    cdef bint PY_BIG_ENDIAN  # defined in later Py3.x versions
