@@ -4,22 +4,40 @@
 # structure of the respective node to avoid multiple instantiation of
 # the Python class.
 
-@cython.linetrace(False)
-@cython.profile(False)
-cdef inline _Element getProxy(xmlNode* c_node):
-    """Get a proxy for a given node.
+cdef extern from *:
     """
-    #print "getProxy for:", <int>c_node
-    if c_node is NULL or not hasProxy(c_node):
-        return None
-    if not python.HAS_TryIncRef:
-        return <_Element> c_node._private
-    if not python.PyUnstable_TryIncRef(<cpython.object.PyObject*> c_node._private):
-        c_node._private = NULL
-        return None
-    element = <_Element> c_node._private
-    python.Py_DECREF(element)  # correct double incref
-    return element
+    #if !(CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030e0000 && defined(Py_GIL_DISABLED))
+        #define PyUnstable_EnableTryIncRef(obj)
+    #endif
+
+    static CYTHON_INLINE PyObject* _lx__getProxy(xmlNode *c_node) {
+        PyObject *proxy;
+        if (c_node && c_node->_private) {
+            proxy = c_node->_private;
+            #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030e0000 && defined(Py_GIL_DISABLED)
+            /* In FT-Python, prevent concurrent disposal and resurrection. */
+            if (PyUnstable_TryIncRef(proxy)) {
+                return proxy;
+            } else {
+                /* NOTE: potential race condition, requires outside guard. */
+                c_node->_private = NULL;
+                proxy = Py_None;
+            }
+            #endif
+        } else {
+            proxy = Py_None;
+        }
+        Py_INCREF(proxy);
+        return proxy;
+    }
+    """
+    _Element getProxy "_lx__getProxy" (xmlNode* c_node)
+
+    void PyUnstable_EnableTryIncRef(object o)
+    # Enables subsequent uses of PyUnstable_TryIncRef() on obj.
+    # The caller must hold a strong reference to obj when calling this.
+    #
+    # Added in CPython 3.14.
 
 
 @cython.linetrace(False)
@@ -39,7 +57,7 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     c_node._private = <void*> proxy
     proxy._doc = doc
     proxy._c_node = c_node
-    python.PyUnstable_EnableTryIncRef(proxy)
+    PyUnstable_EnableTryIncRef(proxy)
     return 0
 
 
