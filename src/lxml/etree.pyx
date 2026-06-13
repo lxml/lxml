@@ -4102,6 +4102,8 @@ include "saxparser.pxi"    # SAX-like Parser interface and tree builder
 include "parsertarget.pxi" # ET Parser target
 include "serializer.pxi"   # XML output functions
 include "iterparse.pxi"    # incremental XML parsing
+include "iterfind.pxi"     # ElementPath iterator (pure C-level, xmlNode in/out)
+include "_elementpath.pxi" # Python-facing find/findall/iterfind/findtext
 include "xmlid.pxi"        # XMLID and IDDict
 include "xinclude.pxi"     # XInclude
 include "elementpath.pxi"  # ElementPath: ElementTree-compatible path expressions

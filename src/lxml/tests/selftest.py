@@ -22,7 +22,6 @@ def stdout():
 from io import BytesIO
 
 from lxml import etree as ElementTree
-from lxml import _elementpath as ElementPath
 from lxml import ElementInclude
 ET = ElementTree
 
@@ -752,58 +751,6 @@ def qname():
 
     """
 
-def xpath_tokenizer(p):
-    """
-    Test the XPath tokenizer.
-
-    >>> # tests from the xml specification
-    >>> xpath_tokenizer("*")
-    ['*']
-    >>> xpath_tokenizer("text()")
-    ['text', '()']
-    >>> xpath_tokenizer("@name")
-    ['@', 'name']
-    >>> xpath_tokenizer("@*")
-    ['@', '*']
-    >>> xpath_tokenizer("para[1]")
-    ['para', '[', '1', ']']
-    >>> xpath_tokenizer("para[last()]")
-    ['para', '[', 'last', '()', ']']
-    >>> xpath_tokenizer("*/para")
-    ['*', '/', 'para']
-    >>> xpath_tokenizer("/doc/chapter[5]/section[2]")
-    ['/', 'doc', '/', 'chapter', '[', '5', ']', '/', 'section', '[', '2', ']']
-    >>> xpath_tokenizer("chapter//para")
-    ['chapter', '//', 'para']
-    >>> xpath_tokenizer("//para")
-    ['//', 'para']
-    >>> xpath_tokenizer("//olist/item")
-    ['//', 'olist', '/', 'item']
-    >>> xpath_tokenizer(".")
-    ['.']
-    >>> xpath_tokenizer(".//para")
-    ['.', '//', 'para']
-    >>> xpath_tokenizer("..")
-    ['..']
-    >>> xpath_tokenizer("../@lang")
-    ['..', '/', '@', 'lang']
-    >>> xpath_tokenizer("chapter[title]")
-    ['chapter', '[', 'title', ']']
-    >>> xpath_tokenizer("employee[@secretary and @assistant]")
-    ['employee', '[', '@', 'secretary', '', 'and', '', '@', 'assistant', ']']
-
-    >>> # additional tests
-    >>> xpath_tokenizer("{http://spam}egg")
-    ['{http://spam}egg']
-    >>> xpath_tokenizer("./spam.egg")
-    ['.', '/', 'spam.egg']
-    >>> xpath_tokenizer(".//{http://spam}egg")
-    ['.', '//', '{http://spam}egg']
-    """
-    out = []
-    for op, tag in ElementPath.xpath_tokenizer(p):
-        out.append(op or tag)
-    return out
 
 #
 # xinclude tests (samples from appendix C of the xinclude specification)
