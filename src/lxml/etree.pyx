@@ -2184,7 +2184,6 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
             # prevent re-entry race condition - we just called into Python
             proxy = getProxy(c_node)
             if proxy is not None:
-                result._c_node = NULL
                 return proxy
 
         _registerProxy(result, doc, c_node)
