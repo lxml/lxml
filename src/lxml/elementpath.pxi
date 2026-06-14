@@ -711,6 +711,10 @@ cdef class _NegIndexPathEvaluator(_PathEvaluator):
         if self.node_window is NULL:
             raise MemoryError()
 
+    def __dealloc__(self):
+        python.lxml_free(self.node_window)
+        self.node_window = NULL
+
     def __repr__(self):
         return "[last()]" if self.index == 1 else f"[last()-{self.index-1}]"
 
