@@ -239,13 +239,13 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
     cdef _element_class_lookup_function _fallback_function
     def __cinit__(self):
         # fall back to default lookup
-        self._fallback_function = _lookupDefaultElementClass
+        self._fallback_function = _lookupDefaultElementClassesOnly
 
     def __init__(self, ElementClassLookup fallback=None):
         if fallback is not None:
             self._setFallback(fallback)
         else:
-            self._fallback_function = _lookupDefaultElementClass
+            self._fallback_function = _lookupDefaultElementClassesOnly
 
     cdef void _setFallback(self, ElementClassLookup lookup):
         """Sets the fallback scheme for this lookup method.
@@ -254,7 +254,7 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
         self._fallback_function = lookup._lookup_function
         if self._fallback_function is NULL:
             self.fallback = None
-            self._fallback_function = _lookupDefaultElementClass
+            self._fallback_function = _lookupDefaultElementClassesOnly
 
     def set_fallback(self, ElementClassLookup lookup not None):
         """set_fallback(self, lookup)
@@ -286,7 +286,7 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
     cdef readonly object pi_class
     cdef readonly object entity_class
     def __cinit__(self):
-        self._lookup_function = _lookupDefaultElementClass
+        self._lookup_function = _lookupDefaultElementClasses
 
     def __init__(self, element=None, comment=None, pi=None, entity=None):
         if element is None:
@@ -317,35 +317,45 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
         else:
             raise TypeError, "PI class must be subclass of PIBase"
 
+        if element is None and comment is None and entity is None and pi is None:
+            self._lookup_function = _lookupDefaultElementClassesOnly
 
-cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
+
+cdef object _lookupDefaultElementClasses(state, _Document doc, xmlNode* c_node):
+    "Trivial class lookup function that always returns the default class."
+    if state is None:
+        return _lookupDefaultElementClassesOnly(None, doc, c_node)
+
+    if c_node.type == tree.XML_ELEMENT_NODE:
+        return (<ElementDefaultClassLookup>state).element_class
+    elif c_node.type == tree.XML_COMMENT_NODE:
+        return (<ElementDefaultClassLookup>state).comment_class
+    elif c_node.type == tree.XML_ENTITY_REF_NODE:
+        return (<ElementDefaultClassLookup>state).entity_class
+    elif c_node.type == tree.XML_PI_NODE:
+        if (<ElementDefaultClassLookup>state).pi_class is not None:
+            return (<ElementDefaultClassLookup>state).pi_class
+        return _lookupDefaultElementClassesOnly(None, doc, c_node)
+    else:
+        assert False, f"Unknown node type: {c_node.type}"
+
+
+cdef object _lookupDefaultElementClassesOnly(state, _Document doc, xmlNode* c_node):
     "Trivial class lookup function that always returns the default class."
     if c_node.type == tree.XML_ELEMENT_NODE:
-        if state is not None:
-            return (<ElementDefaultClassLookup>state).element_class
-        else:
-            return _Element
+        return _Element
     elif c_node.type == tree.XML_COMMENT_NODE:
-        if state is not None:
-            return (<ElementDefaultClassLookup>state).comment_class
-        else:
-            return _Comment
+        return _Comment
     elif c_node.type == tree.XML_ENTITY_REF_NODE:
-        if state is not None:
-            return (<ElementDefaultClassLookup>state).entity_class
-        else:
-            return _Entity
+        return _Entity
     elif c_node.type == tree.XML_PI_NODE:
-        if state is None or (<ElementDefaultClassLookup>state).pi_class is None:
-            # special case XSLT-PI
-            if c_node.name is not NULL and c_node.content is not NULL:
-                if tree.xmlStrEqual(c_node.name, <unsigned char*>"xml-stylesheet"):
-                    if tree.xmlStrstr(c_node.content, <unsigned char*>"text/xsl") is not NULL or \
-                           tree.xmlStrstr(c_node.content, <unsigned char*>"text/xml") is not NULL:
-                        return _XSLTProcessingInstruction
-            return _ProcessingInstruction
-        else:
-            return (<ElementDefaultClassLookup>state).pi_class
+        # special case XSLT-PI
+        if c_node.name is not NULL and c_node.content is not NULL:
+            if tree.xmlStrEqual(c_node.name, <unsigned char*>"xml-stylesheet"):
+                if tree.xmlStrstr(c_node.content, <unsigned char*>"text/xsl") is not NULL or \
+                        tree.xmlStrstr(c_node.content, <unsigned char*>"text/xml") is not NULL:
+                    return _XSLTProcessingInstruction
+        return _ProcessingInstruction
     else:
         assert False, f"Unknown node type: {c_node.type}"
 

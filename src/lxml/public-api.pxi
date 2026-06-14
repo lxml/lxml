@@ -42,7 +42,7 @@ cdef public api void setElementClassLookupFunction(
     _setElementClassLookupFunction(function, state)
 
 cdef public api object lookupDefaultElementClass(state, doc, xmlNode* c_node):
-    return _lookupDefaultElementClass(state, doc, c_node)
+    return _lookupDefaultElementClasses(state, doc, c_node)
 
 cdef public api object lookupNamespaceElementClass(state, doc, xmlNode* c_node):
     return _find_nselement_class(state, doc, c_node)

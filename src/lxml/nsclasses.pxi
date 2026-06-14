@@ -157,7 +157,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
     cdef ElementNamespaceClassLookup lookup
     cdef _NamespaceRegistry registry = None
     if state is None:
-        return _lookupDefaultElementClass(None, doc, c_node)
+        return _lookupDefaultElementClassesOnly(None, doc, c_node)
 
     lookup = <ElementNamespaceClassLookup>state
     if c_node.type != tree.XML_ELEMENT_NODE:
