@@ -1117,6 +1117,7 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
     """
     cdef xmlNode* c_node
     cdef xmlNode* c_next
+    cdef xmlNode** c_node_stack = NULL
     _assertValidNode(start_element)
 
     doc = start_element._doc
@@ -1128,15 +1129,16 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
     # The yielded element is never stored on the stack, thus path length - 1.
     cdef Py_ssize_t end_of_path = len(path_selectors) - 1
     proxy_stack: list = ([None] * end_of_path) if expect_modifications else []
-    cdef xmlNode** c_node_stack = <xmlNode**> python.lxml_malloc(end_of_path + 1, sizeof(xmlNode*))
-    if c_node_stack is NULL:
-        raise MemoryError
 
     cdef Py_ssize_t i = 0, next_first = 0
     cdef Py_ssize_t cached_min = -1, cached_max = 0
 
     doc.lock_read()
     try:
+        c_node_stack = <xmlNode**> python.lxml_malloc(end_of_path + 1, sizeof(xmlNode*))
+        if c_node_stack is NULL:
+            raise MemoryError
+
         while i >= 0:
             selector = <_PathEvaluator> path_selectors[i]
             if i >= cached_max:
