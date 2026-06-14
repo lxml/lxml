@@ -2,6 +2,19 @@
 lxml changelog
 ==============
 
+7.0.0a3 (2026-??-??)
+====================
+
+Features added
+--------------
+
+* ``.find()`` and ``.findall()`` now take advantage of their read-locked tree
+  to skip tree modification checks, making them visibly faster.
+
+* Python Element proxy instantiation was tuned another bit to shave off more of the
+  performance disadvantages added by tree locking.
+
+
 7.0.0a2 (2026-06-09)
 ====================
 
