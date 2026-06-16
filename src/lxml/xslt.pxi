@@ -542,7 +542,12 @@ cdef class XSLT:
             transform_ctxt.profile = 1
 
         try:
-            context = self._context._copy()
+            try:
+                context = self._context._copy()
+            except:
+                xslt.xsltFreeTransformContext(transform_ctxt)
+                raise
+
             context.register_context(transform_ctxt, input_doc)
 
             resolver_context = self._xslt_resolver_context._copy()
