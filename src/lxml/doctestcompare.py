@@ -404,8 +404,13 @@ def temp_install(html=False, del_module=None):
     check_func = frame.f_locals['check'].__func__
     checker_check_func = checker.check_output.__func__
     # Because we can't patch up func_globals, this is the only global
-    # in check_output that we care about:
-    doctest.etree = etree
+    # in check_output that we care about.  We inject it directly into the
+    # function's actual globals dict, which is not necessarily
+    # doctest.__dict__: when the active runner uses a checker whose
+    # check_output is defined in another module (e.g. pytest's doctest
+    # plugin or any OutputChecker subclass), those globals belong to that
+    # module instead.
+    check_func.__globals__['etree'] = etree
     _RestoreChecker(dt_self, old_checker, checker,
                     check_func, checker_check_func,
                     del_module)

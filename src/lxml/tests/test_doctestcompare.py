@@ -1,4 +1,5 @@
 import unittest
+import doctest
 
 from lxml import etree
 from .common_imports import HelperTestCase
@@ -9,6 +10,15 @@ class DummyInput:
     def __init__(self, **kw):
         for name, value in kw.items():
             setattr(self, name, value)
+
+
+class _PlainChecker(doctest.OutputChecker):
+    # Defined here (not in the doctest module) so that its check_output
+    # runs against this module's globals rather than doctest.__dict__.
+    # This mirrors a third-party or subclassed checker (e.g. pytest's
+    # doctest plugin), which is the case the temp_install() fix must handle.
+    def check_output(self, want, got, optionflags):
+        return doctest.OutputChecker.check_output(self, want, got, optionflags)
 
 
 def indent(elem, level=0):
@@ -118,6 +128,32 @@ class DoctestCompareTest(HelperTestCase):
             '<p>\n'
             '  <span class="foo" -id="bar">Text</span>\n'
             '</p>\n')
+
+    def test_temp_install_parse_error_no_nameerror(self):
+        # Regression test for https://bugs.launchpad.net/lxml/+bug/2143321
+        # When temp_install() clones check_output into the doctest runner,
+        # a parser failure must be reported as a normal doctest failure and
+        # must not raise NameError because 'etree' is missing from the globals
+        # of the runner's check function.  The stock doctest OutputChecker
+        # has its check_output defined in the doctest module, so its globals
+        # happen to be doctest.__dict__ and mask the bug; a checker defined
+        # elsewhere (as here, and as with pytest's doctest plugin) exercises
+        # the failing path.
+        if hasattr(doctest, 'etree'):
+            # Drop any stale injection from an earlier doctest run so it
+            # cannot hide a regression here.
+            del doctest.etree
+        runner = doctest.DocTestRunner(checker=_PlainChecker(), verbose=False)
+        parser = doctest.DocTestParser()
+        test = parser.get_doctest(
+            '>>> from lxml.doctestcompare import temp_install\n'
+            '>>> temp_install()\n'
+            '>>> print("<root>")\n'
+            '<root><b />\n',
+            {}, 'nameerror_regression', 'nameerror_regression.txt', 0)
+        result = runner.run(test)
+        self.assertEqual(result.attempted, 3)
+        self.assertEqual(result.failed, 1)
 
 
 def test_suite():
