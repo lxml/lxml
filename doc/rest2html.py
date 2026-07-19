@@ -12,7 +12,7 @@ INLINESTYLES = False
 try:
     import locale
     locale.setlocale(locale.LC_ALL, '')
-except:
+except Exception:
     pass
 
 # set up Pygments
