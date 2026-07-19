@@ -70,7 +70,7 @@ def download1(wheel_metadata, dest_dir):
         try:
             with open(temp_file_path, "wb") as f:
                 shutil.copyfileobj(w, f)
-        except:
+        except Exception:
             if temp_file_path.exists():
                 temp_file_path.unlink()
             raise
