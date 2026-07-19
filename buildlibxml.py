@@ -22,7 +22,7 @@ try:
         if cpus > 5:
             cpus = 5
         multi_make_options = ['-j%d' % (cpus+1)]
-except:
+except Exception:
     pass
 
 
