@@ -98,7 +98,7 @@ jobs:
 
       - name: Install cibuildwheel
         # Nb. keep cibuildwheel version pin consistent with job below
-        run: pipx install cibuildwheel==4.1.0
+        run: pipx install cibuildwheel==4.1.1
 
       - id: set-matrix
         run: |
@@ -171,7 +171,7 @@ jobs:
           echo "CIBW_BEFORE_BUILD_LINUX=${DIST_INSTALL} ccache && ccache -o cache_dir=/host${HOST_CCACHE_DIR} && ccache -p && for dir in /host/usr/lib/ccache /host/usr/local/opt/ccache/libexec; do ls -l \$dir || true; done || echo '::notice::ccache installation failed on ${{ matrix.only }}'" | tee -a "${GITHUB_ENV}"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # v4.1.1
         with:
           only: ${{ matrix.only }}
 
@@ -179,7 +179,7 @@ jobs:
       #   # also build wheels with the most recent manylinux images and gcc
       #   # DISABLED: the images below are now the default.
       #   if: runner.os == 'Linux' && (contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-      #   uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
+      #   uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # v4.1.1
       #   env:
       #     CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
       #     CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
@@ -204,7 +204,7 @@ jobs:
         if: >-
           contains(matrix.only, '-manylinux_') &&
           (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # v4.1.1
         env:
           CIBW_MANYLINUX_i686_IMAGE: manylinux2014
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
@@ -264,7 +264,7 @@ jobs:
           platforms: all
 
       - name: Build ABI3 wheels
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # v4.1.1
         env:
           # Smaller set of platforms that we only provide Stable ABI wheels for
           CIBW_BUILD: |
