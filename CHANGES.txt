@@ -2,6 +2,26 @@
 lxml changelog
 ==============
 
+7.0.0b1 (2026-0?-??)
+====================
+
+Bugs fixed
+----------
+
+* LP#2143321: A ``NameError`` in ``doctestcompare`` when the doctests are processed
+  by a non-standard module.
+  Original patch by Rahul Kumar.
+
+* GH#492: Failures in ``htmldiff()`` to string-join the diff result are now propagated
+  instead of silently returning an empty result.
+  Patch by Juan Carlos Carvajal B.
+
+Other changes
+-------------
+
+* Built using Cython 3.3.0b1.
+
+
 7.0.0a3 (2026-06-16)
 ====================
 
