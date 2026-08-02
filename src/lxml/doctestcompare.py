@@ -272,7 +272,7 @@ class LXMLOutputChecker(OutputChecker):
         if not attrs:
             return '<%s>' % el.tag
         return '<%s %s>' % (el.tag, ' '.join(attrs))
-    
+
     def format_end_tag(self, el):
         if isinstance(el, etree.CommentBase):
             # FIXME: probably PIs should be handled specially too?
@@ -362,7 +362,7 @@ class LXMLOutputChecker(OutputChecker):
 class LHTMLOutputChecker(LXMLOutputChecker):
     def get_default_parser(self):
         return html_fromstring
-    
+
 def install(html=False):
     """
     Install doctestcompare for all future doctests.
@@ -392,6 +392,7 @@ def temp_install(html=False, del_module=None):
     checker = Checker()
     old_checker = dt_self._checker
     dt_self._checker = checker
+
     # The unfortunate thing is that there is a local variable 'check'
     # in the function that runs the doctests, that is a bound method
     # into the output checker.  We have to update that.  We can't
@@ -455,7 +456,8 @@ class _RestoreChecker:
             return self.check_func(*args, **kw)
         finally:
             self.install_clone()
-            
+
+
 def _find_doctest_frame():
     import sys
     frame = sys._getframe(1)
@@ -467,7 +469,7 @@ def _find_doctest_frame():
         frame = frame.f_back
     raise LookupError(
         "Could not find doctest (only use this function *inside* a doctest)")
-    
+
 __test__ = {
     'basic': '''
     >>> temp_install()
@@ -481,8 +483,7 @@ __test__ = {
     <xml>...foo /></xml>
     '''}
 
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-    
-    
