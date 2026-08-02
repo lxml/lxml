@@ -529,7 +529,7 @@ are not supported by Python will result in an error:
   >>> xslt_tree = etree.XML('''\
   ... <xsl:stylesheet version="1.0"
   ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  ...     <xsl:output encoding="UCS4"/>
+  ...     <xsl:output encoding="EBCDIC"/>
   ...     <xsl:template match="/">
   ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
   ...     </xsl:template>
@@ -540,7 +540,7 @@ are not supported by Python will result in an error:
   >>> str(result)
   Traceback (most recent call last):
     ...
-  LookupError: unknown encoding: UCS4
+  LookupError: unknown encoding: EBCDIC
 
 While it is possible to use the ``.write()`` method (known from ``ElementTree``
 objects) to serialise the XSLT result into a file, it is better to use the
