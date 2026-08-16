@@ -1442,15 +1442,6 @@ cdef int _addSibling(_Element element, _Element sibling, bint as_next) except -1
     moveNodeToDocument(element._doc, c_source_doc, c_node)
     return 0
 
-cdef inline bint isutf8(const_xmlChar* s) noexcept:
-    cdef xmlChar c = s[0]
-    while c != c'\0':
-        if c & 0x80:
-            return True
-        s += 1
-        c = s[0]
-    return False
-
 cdef bint isutf8l(const_xmlChar* s, size_t length) noexcept:
     """
     Search for non-ASCII characters in the string, knowing its length in advance.
