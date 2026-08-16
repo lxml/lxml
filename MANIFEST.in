@@ -1,5 +1,5 @@
 exclude *.py
-include setup.py setupinfo.py versioninfo.py buildlibxml.py
+include setup.py setupinfo.py versioninfo.py buildlibxml.py patch_lxml_deplibs.py
 include test.py
 include update-error-constants.py
 include MANIFEST.in Makefile requirements.txt
