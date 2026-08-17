@@ -520,9 +520,9 @@ cdef class _ExsltRegExp:
         result_list = []
         root = Element('matches')
         for s_match in results:
-            if isinstance(s_match, tuple):
+            if python.PyTuple_CheckExact(s_match):
                 s_match = ''.join(s_match)
-            elem = _makeSubElement(root, 'match')
+            elem = SubElement(root, 'match')
             elem.text = s_match
             result_list.append(elem)
         return result_list
