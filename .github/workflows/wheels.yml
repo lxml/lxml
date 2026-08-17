@@ -249,7 +249,7 @@ jobs:
           echo; echo "Wheels built: "; ls *.whl | wc -l
           echo; echo "Validating wheel success…"
           RESULT_CODE=0
-          for PYVERSION in  38  39  310  311  312  313  314 ; do \
+          for PYVERSION in  38  39  310  311  312  313  314  315 ; do \
             for WHEEL_ARCH in  "win32"  "win_amd64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
               ls *-cp${PYVERSION}-*${WHEEL_ARCH}*.whl >/dev/null 2>&1  ||  { echo "MISSING WHEEL: cp${PYVERSION}-${WHEEL_ARCH}" ; RESULT_CODE=1; } ; \
             done; \
