@@ -13,14 +13,14 @@ updates:
         patterns:
           - "*"
 
-  - package-ecosystem: "github-actions"
-    target-branch: "lxml-6.1"
-    directory: "/"
-    schedule:
-      # Check for updates to GitHub Actions every week
-      interval: "weekly"
-    rebase-strategy: auto
-    groups:
-      github-actions:
-        patterns:
-          - "*"
+  # - package-ecosystem: "github-actions"
+  #   target-branch: "lxml-6.1"
+  #   directory: "/"
+  #   schedule:
+  #     # Check for updates to GitHub Actions every week
+  #     interval: "weekly"
+  #   rebase-strategy: auto
+  #   groups:
+  #     github-actions:
+  #       patterns:
+  #         - "*"
