@@ -203,24 +203,6 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
 
-      - name: Build faster Linux wheels
-        # also build wheels with the most recent manylinux images and gcc
-        if: runner.os == 'Linux' && (contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
-        env:
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
-          CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux_2_28
-          CIBW_MANYLINUX_S390X_IMAGE: manylinux_2_28
-          CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux_2_28
-          CIBW_MANYLINUX_PYPY_AARCH64_IMAGE: manylinux_2_28
-          CIBW_MUSLLINUX_X86_64_IMAGE: musllinux_1_2
-          CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_2
-          CIBW_MUSLLINUX_PPC64LE_IMAGE: musllinux_1_2
-          CIBW_MUSLLINUX_S390X_IMAGE: musllinux_1_2
-        with:
-          only: ${{ matrix.only }}
-
       - name: Upload wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
