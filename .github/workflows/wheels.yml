@@ -98,7 +98,7 @@ jobs:
 
       - name: Install cibuildwheel
         # Nb. keep cibuildwheel version pin consistent with job below
-        run: pipx install cibuildwheel==4.1.1
+        run: pipx install cibuildwheel==4.2.0
 
       - id: set-matrix
         run: |
@@ -175,25 +175,6 @@ jobs:
         with:
           only: ${{ matrix.only }}
 
-      # - name: Build faster Linux wheels
-      #   # also build wheels with the most recent manylinux images and gcc
-      #   # DISABLED: the images below are now the default.
-      #   if: runner.os == 'Linux' && (contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-      #   uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
-      #   env:
-      #     CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-      #     CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
-      #     CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux_2_28
-      #     CIBW_MANYLINUX_S390X_IMAGE: manylinux_2_28
-      #     CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux_2_28
-      #     CIBW_MANYLINUX_PYPY_AARCH64_IMAGE: manylinux_2_28
-      #     CIBW_MUSLLINUX_X86_64_IMAGE: musllinux_1_2
-      #     CIBW_MUSLLINUX_AARCH64_IMAGE: musllinux_1_2
-      #     CIBW_MUSLLINUX_PPC64LE_IMAGE: musllinux_1_2
-      #     CIBW_MUSLLINUX_S390X_IMAGE: musllinux_1_2
-      #   with:
-      #     only: ${{ matrix.only }}
-
       - name: Set up ccache host directory for old wheels
         if: >-
           contains(matrix.only, '-manylinux_') &&
@@ -203,6 +184,7 @@ jobs:
       - name: Build old Linux wheels
         if: >-
           contains(matrix.only, '-manylinux_') &&
+          (startsWith(matrix.only, 'cp39-') || startsWith(matrix.only, 'cp310-') || startsWith(matrix.only, 'cp311-')) &&
           (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
         uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
         env:
@@ -318,7 +300,7 @@ jobs:
           echo; echo "Wheels built: "; ls *.whl | wc -l
           echo; echo "Validating wheel success…"
           RESULT_CODE=0
-          for PYVERSION in  39  310  311  312  313  314 ; do \
+          for PYVERSION in  39  310  311  312  313  314  315 ; do \
             for WHEEL_ARCH in  "win32"  "win_amd64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
               ls *-cp${PYVERSION}-*${WHEEL_ARCH}*.whl >/dev/null 2>&1  ||  { echo "MISSING WHEEL: cp${PYVERSION}-${WHEEL_ARCH}" ; RESULT_CODE=1; } ; \
             done; \

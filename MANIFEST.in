@@ -1,5 +1,6 @@
 exclude *.py
-include setup.py setupinfo.py versioninfo.py buildlibxml.py patch_lxml_deplibs.py
+include setup.py setupinfo.py versioninfo.py buildlibxml.py
+include patch_lxml_deplibs.py libxslt-*backport*.patch
 include test.py
 include update-error-constants.py
 include MANIFEST.in Makefile requirements.txt
