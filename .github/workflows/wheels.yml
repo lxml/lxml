@@ -187,24 +187,18 @@ jobs:
           only: ${{ matrix.only }}
 
       - name: Build Py3.8 wheels
-        if: startswith(matrix.only, 'cp39')
+        if: startswith(matrix.only, 'cp39-macos') || startswith(matrix.only, 'cp39-windows')
         # Keep cibuildwheel at 3.4.1 here.
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           CIBW_BUILD: "cp38*"
-          CIBW_MANYLINUX_i686_IMAGE: manylinux2014
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
 
       - name: Build old Linux wheels
-        if: >-
-          startswith(matrix.only, 'cp39-') &&
-          contains(matrix.only, '-manylinux_') &&
-          (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
+        if: matrix.only == 'cp39-manylinux_x86_64' || matrix.only == 'cp39-manylinux_aarch64'
         # Keep cibuildwheel at 3.4.1 here.
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
-          CIBW_BUILD: "*-manylinux_${{ contains(matrix.only, 'i686') && 'i686' || contains(matrix.only, 'x86_64') && 'x86_64' || 'aarch64' }}"
+          CIBW_BUILD: "${{ contains(matrix.only, 'x86_64') && '*-manylinux_i686 *-manylinux_x86_64' || '*-manylinux_aarch64' }}"
           CIBW_MANYLINUX_i686_IMAGE: manylinux2014
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
