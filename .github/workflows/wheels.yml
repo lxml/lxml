@@ -187,7 +187,7 @@ jobs:
           only: ${{ matrix.only }}
 
       - name: Build Py3.8 wheels
-        if: startswith(matrix.only, 'cp39-macos') || startswith(matrix.only, 'cp39-windows')
+        if: startswith(matrix.only, 'cp39-macos') || matrix.only == 'cp39-windows-2022'
         # Keep cibuildwheel at 3.4.1 here.
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
