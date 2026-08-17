@@ -198,16 +198,16 @@ jobs:
 
       - name: Build old Linux wheels
         if: >-
+          startswith(matrix.only, 'cp39-') &&
           contains(matrix.only, '-manylinux_') &&
           (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
         # Keep cibuildwheel at 3.4.1 here.
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
+          CIBW_BUILD: "*-manylinux_${{ contains(matrix.only, 'i686') && 'i686' || contains(matrix.only, 'x86_64') && 'x86_64' || 'aarch64' }}"
           CIBW_MANYLINUX_i686_IMAGE: manylinux2014
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
-        with:
-          only: ${{ matrix.only }}
 
       - name: Build faster Linux wheels
         # also build wheels with the most recent manylinux images and gcc
