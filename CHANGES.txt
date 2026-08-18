@@ -118,7 +118,7 @@ Other changes
 * Built using Cython 3.2.5.
 
 
-6.1.2 (2026-08-17)
+6.1.2 (2026-08-18)
 ==================
 
 * GH#526: Some build files were missing in the sdist.

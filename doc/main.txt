@@ -272,7 +272,7 @@ See the websites of lxml
 
 * `lxml 7.0.0a1`_, released 2026-05-29 (`changes for 7.0.0a1`_)
 
-* `lxml 6.1.2`_, released 2026-08-19 (`changes for 6.1.2`_)
+* `lxml 6.1.2`_, released 2026-08-18 (`changes for 6.1.2`_)
 
 * `lxml 6.1.1`_, released 2026-05-18 (`changes for 6.1.1`_)
 

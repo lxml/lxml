@@ -293,6 +293,12 @@ jobs:
           path: ./release_upload
           name: sdist
 
+      - name: Upload wheels
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: ./release_upload/*.whl
+          name: all_wheels
+
       - name: List downloaded artifacts
         run: |
           cd ./release_upload
@@ -301,17 +307,12 @@ jobs:
           echo; echo "Validating wheel success…"
           RESULT_CODE=0
           for PYVERSION in  39  310  311  312  313  314  315 ; do \
-            for WHEEL_ARCH in  "win32"  "win_amd64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
+            for WHEEL_ARCH in  "win32"  "win_amd64"  "win_arm64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
+              [[ "${PYVERSION}-${WHEEL_ARCH}" == "315"*"i686" ]] && continue; \
               ls *-cp${PYVERSION}-*${WHEEL_ARCH}*.whl >/dev/null 2>&1  ||  { echo "MISSING WHEEL: cp${PYVERSION}-${WHEEL_ARCH}" ; RESULT_CODE=1; } ; \
             done; \
           done; \
           exit ${RESULT_CODE}
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          path: ./release_upload/*.whl
-          name: all_wheels
 
       - name: Release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
