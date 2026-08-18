@@ -229,6 +229,12 @@ jobs:
           pattern: lxml-wheel-*
           merge-multiple: true
 
+      - name: Upload wheels
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: ./release_upload/*.whl
+          name: all_wheels
+
       - name: List downloaded artifacts
         run: |
           cd ./release_upload
@@ -243,12 +249,6 @@ jobs:
             done; \
           done; \
           exit ${RESULT_CODE}
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          path: ./release_upload/*.whl
-          name: all_wheels
 
       - name: Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
