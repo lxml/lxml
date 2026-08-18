@@ -187,7 +187,7 @@ jobs:
           only: ${{ matrix.only }}
 
       - name: Build Py3.8 wheels
-        if: startsWith(matrix.only, 'cp39-macos') || startsWith(matrix.only, 'cp39-musllinux') || startsWith(matrix.only, 'cp39-win')
+        if: startsWith(matrix.only, 'cp39-macos') || startsWith(matrix.only, 'cp39-musllinux') || matrix.only == 'cp39-win32' || matrix.only == 'cp39-win_amd64'
         # Keep cibuildwheel at 3.4.1 here.
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
@@ -243,8 +243,9 @@ jobs:
           echo; echo "Validating wheel success…"
           RESULT_CODE=0
           for PYVERSION in  38  39  310  311  312  313  314  315 ; do \
-            for WHEEL_ARCH in  "win32"  "win_amd64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
+            for WHEEL_ARCH in  "win32"  "win_amd64"  "win_arm64"  "manylinux*i686"  "manylinux*x86_64"  "musllinux*x86_64"  "macosx"; do \
               [[ "${PYVERSION}-${WHEEL_ARCH}" == "315"*"i686" ]] && continue; \
+              [[ "${PYVERSION}-${WHEEL_ARCH}" == "38-win_arm64" ]] && continue; \
               ls *-cp${PYVERSION}-*${WHEEL_ARCH}*.whl >/dev/null 2>&1  ||  { echo "MISSING WHEEL: cp${PYVERSION}-${WHEEL_ARCH}" ; RESULT_CODE=1; } ; \
             done; \
           done; \
