@@ -41,6 +41,9 @@ cdef extern from "Python.h":
       #define Py_MOD_GIL_NOT_USED  NULL
     #endif
 
+    if !defined(PY_BIG_ENDIAN) && defined(BIG_ENDIAN)
+      #define PY_BIG_ENDIAN  BIG_ENDIAN
+    #endif
     """
 
     ctypedef struct PyObject
@@ -49,7 +52,6 @@ cdef extern from "Python.h":
     cdef const int PY_VERSION_HEX
     cdef const bint IN_LIMITED_API "LXML_IN_LIMITED_API"
     cdef bint PY_BIG_ENDIAN
-    cdef bint PY_LITTLE_ENDIAN
 
     cdef void Py_INCREF(object o)
     cdef void Py_DECREF(object o)
