@@ -41,7 +41,7 @@ cdef extern from "Python.h":
       #define Py_MOD_GIL_NOT_USED  NULL
     #endif
 
-    if !defined(PY_BIG_ENDIAN) && defined(BIG_ENDIAN)
+    #if !defined(PY_BIG_ENDIAN) && defined(BIG_ENDIAN)
       #define PY_BIG_ENDIAN  BIG_ENDIAN
     #endif
     """
