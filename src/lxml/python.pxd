@@ -45,7 +45,7 @@ cdef extern from "Python.h":
       #ifdef BIG_ENDIAN
         #define PY_BIG_ENDIAN  BIG_ENDIAN
       #else
-        static CYTHON_INLINE int _lx__is_big_endian(void) {
+        static inline int _lx__is_big_endian(void) {
             union {uint32_t i; char c[4];} x = {0x01020304};
             return x.c[0] == 1;
         }
