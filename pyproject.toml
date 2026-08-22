@@ -15,7 +15,7 @@ skip = [
     "pp*-manylinux_i686",
     "*-musllinux_i686",
     "cp315*_i686",
-    # FT-Python 3.13t is probably not worth supporting (at least right now).
+    # FT-Python 3.13t is not worth supporting.
     "cp313t-*",
     # Reduce job load and HTTP hit rate on library servers.
     "cp39-*_ppc64le",
