@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-7.0.0b1 (2026-0?-??)
+7.0.0b1 (2026-08-22)
 ====================
 
 Bugs fixed
@@ -19,7 +19,7 @@ Bugs fixed
 Other changes
 -------------
 
-* Built using Cython 3.3.0b1.
+* Built using Cython 3.3.0.
 
 
 7.0.0a3 (2026-06-16)
