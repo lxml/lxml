@@ -372,8 +372,8 @@ def define_macros():
     # Use compact type specs to reduce the declaration size of our many extension types.
     macros.append(('CYTHON_USE_TYPE_SPECS', '1'))
     # PyPy crashes when accessing objects in tp_finalize().
-    if IS_PYPY:
-        macros.append(('CYTHON_USE_TP_FINALIZE', '0'))
+    #if IS_PYPY:
+    #    macros.append(('CYTHON_USE_TP_FINALIZE', '0'))
     return macros
 
 
