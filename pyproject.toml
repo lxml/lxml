@@ -45,17 +45,17 @@ environment.LDFLAGS = "-fPIC -flto"
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3 -DNDEBUG"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_x86_64"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=core2 -mtune=generic -mno-ssse3 -DNDEBUG"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_aarch64"
 inherit.environment = "append"
-environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72"
+environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72 -DNDEBUG"
 
 # [[tool.cibuildwheel.overrides]]
 # select = "*i686 *musllinux* *win32 *win_arm64 *macosx_x86_64 *linux_armv7l *linux_ppc64le *linux_riscv64"
