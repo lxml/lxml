@@ -34,7 +34,7 @@ def XMLDTDID(text, parser=None, *, base_url=None):
     The results are undefined.
     """
     cdef _Element root
-    root = XML(text, parser, base_url=base_url)
+    root = <_Element?> XML(text, parser, base_url=base_url)
     # xml:id spec compatible implementation: use DTD ID attributes from libxml2
     if root._doc._c_doc.ids is NULL:
         return root, {}

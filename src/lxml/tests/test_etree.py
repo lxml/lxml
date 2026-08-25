@@ -2998,6 +2998,22 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(sorted(dic.keys()),
                           sorted(expected.keys()))
 
+    def test_XMLDTDID_target_None(self):
+        # Crash reported in https://bugs.launchpad.net/bugs/2164984
+        class Target:
+            def start(self, tag, attrs): pass
+            def end(self, tag): pass
+            def data(self, data): pass
+            def close(self): return None  # not an Element !
+
+        parser = etree.XMLParser(target=Target())
+        try:
+            result = etree.XMLDTDID(b"<root/>", parser=parser)
+        except TypeError:
+            self.assertTrue(True)
+        else:
+            self.fail(f"Should have raised TypeError but returned {result}")
+
     def test_register_namespace_xml(self):
         self.assertRaises(ValueError, self.etree.register_namespace,
                           "XML", "http://www.w3.org/XML/1998/namespace")
