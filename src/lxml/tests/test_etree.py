@@ -606,6 +606,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(a[0].target, 'foo')
         self.assertEqual(a[0].text, 'some more text')
 
+    def test_pi_content(self):
+        ProcessingInstruction = self.etree.ProcessingInstruction
+        self.assertRaises(ValueError, ProcessingInstruction, "piname", "xyz?>zyx")
+        pi = ProcessingInstruction('abc', 'def')
+        self.assertRaises(ValueError, setattr, pi, 'text', "xyz?>zyx")
+
     def test_pi_parse(self):
         XML = self.etree.XML
         root = XML(b"<test><?mypi my test ?></test>")
@@ -2378,6 +2384,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         values = root.values()
         values.sort()
         self.assertEqual(['Alpha', 'Beta', 'Gamma'], values)
+
+    def test_comment_content(self):
+        Comment = self.etree.Comment
+        self.assertRaises(ValueError, Comment, "--")
+        self.assertRaises(ValueError, Comment, "  --  ")
+        self.assertRaises(ValueError, Comment, "xyz-")
+        comment = Comment('abc')
+        self.assertRaises(ValueError, setattr, comment, 'text', "--")
+        self.assertRaises(ValueError, setattr, comment, 'text', "  --  ")
+        self.assertRaises(ValueError, setattr, comment, 'text', "xyz-")
 
     # gives error in ElementTree
     def test_comment_empty(self):
