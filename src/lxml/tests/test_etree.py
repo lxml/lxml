@@ -599,7 +599,6 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_pi(self):
         # lxml.etree separates target and text
         Element = self.etree.Element
-        SubElement = self.etree.SubElement
         ProcessingInstruction = self.etree.ProcessingInstruction
 
         a = Element('a')
