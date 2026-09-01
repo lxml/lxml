@@ -2227,29 +2227,6 @@ cdef class __ContentOnlyElement(_Element):
     def attrib(self):
         return IMMUTABLE_EMPTY_MAPPING
 
-    property text:
-        def __get__(self):
-            _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
-            try:
-                return funicodeOrEmpty(self._c_node.content)
-            finally:
-                doc.unlock_read()
-
-        def __set__(self, value):
-            cdef tree.xmlDict* c_dict
-            _assertValidNode(self)
-            if value is None:
-                c_text = <const_xmlChar*>NULL
-            else:
-                value = _utf8(value)
-                c_text = _xcstr(value)
-            doc = self._doc
-            doc.lock_write()
-            tree.xmlNodeSetContent(self._c_node, c_text)
-            doc.unlock_write()
-
     # ACCESSORS
     def __getitem__(self, x):
         "__getitem__(self, x)"
@@ -2278,6 +2255,29 @@ cdef class __ContentOnlyElement(_Element):
         "values(self)"
         return []
 
+
+cdef _get_node_content(element: _Element):
+    doc = element._doc
+    doc.lock_read()
+    try:
+        return funicodeOrEmpty(element._c_node.content)
+    finally:
+        doc.unlock_read()
+
+
+cdef int _set_node_content(element: _Element, bytes value) noexcept:
+    cdef tree.xmlDict* c_dict
+    if value is None:
+        c_text = <const_xmlChar*>NULL
+    else:
+        c_text = _xcstr(value)
+    doc = element._doc
+    doc.lock_write()
+    result = tree.xmlNodeSetContent(element._c_node, c_text)
+    doc.unlock_write()
+    return result
+
+
 cdef class _Comment(__ContentOnlyElement):
     @property
     def tag(self):
@@ -2285,6 +2285,17 @@ cdef class _Comment(__ContentOnlyElement):
 
     def __repr__(self):
         return "<!--%s-->" % self.text
+
+    property text:
+        def __get__(self):
+            _assertValidNode(self)
+            return _get_node_content(self)
+
+        def __set__(self, value):
+            _assertValidNode(self)
+            if _set_node_content(self, _as_comment_text(value)) == -1:
+                raise MemoryError
+
 
 cdef class _ProcessingInstruction(__ContentOnlyElement):
     @property
@@ -2310,6 +2321,16 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
             doc.lock_write()
             tree.xmlNodeSetName(self._c_node, c_text)
             doc.unlock_write()
+
+    property text:
+        def __get__(self):
+            _assertValidNode(self)
+            return _get_node_content(self)
+
+        def __set__(self, value):
+            _assertValidNode(self)
+            if _set_node_content(self, _as_pi_text(value)) == -1:
+                raise MemoryError
 
     def __repr__(self):
         text = self.text
@@ -2370,8 +2391,6 @@ cdef class _Entity(__ContentOnlyElement):
 
     @property
     def text(self):
-        # FIXME: should this be None or '&[VALUE];' or the resolved
-        # entity value ?
         _assertValidNode(self)
         doc = self._doc
         doc.lock_read()
@@ -3555,12 +3574,7 @@ def Comment(text=None):
     Comment element factory. This factory function creates a special element that will
     be serialized as an XML comment.
     """
-    if text is None:
-        text = b''
-    else:
-        text = _utf8(text)
-        if b'--' in text or text.endswith(b'-'):
-            raise ValueError("Comment may not contain '--' or end with '-'")
+    text = _as_comment_text(text)
 
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
@@ -3569,6 +3583,15 @@ def Comment(text=None):
     c_node = _createComment(c_doc, _xcstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
+
+
+cdef bytes _as_comment_text(str utext):
+    if utext is None:
+        return b''
+    text = _utf8(utext)
+    if b'--' in text or text.endswith(b'-'):
+        raise ValueError("Comment may not contain '--' or end with '-'")
+    return text
 
 
 def ProcessingInstruction(target, text=None):
@@ -3582,12 +3605,7 @@ def ProcessingInstruction(target, text=None):
     if target.lower() == b'xml':
         raise ValueError, f"Invalid PI name '{target}'"
 
-    if text is None:
-        text = b''
-    else:
-        text = _utf8(text)
-        if b'?>' in text:
-            raise ValueError, "PI text must not contain '?>'"
+    text = _as_pi_text(text)
 
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
@@ -3598,6 +3616,15 @@ def ProcessingInstruction(target, text=None):
     return _elementFactory(doc, c_node)
 
 PI = ProcessingInstruction
+
+
+cdef bytes _as_pi_text(str utext):
+    if utext is None:
+        return b''
+    text = _utf8(utext)
+    if b'?>' in text:
+        raise ValueError, "PI text must not contain '?>'"
+    return text
 
 
 cdef class CDATA:
