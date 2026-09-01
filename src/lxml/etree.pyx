@@ -1462,7 +1462,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         def __set__(self, value):
             _assertValidNode(self)
-            is_qname: cython.bint = isinstance(value, QName)
+            is_qname: cython.bint = type(value) is not str and isinstance(value, QName)
             doc = self._doc
             doc.lock_write()
             try:
