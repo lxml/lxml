@@ -1129,6 +1129,7 @@ cdef class _BaseParser:
             pctxt.sax.cdataBlock = NULL
         if not self._flags.resolve_external_entities:
             pctxt.sax.getEntity = _getInternalEntityOnly
+            pctxt.sax.getParameterEntity = NULL  # Disable parameter entities completely.
 
     cdef int _registerHtmlErrorHandler(self, xmlparser.xmlParserCtxt* c_ctxt) except -1:
         cdef xmlparser.xmlSAXHandler* sax = c_ctxt.sax
