@@ -207,16 +207,8 @@ cdef class _MultiTagMatcher:
             self._py_tags = []
             self._storeTags(tags, set())
 
-    cdef _storeTags(self, tag, set seen):
-        if tag is Comment:
-            self._node_types |= 1 << tree.XML_COMMENT_NODE
-        elif tag is ProcessingInstruction:
-            self._node_types |= 1 << tree.XML_PI_NODE
-        elif tag is Entity:
-            self._node_types |= 1 << tree.XML_ENTITY_REF_NODE
-        elif tag is Element:
-            self._node_types |= 1 << tree.XML_ELEMENT_NODE
-        elif python._isString(tag):
+    cdef _storeTags(self, tag, seen: set):
+        if python._isString(tag):
             if tag in seen:
                 return
             seen.add(tag)
@@ -231,6 +223,14 @@ cdef class _MultiTagMatcher:
                 elif href == b'*':
                     href = None  # wildcard: any namespace, including none
                 self._py_tags.append((href, name))
+        elif tag is Comment:
+            self._node_types |= 1 << tree.XML_COMMENT_NODE
+        elif tag is ProcessingInstruction:
+            self._node_types |= 1 << tree.XML_PI_NODE
+        elif tag is Entity:
+            self._node_types |= 1 << tree.XML_ENTITY_REF_NODE
+        elif tag is Element:
+            self._node_types |= 1 << tree.XML_ELEMENT_NODE
         elif isinstance(tag, QName):
             self._storeTags(tag.text, seen)
         else:
