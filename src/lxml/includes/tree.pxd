@@ -397,7 +397,7 @@ cdef extern from "libxml/tree.h" nogil:
     cdef void xmlBufAttrSerializeTxtContent(xmlOutputBuffer *buf, xmlDoc *doc,
                                 xmlAttr *attr, const_xmlChar *string)
     cdef void xmlNodeSetName(xmlNode* cur, const_xmlChar* name)
-    cdef void xmlNodeSetContent(xmlNode* cur, const_xmlChar* content)
+    cdef int xmlNodeSetContent(xmlNode* cur, const_xmlChar* content)
     cdef xmlDtd* xmlCopyDtd(xmlDtd* dtd)
     cdef xmlDoc* xmlCopyDoc(xmlDoc* doc, int recursive)
     cdef xmlNode* xmlCopyNode(xmlNode* node, int extended)
