@@ -2266,14 +2266,16 @@ cdef _get_node_content(element: _Element):
 
 
 cdef int _set_node_content(element: _Element, bytes value) noexcept:
-    cdef tree.xmlDict* c_dict
-    if value is None:
-        c_text = <const_xmlChar*>NULL
-    else:
+    cdef const_xmlChar* c_text = NULL
+    cdef Py_ssize_t length = 0
+
+    if value is not None:
         c_text = _xcstr(value)
+        length = len(value)
+
     doc = element._doc
     doc.lock_write()
-    result = tree.xmlNodeSetContent(element._c_node, c_text)
+    result = tree.xmlNodeSetContentLen(element._c_node, c_text, length)  # 'Py_ssize_t length'
     doc.unlock_write()
     return result
 

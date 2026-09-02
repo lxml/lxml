@@ -552,14 +552,16 @@ cdef class _ModifyContentOnlyProxy(_ReadOnlyProxy):
                 return funicode(self._c_node.content)
 
         def __set__(self, value):
-            cdef tree.xmlDict* c_dict
+            cdef const_xmlChar* c_text = NULL
+            cdef Py_ssize_t length = 0
             self._assertNode()
-            if value is None:
-                c_text = <const_xmlChar*>NULL
-            else:
-                value = _utf8(value)
-                c_text = _xcstr(value)
-            tree.xmlNodeSetContent(self._c_node, c_text)
+            if value is not None:
+                bytes_value = _utf8(value)
+                c_text = _xcstr(bytes_value)
+                length = len(bytes_value)
+            result = tree.xmlNodeSetContentLen(self._c_node, c_text, length)  # 'Py_ssize_t length'
+            if tree.LIBXML_VERSION >= 21300 and result == -1:
+                raise MemoryError
 
 @cython.final
 @cython.internal

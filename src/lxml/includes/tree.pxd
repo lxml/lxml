@@ -102,6 +102,15 @@ cdef extern from * nogil: # actually "libxml/dict.h"
 
 
 cdef extern from "libxml/tree.h" nogil:
+    """
+    #if LIBXML_VERSION < 21300
+        #define __lx_xmlNodeSetContentLen(cur, content, len) \
+            (xmlNodeSetContentLen(cur, content, (len <= INT_MAX) ? (int) len : -1), 0)
+    #else
+        #define __lx_xmlNodeSetContentLen(cur, content, len) \
+            xmlNodeSetContentLen(cur, content, (len <= INT_MAX) ? (int) len : -1)
+    #endif
+    """
     ctypedef struct xmlDoc
     ctypedef struct xmlAttr
     ctypedef struct xmlNotationTable
@@ -397,7 +406,7 @@ cdef extern from "libxml/tree.h" nogil:
     cdef void xmlBufAttrSerializeTxtContent(xmlOutputBuffer *buf, xmlDoc *doc,
                                 xmlAttr *attr, const_xmlChar *string)
     cdef void xmlNodeSetName(xmlNode* cur, const_xmlChar* name)
-    cdef int xmlNodeSetContent(xmlNode* cur, const_xmlChar* content)
+    cdef int xmlNodeSetContentLen "__lx_xmlNodeSetContentLen" (xmlNode* cur, const_xmlChar* content, Py_ssize_t len)
     cdef xmlDtd* xmlCopyDtd(xmlDtd* dtd)
     cdef xmlDoc* xmlCopyDoc(xmlDoc* doc, int recursive)
     cdef xmlNode* xmlCopyNode(xmlNode* node, int extended)
