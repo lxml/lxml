@@ -274,6 +274,8 @@ See the websites of lxml
 
 * `lxml 7.0.0a1`_, released 2026-05-29 (`changes for 7.0.0a1`_)
 
+* `lxml 6.1.3`_, released 2026-09-02 (`changes for 6.1.3`_)
+
 * `lxml 6.1.2`_, released 2026-08-18 (`changes for 6.1.2`_)
 
 * `lxml 6.1.1`_, released 2026-05-18 (`changes for 6.1.1`_)
@@ -286,6 +288,7 @@ See the websites of lxml
 .. _`lxml 7.0.0a3`: /files/lxml-7.0.0a3.tgz
 .. _`lxml 7.0.0a2`: /files/lxml-7.0.0a2.tgz
 .. _`lxml 7.0.0a1`: /files/lxml-7.0.0a1.tgz
+.. _`lxml 6.1.3`: /files/lxml-6.1.3.tgz
 .. _`lxml 6.1.2`: /files/lxml-6.1.2.tgz
 .. _`lxml 6.1.1`: /files/lxml-6.1.1.tgz
 .. _`lxml 6.1.0`: /files/lxml-6.1.0.tgz
@@ -299,6 +302,7 @@ See the websites of lxml
 .. _`changes for 7.0.0a3`: /changes-7.0.0a3.html
 .. _`changes for 7.0.0a2`: /changes-7.0.0a2.html
 .. _`changes for 7.0.0a1`: /changes-7.0.0a1.html
+.. _`changes for 6.1.3`: /changes-6.1.3.html
 .. _`changes for 6.1.2`: /changes-6.1.2.html
 .. _`changes for 6.1.1`: /changes-6.1.1.html
 .. _`changes for 6.1.0`: /changes-6.1.0.html
