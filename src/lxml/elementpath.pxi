@@ -233,7 +233,15 @@ cdef class _MultiTagMatcher:
             self._node_types |= 1 << tree.XML_ELEMENT_NODE
         elif isinstance(tag, QName):
             self._storeTags(tag.text, seen)
+        elif isinstance(tag, _Element):
+            # This can have arbitrary effects on iteration below.
+            raise ValueError(f"expected a tag to match, got {tag!r}")
         else:
+            # Prevent infinite recursion for arbitrary (container) types.
+            key = (type(tag), id(tag))
+            if key in seen:
+                return
+            seen.add(key)
             # support a sequence of tags
             for item in tag:
                 self._storeTags(item, seen)

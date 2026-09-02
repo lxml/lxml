@@ -3471,6 +3471,16 @@ class ETreeOnlyTestCase(HelperTestCase):
             [],
             d.getchildren())
 
+    def test_iter_misuse_element(self):
+        element = self.etree.Element('tag')
+        self.assertRaises(ValueError, element.iter, element)
+
+    def test_iter_misuse_recursion(self):
+        tags = ['tag']
+        tags.append(tags)
+        element = self.etree.Element('tag')
+        element.iter(tags)  # should terminate
+
     def test_getiterator(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement

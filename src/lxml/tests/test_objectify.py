@@ -2653,6 +2653,17 @@ class ObjectifyTestCase(HelperTestCase):
             root.get('{http://www.w3.org/XML/1998/namespace}base'),
             "https://secret/url")
 
+    def test_iter_misuse_LP2165840(self):
+        # Crash reported in https://bugs.launchpad.net/lxml/+bug/2165840
+        element = objectify.ObjectifiedElement()
+        self.assertRaises(ValueError, element.iter, element)
+
+    def test_iter_misuse_recursion(self):
+        tags = ['tag']
+        tags.append(tags)
+        element = objectify.ObjectifiedElement()
+        element.iter(tags)  # should not fail
+
     def test_standard_lookup(self):
         XML = self.XML
 
