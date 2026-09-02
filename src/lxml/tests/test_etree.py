@@ -16,6 +16,7 @@ import sys
 import re
 import gc
 import operator
+import pathlib
 import shutil
 import tempfile
 import textwrap
@@ -1853,6 +1854,34 @@ class ETreeOnlyTestCase(HelperTestCase):
             pass
         else:
             self.assertNotIn("Søk på nettet", tostring(root, encoding="unicode"))
+
+    def test_entity_parse_indirect_parameter_entity_xxe(self):
+        # From https://bugs.launchpad.net/lxml/+bug/2165901
+        with tempfile.TemporaryDirectory() as directory:
+            directory = pathlib.Path(directory)
+
+            secret = directory / "secret.txt"
+            secret.write_text("EVIL_LOCAL_FILE_CONTENT", encoding="utf-8")
+
+            external_dtd = directory / "external.dtd"
+            external_dtd.write_text(
+                f'<!ENTITY % file SYSTEM "{secret.as_uri()}">\n'
+                '<!ENTITY leaked "%file;">\n',
+                encoding="utf-8",
+            )
+
+            xml = (
+                f'<!DOCTYPE root [<!ENTITY % dtd SYSTEM "{external_dtd.as_uri()}">%dtd;]>'
+                "<root>&leaked;</root>"
+            ).encode()
+
+            try:
+                root = etree.fromstring(xml)
+            except self.etree.XMLSyntaxError:
+                # This is the normal outcome - we should never access the external file.
+                pass
+            else:
+                self.assertNotIn("EVIL_LOCAL_FILE_CONTENT", self.etree.tostring(root, encoding="unicode"))
 
     def test_entity_restructure(self):
         xml = b'''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
