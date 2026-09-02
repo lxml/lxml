@@ -133,7 +133,7 @@ cdef class _MultiTagMatcher:
     """
     Match an xmlNode against a list of tags.
     """
-    cdef list _py_tags
+    cdef list[tuple[bytes | None, bytes | None]] _py_tags
     cdef qname* _cached_tags
     cdef size_t _cached_tags_count
     cdef size_t _cached_doc_dict_size

@@ -1058,7 +1058,8 @@ cdef inline bint _nsTagMatchesExactly(const_xmlChar* c_node_href,
     else:
         return tree.xmlStrEqual(<const_xmlChar*>c_href, c_node_href)
 
-cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
+
+cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list[tuple[bytes | None, bytes | None]] ns_tags,
                                           qname* c_ns_tags, bint force_into_dict) except -1:
     """Map a sequence of (name, namespace) pairs to a qname array for efficient
     matching with _tagMatchesExactly() above.
@@ -1099,6 +1100,7 @@ cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
             c_ns_tags[count].href = <python.PyObject*>ns
         count += 1
     return count
+
 
 cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
     """Unlink and free a node and subnodes if possible.  Otherwise, make sure
