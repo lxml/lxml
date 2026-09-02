@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+6.1.3 (2026-09-02)
+==================
+
+Bugs fixed
+----------
+
+* LP#2165901: External parameter entity parsing was allowed by default
+  (with ``resolve_entities="internal"``).
+  Issue found by Tomer Fichman.
+
+
 6.1.2 (2026-08-18)
 ==================
 
