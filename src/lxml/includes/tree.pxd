@@ -109,12 +109,24 @@ cdef extern from "libxml/tree.h" nogil:
 
         #define __lx_xmlNodeSetBase(node, uri) \
             (xmlNodeSetBase(node, uri), 0)
+
+        #define __lx_xmlNodeGetBaseSafe(doc, node, baseOut) \
+            (*(baseOut) = xmlNodeGetBase(doc, node), 0)
+
+        #define __lx_xmlBuildURISafe(doc, node, baseOut) \
+            (*(baseOut) = xmlBuildURI(doc, node), 0)
     #else
         #define __lx_xmlNodeSetContentLen(cur, content, len) \
             xmlNodeSetContentLen(cur, content, (len <= INT_MAX) ? (int) len : -1)
 
         #define __lx_xmlNodeSetBase(node, uri) \
             xmlNodeSetBase(node, uri)
+
+        #define __lx_xmlNodeGetBaseSafe(doc, node, baseOut) \
+            xmlNodeGetBaseSafe(doc, node, baseOut)
+
+        #define __lx_xmlBuildURISafe(doc, node, baseOut) \
+            xmlBuildURISafe(doc, node, baseOut)
     #endif
     """
     ctypedef struct xmlDoc
@@ -412,7 +424,7 @@ cdef extern from "libxml/tree.h" nogil:
     cdef void xmlBufAttrSerializeTxtContent(xmlOutputBuffer *buf, xmlDoc *doc,
                                 xmlAttr *attr, const_xmlChar *string)
     cdef void xmlNodeSetName(xmlNode* cur, const_xmlChar* name)
-    cdef int xmlNodeSetContentLen "__lx_xmlNodeSetContentLen" (xmlNode* cur, const_xmlChar* content, Py_ssize_t len)
+    cdef int xmlNodeSetContentLen "__lx_xmlNodeSetContentLen" (xmlNode* cur, const_xmlChar* content, Py_ssize_t len)  # return type changed in 2.13
     cdef xmlDtd* xmlCopyDtd(xmlDtd* dtd)
     cdef xmlDoc* xmlCopyDoc(xmlDoc* doc, int recursive)
     cdef xmlNode* xmlCopyNode(xmlNode* node, int extended)
@@ -428,14 +440,15 @@ cdef extern from "libxml/tree.h" nogil:
     cdef size_t xmlBufUse(xmlBuf* buf) # new in libxml2 2.9
     cdef int xmlKeepBlanksDefault(int val)
     cdef xmlChar* xmlNodeGetBase(xmlDoc* doc, xmlNode* node)
+    cdef int xmlNodeGetBaseSafe "__lx_xmlNodeGetBaseSafe" (xmlDoc* doc, xmlNode* node, xmlChar** baseOut)  # new in 2.13
     cdef xmlDtd* xmlCreateIntSubset(xmlDoc* doc, const_xmlChar* name,
                                     const_xmlChar* ExternalID, const_xmlChar* SystemID)
-    cdef void xmlNodeSetBase(xmlNode* node, const_xmlChar* uri)
-    cdef int xmlNodeSetBase "__lx_xmlNodeSetBase" (xmlNode* node, const_xmlChar* uri)
+    cdef int xmlNodeSetBase "__lx_xmlNodeSetBase" (xmlNode* node, const_xmlChar* uri)  # return type changed in 2.13
     cdef int xmlValidateNCName(const_xmlChar* value, int space)
 
 cdef extern from "libxml/uri.h" nogil:
     cdef const_xmlChar* xmlBuildURI(const_xmlChar* href, const_xmlChar* base)
+    cdef int xmlBuildURISafe "__lx_xmlBuildURISafe" (const_xmlChar* href, const_xmlChar* base, xmlChar** c_uri_out)  # new in 2.13
 
 cdef extern from "libxml/HTMLtree.h" nogil:
     cdef void htmlNodeDumpFormatOutput(xmlOutputBuffer* buf,

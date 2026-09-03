@@ -893,10 +893,7 @@ cdef class DocInfo:
     property URL:
         "The source URL of the document (or None if unknown)."
         def __get__(self):
-            url = None
-            with cython.critical_section(self._doc._lock):
-                c_url = self._doc._c_doc.URL
-                return _decodeFilename(c_url) if c_url is not NULL else None
+            return _get_docURL(self._doc)
 
         def __set__(self, url):
             url = _encodeFilename(url)
@@ -945,6 +942,12 @@ cdef class DocInfo:
         with cython.critical_section(self._doc._lock):
             dtd = _dtdFactory(self._doc._c_doc.extSubset)
         return dtd
+
+
+cdef _get_docURL(doc: _Document):
+    with cython.critical_section(doc._lock):
+        c_url = doc._c_doc.URL
+        return _decodeFilename(c_url) if c_url is not NULL else None
 
 
 @cython.no_gc_clear
@@ -1571,23 +1574,22 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Element, regardless of the document type (XML or HTML).
         """
         def __get__(self):
+            cdef xmlChar* c_base
             _assertValidNode(self)
             doc = self._doc
             doc.lock_read()
-            try:
-                c_base = tree.xmlNodeGetBase(self._doc._c_doc, self._c_node)
-                if c_base is NULL:
-                    if self._doc._c_doc.URL is NULL:
-                        return None
-                    return _decodeFilename(self._doc._c_doc.URL)
-            finally:
-                doc.unlock_read()
+            result = tree.xmlNodeGetBaseSafe(self._doc._c_doc, self._c_node, &c_base)
+            doc.unlock_read()
+
+            if c_base is NULL:
+                if tree.LIBXML_VERSION >= 21300 and result == -1:
+                    raise MemoryError
+                return _get_docURL(self._doc)
 
             try:
-                base = _decodeFilename(c_base)
+                return _decodeFilename(c_base)
             finally:
                 tree.xmlFree(c_base)
-            return base
 
         def __set__(self, url):
             _assertValidNode(self)

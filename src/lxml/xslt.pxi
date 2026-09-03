@@ -962,6 +962,8 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef _Element  result_node
         cdef bytes href_utf
         cdef const_xmlChar* c_href
+        cdef xmlChar* c_base = NULL
+        cdef xmlChar* c_uri = NULL
         cdef xmlAttr* c_attr
 
         _assertValidNode(self)
@@ -982,15 +984,21 @@ cdef class _XSLTProcessingInstruction(PIBase):
         if c_href[0] != c'#':
             # normal URL, try to parse from it
             self._doc.lock_read()
-            c_href = tree.xmlBuildURI(
-                c_href,
-                tree.xmlNodeGetBase(self._c_node.doc, self._c_node))
+            ret = tree.xmlNodeGetBaseSafe(self._c_node.doc, self._c_node, &c_base)
             self._doc.unlock_read()
-            if c_href is not NULL:
+
+            if c_base is not NULL:
+                ret = tree.xmlBuildURISafe(c_href, c_base, &c_uri)
+                tree.xmlFree(c_base)
+
+            if c_uri is not NULL:
                 try:
-                    href_utf = <unsigned char*>c_href
+                    href_utf = <unsigned char*> c_uri
                 finally:
-                    tree.xmlFree(<char*>c_href)
+                    tree.xmlFree(<char*> c_uri)
+            elif tree.LIBXML_VERSION >= 21300 and ret == -1:
+                raise MemoryError
+
             result_doc = _parseDocumentFromURL(href_utf, parser)
             return _elementTreeFactory(result_doc, None)
 
