@@ -106,9 +106,15 @@ cdef extern from "libxml/tree.h" nogil:
     #if LIBXML_VERSION < 21300
         #define __lx_xmlNodeSetContentLen(cur, content, len) \
             (xmlNodeSetContentLen(cur, content, (len <= INT_MAX) ? (int) len : -1), 0)
+
+        #define __lx_xmlNodeSetBase(node, uri) \
+            (xmlNodeSetBase(node, uri), 0)
     #else
         #define __lx_xmlNodeSetContentLen(cur, content, len) \
             xmlNodeSetContentLen(cur, content, (len <= INT_MAX) ? (int) len : -1)
+
+        #define __lx_xmlNodeSetBase(node, uri) \
+            xmlNodeSetBase(node, uri)
     #endif
     """
     ctypedef struct xmlDoc
@@ -425,6 +431,7 @@ cdef extern from "libxml/tree.h" nogil:
     cdef xmlDtd* xmlCreateIntSubset(xmlDoc* doc, const_xmlChar* name,
                                     const_xmlChar* ExternalID, const_xmlChar* SystemID)
     cdef void xmlNodeSetBase(xmlNode* node, const_xmlChar* uri)
+    cdef int xmlNodeSetBase "__lx_xmlNodeSetBase" (xmlNode* node, const_xmlChar* uri)
     cdef int xmlValidateNCName(const_xmlChar* value, int space)
 
 cdef extern from "libxml/uri.h" nogil:

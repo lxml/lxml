@@ -1598,8 +1598,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 c_base = _xcstr(url)
             doc = self._doc
             doc.lock_write()
-            tree.xmlNodeSetBase(self._c_node, c_base)
+            result = tree.xmlNodeSetBase(self._c_node, c_base)
             doc.unlock_write()
+            if tree.LIBXML_VERSION >= 21300 and result == -1:
+                raise MemoryError
 
     # ACCESSORS
     def __repr__(self):
