@@ -5,8 +5,11 @@ privately. **Do not disclose it as a public issue.** This gives us time to work 
 to fix the issue before public exposure, reducing the chance that the exploit will be
 used before a patch is released.
 
-Please submit the report as
-[Github draft security advisory](https://github.com/lxml/lxml/security/advisories).
+Please submit the report through the
+[Launchpad bug-tracker](https://bugs.launchpad.net/lxml/+filebug) (you may need to
+create an account and log in). Make sure to mark the "🔒 This bug is a security
+vulnerability" checkbox before submitting the report. This ensures the bug can only be
+seen by the security group.
 
 Please provide the following information in your report:
 
