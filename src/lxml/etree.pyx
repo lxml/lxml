@@ -3646,10 +3646,23 @@ cdef class CDATA:
         a string
         >>> print(tostring(el, encoding="unicode"))
         <content><![CDATA[a string]]></content>
+
+        >>> CDATA('a string')
+        CDATA('a string')
+        >>> print(CDATA('a string'))
+        <![CDATA[a string]]>
     """
     cdef bytes _utf8_data
     def __cinit__(self, data):
         self._utf8_data = _utf8(data)
+
+    def __str__(self):
+        text = self._utf8_data.replace(b']]>', b']]]]><![CDATA[>').decode('utf8')
+        return f"<![CDATA[{text}]]>"
+
+    def __repr__(self):
+        text = self._utf8_data.replace(b']]>', b']]]]><![CDATA[>').decode('utf8')
+        return f"CDATA({self._utf8_data.decode('utf8')!r})"
 
 
 def Entity(name):

@@ -2039,6 +2039,18 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertRaises(TypeError, CDATA, 1)
 
+    def test_cdata_type_str(self):
+        CDATA = self.etree.CDATA
+        self.assertEqual("<![CDATA[test]]>", str(CDATA("test")))
+        self.assertEqual("<![CDATA[]]]]><![CDATA[>]]>", str(CDATA("]]>")))
+        self.assertEqual("<![CDATA[a]]]]><![CDATA[>b]]>", str(CDATA("a]]>b")))
+
+    def test_cdata_type_repr(self):
+        CDATA = self.etree.CDATA
+        self.assertEqual("CDATA('test')>", repr(CDATA("test")))
+        self.assertEqual("CDATA(']]>')", repr(CDATA("]]>")))
+        self.assertEqual("CDATA('a]]>b')", repr(CDATA("a]]>b")))
+
     def test_cdata_errors(self):
         CDATA = self.etree.CDATA
         Element = self.etree.Element
