@@ -2047,7 +2047,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_cdata_type_repr(self):
         CDATA = self.etree.CDATA
-        self.assertEqual("CDATA('test')>", repr(CDATA("test")))
+        self.assertEqual("CDATA('test')", repr(CDATA("test")))
         self.assertEqual("CDATA(']]>')", repr(CDATA("]]>")))
         self.assertEqual("CDATA('a]]>b')", repr(CDATA("a]]>b")))
 
