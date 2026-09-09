@@ -1,0 +1,4 @@
+docutils
+pygments
+sphinx
+sphinx-book-theme
