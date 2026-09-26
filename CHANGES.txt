@@ -5,6 +5,11 @@ lxml changelog
 7.0.0 (2026-??-??)
 ==================
 
+Features added
+--------------
+
+* ``CDATA`` objects gained a string representation.
+
 Bugs fixed
 ----------
 
