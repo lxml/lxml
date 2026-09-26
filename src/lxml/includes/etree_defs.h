@@ -51,7 +51,7 @@
 #  endif
 #endif
 
-#if IS_PYPY
+#if IS_PYPY && PYPY_VERSION_NUM < 0x08000000
 #  ifndef PyUnicode_FromFormat
 #    define PyUnicode_FromFormat  PyString_FromFormat
 #  endif
