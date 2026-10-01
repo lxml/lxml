@@ -153,7 +153,7 @@ jobs:
 
       - name: Set up QEMU
         if: runner.os == 'Linux' && !(endsWith(matrix.platform, 'x86_64') || endsWith(matrix.platform, 'i686') || endsWith(matrix.platform, 'aarch64'))
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: all
 
@@ -173,7 +173,7 @@ jobs:
           echo "CIBW_BEFORE_BUILD_LINUX=${DIST_INSTALL} ccache && ccache -o cache_dir=/host${HOST_CCACHE_DIR} && ccache -p && for dir in /host/usr/lib/ccache /host/usr/local/opt/ccache/libexec; do ls -l \$dir || true; done || echo '::notice::ccache installation failed on ${{ matrix.only }}'" | tee -a "${GITHUB_ENV}"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
         with:
           only: ${{ matrix.only }}
 
@@ -188,7 +188,7 @@ jobs:
           contains(matrix.only, '-manylinux_') &&
           (startsWith(matrix.only, 'cp39-') || startsWith(matrix.only, 'cp310-') || startsWith(matrix.only, 'cp311-')) &&
           (contains(matrix.only, 'i686') || contains(matrix.only, 'x86_64') || contains(matrix.only, 'aarch64'))
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
         env:
           CIBW_MANYLINUX_i686_IMAGE: manylinux2014
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
@@ -243,12 +243,12 @@ jobs:
 
       - name: Set up QEMU
         if: runner.os == 'Linux' && !(endsWith(matrix.platform, 'x86_64') || endsWith(matrix.platform, 'i686') || endsWith(matrix.platform, 'aarch64'))
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: all
 
       - name: Build ABI3 wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
         env:
           # Smaller set of platforms that we only provide Stable ABI wheels for
           CIBW_BUILD: |
