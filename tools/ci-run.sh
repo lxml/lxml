@@ -73,7 +73,7 @@ fi
 GITHUB_API_TOKEN="${SAVED_GITHUB_API_TOKEN}" \
       CFLAGS="$CFLAGS $TEST_CFLAGS $EXTRA_CFLAGS" \
       LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS" \
-      python -u setup.py build_ext --inplace --warnings -j4 \
+      python -u setup.py build_ext --inplace --warnings -j3 \
       $(if [[ "$COVERAGE" == "true" ]]; then echo -n " --with-coverage"; fi ) \
       || exit 1
 
