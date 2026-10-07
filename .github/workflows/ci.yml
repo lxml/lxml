@@ -150,6 +150,14 @@ jobs:
               LIBXSLT_VERSION: 1.1.40,
             }
             extra_hash: "-oldlibs213"
+          - os: ubuntu-latest
+            python-version: "3.12"
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.14.6,
+              LIBXSLT_VERSION: 1.1.43,
+            }
+            extra_hash: "-oldlibs214"
 
           - os: ubuntu-latest
             python-version: "3.12"
