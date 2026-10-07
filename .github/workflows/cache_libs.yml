@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       WIN_LIBICONV_VERSION:
-        default: "1.17.1"
+        default: "1.19"
         required: false
         type: string
       WIN_LIBXML2_VERSION:
