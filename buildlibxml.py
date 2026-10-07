@@ -686,6 +686,7 @@ def build_libs(
     libxml2_configure_cmd = configure_cmd + [
         '--without-python',
         '--with-iconv=%s' % prefix,
+        '--with-schematron',
         ('--with-zlib=%s' % prefix) if with_zlib else '--without-zlib',
     ]
 
