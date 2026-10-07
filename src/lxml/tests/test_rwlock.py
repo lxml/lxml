@@ -310,6 +310,7 @@ class RWLockTest(unittest.TestCase):
 
     def test_concurrent_read_write_locking(self):
         lock = RWLock()
+        guard = threading.Lock()
 
         # Thread monitoring:
 
@@ -321,11 +322,13 @@ class RWLockTest(unittest.TestCase):
         def lock_read():
             nonlocal reader_count
             lock.lock_read()
-            reader_count += 1
+            with guard:
+                reader_count += 1
 
         def unlock_read():
             nonlocal reader_count
-            reader_count -= 1
+            with guard:
+                reader_count -= 1
             lock.unlock_read()
 
         def lock_write():
