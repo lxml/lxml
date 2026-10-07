@@ -693,14 +693,13 @@ def build_libs(
     if not libxml2_version:
         libxml2_version = os.path.basename(libxml2_dir).split('-', 1)[-1]
 
-    if tuple(map(tryint, libxml2_version.split('-', 1)[0].split('.'))) >= (2, 9, 5):
+    libxml2_version_tuple = tuple(map(tryint, libxml2_version.split('-', 1)[0].split('.')))
+    if libxml2_version_tuple >= (2, 9, 5):
         libxml2_configure_cmd.append('--without-lzma')  # can't currently build that
 
-    try:
-        if tuple(map(tryint, libxml2_version.split('-', 1)[0].split('.'))) >= (2, 7, 3):
-            libxml2_configure_cmd.append('--enable-rebuild-docs=no')
-    except Exception:
-        pass # this isn't required, so ignore any errors
+    if libxml2_version_tuple >= (2, 7, 3):
+        libxml2_configure_cmd.append('--enable-rebuild-docs=no')
+
     if not has_current_lib("libxml2", libxml2_dir):
         if not os.path.exists(os.path.join(libxml2_dir, "configure")):
             # Allow building from git sources by running autoconf etc.
