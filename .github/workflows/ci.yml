@@ -122,7 +122,7 @@ jobs:
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.10.3,
+              LIBXML2_VERSION: 2.10.4,
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs210"
@@ -130,7 +130,7 @@ jobs:
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.11.8,
+              LIBXML2_VERSION: 2.11.9,
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs211"
@@ -146,10 +146,18 @@ jobs:
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
-              LIBXML2_VERSION: 2.13.7,
+              LIBXML2_VERSION: 2.13.9,
               LIBXSLT_VERSION: 1.1.40,
             }
             extra_hash: "-oldlibs213"
+          - os: ubuntu-latest
+            python-version: "3.12"
+            env: {
+              STATIC_DEPS: true,
+              LIBXML2_VERSION: 2.14.6,
+              LIBXSLT_VERSION: 1.1.43,
+            }
+            extra_hash: "-oldlibs214"
 
           - os: ubuntu-latest
             python-version: "3.12"
