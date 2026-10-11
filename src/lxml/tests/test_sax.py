@@ -49,6 +49,24 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEqual(b'<?this and that?><a>ab</a>',
                           xml_out)
 
+    def test_etree_sax_pi_after_root(self):
+        # https://bugs.launchpad.net/lxml/+bug/2011542
+        tree = self.parse('<a>ab</a><?this and that?>')
+        xml_out = self._saxify_serialize(tree)
+        self.assertEqual(b'<a>ab</a><?this and that?>',
+                          xml_out)
+
+        tree = self.parse('<?before z?><a>ab</a><?one x?><?two y?>')
+        xml_out = self._saxify_serialize(tree)
+        self.assertEqual(b'<?before z?><a>ab</a><?one x?><?two y?>',
+                          xml_out)
+
+        tree = self.parse('<E></E><?t?>')
+        root = self._saxify_unsaxify(tree).getroot()
+        sibling = root.getnext()
+        self.assertEqual('t', sibling.target)
+        self.assertIsNone(sibling.getnext())
+
     def test_etree_sax_attributes(self):
         tree = self.parse('<a aa="5">ab<b b="5"/>ba</a>')
         xml_out = self._saxify_serialize(tree)
