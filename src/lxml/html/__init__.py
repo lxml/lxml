@@ -200,10 +200,10 @@ class Classes(MutableSet):
         if not value or re.search(r'\s', value):
             raise ValueError("Invalid class name: %r" % value)
         classes = self._get_class_value().split()
-        try:
-            classes.remove(value)
+        if value in classes:
+            classes = [name for name in classes if name != value]
             enabled = False
-        except ValueError:
+        else:
             classes.append(value)
             enabled = True
         if classes:
