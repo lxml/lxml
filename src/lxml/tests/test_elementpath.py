@@ -232,10 +232,8 @@ class EtreeElementPathTestCase(HelperTestCase):
             )
 
     def test_find(self):
-        """
-        Test find methods (including xpath syntax).
-        Originally copied from 'selftest.py'.
-        """
+        # Test find methods (including xpath syntax).
+        # Originally copied from 'selftest.py'.
         elem = etree.XML("""
         <body>
           <tag class='a'>text</tag>
