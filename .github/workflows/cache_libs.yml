@@ -8,15 +8,15 @@ on:
         required: false
         type: string
       LIBICONV_VERSION:
-        default: "1.18"
+        default: "1.19"
         required: false
         type: string
       LIBXML2_VERSION:
-        default: "2.14.6"
+        default: "2.15.4"
         required: false
         type: string
       LIBXSLT_VERSION:
-        default: "1.1.43"
+        default: "1.1.45"
         required: false
         type: string
       WIN_ZLIB_VERSION:
@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       WIN_LIBICONV_VERSION:
-        default: "1.17.1"
+        default: "1.19"
         required: false
         type: string
       WIN_LIBXML2_VERSION:

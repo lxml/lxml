@@ -193,6 +193,17 @@ jobs:
           CIBW_MANYLINUX_i686_IMAGE: manylinux2014
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+          # iconv 1.19 requires newer 'make' (GNU make >= 4.0).
+          CIBW_ENVIRONMENT: >
+            LIBICONV_VERSION="1.18"
+            CCACHE_READONLY=1
+            PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+            CFLAGS="-O3 -g1 -pipe -fPIC -flto -DNDEBUG"
+            LDFLAGS="-fPIC -flto"
+            AR="gcc-ar"
+            NM="gcc-nm"
+            RANLIB="gcc-ranlib"
+          CIBW_ENVIRONMENT_PASS_LINUX: LXML_CSTD  ZLIB_VERSION  LIBXML2_VERSION  LIBXSLT_VERSION  STATIC_DEPS
         with:
           only: ${{ matrix.only }}
 
