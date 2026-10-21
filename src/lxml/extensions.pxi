@@ -669,13 +669,10 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
                                  _BaseContext context):
     cdef xmlNode* c_node
-    cdef int i
-    cdef list result
-    result = []
+    cdef list result = []
     if xpathObj.nodesetval is NULL:
         return result
-    for i in range(xpathObj.nodesetval.nodeNr):
-        c_node = xpathObj.nodesetval.nodeTab[i]
+    for c_node in xpathObj.nodesetval.nodeTab[:xpathObj.nodesetval.nodeNr]:
         _unpackNodeSetEntry(result, c_node, doc, context,
                             xpathObj.type == xpath.XPATH_XSLT_TREE)
     return result
