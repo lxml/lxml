@@ -85,6 +85,25 @@ with an extra toggle method to switch the state of classes
     ...
     ValueError: Invalid class name: 'foo '
 
+Toggling a repeated class name removes every occurrence and returns its new state.
+
+    >>> el = fragment_fromstring('<span class="foo foo bar"></span>')
+    >>> el.classes.toggle('foo')
+    False
+    >>> 'foo' in el.classes
+    False
+    >>> el.get('class')
+    'bar'
+    >>> el.classes.toggle('foo')
+    True
+    >>> el.get('class')
+    'bar foo'
+    >>> el.set('class', 'foo foo')
+    >>> el.classes.toggle('foo')
+    False
+    >>> el.get('class') is None
+    True
+
 Also added is a get_rel_links, which you can use to search for links
 like ``<a rel="$something">``::
 
