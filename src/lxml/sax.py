@@ -128,8 +128,16 @@ class ElementTreeContentHandler(ContentHandler):
         pi = ProcessingInstruction(target, data)
         if self._root is None:
             self._root_siblings.append(pi)
-        else:
+        elif self._element_stack:
             self._element_stack[-1].append(pi)
+        else:
+            # The root is already closed, so this PI is a following sibling.
+            sibling = self._root
+            follower = sibling.getnext()
+            while follower is not None:
+                sibling = follower
+                follower = sibling.getnext()
+            sibling.addnext(pi)
 
     def endElementNS(self, ns_name, qname):
         element = self._element_stack.pop()
