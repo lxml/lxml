@@ -394,7 +394,7 @@ cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode*
     cdef tree.xmlAttr* c_attr
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_del_ns_list = NULL
-    cdef proxy_count = 0
+    cdef size_t proxy_count = 0
 
     c_start_node = c_element
 
