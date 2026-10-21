@@ -335,7 +335,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef char* c_name
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_del_ns_list = NULL
-    cdef proxy_count = 0
+    cdef size_t proxy_count = 0
 
     if not tree._isElementOrXInclude(c_element):
         return 0
