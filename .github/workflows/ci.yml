@@ -205,7 +205,10 @@ jobs:
             allowed_failure: true
           - os: ubuntu-latest
             python-version: pypy-3.11
-            #python-version: pypy-3.11
+            env: { STATIC_DEPS: false }
+            allowed_failure: true
+          - os: ubuntu-latest
+            python-version: pypy-3.12
             env: { STATIC_DEPS: false }
             allowed_failure: true
 
