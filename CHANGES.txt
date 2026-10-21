@@ -13,6 +13,9 @@ Features added
 Bugs fixed
 ----------
 
+* LP#2011542: A processing instruction after the root element crashed
+  ``ElementTreeContentHandler`` with ``IndexError``.
+
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
