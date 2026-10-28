@@ -176,12 +176,15 @@ def convert_changelog(lxml_path, changelog_file_path, rst2html_script, styleshee
     finally:
         f.close()
 
-    links = dict(LP='`%s <https://bugs.launchpad.net/lxml/+bug/%s>`_',
-                 GH='`%s <https://github.com/lxml/lxml/issues/%s>`_')
-    replace_tracker_links = re.compile('((LP|GH)#([0-9]+))').sub
+    links = dict(
+        LP='`%s <https://bugs.launchpad.net/lxml/+bug/%s>`_',
+        GH='`%s <https://github.com/lxml/lxml/issues/%s>`_',
+        GHSA='`%s <https://github.com/lxml/lxml/security/advisories/%s>`_',
+    )
+    replace_tracker_links = re.compile('(?<= )((LP#|GH#|GHSA-)([0-9a-z-]+))').sub
     def insert_link(match):
         text, ref_type, ref_id = match.groups()
-        return links[ref_type] % (text, ref_id)
+        return links[ref_type[:-1]] % (text, ref_id)
     content = replace_tracker_links(insert_link, content)
 
     command = [sys.executable, rst2html_script] + RST2HTML_OPTIONS.split() + [
