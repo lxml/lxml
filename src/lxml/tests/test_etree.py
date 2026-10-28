@@ -2042,6 +2042,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(b'<root><![CDATA[test]]]]><![CDATA[>]]></root>',
                           tostring(root))
 
+    def test_cdata_end_bracket(self):
+        # Tests that a trailing ']' in CDATA is handled correctly.
+        CDATA = self.etree.CDATA
+        Element = self.etree.Element
+        tostring = self.etree.tostring
+
+        root = Element("root")
+        root.text = CDATA('test]')
+
+        self.assertEqual('test]',
+                          root.text)
+        self.assertEqual(b'<root><![CDATA[test]]]></root>',
+                          tostring(root))
+
     # TypeError in etree, AssertionError in ElementTree;
     def test_setitem_assert(self):
         Element = self.etree.Element

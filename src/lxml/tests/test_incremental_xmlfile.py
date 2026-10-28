@@ -203,6 +203,13 @@ class _XmlFileTestCaseBase(HelperTestCase):
         self.assertXml(
             '<test><![CDATA[Ensure ]]]]><![CDATA[> is escaped using separate CDATA nodes]]></test>')
 
+    def test_cdata_trailing_bracket(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                xf.write(CDATA('End text with bracket: ]'))
+        self.assertXml(
+            '<test><![CDATA[End text with bracket: ]]]></test>')
+
     def test_encoding(self):
         with etree.xmlfile(self._file, encoding='utf-16') as xf:
             with xf.element('test'):
