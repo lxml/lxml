@@ -1305,7 +1305,7 @@ cdef tree.xmlEntity* _getInternalEntityOnly(void* ctxt, const_xmlChar* name) noe
         err_context = xmlerror.xmlStructuredErrorContext
         err_func(err_context, &c_error)
 
-    c_ctxt.wellFormed = 0
+    _abortParser(c_ctxt)
     # The entity was looked up and does not need to be freed.
     return NULL
 
@@ -1341,6 +1341,14 @@ cdef void _initSaxDocument(void* ctxt) noexcept with gil:
                 # already initialised but empty => clear
                 tree.xmlHashFree(c_doc.ids, NULL)
                 c_doc.ids = NULL
+
+
+cdef void _abortParser(xmlparser.xmlParserCtxt* c_ctxt) noexcept nogil:
+    if c_ctxt.errNo == xmlerror.XML_ERR_OK:
+        c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+    # stop parsing immediately
+    xmlparser.xmlStopParser(c_ctxt)
+    c_ctxt.instate = xmlparser.XML_PARSER_EOF
 
 
 ############################################################

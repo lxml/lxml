@@ -239,12 +239,7 @@ cdef class _SaxParserContext(_ParserContext):
             _pushSaxNsEndEvents(self)
 
     cdef void _handleSaxException(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
-        if c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        # stop parsing immediately
-        c_ctxt.wellFormed = 0
-        c_ctxt.disableSAX = 1
-        c_ctxt.instate = xmlparser.XML_PARSER_EOF
+        _abortParser(c_ctxt)
         self._store_raised()
 
 
@@ -258,6 +253,11 @@ cdef class _ParseEventsIterator:
     def __cinit__(self):
         self._events = []
         self._event_index = 0
+
+    cdef int abort(self) except -1:
+        del self._events[:]
+        self._event_index = 0
+        return 0
 
     def __iter__(self):
         return self

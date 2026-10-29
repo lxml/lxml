@@ -242,6 +242,7 @@ cdef extern from "libxml/parser.h" nogil:
                                              xmlParserInputBuffer* input,
                                              int enc)
     cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
+    cdef void xmlStopParser(xmlParserCtxt* ctxt)
     cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
     cdef void xmlCtxtReset(xmlParserCtxt* ctxt)
     cdef void xmlClearParserCtxt(xmlParserCtxt* ctxt)
