@@ -227,7 +227,7 @@ cdef class _SaxParserContext(_ParserContext):
             if root is not None and root._c_node.type == tree.XML_ELEMENT_NODE:
                 self._root = root
         node = _elementFactory(self._doc, c_node)
-        self.events_iterator._events.append( (event, node) )
+        self.events_iterator.add_event( (event, node) )
         return 0
 
     cdef int flushEvents(self) except -1:
@@ -253,6 +253,11 @@ cdef class _ParseEventsIterator:
     def __cinit__(self):
         self._events = []
         self._event_index = 0
+
+    @cython.inline
+    cdef int add_event(self, event) except -1:
+        self._events.append(event)
+        return 0
 
     cdef int abort(self) except -1:
         del self._events[:]
@@ -309,7 +314,7 @@ cdef void _handleSaxStart(
                 context, c_nb_namespaces, c_namespaces)
             if event_filter & PARSE_EVENT_FILTER_START_NS:
                 for prefix_uri_tuple in declared_namespaces:
-                    context.events_iterator._events.append(("start-ns", prefix_uri_tuple))
+                    context.events_iterator.add_event(("start-ns", prefix_uri_tuple))
         else:
             declared_namespaces = None
 
@@ -358,7 +363,7 @@ cdef void _handleSaxTargetStart(
 
             if event_filter & PARSE_EVENT_FILTER_START_NS:
                 for prefix_uri_tuple in declared_namespaces:
-                    context.events_iterator._events.append(("start-ns", prefix_uri_tuple))
+                    context.events_iterator.add_event(("start-ns", prefix_uri_tuple))
 
             if sax_event_filter & SAX_EVENT_START_NS:
                 for prefix, uri in declared_namespaces:
@@ -482,7 +487,7 @@ cdef int _pushSaxStartEvent(_SaxParserContext context,
             assert context._doc is not None
             node = _elementFactory(context._doc, c_ctxt.node)
         if context._event_filter & PARSE_EVENT_FILTER_START:
-            context.events_iterator._events.append(('start', node))
+            context.events_iterator.add_event(('start', node))
         if (context._target is None and
                 context._event_filter & PARSE_EVENT_FILTER_END):
             context._node_stack.append(node)
@@ -549,7 +554,7 @@ cdef int _pushSaxNsEndEvents(_SaxParserContext context) except -1:
         if call_target:
             context._target._handleSaxEndNs(prefix_uri[0])
         if build_events:
-            context.events_iterator._events.append(('end-ns', None))
+            context.events_iterator.add_event(('end-ns', None))
 
     return 0
 
@@ -562,7 +567,7 @@ cdef int _pushSaxEndEvent(_SaxParserContext context,
                 context._matcher.matchesNsTag(c_href, c_name)):
             if context._target is None:
                 node = context._node_stack.pop()
-            context.events_iterator._events.append(('end', node))
+            context.events_iterator.add_event(('end', node))
     return 0
 
 
@@ -627,7 +632,7 @@ cdef void _handleSaxTargetPI(void* ctxt, const_xmlChar* c_target,
             funicodeOrNone(c_target),
             funicodeOrEmpty(c_data))
         if context._event_filter & PARSE_EVENT_FILTER_PI:
-            context.events_iterator._events.append(('pi', pi))
+            context.events_iterator.add_event(('pi', pi))
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -662,7 +667,7 @@ cdef void _handleSaxTargetComment(void* ctxt, const_xmlChar* c_data) noexcept wi
     try:
         comment = context._target._handleSaxComment(funicodeOrEmpty(c_data))
         if context._event_filter & PARSE_EVENT_FILTER_COMMENT:
-            context.events_iterator._events.append(('comment', comment))
+            context.events_iterator.add_event(('comment', comment))
     except:
         context._handleSaxException(c_ctxt)
     finally:
