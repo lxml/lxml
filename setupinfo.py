@@ -160,6 +160,11 @@ def ext_modules(static_include_dirs, static_library_dirs,
     result = []
     for module, src_file in zip(modules, module_files):
         is_py = module in COMPILED_MODULES
+        # Repeated PEP 517 hooks can reuse generated C without Cython metadata.
+        # Keep the original test instrument's required macro in that build too.
+        module_macros = list(_define_macros)
+        if module == 'lxml.tests._testlock':
+            module_macros.append(('LXML_LOCK_PERFORMANCE', '1'))
         main_module_source = src_file + (
             '.c' if not use_cython else '.py' if is_py else '.pyx')
         result.append(
@@ -170,7 +175,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 extra_compile_args = _cflags,
                 extra_link_args = None if is_py else _ldflags,
                 extra_objects = None if is_py else static_binaries,
-                define_macros = _define_macros,
+                define_macros = module_macros,
                 include_dirs = _include_dirs,
                 library_dirs = None if is_py else _library_dirs,
                 runtime_library_dirs = None if is_py else runtime_library_dirs,
