@@ -591,6 +591,7 @@ def download_libs(
 
 
 LIBRARY_PATCHES = {
+    "libxml2-2.14.6": "libxml2-2.14.6-backport1.patch",
     "libxslt-1.1.43": "libxslt-1.1.43-backport1.patch",
 }
 
