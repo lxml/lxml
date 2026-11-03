@@ -19,9 +19,9 @@ try:
     import multiprocessing
     cpus = multiprocessing.cpu_count()
     if cpus > 1:
-        if cpus > 5:
-            cpus = 5
-        multi_make_options = ['-j%d' % (cpus+1)]
+        if cpus > 6:
+            cpus = 6
+        multi_make_options = [f'-j{cpus:d}']
 except Exception:
     pass
 
