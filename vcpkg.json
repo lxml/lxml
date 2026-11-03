@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "dependencies": [
+    "libxslt",
+    {
+      "$explanation": "This entry is only needed to work around vcpkg default feature issue (https://github.com/microsoft/vcpkg/issues/44627), which is fixed in 2.13.5+ in https://github.com/microsoft/vcpkg/pull/44633. Remove this when we update libxml2 for Windows.",
+      "name": "libxml2",
+      "default-features": false,
+      "features": ["iconv", "zlib"]
+    }
+  ],
+  "overrides": [
+    {
+      "name": "zlib",
+      "version": "1.3.2#2"
+    },
+    {
+      "name": "libiconv",
+      "version": "1.19#1"
+    },
+    {
+      "name": "libxml2",
+      "version": "2.11.9"
+    },
+    {
+      "name": "libxslt",
+      "version": "1.1.45"
+    }
+  ],
+  "builtin-baseline": "9eec002df1cd109f8f104cd966a763daf9751489"
+}
