@@ -694,10 +694,12 @@ cdef void _handleSaxComment(void* ctxt, const_xmlChar* text) noexcept with gil:
 
 cdef inline xmlNode* _findLastEventNode(xmlparser.xmlParserCtxt* c_ctxt) noexcept:
     # this mimics what libxml2 creates for comments/PIs
-    if c_ctxt.inSubset == 1:
-        return c_ctxt.myDoc.intSubset.last
-    elif c_ctxt.inSubset == 2:
-        return c_ctxt.myDoc.extSubset.last
+    if c_ctxt.inSubset:
+        # Ignore internal/external subset. libxml2 uses the following,
+        # but we don't have a document node for the DTDs to create an element proxy.
+        # if c_ctxt.inSubset == 1: return c_ctxt.myDoc.intSubset.last
+        # if c_ctxt.inSubset == 2: return c_ctxt.myDoc.extSubset.last
+        return NULL
     elif c_ctxt.node is NULL:
         return c_ctxt.myDoc.last
     elif c_ctxt.node.type == tree.XML_ELEMENT_NODE:
