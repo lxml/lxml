@@ -189,6 +189,30 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 xf.write(el)
         self.assertXml('<älämänt Тест="Атрибут"><älämänt Тест="Атрибут"/></älämänt>')
 
+    def test_element_name_invalid(self):
+        with etree.xmlfile(self._file) as xf:
+            self.assertRaises(ValueError, xf.element, 'a><b')
+            self.assertRaises(ValueError, xf.element, 'na me')
+            self.assertRaises(ValueError, xf.element, '{ns}na"me')
+            with xf.element('test'):
+                pass
+        self.assertXml('<test></test>')
+
+    def test_attribute_name_invalid(self):
+        with etree.xmlfile(self._file) as xf:
+            self.assertRaises(ValueError, xf.element, 'test', {'k="v" x': 'v'})
+            self.assertRaises(ValueError, xf.element, 'test', {'{ns}k>': 'v'})
+            self.assertRaises(ValueError, xf.element, 'test', **{'k><x': 'v'})
+            with xf.element('test', {'k': 'v'}):
+                pass
+        self.assertXml('<test k="v"></test>')
+
+    def test_element_name_prefixed(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('p:test', {'xmlns:p': 'nsURI'}):
+                pass
+        self.assertXml('<p:test xmlns:p="nsURI"></p:test>')
+
     def test_escaping(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
@@ -620,6 +644,15 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
                 xf.write("foo")
 
         self.assertXml('<tagname attr="&quot;misqu&#246;ted&#13124;&#78660;&quot;">foo</tagname>')
+
+    def test_html_name_invalid(self):
+        with etree.htmlfile(self._file) as xf:
+            self.assertRaises(ValueError, xf.element, 'p><script')
+            self.assertRaises(ValueError, xf.element, 'p', {'a><script': 'v'})
+            self.assertRaises(ValueError, xf.element, 'p', {'a onclick': 'v'})
+            with xf.element('p', {'@click': 'v'}):
+                pass
+        self.assertXml('<p @click="v"></p>')
 
     def test_unescaped_script(self):
         with etree.htmlfile(self._file) as xf:

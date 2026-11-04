@@ -27,6 +27,9 @@ Bugs fixed
   if class names were duplicated.
   Patch by Huanyi Xie.
 
+* Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
+  were not validated and could inject arbitrary markup into the output.
+
 Other changes
 -------------
 
