@@ -246,17 +246,26 @@ def _init_node_converters(makeelement):
             attribs = map_attrs(attrs) if attrs else {}
             res = makeelement(bs_node.name, attrib=attribs)
 
+        # Join consecutive text nodes once to avoid quadratic string copying.
+        text_parts = []
         for child in bs_node:
             # avoid double recursion by inlining convert_node(), see above
             try:
                 handler = converters[type(child)]
             except KeyError:
-                pass
-            else:
-                if handler is not None:
-                    handler(child, res)
+                handler = converters[type(child)] = find_best_converter(child)
+            if handler is None:
                 continue
-            convert_node(child, res)
+            # The resolved handler keeps Comment and PI subclasses separate.
+            if handler is convert_text:
+                text_parts.append(unescape(child))
+                continue
+            if text_parts:
+                append_text(res, ''.join(text_parts))
+                text_parts.clear()
+            handler(child, res)
+        if text_parts:
+            append_text(res, ''.join(text_parts))
         return res
 
     @converter(Comment)
