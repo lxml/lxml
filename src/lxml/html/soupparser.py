@@ -227,10 +227,12 @@ def _init_node_converters(makeelement):
         return attribs
 
     def append_text(parent, text):
-        if len(parent) == 0:
+        try:
+            last_child = parent[-1]
+        except IndexError:
             parent.text = (parent.text or '') + text
         else:
-            parent[-1].tail = (parent[-1].tail or '') + text
+            last_child.tail = (last_child.tail or '') + text
 
     # converters are tried in order of their definition
 
