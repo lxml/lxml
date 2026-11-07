@@ -33,6 +33,7 @@ jobs:
     secrets: inherit
     with:
       LIBXML2_VERSION: "2.14.6"
+      LIBXSLT_VERSION: "1.1.43"
 
   benchmarks:
     needs: [ cache_libs ]
