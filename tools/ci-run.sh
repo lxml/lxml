@@ -19,7 +19,7 @@ if [ -z "${OS_NAME##ubuntu*}" ]; then
     # Ubuntu 22.04 has libxml2 2.9.13, Ubuntu 24.04 has 2.9.14, Ubuntu 26.04 has libxml2-16
     sudo apt-get install -y -q  libxml2-16  libxml2-dev  libxslt1.1  libxslt1-dev \
     ||  sudo apt-get install -y -q "libxml2=2.9.14*" "libxml2-dev=2.9.14*" libxslt1.1 libxslt1-dev  \
-    ||  sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev \
+    ||  sudo apt-get install -y -q "libxml2=2.9.13*" "libxml2-dev=2.9.13*" libxslt1.1 libxslt1-dev
   fi
   sudo /usr/sbin/update-ccache-symlinks
   echo "/usr/lib/ccache" >> $GITHUB_PATH # export ccache to path
