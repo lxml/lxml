@@ -31,6 +31,8 @@ jobs:
   cache_libs:
     uses: ./.github/workflows/cache_libs.yml
     secrets: inherit
+    with:
+      LIBXML2_VERSION: "2.14.6"
 
   benchmarks:
     needs: [ cache_libs ]
