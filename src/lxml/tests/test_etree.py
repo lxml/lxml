@@ -18,6 +18,7 @@ import re
 import gc
 import operator
 import pathlib
+import platform
 import shutil
 import tempfile
 import textwrap
@@ -5240,6 +5241,10 @@ class _XIncludeTestCase(HelperTestCase):
             called = {}
 
             def resolve(self, url, id, context):
+                if platform.system() == 'Windows':
+                    # The separator used might depend on libxml2, so normalise on Windows.
+                    url = url.replace('\\', '/')
+
                 if url.endswith("test_xinclude.xml"):
                     assert not self.called.get("input")
                     self.called["input"] = True
