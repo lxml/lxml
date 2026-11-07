@@ -308,7 +308,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          (sudo apt-get update  &&  sudo apt-get install -y  libxml2 libxml2-dev libxslt1.1 libxslt1-dev) &
+          (sudo apt-get update  &&  sudo apt-get install -y  libxml2-16 libxml2-dev libxslt1.1 libxslt1-dev \
+            ||  sudo apt-get install -y  libxml2 libxml2-dev libxslt1.1 libxslt1-dev) &
           (python -m pip install -U  pip setuptools  && \
             python -m pip install -U  -r requirements.txt  -r docs-requirements.txt  -r test-requirements.txt  && \
             python -m pip install --no-deps  lxml_html_clean \
