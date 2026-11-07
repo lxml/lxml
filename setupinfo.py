@@ -64,9 +64,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 static_cflags, static_binaries):
     global XML2_CONFIG, XSLT_CONFIG
     if OPTION_BUILD_LIBXML2XSLT:
-        from buildlibxml import build_libxml2xslt, get_prebuilt_libxml2xslt
+        from buildlibxml import build_libxml2xslt, build_libxml2xslt_via_vcpkg
         if sys.platform.startswith('win'):
-            get_prebuilt_libxml2xslt(
+            build_libxml2xslt_via_vcpkg(
                 OPTION_DOWNLOAD_DIR, static_include_dirs, static_library_dirs)
         else:
             XML2_CONFIG, XSLT_CONFIG = build_libxml2xslt(
@@ -285,10 +285,8 @@ def libraries():
     standard_libs.append('m')
 
     if sys.platform in ('win32',):
-        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv']
-        if OPTION_STATIC:
-            libs = ['%s_a' % lib for lib in libs]
-        libs.extend(['zlib', 'WS2_32'])
+        # bcrypt is a Windows system library that libxml2 depends on.
+        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv', 'bcrypt', 'zs', 'WS2_32']
     elif OPTION_STATIC:
         libs = standard_libs
     else:
