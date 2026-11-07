@@ -107,8 +107,8 @@ jobs:
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
-              | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
-              | sed -e '/aarch64\|armv7l/s|ubuntu-latest|ubuntu-24.04-arm|' \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-24.04"}' \
+              | sed -e '/aarch64\|armv7l/s|ubuntu-24.04|ubuntu-24.04-arm|' \
               && cibuildwheel --print-build-identifiers --platform macos \
               | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               && cibuildwheel --print-build-identifiers --platform windows  --archs AMD64,x86 \
