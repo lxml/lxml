@@ -4,6 +4,7 @@
 __all__ = ["fromstring", "parse", "convert_tree"]
 
 import re
+from contextlib import contextmanager
 from lxml import etree, html
 
 try:
@@ -42,9 +43,8 @@ def parse(file, beautifulsoup=None, makeelement=None, **bsargs):
     ``BeautifulSoup`` class and the default factory of `lxml.html` are
     used.
     """
-    if not hasattr(file, 'read'):
-        file = open(file)
-    root = _parse(file, beautifulsoup, makeelement, **bsargs)
+    with _open_if_not_a_file(file) as fileobj:
+        root = _parse(fileobj, beautifulsoup, makeelement, **bsargs)
     return etree.ElementTree(root)
 
 
@@ -82,6 +82,15 @@ def _parse(source, beautifulsoup, makeelement, **bsargs):
         return root[0]
     root.tag = "html"
     return root
+
+
+@contextmanager
+def _open_if_not_a_file(file):
+    if hasattr(file, 'read'):
+        yield file
+    else:
+        with open(file) as fileobj:
+            yield fileobj
 
 
 _parse_doctype_declaration = re.compile(
