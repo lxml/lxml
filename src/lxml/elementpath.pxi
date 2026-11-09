@@ -688,7 +688,7 @@ cdef class _IndexPathEvaluator(_PathEvaluator):
     def __repr__(self):
         return f"[{self.index}]"
 
-    cdef _IndexPathEvaluator _copy(self):
+    cdef _IndexPathEvaluator copy(self):
         return <_IndexPathEvaluator> _IndexPathEvaluator.__new__(
             _IndexPathEvaluator, self.index)
 

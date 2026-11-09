@@ -40,7 +40,7 @@ jobs:
       PYTHON_VERSION: ${{ matrix.python-version }}
       MACOSX_DEPLOYMENT_TARGET: "11.0"
       COVERAGE: false
-      GCC_VERSION: 9
+      GCC_VERSION: 11
       USE_CCACHE: 1
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
       CCACHE_COMPRESS: 1
@@ -69,8 +69,8 @@ jobs:
         # Tests [amd64]
         #
         os:
-          - "ubuntu-22.04"
-          - "ubuntu-22.04-arm"
+          - "ubuntu-24.04"
+          - "ubuntu-24.04-arm"
           - "macos-latest"
           - "windows-2022"
           - "windows-11-arm"
@@ -85,8 +85,8 @@ jobs:
           - "3.14t"
           - "3.15"
           - "3.15t"
-          #- "3.16-dev"
-          #- "3.16t-dev"
+          - "3.16-dev"
+          - "3.16t-dev"
         env:
           - { STATIC_DEPS: true }
           - { STATIC_DEPS: false }
@@ -96,7 +96,7 @@ jobs:
           #  python-version: "3.15-dev"
           #  allowed_failure: true
 
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
@@ -195,7 +195,7 @@ jobs:
           # Ubuntu sub-jobs:
           # ================
           # Pypy
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: pypy-3.9
             env: { STATIC_DEPS: false }
             allowed_failure: true
@@ -308,7 +308,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          (sudo apt-get update  &&  sudo apt-get install -y  libxml2 libxml2-dev libxslt1.1 libxslt1-dev) &
+          (sudo apt-get update  &&  sudo apt-get install -y  libxml2-16 libxml2-dev libxslt1.1 libxslt1-dev \
+            ||  sudo apt-get install -y  libxml2 libxml2-dev libxslt1.1 libxslt1-dev) &
           (python -m pip install -U  pip setuptools  && \
             python -m pip install -U  -r requirements.txt  -r docs-requirements.txt  -r test-requirements.txt  && \
             python -m pip install --no-deps  lxml_html_clean \
