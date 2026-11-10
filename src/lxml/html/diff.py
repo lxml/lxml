@@ -903,7 +903,7 @@ def _move_el_inside_block(el, tag):
         children_tag = makeelement(tag)
         children_tag.text = el.text
         el.text = None
-        children_tag.extend(iter(el))
+        children_tag.extend(list(el))
         el[:] = [children_tag]
         return
 
