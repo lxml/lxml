@@ -1,3 +1,5 @@
+import os
+import subprocess
 import unittest, sys
 from ...tests.common_imports import make_doctest, HelperTestCase
 
@@ -61,6 +63,52 @@ if BS_INSTALLED:
                 tostring(body, method="html"),
                 b"<body>beforeafter<span>inner</span>tailafter"
                 b"<!--comment-->morenext<?pi data>end</body>")
+
+        def test_mixed_content_order(self):
+            source = '<a>before<!-- c --><?pi data?><b>inside</b>after<i/>end'
+            beautifulsoup = self.soupparser.BeautifulSoup
+            bsargs = {}
+            if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"):
+                bsargs["features"] = "html.parser"
+            soup = beautifulsoup(source, **bsargs)
+            tree = self.soupparser.convert_tree(soup)[0]
+            self.assertEqual(
+                tostring(tree),
+                b'<a>before<!-- c --><?pi data><b>inside</b>after'
+                b'<i></i>end</a>')
+
+        def test_deep_tree(self):
+            if not hasattr(
+                    self.soupparser.BeautifulSoup,
+                    "DEFAULT_BUILDER_FEATURES"):
+                self.skipTest("deep tree fixture requires BeautifulSoup 4")
+
+            code = '''\
+import sys
+from bs4 import BeautifulSoup, Tag
+from lxml.html.soupparser import convert_tree
+
+sys.setrecursionlimit(100)
+soup = BeautifulSoup("", "html.parser")
+node = Tag(name="n")
+soup.contents = [node]
+for _ in range(75000):
+    child = Tag(name="n")
+    node.contents = [child]
+    node = child
+
+root = convert_tree(soup)[0]
+depth = 0
+while len(root):
+    depth += 1
+    root = root[0]
+assert depth == 75000, depth
+'''
+            result = subprocess.run(
+                [sys.executable, '-c', code], capture_output=True, text=True,
+                timeout=60,
+                env=dict(os.environ, PYTHONPATH=os.pathsep.join(sys.path)))
+            self.assertEqual(result.returncode, 0, result.stderr)
 
         def test_body(self):
             html = '''<body><p>test</p></body>'''
