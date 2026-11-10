@@ -197,8 +197,8 @@ def _convert_tree(beautiful_soup_tree, makeelement):
 
 
 def _init_node_converters(makeelement):
-    converters = {}
-    ordered_node_types = []
+    converters: dict = {}
+    ordered_node_types: list[type] = []
 
     def converter(*types):
         def add(handler):
@@ -224,7 +224,7 @@ def _init_node_converters(makeelement):
             return None
         return handler(bs_node, parent)
 
-    def map_attrs(bs_attrs):
+    def map_attrs(bs_attrs) -> dict:
         if isinstance(bs_attrs, dict):  # bs4
             attribs = {}
             for k, v in bs_attrs.items():
