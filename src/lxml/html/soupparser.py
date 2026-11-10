@@ -304,31 +304,19 @@ def _init_node_converters(makeelement):
     return convert_node
 
 
-# copied from ET's ElementSoup
+# Originally copied from ET's ElementSoup.
 
-try:
-    from html.entities import name2codepoint  # Python 3
-except ImportError:
-    from htmlentitydefs import name2codepoint
+from html.entities import name2codepoint
 
+# work around oddities in BeautifulSoup's entity handling
+def _unescape_entity(m):
+    try:
+        return chr(name2codepoint[m.group(1)])
+    except KeyError:
+        return m.group(0)  # use as is
 
 handle_entities = re.compile(r"&(\w+);").sub
 
 
-try:
-    unichr
-except NameError:
-    # Python 3
-    unichr = chr
-
-
-def unescape(string):
-    if not string:
-        return ''
-    # work around oddities in BeautifulSoup's entity handling
-    def unescape_entity(m):
-        try:
-            return unichr(name2codepoint[m.group(1)])
-        except KeyError:
-            return m.group(0)  # use as is
-    return handle_entities(unescape_entity, string)
+def unescape(string, _unescape_entity=_unescape_entity, _handle_entities=handle_entities) -> str:
+    return _handle_entities(_unescape_entity, string) if string else ''
