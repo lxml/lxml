@@ -13,6 +13,9 @@ Features added
 Bugs fixed
 ----------
 
+* ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
+  instead of setting a ``value`` attribute on the ``<select>`` element.
+
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``

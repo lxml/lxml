@@ -128,6 +128,8 @@ def _select(el, select):
 def _fill_single(input, value):
     if _nons(input.tag) == 'textarea':
         input.text = value
+    elif _nons(input.tag) == 'select':
+        _fill_multiple(input, [value])
     else:
         input.set('value', value)
 

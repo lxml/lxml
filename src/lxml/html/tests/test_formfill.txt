@@ -110,3 +110,23 @@ be removed. The "name" attribute should be kept::
     <form>
       <textarea name="foo">Bar</textarea>
     </form>
+
+
+A single-valued ``<select>`` (without ``multiple``) gets the matching
+``<option>`` selected, and the other options are deselected::
+
+    >>> print(fill_form_html('''
+    ... <form>
+    ...   <select name="colour">
+    ...     <option value="red" selected>Red</option>
+    ...     <option value="blue">Blue</option>
+    ...     <option>green</option>
+    ...   </select>
+    ... </form>''', dict(colour="blue")))
+    <form>
+      <select name="colour">
+        <option value="red">Red</option>
+        <option value="blue" selected>Blue</option>
+        <option>green</option>
+      </select>
+    </form>
