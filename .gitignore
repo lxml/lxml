@@ -53,6 +53,7 @@ src/lxml/includes/*/
 src/lxml/includes/lxml-version.h
 src/lxml/html/*.html
 src/lxml/html/*.c
+src/lxml/tests/*.c
 src/lxml/*.html
 src/lxml/*.c
 src/lxml/etree.h

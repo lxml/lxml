@@ -211,7 +211,7 @@ class SimpleFSPath:
 
 def fileInTestDir(name):
     _testdir = os.path.dirname(__file__)
-    return os.path.join(_testdir, name)
+    return os.path.join(_testdir, *name.split('/'))
 
 
 def path2url(path):

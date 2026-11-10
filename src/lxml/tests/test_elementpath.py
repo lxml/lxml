@@ -398,6 +398,22 @@ class EtreeElementPathTestCase(HelperTestCase):
             FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
             etree.ElementTree(elem).iterfind, "/tag")
 
+    def test_find_index_repeated(self):
+        # Searches with the same (cached) path must not share their index state.
+        root = self.etree.XML('<r><a><b>1</b><b>2</b></a><a><b>3</b><b>4</b></a></r>')
+
+        for _ in range(3):
+            self.assertEqual(root.find('a/b[2]').text, '2')
+            self.assertEqual(root.findtext('a/b[2]'), '2')
+            self.assertEqual([b.text for b in root.findall('a/b[2]')], ['2', '4'])
+
+        self.assertEqual(
+            [(x.text, y.text) for x, y in zip(root.iterfind('a/b[1]'), root.iterfind('a/b[1]'))],
+            [('1', '1'), ('3', '3')])
+        self.assertEqual(
+            [(x.text, [y.text for y in root.iterfind('a/b[1]')]) for x in root.iterfind('a/b[1]')],
+            [('1', ['1', '3']), ('3', ['1', '3'])])
+
 
 class ElementFindTest(unittest.TestCase):
     # Copied from CPython's test_xml_etree.py.
