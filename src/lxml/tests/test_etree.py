@@ -229,6 +229,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(qname1.text, qname2)
         self.assertEqual(qname1, qname2)
 
+    def test_qname_bytearray(self):
+        etree = self.etree
+        name = bytearray(b'a')
+        self.assertEqual(etree.QName(name), etree.QName("a"))
+
+        el = etree.Element(name)
+        print(el, repr(el))
+        self.assertEqual(etree.QName(el), etree.QName("a"))
+
+        el.tag = name  # force tag to bytearray
+        etree.tostring(el)
+        self.assertEqual(etree.QName(el), etree.QName("a"))
+
     def test_qname_text_resolve(self):
         # ET doesn't resove QNames as text values
         etree = self.etree

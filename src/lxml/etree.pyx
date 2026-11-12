@@ -2441,14 +2441,8 @@ cdef class QName:
         if not _isString(text_or_uri_or_element):
             if isinstance(text_or_uri_or_element, _Element):
                 text_or_uri_or_element = (<_Element>text_or_uri_or_element).tag
-                if not _isString(text_or_uri_or_element):
-                    raise ValueError, f"Invalid input tag of type {type(text_or_uri_or_element)!r}"
-            elif isinstance(text_or_uri_or_element, QName):
-                text_or_uri_or_element = (<QName>text_or_uri_or_element).text
-            elif text_or_uri_or_element is not None:
-                text_or_uri_or_element = unicode(text_or_uri_or_element)
-            else:
-                raise ValueError, f"Invalid input tag of type {type(text_or_uri_or_element)!r}"
+            if text_or_uri_or_element is None:
+                raise ValueError(f"Invalid input tag of type {type(text_or_uri_or_element)!r}")
 
         ns_utf, tag_utf = _getNsTag(text_or_uri_or_element)
         if tag is not None:
