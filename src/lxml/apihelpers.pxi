@@ -1180,6 +1180,32 @@ cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target) noexcept:
         c_target = tree.xmlAddNextSibling(c_target, c_tail)
         c_tail = c_next
 
+cdef int _dropNode(_Document doc, xmlNode* c_node) except -1:
+    """Detach c_node after joining its tail into the surrounding text.
+
+    The caller holds the document write lock and has checked that c_node has
+    an element parent. Its tail remains attached to the detached node.
+    """
+    cdef xmlNode* c_parent
+    cdef xmlNode* c_previous
+    cdef xmlNode* c_next
+    cdef object tail
+
+    c_parent = c_node.parent
+    c_previous = _previousElement(c_node)
+    tail = _collectText(c_node.next)
+    if tail:
+        if c_previous is NULL:
+            _appendText(c_parent, tail, tail=0)
+        else:
+            _appendText(c_previous, tail, tail=1)
+
+    c_next = c_node.next
+    tree.xmlUnlinkNode(c_node)
+    _moveTail(c_next, c_node)
+    moveNodeToDocument(doc, c_node.doc, c_node)
+    return 0
+
 cdef int _copyTail(xmlNode* c_tail, xmlNode* c_target) except -1:
     cdef xmlNode* c_new_tail
     # tail copying support: look for any text nodes trailing this node and

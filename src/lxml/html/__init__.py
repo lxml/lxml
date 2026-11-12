@@ -310,56 +310,6 @@ class HtmlMixin:
         if label is not None:
             del label.attrib['for']
 
-    def drop_tree(self):
-        """
-        Removes this element from the tree, including its children and
-        text.  The tail text is joined to the previous element or
-        parent.
-        """
-        parent = self.getparent()
-        assert parent is not None
-        if self.tail:
-            previous = self.getprevious()
-            if previous is None:
-                parent._append_text(self.tail)
-            else:
-                previous._append_tail(self.tail)
-        parent.remove(self)
-
-    def drop_tag(self):
-        """
-        Remove the tag, but not its children or text.  The children and text
-        are merged into the parent.
-
-        Example::
-
-            >>> h = fragment_fromstring('<div>Hello <b>World!</b></div>')
-            >>> h.find('.//b').drop_tag()
-            >>> print(tostring(h, encoding='unicode'))
-            <div>Hello World!</div>
-        """
-        parent = self.getparent()
-        assert parent is not None
-        previous = self.getprevious()
-        if self.text and isinstance(self.tag, str):
-            # not a Comment, etc.
-            if previous is None:
-                parent._append_text(self.text)
-            else:
-                previous._append_tail(self.text)
-        if self.tail:
-            if len(self):
-                self[-1]._append_tail(self.tail)
-            elif previous is None:
-                parent._append_text(self.tail)
-            else:
-                previous._append_tail(self.tail)
-        # Moving the children one by one (together with their tails) is O(1)
-        # per child, whereas index() and slice assignment are O(siblings).
-        for child in self[:]:
-            self.addprevious(child)
-        parent.remove(self)
-
     def find_rel_links(self, rel):
         """
         Find any links like ``<a rel="{rel}">...</a>``; returns a list of elements.

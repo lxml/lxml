@@ -420,54 +420,44 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(b'<test><a><b></b></a><x><a><b></b></a></x></test>',
                           self._writeElement(root))
 
-    def test_append_text_and_tail(self):
-        # private helpers used by lxml.html
-        XML = self.etree.XML
-        root = XML('<r>a<b/>c<d/><e>x</e></r>')
-        b, d, e = root
-        root._append_text('A\xe9')
-        b._append_tail('C&<>')
-        d._append_tail('new')   # no tail yet
-        e._append_text('y')
-        self.assertEqual(root.text, 'aA\xe9')
-        self.assertEqual(b.tail, 'cC&<>')
-        self.assertEqual(d.tail, 'new')
-        self.assertEqual(e.text, 'xy')
+    def test_drop_tree_joins_tail_and_preserves_parent_text(self):
+        root = self.etree.XML(
+            '<para>The result<note>Needs verification</note> is significant.</para>')
+        note = root[0]
+
+        note.drop_tree()
+
+        self.assertEqual(root.text, 'The result is significant.')
+        self.assertEqual(len(root), 0)
         self.assertEqual(
             self.etree.tostring(root, encoding='unicode'),
-            '<r>aA\xe9<b/>cC&amp;&lt;&gt;<d/>new<e>xy</e></r>')
-        # a single text node remains
-        self.assertEqual(root.xpath('count(text())'), 3.0)
-        self.assertEqual(root.xpath('text()'), ['aA\xe9', 'cC&<>', 'new'])
+            '<para>The result is significant.</para>')
 
-        # later replacement removes the appended text as well
-        b.tail = 'T'
-        root.text = 'X'
+        root = self.etree.XML('<para>The result<note/> is significant.</para>')
+        note = root[0]
+        root.remove(note)
+        self.assertEqual(root.text, 'The result')
+        self.assertEqual(note.tail, ' is significant.')
+
+        root = self.etree.XML('<p>a<note/>b</p>')
+        root[0].tail = self.etree.CDATA('c')
+        root[0].drop_tree()
+        self.assertEqual(root.text, 'ac')
+        self.assertEqual(root.xpath('text()'), ['ac'])
+
+    def test_drop_tag_keeps_children_and_joins_text(self):
+        root = self.etree.XML('<p>Before<b>Inside<i/>after</b> outside</p>')
+        bold = root[0]
+
+        bold.drop_tag()
+
+        self.assertEqual(root.text, 'BeforeInside')
+        self.assertEqual(len(root), 1)
+        self.assertEqual(root[0].tag, 'i')
+        self.assertEqual(root[0].tail, 'after outside')
         self.assertEqual(
             self.etree.tostring(root, encoding='unicode'),
-            '<r>X<b/>T<d/>new<e>xy</e></r>')
-
-    def test_append_text_to_text_run(self):
-        # several adjacent text nodes are merged into a single one
-        XML = self.etree.XML
-        root = XML('<r>a<b>q</b>b<c/>d</r>')
-        self.etree.strip_elements(root, 'b', with_tail=False)
-        self.assertEqual(root.xpath('text()'), ['a', 'b', 'd'])
-        root._append_text('Z')
-        self.assertEqual(root.xpath('text()'), ['abZ', 'd'])
-        self.assertEqual(root.text, 'abZ')
-        root.text = 'new'
-        self.assertEqual(root.xpath('text()'), ['new', 'd'])
-
-    def test_append_text_to_cdata(self):
-        root = self.etree.XML('<r><a/></r>')
-        root.text = self.etree.CDATA('<x>')
-        root[0].tail = self.etree.CDATA('<y>')
-        root._append_text('&')
-        root[0]._append_tail('&')
-        self.assertEqual(root.text, '<x>&')
-        self.assertEqual(root[0].tail, '<y>&')
-        self.assertEqual(root.xpath('text()'), ['<x>&', '<y>&'])
+            '<p>BeforeInside<i/>after outside</p>')
 
     def test_strip_elements_ns(self):
         XML = self.etree.XML

@@ -1358,7 +1358,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Removes a matching subelement. Unlike the find methods, this
         method compares elements based on identity, not on tag value
-        or contents.
+        or contents. This ElementTree-compatible method detaches the element
+        with its tail still attached to it. For practical editing of
+        document-style (mixed-content) trees, lxml provides the extension
+        ``element.drop_tree()``, which removes the element and joins its tail
+        into the surrounding text in the parent tree.
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
@@ -1521,16 +1525,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         # using 'del el.tail' is the wrong thing to do
         #def __del__(self):
         #    _setTailText(self._c_node, None)
-
-    def _append_text(self, value):
-        """Private helper for lxml.html: append text to ``.text`` in place."""
-        _assertValidNode(self)
-        _appendText(self._c_node, value, tail=0)
-
-    def _append_tail(self, value):
-        """Private helper for lxml.html: append text to ``.tail`` in place."""
-        _assertValidNode(self)
-        _appendText(self._c_node, value, tail=1)
 
     # not in ElementTree, read-only
     @property
@@ -1918,6 +1912,87 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return _elementFactory(self._doc, c_node)
         finally:
             doc.unlock_read()
+
+    def drop_tree(self):
+        """drop_tree(self)
+
+        Removes this element and its children, joining its tail text with
+        the surrounding text in the parent tree. Unlike the standard
+        ElementTree-compatible ``parent.remove(element)``, which leaves the
+        tail attached to the detached element, this lxml-specific extension
+        exists as a practical convenience for editing document-style
+        (mixed-content) trees while preserving their text flow.
+        """
+        cdef xmlNode* c_node
+        cdef xmlNode* c_parent
+        _assertValidNode(self)
+
+        doc = self._doc
+        doc.lock_write()
+        try:
+            c_node = self._c_node
+            c_parent = c_node.parent
+            if c_parent is NULL or not _isElement(c_parent):
+                raise ValueError("Cannot drop the root element.")
+            _dropNode(doc, c_node)
+        finally:
+            doc.unlock_write()
+
+    def drop_tag(self):
+        """drop_tag(self)
+
+        Removes this element's tag while keeping its text, children and
+        tail text in the tree.
+
+        Example::
+
+            >>> h = XML('<div>Hello <b>World!</b></div>')
+            >>> h.find('.//b').drop_tag()
+            >>> print(tostring(h, encoding='unicode'))
+            <div>Hello World!</div>
+        """
+        cdef xmlNode* c_node
+        cdef xmlNode* c_parent
+        cdef xmlNode* c_previous
+        cdef xmlNode* c_child
+        cdef xmlNode* c_next_child
+        cdef xmlNode* c_next
+        cdef xmlDoc* c_source_doc
+        cdef object text
+        _assertValidNode(self)
+
+        doc = self._doc
+        doc.lock_write()
+        try:
+            c_node = self._c_node
+            c_parent = c_node.parent
+            if c_parent is NULL or not _isElement(c_parent):
+                raise ValueError("Cannot drop the root element.")
+
+            if c_node.type == tree.XML_ELEMENT_NODE:
+                c_previous = _previousElement(c_node)
+                text = _collectText(c_node.children)
+                if text:
+                    if c_previous is NULL:
+                        _appendText(c_parent, text, tail=0)
+                    else:
+                        _appendText(c_previous, text, tail=1)
+
+                # Move element children and their tails before this node.
+                # Entity references are excluded to avoid walking their DTD.
+                c_child = _findChildForwards(c_node, 0)
+                while c_child is not NULL:
+                    c_next_child = _nextElement(c_child)
+                    c_source_doc = c_child.doc
+                    c_next = c_child.next
+                    tree.xmlAddPrevSibling(c_node, c_child)
+                    _moveTail(c_next, c_child)
+                    moveNodeToDocument(self._doc, c_source_doc, c_child)
+                    c_child = c_next_child
+
+            _dropNode(doc, c_node)
+        finally:
+            doc.unlock_write()
 
     def getnext(self):
         """getnext(self)
