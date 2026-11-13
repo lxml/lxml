@@ -20,8 +20,6 @@ class FormNotFound(LookupError):
     """
 
 _form_name_xpath = XPath('descendant-or-self::form[name=$name]|descendant-or-self::x:form[name=$name]', namespaces={'x':XHTML_NAMESPACE})
-_input_xpath = XPath('|'.join(['descendant-or-self::'+_tag for _tag in ('input','select','textarea','x:input','x:select','x:textarea')]),
-                               namespaces={'x':XHTML_NAMESPACE})
 _label_for_xpath = XPath('//label[@for=$for_id]|//x:label[@for=$for_id]',
                                namespaces={'x':XHTML_NAMESPACE})
 _name_xpath = XPath('descendant-or-self::*[@name=$name]')
@@ -44,13 +42,14 @@ def fill_form_html(html, values, form_id=None, form_index=None):
     fill_form(doc, values, form_id=form_id, form_index=form_index)
     return _transform_result(result_type, doc)
 
-def _fill_form(el, values):
+
+def _fill_form(el, values, _input_tags=('input', 'select', 'textarea', f'{XHTML_NAMESPACE}input', f'{XHTML_NAMESPACE}select', f'{XHTML_NAMESPACE}textarea')):
     counts = {}
     if hasattr(values, 'mixed'):
         # For Paste request parameters
         values = values.mixed()
-    inputs = _input_xpath(el)
-    for input in inputs:
+
+    for input in el.iter(_input_tags):
         name = input.get('name')
         if not name:
             continue
@@ -73,6 +72,7 @@ def _fill_form(el, values):
             elif index > 0:
                 continue
             _fill_single(input, value)
+
 
 def _takes_multiple(input):
     if _nons(input.tag) == 'select' and input.get('multiple'):
@@ -148,7 +148,7 @@ def _find_form(el, form_id=None, form_index=None):
         else:
             raise FormNotFound(
                 "No form with the name or id of %r (forms: %s)"
-                % (id, ', '.join(_find_form_ids(el))))               
+                % (id, ', '.join(_find_form_ids(el))))
     if form_index is not None:
         forms = _forms_xpath(el)
         try:
@@ -226,7 +226,7 @@ class DefaultErrorCreator:
                 parent.insert(pos+1, error_el)
 
 default_error_creator = DefaultErrorCreator()
-    
+
 
 def insert_errors(
     el,
