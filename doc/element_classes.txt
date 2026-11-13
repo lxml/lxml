@@ -303,7 +303,10 @@ value in a dictionary.  It is set up as follows:
 
 .. sourcecode:: pycon
 
-  >>> id_class_mapping = {'1234' : honk} # maps attribute values to classes
+  >>> id_class_mapping = {  # maps attribute values to classes
+  ...     '1234' : honk,
+  ...     '1235' : honk,
+  ... }
 
   >>> lookup = etree.AttributeBasedElementClassLookup(
   ...                                      'id', id_class_mapping)
@@ -314,17 +317,17 @@ And here is how to use it:
 
 .. sourcecode:: pycon
 
-  >>> xml = '<a id="123"><b id="1234"/><b id="1234" honking="true"/></a>'
+  >>> xml = '<a id="123"><b id="1234"/><b id="1235" honking="true"/></a>'
   >>> a = etree.fromstring(xml, parser)
 
-  >>> a.honking       # id does not match !
-  Traceback (most recent call last):
-  AttributeError: 'lxml.etree._Element' object has no attribute 'honking'
-
-  >>> a[0].honking
+  >>> a[0].honking  # id="1234"
   False
-  >>> a[1].honking
+  >>> a[1].honking  # id="1235"
   True
+
+  >>> a.honking       # id '123' does not match !  # doctest: +ELLIPSIS
+  Traceback (most recent call last):
+  AttributeError: ..._Element... object has no attribute 'honking'
 
 This lookup scheme uses its fallback if the attribute is not found or
 its value is not in the mapping.  Normally, the default class lookup

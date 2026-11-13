@@ -85,6 +85,36 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         self.Namespace('ns11').clear()
 
+    def test_namespace_decorator(self):
+        ns = self.Namespace("http://test/ns")
+
+        @ns('foo')
+        class FooElement(etree.ElementBase):
+            pass
+
+        root = etree.fromstring('<foo xmlns="http://test/ns"/>')
+        self.assertIsInstance(root, FooElement)
+
+    def test_namespace_decorator_bytes(self):
+        ns = self.Namespace("http://test/ns")
+
+        @ns(b'foo')
+        class FooElement(etree.ElementBase):
+            pass
+
+        root = etree.fromstring('<foo xmlns="http://test/ns"/>')
+        self.assertIsInstance(root, FooElement)
+
+    def test_namespace_decorator_bytearray(self):
+        ns = self.Namespace("http://test/ns")
+
+        @ns(bytearray(b'foo'))
+        class FooElement(etree.ElementBase):
+            pass
+
+        root = etree.fromstring('<foo xmlns="http://test/ns"/>')
+        self.assertIsInstance(root, FooElement)
+
     def test_default_tagname(self):
         bluff_dict = {
             None   : self.bluff_class,

@@ -229,6 +229,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(qname1.text, qname2)
         self.assertEqual(qname1, qname2)
 
+    def test_qname_bytearray(self):
+        etree = self.etree
+        name = bytearray(b'a')
+        self.assertEqual(etree.QName(name), etree.QName("a"))
+
+        el = etree.Element(name)
+        self.assertEqual(etree.QName(el), etree.QName("a"))
+
+        el.tag = name  # force tag to bytearray
+        etree.tostring(el)
+        self.assertEqual(etree.QName(el), etree.QName("a"))
+
     def test_qname_text_resolve(self):
         # ET doesn't resove QNames as text values
         etree = self.etree
@@ -3494,6 +3506,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         element = self.etree.Element('tag')
         element.iter(tags)  # should terminate
 
+    def test_iter_bytearray_tag(self):
+        etree = self.etree
+        root = etree.XML('<r><a/><b><a/></b></r>')
+        self.assertEqual(len(list(root.iter(bytearray(b'a')))), 2)
+        self.assertEqual(len(list(root.iter([bytearray(b'a'), 'b']))), 3)
+
     def test_getiterator(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -4028,6 +4046,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, root.findall, '')
         self.assertRaises(SyntaxError, root.findall, '//')  # absolute path on Element
         self.assertRaises(SyntaxError, root.findall, './//')
+
+    def test_find_bytearray_tag_in_findall_iteration(self):
+        etree = self.etree
+        root = etree.XML('<r><a/><a/><c/></r>')
+        self.assertEqual(len(list(root.iterfind('a'))), 2)
+        self.assertEqual(len(list(root.iter(bytearray(b'c')))), 1)
 
     def test_iterfind_tree_modifications(self):
         def insert_prev(it, tag='tagname'):

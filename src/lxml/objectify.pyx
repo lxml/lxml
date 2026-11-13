@@ -422,7 +422,7 @@ cdef class ObjectifiedElement(ElementBase):
 
         Returns a list of object path expressions for all descendants.
         """
-        if prefix is not None and not python._isString(prefix):
+        if prefix is not None and not isinstance(prefix, str):
             prefix = '.'.join(prefix)
         doc = self._doc
         cetree.lock_read(doc)
@@ -1119,6 +1119,8 @@ cdef str _lockedTextOf(_Element element):
 cdef object _strValueOf(obj):
     if python._isString(obj):
         return obj
+    if isinstance(obj, bytearray):
+        return bytes(obj)
     if isinstance(obj, _Element):
         return _lockedTextOf(<_Element> obj) or ''
     if obj is None:
@@ -1430,7 +1432,7 @@ cdef class _ObjectifyElementMakerCaller:
                     cetree.setAttributeValue(
                         element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
 
-            elif python._isString(child):
+            elif python._isStringOrByteArray(child):
                 _add_text(element, child)
                 has_string_value = True
 
@@ -1461,7 +1463,7 @@ cdef class _ObjectifyElementMakerCaller:
                     pytype = _PYTYPE_DICT.get(python._typename(value))
                     if pytype is not None:
                         value = (<PyType>pytype).stringify(value)
-                    elif not python._isString(value):
+                    elif not python._isStringOrByteArray(value):
                         value = str(value)
                     cetree.setAttributeValue(element, name, value)
 

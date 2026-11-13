@@ -2132,6 +2132,16 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual(root.c1.c2.text, path.find(root).text)
         self.assertEqual(root.c1.c2.text, path(root).text)
 
+    def test_objectpath_bytes(self):
+        root = self.XML('<root><child>5</child></root>')
+        path = objectify.ObjectPath(b'root.child')
+        self.assertEqual(int(path(root)), 5)
+
+    def test_objectpath_bytearray(self):
+        root = self.XML('<root><child>5</child></root>')
+        path = objectify.ObjectPath(bytearray(b'root.child'))
+        self.assertEqual(int(path(root)), 5)
+
     def test_object_path_list(self):
         root = self.XML(xml_str)
         path = objectify.ObjectPath( ['root', 'c1', 'c2'] )
@@ -2477,6 +2487,12 @@ class ObjectifyTestCase(HelperTestCase):
              'root.{objectified}c1.{}c2'],
             root.c1.descendantpaths('root'))
 
+    def test_descendantpaths_rejects_bytes_prefix(self):
+        root = self.XML('<root><child/></root>')
+        with self.assertRaises(TypeError):
+            root.descendantpaths(b'root')
+        self.assertIsInstance(root.descendantpaths('root'), list)
+
     def test_pickle(self):
         import pickle
 
@@ -2558,8 +2574,20 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_efactory_unicode(self):
         E = objectify.E
-        root = E.root(E.val(_str("blöödy häll", encoding="ISO-8859-1")))
+        root = E.root(E.val("blöödy häll"))
         self.assertTrue(isinstance(root.val, objectify.StringElement))
+
+    def test_efactory_bytes_text_and_attribute(self):
+        E = objectify.ElementMaker(annotate=False)
+        root = E.root(E.val(b'hi', name=b'v'))
+        self.assertTrue(isinstance(root.val, objectify.StringElement))
+        self.assertEqual(etree.tostring(root), b'<root><val name="v">hi</val></root>')
+
+    def test_efactory_bytearray_text_and_attribute(self):
+        E = objectify.ElementMaker(annotate=False)
+        root = E.root(E.val(bytearray(b'hi'), name=bytearray(b'v')))
+        self.assertTrue(isinstance(root.val, objectify.StringElement))
+        self.assertEqual(etree.tostring(root), b'<root><val name="v">hi</val></root>')
 
     def test_efactory_bool(self):
         E = objectify.E

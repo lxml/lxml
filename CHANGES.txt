@@ -10,17 +10,35 @@ Features added
 
 * ``CDATA`` objects gained a string representation.
 
+* LP#2172456: Several parts of the API now accept ``bytearray`` values in addition to ``bytes``.
+
+* GH#542: soupparser is faster for large input trees.
+  It is also compiled now which improves the overall conversion performance.
+  Patches by Pierre-Louis Peeters.
+
+* formfill is slightly faster.
+
 Bugs fixed
 ----------
 
-* ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
-  instead of setting a ``value`` attribute on the ``<select>`` element.
+* GH#546: Usage in PyPy crashed since lxml 7.0.
+  It now works correctly in PyPy 3.11 and 3.12.
+  Patches by Matti Picus.
 
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.
+
+* GH#543: Repeated ElementPath searches could leak an index counter into the next run since lxml 7.0.
+  Patch by Nayana-Naik73.
+
+* GH#545: ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
+  instead of setting a ``value`` attribute on the ``<select>`` element.
+  Patch by Alex Castillo Gonzalez.
+
+* Parsing from a file path in the soupparser did not close the file it opened.
 
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
@@ -33,10 +51,12 @@ Bugs fixed
 Other changes
 -------------
 
-* Binary wheels use libxml2 2.15.4, libxslt 1.1.45, libiconv 1.19 and zlib 1.3.2, also on Windows.
+* Binary wheels use libxml2 2.15.4, libxslt 1.1.45, libiconv 1.19 and zlib 1.4, also on Windows.
   The old ``manylinux2014`` wheels use libiconv 1.18 due to build incompatibilities.
   Some libxml2 features that are pending upstream removal are explicitly enabled:
   decompression with zlib, RelaxNG and the builtin (non-ISO) schematron.
+
+* The valgrind suppressions file was updated to match CPython 3.16a1.
 
 
 7.0.0b1 (2026-08-22)

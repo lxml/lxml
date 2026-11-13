@@ -34,6 +34,18 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 xf.write('toast')
         self.assertXml('<test>toast</test>')
 
+    def test_xmlfile_write_bytes(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('root'):
+                xf.write(b'text')
+        self.assertXml('<root>text</root>')
+
+    def test_xmlfile_write_bytearray(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('root'):
+                xf.write(bytearray(b'text'))
+        self.assertXml('<root>text</root>')
+
     def test_element_write_cdata(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):

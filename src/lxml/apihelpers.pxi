@@ -1657,6 +1657,8 @@ cdef object _getFSPathOrObject(object obj):
     """
     if _isString(obj):
         return obj
+    if isinstance(obj, bytearray):
+        return bytes(obj)
     try:
         return python.PyOS_FSPath(obj)
     except TypeError:
@@ -1668,8 +1670,6 @@ cdef object _encodeFilename(object filename):
     """
     if filename is None:
         return None
-    elif isinstance(filename, bytes):
-        return filename
     elif isinstance(filename, unicode):
         filename8 = (<unicode>filename).encode('utf8')
         if _isFilePath(<unsigned char*>filename8):
@@ -1679,6 +1679,10 @@ cdef object _encodeFilename(object filename):
             except UnicodeEncodeError:
                 pass
         return filename8
+    elif isinstance(filename, bytes):
+        return filename
+    elif isinstance(filename, bytearray):
+        return bytes(filename)
     else:
         raise TypeError("Argument must be string or unicode.")
 
@@ -1864,6 +1868,8 @@ cdef _getFilenameForFile(source):
         filename = source.name
         if _isString(filename):
             return os_path_abspath(filename)
+        elif isinstance(filename, bytearray):
+            return os_path_abspath(bytes(filename))
     except:
         pass
     # gzip file instances have a filename attribute (before Py3k)
@@ -1871,6 +1877,8 @@ cdef _getFilenameForFile(source):
         filename = source.filename
         if _isString(filename):
             return os_path_abspath(filename)
+        elif isinstance(filename, bytearray):
+            return os_path_abspath(bytes(filename))
     except:
         pass
     # can't determine filename
