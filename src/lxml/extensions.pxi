@@ -751,13 +751,13 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
 
 cdef extern from *:
     """
-    #if CYTHON_COMPILING_IN_PYPY
+    #if LXML_IN_LIMITED_API || CYTHON_COMPILING_IN_PYPY
       #define LXML_USE_PY_STRING_RESULT 1
     #else
       #define LXML_USE_PY_STRING_RESULT 0
     #endif
     """
-    int LXML_USE_PY_STRING_RESULT
+    const int LXML_USE_PY_STRING_RESULT
 
 
 cdef extern from *:
@@ -809,17 +809,15 @@ class __ElementUnicodeResultPy(str):
     def is_attribute(self):
         return self.attrname is not None
 
-if python.IN_LIMITED_API or LXML_USE_PY_STRING_RESULT:
+if LXML_USE_PY_STRING_RESULT:
     _ElementUnicodeResult = __ElementUnicodeResultPy
 else:
     _ElementUnicodeResult = __ElementUnicodeResultC
 
 
-
-
 cdef object _elementStringResultFactory(string_value, _Element parent,
                                         attrname, bint is_tail):
-    if python.IN_LIMITED_API or LXML_USE_PY_STRING_RESULT:
+    if LXML_USE_PY_STRING_RESULT:
         pyresult = __ElementUnicodeResultPy(string_value)
         pyresult._parent = parent
         pyresult.attrname = attrname
