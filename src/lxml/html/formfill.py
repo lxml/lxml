@@ -2,7 +2,9 @@ from lxml.etree import XPath, ElementBase
 from lxml.html import fromstring, XHTML_NAMESPACE
 from lxml.html import _forms_xpath, _options_xpath, _nons, _transform_result
 from lxml.html import defs
+
 import copy
+from collections import defaultdict
 
 __all__ = ['FormNotFound', 'fill_form', 'fill_form_html',
            'insert_errors', 'insert_errors_html',
@@ -18,14 +20,11 @@ _label_for_xpath = XPath('//label[@for=$for_id]|//x:label[@for=$for_id]',
                                namespaces={'x':XHTML_NAMESPACE})
 _name_xpath = XPath('descendant-or-self::*[@name=$name]')
 
-def fill_form(
-    el,
-    values,
-    form_id=None,
-    form_index=None,
-    ):
+
+def fill_form(el, values, form_id=None, form_index=None):
     el = _find_form(el, form_id=form_id, form_index=form_index)
     _fill_form(el, values)
+
 
 def fill_form_html(html, values, form_id=None, form_index=None):
     result_type = type(html)
@@ -38,7 +37,7 @@ def fill_form_html(html, values, form_id=None, form_index=None):
 
 
 def _fill_form(el, values, _input_tags=('input', 'select', 'textarea', f'{XHTML_NAMESPACE}input', f'{XHTML_NAMESPACE}select', f'{XHTML_NAMESPACE}textarea')):
-    counts = {}
+    counts = defaultdict(int)
     if hasattr(values, 'mixed'):
         # For Paste request parameters
         values = values.mixed()
@@ -52,10 +51,8 @@ def _fill_form(el, values, _input_tags=('input', 'select', 'textarea', f'{XHTML_
             if not isinstance(value, (list, tuple)):
                 value = [value]
             _fill_multiple(input, value)
-        elif name not in values:
-            continue
-        else:
-            index = counts.get(name, 0)
+        elif name in values:
+            index = counts[name]
             counts[name] = index + 1
             value = values[name]
             if isinstance(value, (list, tuple)):
