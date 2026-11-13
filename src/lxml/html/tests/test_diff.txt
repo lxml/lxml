@@ -61,6 +61,17 @@ images are treated like words:
     >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://yahoo.com">search</a>')
     <a href="http://yahoo.com">search</a>
 
+The link text is escaped like any other text:
+
+    >>> from lxml.html import fragment_fromstring
+    >>> html = htmldiff('<a href="http://yahoo.com">search</a>',
+    ...                 '<a href="http://x/?&lt;img src=x onerror=alert(1)&gt;">search</a>')
+    >>> diff_tree = fragment_fromstring(html, create_parent=True)
+    >>> diff_tree.findall('.//img')
+    []
+    >>> print(diff_tree.findtext('.//ins').strip())
+    Link: http://x/?<img src=x onerror=alert(1)>
+
 Images may sometimes not have 'src' attributes:
 
     >>> pdiff('<img src="tease"> <img> test <img src="test">', '<img> test <img src="toast">')
