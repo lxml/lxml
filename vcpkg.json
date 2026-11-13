@@ -12,7 +12,7 @@
   "overrides": [
     {
       "name": "zlib",
-      "version": "1.3.2#2"
+      "version": "1.4"
     },
     {
       "name": "libiconv",
@@ -30,7 +30,7 @@
   "configuration": {
     "default-registry": {
       "kind": "git",
-      "baseline": "9eec002df1cd109f8f104cd966a763daf9751489",
+      "baseline": "98d7375b79be7551ac3db6fbe668a08da9b1cac5",
       "repository": "https://github.com/microsoft/vcpkg"
     }
   }

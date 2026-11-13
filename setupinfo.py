@@ -124,7 +124,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
     _cflags = cflags(static_cflags)
     _ldflags = ['-isysroot', get_xcode_isysroot()] if sys.platform == 'darwin' else None
     _define_macros = define_macros()
-    _libraries = libraries()
+    _libraries = libraries(static_binaries)
 
     limited_api = {}
     if OPTION_LIMITED_API:
@@ -276,7 +276,7 @@ def print_libxml_error():
     print('*********************************************************************************')
 
 
-def libraries():
+def libraries(static_binaries=None):
     standard_libs = []
     if 'linux' in sys.platform:
         standard_libs.append('rt')
@@ -286,7 +286,10 @@ def libraries():
 
     if sys.platform in ('win32',):
         # bcrypt is a Windows system library that libxml2 depends on.
-        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv', 'bcrypt', 'zs', 'WS2_32']
+        if OPTION_STATIC and static_binaries:
+            libs = ['bcrypt', 'WS2_32']
+        else:
+            libs = ['libxslt', 'libexslt', 'libxml2', 'iconv', 'bcrypt', 'libzs', 'WS2_32']
     elif OPTION_STATIC:
         libs = standard_libs
     else:
@@ -297,7 +300,9 @@ def library_dirs(static_library_dirs):
     if OPTION_STATIC:
         if not static_library_dirs:
             static_library_dirs = env_var('LIBRARY')
-        assert static_library_dirs, "Static build not configured, see doc/build.txt"
+        # MSVC's link.exe searches the LIB environment variable itself
+        if sys.platform != 'win32':
+          assert static_library_dirs, "Static build not configured, see doc/build.txt"
         return static_library_dirs
     # filter them from xslt-config --libs
     result = []
@@ -366,7 +371,7 @@ def define_macros():
         # coverage.py does not support Cython together with sys.monitoring.
         # See https://github.com/coveragepy/coveragepy/issues/1790
         macros.append(('CYTHON_USE_SYS_MONITORING', '0'))
-    if OPTION_BUILD_LIBXML2XSLT:
+    if OPTION_STATIC:
         macros.append(('LIBXML_STATIC', None))
         macros.append(('LIBXSLT_STATIC', None))
         macros.append(('LIBEXSLT_STATIC', None))
