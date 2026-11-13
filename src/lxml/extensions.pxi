@@ -492,6 +492,8 @@ cdef class _ExsltRegExp:
     cdef _make_string(self, value):
         if _isString(value):
             return value
+        elif isinstance(value, bytearray):
+            return bytes(value)
         elif isinstance(value, list):
             # node set: take recursive text concatenation of first element
             if len(<list> value) == 0:
@@ -499,6 +501,8 @@ cdef class _ExsltRegExp:
             firstnode = (<list> value)[0]
             if _isString(firstnode):
                 return firstnode
+            elif isinstance(firstnode, bytearray):
+                return bytes(firstnode)
             elif isinstance(firstnode, _Element):
                 c_text = tree.xmlNodeGetContent((<_Element>firstnode)._c_node)
                 if c_text is NULL:

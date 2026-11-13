@@ -51,7 +51,7 @@ from lxml cimport python
 from lxml.includes cimport tree, config
 from lxml.includes.tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from lxml.includes.tree cimport const_xmlChar, xmlChar, _xcstr
-from lxml.python cimport _cstr, _isString
+from lxml.python cimport _cstr, _isString, _isStringOrByteArray
 from lxml.includes cimport xpath
 from lxml.includes cimport c14n
 
@@ -2454,10 +2454,10 @@ cdef class QName:
         if text_or_uri_or_element is None:
             # Allow None as no namespace.
             text_or_uri_or_element, tag = tag, None
-        if not _isString(text_or_uri_or_element):
+        if not _isStringOrByteArray(text_or_uri_or_element):
             if isinstance(text_or_uri_or_element, _Element):
                 text_or_uri_or_element = (<_Element>text_or_uri_or_element).tag
-                if not _isString(text_or_uri_or_element):
+                if not _isStringOrByteArray(text_or_uri_or_element):
                     raise ValueError, f"Invalid input tag of type {type(text_or_uri_or_element)!r}"
             elif isinstance(text_or_uri_or_element, QName):
                 text_or_uri_or_element = (<QName>text_or_uri_or_element).text
@@ -2895,7 +2895,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path):
+        if isinstance(path, str):
             if path[:1] == "/":
                 path = "." + path
                 from warnings import warn
@@ -2919,7 +2919,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path):
+        if isinstance(path, str):
             if path[:1] == "/":
                 path = "." + path
                 from warnings import warn
@@ -2943,7 +2943,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path):
+        if isinstance(path, str):
             if path[:1] == "/":
                 path = "." + path
                 from warnings import warn
@@ -2967,7 +2967,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path):
+        if isinstance(path, str):
             if path[:1] == "/":
                 path = "." + path
                 from warnings import warn

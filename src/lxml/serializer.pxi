@@ -1698,7 +1698,7 @@ cdef class _IncrementalFileWriter:
         c_method = self._method if method is None else _findOutputMethod(method)
 
         for content in args:
-            if _isString(content):
+            if _isStringOrByteArray(content):
                 if self._status != WRITER_IN_ELEMENT:
                     if self._status > WRITER_IN_ELEMENT or content.strip():
                         raise LxmlSyntaxError("not in an element")

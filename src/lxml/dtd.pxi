@@ -285,7 +285,7 @@ cdef class DTD(_Validator):
         _Validator.__init__(self)
         if file is not None:
             file = _getFSPathOrObject(file)
-            if _isString(file):
+            if _isStringOrByteArray(file):
                 file = _encodeFilename(file)
                 with self._error_log, lxml_document_loader:
                     self._c_dtd = xmlparser.xmlParseDTD(NULL, _xcstr(file))
