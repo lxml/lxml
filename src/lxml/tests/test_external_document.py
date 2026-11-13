@@ -3,6 +3,8 @@ Test cases related to direct loading of external libxml2 documents
 """
 
 
+import os
+import subprocess
 import sys
 import unittest
 
@@ -15,11 +17,29 @@ DESTRUCTOR_NAME = b'destructor:xmlFreeDoc'
 class ExternalDocumentTestCase(HelperTestCase):
     def setUp(self):
         try:
-            import ctypes
-            from ctypes import pythonapi
-            from ctypes.util import find_library
+            __import__('ctypes')
         except ImportError:
             raise unittest.SkipTest("ctypes support missing")
+
+    def test_external_document_adoption(self):
+        if os.environ.get('LXML_TEST_EXTERNAL_DOCUMENT_SUBPROCESS'):
+            self._test_external_document_adoption()
+            return
+
+        basedir = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__)))))
+        env = os.environ.copy()
+        env['LXML_TEST_EXTERNAL_DOCUMENT_SUBPROCESS'] = '1'
+        result = subprocess.run(
+            [sys.executable, os.path.join(basedir, 'test.py'), '-q',
+             'lxml/tests/test_external_document.py'],
+            cwd=basedir, env=env, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, universal_newlines=True)
+        self.assertEqual(0, result.returncode, result.stdout)
+
+    def _test_external_document_adoption(self):
+        import ctypes
+        from ctypes import pythonapi
 
         def wrap(func, restype, *argtypes):
             func.restype = restype
@@ -50,11 +70,13 @@ class ExternalDocumentTestCase(HelperTestCase):
                                            ctypes.c_int, ctypes.py_object,
                                            ctypes.c_void_p)
         self.PyCapsule_Destructor = ctypes.CFUNCTYPE(None, ctypes.py_object)
-        libxml2 = ctypes.CDLL(find_library('xml2'))
+        libxml2 = ctypes.CDLL(etree.__file__)
         self.create_doc = wrap(libxml2.xmlReadMemory, ctypes.c_void_p,
                                ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p,
                                ctypes.c_char_p, ctypes.c_int)
         self.free_doc = wrap(libxml2.xmlFreeDoc, None, ctypes.c_void_p)
+
+        self._assert_external_document_adoption()
 
     def as_capsule(self, text, capsule_name=DOC_NAME):
         if not isinstance(text, bytes):
@@ -64,7 +86,7 @@ class ExternalDocumentTestCase(HelperTestCase):
         self.set_capsule_context(ans, DESTRUCTOR_NAME)
         return ans
 
-    def test_external_document_adoption(self):
+    def _assert_external_document_adoption(self):
         xml = '<r a="1">t</r>'
         self.assertRaises(TypeError, etree.adopt_external_document, None)
         capsule = self.as_capsule(xml)
