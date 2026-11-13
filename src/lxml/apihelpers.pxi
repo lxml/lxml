@@ -781,6 +781,7 @@ cdef int _setNodeText(xmlNode* c_node, value) except -1:
         tree.xmlAddPrevSibling(c_node.children, c_text_node)
     return 0
 
+
 cdef int _setTailText(xmlNode* c_node, value) except -1:
     # remove all text nodes at the start first
     _removeText(c_node.next)
@@ -791,37 +792,118 @@ cdef int _setTailText(xmlNode* c_node, value) except -1:
     tree.xmlAddNextSibling(c_node, c_text_node)
     return 0
 
-cdef int _appendText(xmlNode* c_node, value, bint tail) except -1:
-    """Append text to the single text node that follows c_node (tail) or
-    that starts at its first child, instead of replacing it with a new
-    node.  This keeps repeated appends cheap, as the existing text is not
-    decoded and re-created each time.
 
-    Anything but exactly one plain text node (no text, several adjacent
-    nodes, CDATA), or a combined length beyond libxml2's int range, is
-    handled by setting the concatenated text.  The result is always a
-    single text node.
-    """
-    cdef xmlNode* c_text
-    cdef bytes utf8_value = None
-    c_text = _textNodeOrSkip(c_node.next if tail else c_node.children)
-    if c_text is not NULL and c_text.type == tree.XML_TEXT_NODE and \
-            _textNodeOrSkip(c_text.next) is NULL:
-        utf8_value = _utf8(value)
-        # xmlTextConcat() uses int lengths for the new and the combined text.
-        if len(utf8_value) > limits.INT_MAX - tree.xmlStrlen(c_text.content):
-            utf8_value = None
-
-    if utf8_value is None:
-        text = (_collectText(c_text) or '') + value
-        if tail:
-            _setTailText(c_node, text)
-        else:
-            _setNodeText(c_node, text)
+cdef int _mergeTextNodes(xmlNode* c_node) except -1:
+    """Merge a text/CDATA run into one plain text node, starting at its left end."""
+    cdef xmlNode* c_merged
+    cdef xmlNode* c_next
+    c_next = _textNodeOrSkip(c_node.next)
+    if c_node.type == tree.XML_TEXT_NODE and c_next is NULL:
+        if c_node.content is NULL or c_node.content[0] == c'\0':
+            _removeText(c_node)
+        return 0
+    c_merged = tree.xmlNewDocText(c_node.doc, NULL)
+    if c_merged is NULL:
+        raise MemoryError()
+    try:
+        _appendTextRun(c_merged, c_node)
+    except:
+        tree.xmlFreeNode(c_merged)
+        raise
+    if c_merged.content is NULL or c_merged.content[0] == c'\0':
+        tree.xmlFreeNode(c_merged)
+        _removeText(c_node)
     else:
-        if tree.xmlTextConcat(c_text, _xcstr(utf8_value), <int> len(utf8_value)) < 0:
-            raise MemoryError()
+        # Replacing does not coalesce or free text nodes, unlike insertion.
+        tree.xmlReplaceNode(c_node, c_merged)
+        tree.xmlFreeNode(c_node)
+        _removeText(c_next)
     return 0
+
+
+cdef int _appendTextRun(xmlNode* c_destination, xmlNode* c_source) except -1:
+    """Append the non-empty text contents from one text/CDATA run."""
+    while c_source is not NULL:
+        if c_source.content is not NULL and c_source.content[0] != c'\0':
+            if tree.xmlTextConcat(c_destination, c_source.content,
+                                  tree.xmlStrlen(c_source.content)) < 0:
+                raise MemoryError()
+        c_source = _textNodeOrSkip(c_source.next)
+    return 0
+
+
+cdef int _replaceTextRun(xmlNode* c_target, xmlNode* c_destination,
+                         xmlNode* c_merged, bint tail) except -1:
+    """Replace the destination text run and link its merged replacement.
+
+    On success, the tree owns c_merged. On failure, ownership remains with
+    the caller, which must free it.
+    """
+    cdef xmlNode* c_result
+    _removeText(c_destination)
+    if tail:
+        c_result = tree.xmlAddNextSibling(c_target, c_merged)
+    elif c_target.children is NULL:
+        c_result = tree.xmlAddChild(c_target, c_merged)
+    else:
+        c_result = tree.xmlAddPrevSibling(c_target.children, c_merged)
+    if c_result is NULL:
+        raise MemoryError()
+    return 0
+
+
+cdef int _appendText(xmlNode* c_target, xmlNode* c_source, bint tail) except -1:
+    """Append the contents of a borrowed text/CDATA run without changing it.
+
+    The destination becomes one plain text node. All concatenation stays
+    in libxml2.
+    """
+    cdef xmlNode* c_destination = _textNodeOrSkip(
+        c_target.next if tail else c_target.children)
+    cdef xmlNode* c_text
+    cdef xmlNode* c_merged
+    cdef bint replace
+
+    c_source = _textNodeOrSkip(c_source)
+    # Empty CDATA can have NULL content.  Like an empty Python string,
+    # an empty source run must not change the destination.
+    c_text = c_source
+    while c_text is not NULL and (
+            c_text.content is NULL or c_text.content[0] == c'\0'):
+        c_text = _textNodeOrSkip(c_text.next)
+    if c_text is NULL:
+        return 0
+    replace = (c_destination is NULL or
+               c_destination.type != tree.XML_TEXT_NODE or
+               _textNodeOrSkip(c_destination.next) is not NULL)
+    if replace:
+        c_merged = tree.xmlNewDocText(c_target.doc, NULL)
+        if c_merged is NULL:
+            raise MemoryError()
+    else:
+        c_merged = c_destination
+
+    # A replacement is a fresh empty node, so copy the destination run before
+    # appending the source; otherwise c_merged is already the destination.
+    try:
+        if replace:
+            _appendTextRun(c_merged, c_destination)
+        _appendTextRun(c_merged, c_source)
+    except:
+        if replace:
+            # Only the temporary replacement is ours to free; the existing
+            # destination remains owned by the tree.
+            tree.xmlFreeNode(c_merged)
+        raise
+
+    if replace:
+        try:
+            _replaceTextRun(c_target, c_destination, c_merged, tail)
+        except:
+            tree.xmlFreeNode(c_merged)
+            raise
+    return 0
+
 
 cdef bytes _resolveQNameText(_Element element, value):
     cdef xmlNs* c_ns
@@ -1147,6 +1229,7 @@ cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
         moveNodeToDocument(doc, c_node.doc, c_node)
     return 0
 
+
 cdef int _removeSiblings(xmlNode* c_element, tree.xmlElementType node_type, bint with_tail) except -1:
     cdef xmlNode* c_node
     cdef xmlNode* c_next
@@ -1170,17 +1253,8 @@ cdef int _removeSiblings(xmlNode* c_element, tree.xmlElementType node_type, bint
         c_node = c_next
     return 0
 
-cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target) noexcept:
-    cdef xmlNode* c_next
-    # tail support: look for any text nodes trailing this node and
-    # move them too
-    c_tail = _textNodeOrSkip(c_tail)
-    while c_tail is not NULL:
-        c_next = _textNodeOrSkip(c_tail.next)
-        c_target = tree.xmlAddNextSibling(c_target, c_tail)
-        c_tail = c_next
 
-cdef int _dropNode(_Document doc, xmlNode* c_node) except -1:
+cdef int _dropNode(xmlNode* c_node) except -1:
     """Detach c_node after joining its tail into the surrounding text.
 
     The caller holds the document write lock and has checked that c_node has
@@ -1189,22 +1263,86 @@ cdef int _dropNode(_Document doc, xmlNode* c_node) except -1:
     cdef xmlNode* c_parent
     cdef xmlNode* c_previous
     cdef xmlNode* c_next
-    cdef object tail
 
     c_parent = c_node.parent
     c_previous = _previousElement(c_node)
-    tail = _collectText(c_node.next)
-    if tail:
+    if _textNodeOrSkip(c_node.next) is not NULL:
         if c_previous is NULL:
-            _appendText(c_parent, tail, tail=0)
+            _appendText(c_parent, c_node.next, tail=0)
         else:
-            _appendText(c_previous, tail, tail=1)
+            _appendText(c_previous, c_node.next, tail=1)
 
     c_next = c_node.next
     tree.xmlUnlinkNode(c_node)
     _moveTail(c_next, c_node)
-    moveNodeToDocument(doc, c_node.doc, c_node)
+    # Namespace cleanup is the caller's responsibility.  The node is now
+    # detached, so its former parent declarations are no longer in scope.
     return 0
+
+
+cdef int _dropTag(_Document doc, xmlNode* c_node) except -1:
+    """Unwrap an element, then detach it and repair its namespaces.
+
+    The caller holds the document write lock and has checked that c_node
+    is an element with an element parent.
+    """
+    cdef xmlNode* c_parent = c_node.parent
+    cdef xmlNode* c_child
+    cdef xmlNode* c_text_target
+    cdef bint has_text
+    cdef bint reconcile_namespaces
+
+    if c_node.children is not NULL:
+        has_text = _textNodeOrSkip(c_node.children) is not NULL
+        c_text_target = _previousElement(c_node)
+        # Link the surrounding nodes to the full child chain first.
+        if c_node.prev is NULL:
+            c_parent.children = c_node.children
+        else:
+            c_node.prev.next = c_node.children
+        c_node.children.prev = c_node.prev
+        c_node.last.next = c_node
+        # The wrapper now follows its former children and has none of its own.
+        c_node.prev = c_node.last
+        c_child = c_node.children
+        c_node.children = c_node.last = NULL
+
+        # Without local declarations, the moved nodes inherit the same
+        # ancestor namespaces as before.
+        reconcile_namespaces = c_node.nsDef is not NULL
+        try:
+            while c_child is not c_node:
+                c_child.parent = c_parent
+                if reconcile_namespaces and _isElement(c_child):
+                    _reconcileNamespaces(doc, c_child)
+                c_child = c_child.next
+        finally:
+            # Finish reparenting if namespace reconciliation failed.
+            while c_child is not c_node:
+                c_child.parent = c_parent
+                c_child = c_child.next
+
+        if has_text:
+            if c_text_target is NULL:
+                _mergeTextNodes(_textNodeOrSkip(c_parent.children))
+            else:
+                _mergeTextNodes(_textNodeOrSkip(c_text_target.next))
+
+    _dropNode(c_node)
+    _reconcileNamespaces(doc, c_node)
+    return 0
+
+
+cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target) noexcept:
+    """Move a text/CDATA tail after c_target, preserving its node types."""
+    cdef xmlNode* c_next
+    c_tail = _textNodeOrSkip(c_tail)
+    while c_tail is not NULL:
+        # Insertion can coalesce ordinary text nodes and free c_tail.
+        c_next = _textNodeOrSkip(c_tail.next)
+        c_target = tree.xmlAddNextSibling(c_target, c_tail)
+        c_tail = c_next
+
 
 cdef int _copyTail(xmlNode* c_tail, xmlNode* c_target) except -1:
     cdef xmlNode* c_new_tail
@@ -1221,6 +1359,7 @@ cdef int _copyTail(xmlNode* c_tail, xmlNode* c_target) except -1:
         c_target = tree.xmlAddNextSibling(c_target, c_new_tail)
         c_tail = _textNodeOrSkip(c_tail.next)
     return 0
+
 
 cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
     cdef xmlNode* c_copy

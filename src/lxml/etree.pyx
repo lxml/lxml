@@ -1934,7 +1934,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_parent = c_node.parent
             if c_parent is NULL or not _isElement(c_parent):
                 raise ValueError("Cannot drop the root element.")
-            _dropNode(doc, c_node)
+            _dropNode(c_node)
+            _reconcileNamespaces(doc, c_node)
         finally:
             doc.unlock_write()
 
@@ -1953,12 +1954,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_parent
-        cdef xmlNode* c_previous
-        cdef xmlNode* c_child
-        cdef xmlNode* c_next_child
-        cdef xmlNode* c_next
-        cdef xmlDoc* c_source_doc
-        cdef object text
         _assertValidNode(self)
 
         doc = self._doc
@@ -1970,27 +1965,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 raise ValueError("Cannot drop the root element.")
 
             if c_node.type == tree.XML_ELEMENT_NODE:
-                c_previous = _previousElement(c_node)
-                text = _collectText(c_node.children)
-                if text:
-                    if c_previous is NULL:
-                        _appendText(c_parent, text, tail=0)
-                    else:
-                        _appendText(c_previous, text, tail=1)
-
-                # Move element children and their tails before this node.
-                # Entity references are excluded to avoid walking their DTD.
-                c_child = _findChildForwards(c_node, 0)
-                while c_child is not NULL:
-                    c_next_child = _nextElement(c_child)
-                    c_source_doc = c_child.doc
-                    c_next = c_child.next
-                    tree.xmlAddPrevSibling(c_node, c_child)
-                    _moveTail(c_next, c_child)
-                    moveNodeToDocument(self._doc, c_source_doc, c_child)
-                    c_child = c_next_child
-
-            _dropNode(doc, c_node)
+                _dropTag(doc, c_node)
+            else:
+                _dropNode(c_node)
         finally:
             doc.unlock_write()
 
