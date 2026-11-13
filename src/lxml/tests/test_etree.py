@@ -235,7 +235,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(etree.QName(name), etree.QName("a"))
 
         el = etree.Element(name)
-        print(el, repr(el))
         self.assertEqual(etree.QName(el), etree.QName("a"))
 
         el.tag = name  # force tag to bytearray
