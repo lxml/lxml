@@ -3506,6 +3506,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         element = self.etree.Element('tag')
         element.iter(tags)  # should terminate
 
+    def test_iter_bytearray_tag(self):
+        etree = self.etree
+        root = etree.XML('<r><a/><b><a/></b></r>')
+        self.assertEqual(len(list(root.iter(bytearray(b'a')))), 2)
+        self.assertEqual(len(list(root.iter([bytearray(b'a'), 'b']))), 3)
+
     def test_getiterator(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -4040,6 +4046,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, root.findall, '')
         self.assertRaises(SyntaxError, root.findall, '//')  # absolute path on Element
         self.assertRaises(SyntaxError, root.findall, './//')
+
+    def test_find_bytearray_tag_in_findall_iteration(self):
+        etree = self.etree
+        root = etree.XML('<r><a/><a/><c/></r>')
+        self.assertEqual(len(list(root.iterfind('a'))), 2)
+        self.assertEqual(len(list(root.iter(bytearray(b'c')))), 1)
 
     def test_iterfind_tree_modifications(self):
         def insert_prev(it, tag='tagname'):
