@@ -4,12 +4,6 @@ from lxml.html import _forms_xpath, _options_xpath, _nons, _transform_result
 from lxml.html import defs
 import copy
 
-try:
-    basestring
-except NameError:
-    # Python 3
-    basestring = str
-
 __all__ = ['FormNotFound', 'fill_form', 'fill_form_html',
            'insert_errors', 'insert_errors_html',
            'DefaultErrorCreator']
@@ -35,7 +29,7 @@ def fill_form(
 
 def fill_form_html(html, values, form_id=None, form_index=None):
     result_type = type(html)
-    if isinstance(html, basestring):
+    if isinstance(html, str):
         doc = fromstring(html)
     else:
         doc = copy.deepcopy(html)
@@ -92,7 +86,7 @@ def _fill_multiple(input, value):
                 result = False
             else:
                 result = value[0]
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     # The only valid "on" value for an unnamed checkbox is 'on'
                     result = result == 'on'
             _check(input, result)
@@ -205,7 +199,7 @@ class DefaultErrorCreator:
         if isinstance(message, ElementBase):
             error_el.append(message)
         else:
-            assert isinstance(message, basestring), (
+            assert isinstance(message, str), (
                 "Bad message; should be a string or element: %r" % message)
             error_el.text = message or self.default_message
         if is_block and self.block_inside:
@@ -241,13 +235,13 @@ def insert_errors(
         if error is None:
             continue
         for error_el, message in _find_elements_for_name(el, name, error):
-            assert isinstance(message, (basestring, type(None), ElementBase)), (
+            assert isinstance(message, (str, type(None), ElementBase)), (
                 "Bad message: %r" % message)
             _insert_error(error_el, message, error_class, error_creator)
 
 def insert_errors_html(html, values, **kw):
     result_type = type(html)
-    if isinstance(html, basestring):
+    if isinstance(html, str):
         doc = fromstring(html)
     else:
         doc = copy.deepcopy(html)
