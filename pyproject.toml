@@ -12,6 +12,8 @@ enable = [
 skip = [
     "cp38-*",
     "pp38-*",
+    "pp39-*",
+    "pp310-*",
     "pp*-manylinux_i686",
     "*-musllinux_i686",
     "cp315*_i686",
