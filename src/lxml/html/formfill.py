@@ -117,8 +117,11 @@ def _select(el, select):
             del el.attrib['selected']
 
 def _fill_single(input, value):
-    if _nons(input.tag) == 'textarea':
+    input_tag_name = _nons(input.tag)
+    if input_tag_name == 'textarea':
         input.text = value
+    elif input_tag_name == 'select':
+        _fill_multiple(input, [value])
     else:
         input.set('value', value)
 

@@ -34,6 +34,10 @@ Bugs fixed
 * GH#543: Repeated ElementPath searches could leak an index counter into the next run since lxml 7.0.
   Patch by Nayana-Naik73.
 
+* GH#545: ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
+  instead of setting a ``value`` attribute on the ``<select>`` element.
+  Patch by Alex Castillo Gonzalez.
+
 * Parsing from a file path in the soupparser did not close the file it opened.
 
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
