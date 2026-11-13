@@ -2,6 +2,7 @@ name: Cache library dependencies
 
 on:
   workflow_call:
+    # NOTE: Windows library versions are defined in vcpkg.json
     inputs:
       ZLIB_VERSION:
         default: "1.4"
@@ -19,22 +20,6 @@ on:
         default: "1.1.45"
         required: false
         type: string
-      WIN_ZLIB_VERSION:
-        default: "1.4"
-        required: false
-        type: string
-      WIN_LIBICONV_VERSION:
-        default: "1.19"
-        required: false
-        type: string
-      WIN_LIBXML2_VERSION:
-        default: "2.11.9"
-        required: false
-        type: string
-      WIN_LIBXSLT_VERSION:
-        default: "1.1.45"
-        required: false
-        type: string
 
     outputs:
       ZLIB_VERSION:
@@ -45,14 +30,6 @@ on:
         value: ${{ inputs.LIBXML2_VERSION }}
       LIBXSLT_VERSION:
         value: ${{ inputs.LIBXSLT_VERSION }}
-      WIN_ZLIB_VERSION:
-        value: ${{ inputs.WIN_ZLIB_VERSION }}
-      WIN_LIBICONV_VERSION:
-        value: ${{ inputs.WIN_LIBICONV_VERSION }}
-      WIN_LIBXML2_VERSION:
-        value: ${{ inputs.WIN_LIBXML2_VERSION }}
-      WIN_LIBXSLT_VERSION:
-        value: ${{ inputs.WIN_LIBXSLT_VERSION }}
 
 
 jobs:
@@ -93,12 +70,3 @@ jobs:
       env:
         GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: python3 buildlibxml.py --download-only  ${{ matrix.os == 'windows-2022' && 'win32' || '' }}
-
-    - name: Check Windows library versions
-      if: ${{ contains(matrix.os, 'windows-') }}
-      run: |
-        bash -c '
-        for file in  libs/zlib-${{ inputs.WIN_ZLIB_VERSION }}.*.zip  libs/iconv-${{ inputs.WIN_LIBICONV_VERSION }}.*.zip  libs/libxml2-${{ inputs.WIN_LIBXML2_VERSION }}.*.zip  libs/libxslt-${{ inputs.WIN_LIBXSLT_VERSION }}.*.zip; do
-            [[ -f "$file" ]] || { echo "MISSING: $file" ; exit 1; }
-        done
-        '

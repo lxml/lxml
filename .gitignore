@@ -20,6 +20,7 @@ cython_debug/
 py[0-9][0-9]
 lxml-*/
 libs
+vcpkg_installed
 *.egg-info
 *.pickle
 *.pyc
