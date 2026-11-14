@@ -205,11 +205,20 @@ Due to the additional lack of package management of this platform,
 it is best to link the library dependencies statically if you decide
 to build from sources, rather than using a binary installer.  For
 that, lxml can use the `binary distribution of libxml2 and libxslt
-<http://www.zlatkovic.com/libxml.en.html>`_, which it downloads
+<https://github.com/lxml/libxml2-win-binaries/releases>`_, which it downloads
 automatically during the static build.  It needs both libxml2 and
 libxslt, as well as iconv and zlib, which are available from the
 same download site.  Further build instructions are in the
 `source build documentation <build.html>`_.
+
+These static libraries use MSVC whole-program optimisation (``/GL``), so
+lxml must use the exact compiler version that built them.  The build selects
+the installed MSVC 14.44 toolset for x86/x64 or 14.52 for ARM64 and keeps
+setuptools from selecting another compiler.  Install the required toolset
+with the Visual Studio Installer.  Archive names include ``_MSC_FULL_VER``;
+unqualified archives and archives from another compiler patch are not reused.
+If no matching archive is published, rebuild and publish the Windows
+libraries with the same toolset before building lxml.
 
 
 Source builds on MacOS-X
