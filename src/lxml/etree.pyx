@@ -1358,7 +1358,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Removes a matching subelement. Unlike the find methods, this
         method compares elements based on identity, not on tag value
-        or contents.
+        or contents. This ElementTree-compatible method detaches the element
+        with its tail still attached to it. For practical editing of
+        document-style (mixed-content) trees, lxml provides the extension
+        ``element.drop_tree()``, which removes the element and joins its tail
+        into the surrounding text in the parent tree.
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
@@ -1908,6 +1912,64 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return _elementFactory(self._doc, c_node)
         finally:
             doc.unlock_read()
+
+    def drop_tree(self):
+        """drop_tree(self)
+
+        Removes this element and its children, joining its tail text with
+        the surrounding text in the parent tree. Unlike the standard
+        ElementTree-compatible ``parent.remove(element)``, which leaves the
+        tail attached to the detached element, this lxml-specific extension
+        exists as a practical convenience for editing document-style
+        (mixed-content) trees while preserving their text flow.
+        """
+        cdef xmlNode* c_node
+        cdef xmlNode* c_parent
+        _assertValidNode(self)
+
+        doc = self._doc
+        doc.lock_write()
+        try:
+            c_node = self._c_node
+            c_parent = c_node.parent
+            if c_parent is NULL or not _isElement(c_parent):
+                raise ValueError("Cannot drop the root element.")
+            _dropNode(c_node)
+            _reconcileNamespaces(doc, c_node)
+        finally:
+            doc.unlock_write()
+
+    def drop_tag(self):
+        """drop_tag(self)
+
+        Removes this element's tag while keeping its text, children and
+        tail text in the tree.
+
+        Example::
+
+            >>> h = XML('<div>Hello <b>World!</b></div>')
+            >>> h.find('.//b').drop_tag()
+            >>> print(tostring(h, encoding='unicode'))
+            <div>Hello World!</div>
+        """
+        cdef xmlNode* c_node
+        cdef xmlNode* c_parent
+        _assertValidNode(self)
+
+        doc = self._doc
+        doc.lock_write()
+        try:
+            c_node = self._c_node
+            c_parent = c_node.parent
+            if c_parent is NULL or not _isElement(c_parent):
+                raise ValueError("Cannot drop the root element.")
+
+            if c_node.type == tree.XML_ELEMENT_NODE:
+                _dropTag(doc, c_node)
+            else:
+                _dropNode(c_node)
+        finally:
+            doc.unlock_write()
 
     def getnext(self):
         """getnext(self)

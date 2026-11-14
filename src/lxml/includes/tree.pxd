@@ -382,6 +382,7 @@ cdef extern from "libxml/tree.h" nogil:
     cdef xmlNode* xmlReplaceNode(xmlNode* old, xmlNode* cur)
     cdef xmlNode* xmlAddPrevSibling(xmlNode* cur, xmlNode* elem)
     cdef xmlNode* xmlAddNextSibling(xmlNode* cur, xmlNode* elem)
+    cdef int xmlTextConcat(xmlNode* node, const_xmlChar* content, int len)
     cdef xmlNode* xmlNewDocNode(xmlDoc* doc, xmlNs* ns,
                                 const_xmlChar* name, const_xmlChar* content)
     cdef xmlDoc* xmlNewDoc(const_xmlChar* version)
