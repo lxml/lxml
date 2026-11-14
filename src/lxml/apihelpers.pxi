@@ -791,6 +791,38 @@ cdef int _setTailText(xmlNode* c_node, value) except -1:
     tree.xmlAddNextSibling(c_node, c_text_node)
     return 0
 
+cdef int _appendText(xmlNode* c_node, value, bint tail) except -1:
+    """Append text to the single text node that follows c_node (tail) or
+    that starts at its first child, instead of replacing it with a new
+    node.  This keeps repeated appends cheap, as the existing text is not
+    decoded and re-created each time.
+
+    Anything but exactly one plain text node (no text, several adjacent
+    nodes, CDATA), or a combined length beyond libxml2's int range, is
+    handled by setting the concatenated text.  The result is always a
+    single text node.
+    """
+    cdef xmlNode* c_text
+    cdef bytes utf8_value = None
+    c_text = _textNodeOrSkip(c_node.next if tail else c_node.children)
+    if c_text is not NULL and c_text.type == tree.XML_TEXT_NODE and \
+            _textNodeOrSkip(c_text.next) is NULL:
+        utf8_value = _utf8(value)
+        # xmlTextConcat() uses int lengths for the new and the combined text.
+        if len(utf8_value) > limits.INT_MAX - tree.xmlStrlen(c_text.content):
+            utf8_value = None
+
+    if utf8_value is None:
+        text = (_collectText(c_text) or '') + value
+        if tail:
+            _setTailText(c_node, text)
+        else:
+            _setNodeText(c_node, text)
+    else:
+        if tree.xmlTextConcat(c_text, _xcstr(utf8_value), <int> len(utf8_value)) < 0:
+            raise MemoryError()
+    return 0
+
 cdef bytes _resolveQNameText(_Element element, value):
     cdef xmlNs* c_ns
     ns, tag = _getNsTag(value)

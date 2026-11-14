@@ -321,9 +321,9 @@ class HtmlMixin:
         if self.tail:
             previous = self.getprevious()
             if previous is None:
-                parent.text = (parent.text or '') + self.tail
+                parent._append_text(self.tail)
             else:
-                previous.tail = (previous.tail or '') + self.tail
+                previous._append_tail(self.tail)
         parent.remove(self)
 
     def drop_tag(self):
@@ -344,19 +344,21 @@ class HtmlMixin:
         if self.text and isinstance(self.tag, str):
             # not a Comment, etc.
             if previous is None:
-                parent.text = (parent.text or '') + self.text
+                parent._append_text(self.text)
             else:
-                previous.tail = (previous.tail or '') + self.text
+                previous._append_tail(self.text)
         if self.tail:
             if len(self):
-                last = self[-1]
-                last.tail = (last.tail or '') + self.tail
+                self[-1]._append_tail(self.tail)
             elif previous is None:
-                parent.text = (parent.text or '') + self.tail
+                parent._append_text(self.tail)
             else:
-                previous.tail = (previous.tail or '') + self.tail
-        index = parent.index(self)
-        parent[index:index+1] = self[:]
+                previous._append_tail(self.tail)
+        # Moving the children one by one (together with their tails) is O(1)
+        # per child, whereas index() and slice assignment are O(siblings).
+        for child in self[:]:
+            self.addprevious(child)
+        parent.remove(self)
 
     def find_rel_links(self, rel):
         """
