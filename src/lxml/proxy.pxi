@@ -198,6 +198,17 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
         #print "Not freeing: proxies still exist"
         return NULL
 
+    # A live child proxy prevents freeing any ancestor.  Check the first child
+    # before walking up the tree to keep deep child traversal linear when each
+    # newly created child proxy replaces its parent's proxy.  Only skip one
+    # leading text node, keeping this check bounded even with many CDATA nodes.
+    c_next = c_node.children
+    if c_next is not NULL:
+        if c_next.type == tree.XML_TEXT_NODE or c_next.type == tree.XML_CDATA_SECTION_NODE:
+            c_next = c_next.next
+        if c_next is not NULL and _isElement(c_next) and hasProxy(c_next):
+            return NULL
+
     while c_node.parent is not NULL:
         c_node = c_node.parent
         #print "checking:", c_current.type
