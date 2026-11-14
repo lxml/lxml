@@ -44,6 +44,8 @@ import re
 
 from collections.abc import MutableMapping, MutableSet
 from functools import partial
+from itertools import groupby
+from operator import itemgetter
 from urllib.parse import urljoin
 
 from .. import etree
@@ -598,28 +600,53 @@ class HtmlMixin:
         elif resolve_base_href:
             self.resolve_base_href()
 
-        for el, attrib, link, pos in self.iterlinks():
-            new_link = link_repl_func(link.strip())
-            if new_link == link:
-                continue
-            if new_link is None:
-                # Remove the attribute or element content
-                if attrib is None:
-                    el.text = ''
-                else:
-                    del el.attrib[attrib]
+        for (el, attr_name), links in groupby(self.iterlinks(), key=itemgetter(0, 1)):
+            if attr_name is None or attr_name == 'style':
+                # <style> text and "style" attribute: the links of one value
+                # are reported last to first.  Rebuild the value once,
+                # instead of once per link.
+                value = el.text if attr_name is None else el.get(attr_name)
+                end = len(value)
+                chunks = []  # replacements and the text following them, reversed
+                removed = False
+                for _, _, link, pos in links:
+                    new_link = link_repl_func(link.strip())
+                    if removed or new_link == link:
+                        continue
+                    if new_link is None:
+                        # Remove the attribute or element content
+                        removed = True
+                        if attr_name is None:
+                            el.text = ''
+                        else:
+                            del el.attrib[attr_name]
+                        break
+                    chunks.append(value[pos+len(link):end])
+                    chunks.append(new_link)
+                    end = pos
+                if chunks and not removed:
+                    new = value[:end] + ''.join(reversed(chunks))
+                    if attr_name is None:
+                        el.text = new
+                    else:
+                        el.set(attr_name, new)
                 continue
 
-            if attrib is None:
-                new = el.text[:pos] + new_link + el.text[pos+len(link):]
-                el.text = new
-            else:
-                cur = el.get(attrib)
+            for _, _, link, pos in links:
+                new_link = link_repl_func(link.strip())
+                if new_link == link:
+                    continue
+                if new_link is None:
+                    # Remove the attribute
+                    del el.attrib[attr_name]
+                    continue
+
+                cur = el.get(attr_name)
                 if not pos and len(cur) == len(link):
                     new = new_link  # most common case
                 else:
                     new = cur[:pos] + new_link + cur[pos+len(link):]
-                el.set(attrib, new)
+                el.set(attr_name, new)
 
 
 class _MethodFunc:
