@@ -1584,7 +1584,8 @@ cdef class _IncrementalFileWriter:
             for prefix, ns in nsmap.items():
                 if prefix is not None:
                     prefix = _utf8(prefix)
-                    _prefixValidOrRaise(prefix)
+                    if not _prefixNameIsValid(prefix):
+                        raise _buildPrefixInvalidError(prefix)
                 reversed_nsmap[_utf8(ns)] = prefix
         ns, name = _getNsTag(tag)
         if not name_is_valid(_xcstr(name)):
