@@ -46,7 +46,7 @@ jobs:
       matrix:
         # Tests [amd64]
         #
-        os: [ubuntu-22.04, macos-latest, windows-2022, windows-11-arm]
+        os: [ubuntu-24.04, macos-latest, windows-2022, windows-11-arm]
         python-version:
           - "3.8"
           - "3.9"
@@ -55,12 +55,13 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-          - "3.15-dev"
+          - "3.15"
+          - "3.16-dev"
         env: [{ STATIC_DEPS: true }, { STATIC_DEPS: false }]
 
         include:
-          #- os: ubuntu-22.04
-          #  python-version: "3.15-dev"
+          #- os: ubuntu-24.04
+          #  python-version: "3.16-dev"
           #  allowed_failure: true
 
           - os: ubuntu-latest
@@ -165,15 +166,6 @@ jobs:
           # ==============
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
-
-          # Legacy jobs
-          # ===========
-          #- os: ubuntu-22.04
-          #  python-version: "3.7"
-          #  env: { STATIC_DEPS: true }
-          #- os: ubuntu-22.04
-          #  python-version: "3.7"
-          #  env: { STATIC_DEPS: false }
 
         exclude:
           # Windows sub-jobs
