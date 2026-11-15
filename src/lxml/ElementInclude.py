@@ -51,13 +51,8 @@ form of custom URL resolvers.
 """
 
 from lxml import etree
-try:
-    from urlparse import urljoin
-    from urllib2 import urlopen
-except ImportError:
-    # Python 3
-    from urllib.parse import urljoin
-    from urllib.request import urlopen
+from urllib.parse import urljoin
+from urllib.request import urlopen
 
 XINCLUDE = "{http://www.w3.org/2001/XInclude}"
 
@@ -108,7 +103,7 @@ def default_loader(href, parse, encoding=None):
 
 ##
 # Default loader used by lxml.etree - handles custom resolvers properly
-# 
+#
 
 def _lxml_default_loader(href, parse, encoding=None, parser=None):
     if parse == "xml":
