@@ -182,6 +182,26 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertRaises(ValueError, SubElement, el, 'na me')
         self.assertRaises(ValueError, SubElement, el, '{test} name')
 
+    def test_html_attribute_name_invalid(self):
+        parser = self.etree.HTMLParser()
+        Element = parser.makeelement
+        SubElement = self.etree.SubElement
+
+        el = Element('p')
+        self.assertRaises(ValueError, el.set, 'a onclick', 'v')
+        self.assertRaises(ValueError, el.set, 'a><script', 'v')
+        self.assertRaises(ValueError, el.set, 'onclick=alert(1)', 'v')
+        self.assertRaises(ValueError, el.set, '{test}a"b', 'v')
+        self.assertRaises(ValueError, Element, 'p', {'a onclick': 'v'})
+        self.assertRaises(ValueError, Element, 'p', {'onclick=alert(1)': 'v'})
+        self.assertRaises(ValueError, SubElement, el, 'p', {'a><script': 'v'})
+        self.assertEqual(self.etree.tostring(el, method="html"), b'<p></p>')
+
+        el.set('@click', 'v')
+        el.set('p:name', 'v')
+        self.assertEqual(self.etree.tostring(el, method="html"),
+                         b'<p @click="v" p:name="v"></p>')
+
     def test_module_parse_html_norecover(self):
         parser = self.etree.HTMLParser(recover=False)
         parse = self.etree.parse
