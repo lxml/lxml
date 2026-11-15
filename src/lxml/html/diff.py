@@ -784,7 +784,10 @@ def flatten_el(el, include_hrefs, skip_tag=False):
     not returned (just its contents)."""
     if not skip_tag:
         if el.tag == 'img':
-            yield ('img', el.get('src'), start_tag(el))
+            src = el.get('src')
+            if src is not None:
+                src = html_escape(src)
+            yield ('img', src, start_tag(el))
         else:
             yield start_tag(el)
     if el.tag in empty_tags and not el.text and not len(el) and not el.tail:
