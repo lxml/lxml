@@ -797,8 +797,10 @@ def flatten_el(el, include_hrefs, skip_tag=False):
         yield html_escape(word)
     for child in el:
         yield from flatten_el(child, include_hrefs=include_hrefs)
-    if el.tag == 'a' and el.get('href') and include_hrefs:
-        yield ('href', html_escape(el.get('href')))
+    if el.tag == 'a' and include_hrefs:
+        href = el.get('href')
+        if href:
+            yield ('href', html_escape(href))
     if not skip_tag:
         yield end_tag(el)
         end_words = split_words(el.tail)
