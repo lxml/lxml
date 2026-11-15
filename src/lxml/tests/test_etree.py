@@ -420,6 +420,127 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(b'<test><a><b></b></a><x><a><b></b></a></x></test>',
                           self._writeElement(root))
 
+    def test_drop_tree_joins_tail_and_preserves_parent_text(self):
+        root = self.etree.XML(
+            '<para>The result<note>Needs verification</note> is significant.</para>')
+        note = root[0]
+
+        note.drop_tree()
+
+        self.assertEqual(root.text, 'The result is significant.')
+        self.assertEqual(len(root), 0)
+        self.assertEqual(
+            self.etree.tostring(root, encoding='unicode'),
+            '<para>The result is significant.</para>')
+
+        root = self.etree.XML('<para>The result<note/> is significant.</para>')
+        note = root[0]
+        root.remove(note)
+        self.assertEqual(root.text, 'The result')
+        self.assertEqual(note.tail, ' is significant.')
+
+        root = self.etree.XML('<p>a<note/>b</p>')
+        root[0].tail = self.etree.CDATA('c')
+        root[0].drop_tree()
+        self.assertEqual(root.text, 'ac')
+        self.assertEqual(root.xpath('text()'), ['ac'])
+
+    def test_drop_tag_keeps_children_and_joins_text(self):
+        root = self.etree.XML('<p>Before<b>Inside<i/>after</b> outside</p>')
+        bold = root[0]
+
+        bold.drop_tag()
+
+        self.assertEqual(root.text, 'BeforeInside')
+        self.assertEqual(len(root), 1)
+        self.assertEqual(root[0].tag, 'i')
+        self.assertEqual(root[0].tail, 'after outside')
+        self.assertEqual(
+            self.etree.tostring(root, encoding='unicode'),
+            '<p>BeforeInside<i/>after outside</p>')
+
+    def test_drop_tag_merges_adjacent_text_and_cdata(self):
+        root = self.etree.XML(
+            '<p>before<drop>inside<![CDATA[<&>]]><i/>after</drop>outside</p>',
+            self.etree.XMLParser(strip_cdata=False))
+        dropped = root[0]
+
+        dropped.drop_tag()
+
+        self.assertEqual(root.xpath('text()'), ['beforeinside<&>', 'afteroutside'])
+        self.assertEqual(
+            self.etree.tostring(root),
+            b'<p>beforeinside&lt;&amp;&gt;<i/>afteroutside</p>')
+        self.assertEqual(dropped.tail, 'outside')
+
+    def test_drop_tag_preserves_preceding_namespace_declarations(self):
+        root = self.etree.XML(
+            '<r xmlns:p="urn:p"><prior xmlns:p="urn:p"/>'
+            '<drop xmlns:q="urn:q"><q:child/></drop></r>')
+
+        root[1].drop_tag()
+
+        self.assertEqual(
+            self.etree.tostring(root),
+            b'<r xmlns:p="urn:p"><prior xmlns:p="urn:p"/>'
+            b'<q:child xmlns:q="urn:q"/></r>')
+
+    def test_drop_methods_preserve_empty_cdata(self):
+        for method in ('drop_tag', 'drop_tree'):
+            for xml, text, expected in (
+                    ('<r><drop/><![CDATA[]]></r>', None, b'<r/>'),
+                    ('<r><drop><![CDATA[]]></drop></r>', None, b'<r/>'),
+                    ('<r><![CDATA[]]><drop/>tail</r>', 'tail', b'<r>tail</r>')):
+                with self.subTest(method=method, xml=xml):
+                    root = self.etree.XML(
+                        xml, self.etree.XMLParser(strip_cdata=False))
+
+                    getattr(root[0], method)()
+
+                    self.assertEqual(root.text, text)
+                    self.assertEqual(self.etree.tostring(root), expected)
+
+    def test_drop_tag_without_local_namespaces_preserves_child_prefix(self):
+        root = self.etree.XML(
+            '<r xmlns:p="urn:p"><drop><q:child xmlns:q="urn:p"/></drop></r>')
+
+        root[0].drop_tag()
+
+        self.assertEqual(
+            self.etree.tostring(root),
+            b'<r xmlns:p="urn:p"><q:child xmlns:q="urn:p"/></r>')
+
+    def test_drop_tag_preserves_child_chain_and_namespace_lifetime(self):
+        root = self.etree.XML(
+            '<!DOCTYPE r [<!ENTITY x "X">]>'
+            '<r>A<drop xmlns:q="urn:q">before&x;<![CDATA[mid]]>'
+            '<!--c--><?pi v?><q:i q:a="v"/>after</drop>Z</r>',
+            self.etree.XMLParser(resolve_entities=False, strip_cdata=False))
+        dropped = root[0]
+        entity, comment, pi, child = list(dropped)
+
+        dropped.drop_tag()
+
+        self.assertEqual(list(root), [entity, comment, pi, child])
+        self.assertTrue(all(node.getparent() is root for node in root))
+        self.assertEqual(
+            self.etree.tostring(root),
+            b'<r>Abefore&x;<![CDATA[mid]]><!--c--><?pi v?>'
+            b'<q:i xmlns:q="urn:q" q:a="v"/>afterZ</r>')
+        self.assertIsNone(dropped.text)
+        self.assertEqual(len(dropped), 0)
+        del dropped, root, entity, comment, pi
+        gc.collect()
+
+        target = self.etree.Element('target')
+        target.append(child)
+        gc.collect()
+        self.assertEqual(child.tag, '{urn:q}i')
+        self.assertEqual(child.get('{urn:q}a'), 'v')
+        self.assertEqual(
+            self.etree.tostring(target),
+            b'<target><q:i xmlns:q="urn:q" q:a="v"/>afterZ</target>')
+
     def test_strip_elements_ns(self):
         XML = self.etree.XML
         xml = b'<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"/>C</b>BT</n:a>AT<x>X<a>A<b xmlns="urn:a"/>BT<c xmlns="urn:x"/>CT</a>AT</x>XT</test>'
@@ -2038,6 +2159,54 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual('test', root.tail)
         self.assertEqual(b'<root/><![CDATA[test]]>',
                          tostring(root))
+
+    def test_move_preserves_mixed_cdata_tail(self):
+        for operation, expected in (
+                ('append', b'<dst><old/><move/>a<![CDATA[<&>]]>b<![CDATA[]]></dst>'),
+                ('insert', b'<dst><move/>a<![CDATA[<&>]]>b<![CDATA[]]><old/></dst>'),
+                ('replace', b'<dst><move/>a<![CDATA[<&>]]>b<![CDATA[]]></dst>'),
+                ('remove', b'<dst><old/></dst>')):
+            with self.subTest(operation=operation):
+                source = self.etree.XML(
+                    '<!DOCTYPE src [<!ENTITY x "X">]>'
+                    '<src><move/>a<![CDATA[<&>]]>b<![CDATA[]]>&x;after<keep/></src>',
+                    self.etree.XMLParser(strip_cdata=False, resolve_entities=False))
+                node = source[0]
+                target = self.etree.XML('<dst><old/></dst>')
+
+                if operation == 'append':
+                    target.append(node)
+                elif operation == 'insert':
+                    target.insert(0, node)
+                elif operation == 'replace':
+                    target.replace(target[0], node)
+                else:
+                    source.remove(node)
+
+                self.assertEqual(self.etree.tostring(source), b'<src>&x;after<keep/></src>')
+                self.assertEqual(self.etree.tostring(target), expected)
+                self.assertEqual(
+                    self.etree.tostring(node), b'<move/>a<![CDATA[<&>]]>b<![CDATA[]]>')
+
+    def test_copy_preserves_mixed_cdata_tail(self):
+        for copier in (copy.copy, copy.deepcopy):
+            with self.subTest(copier=copier):
+                source = self.etree.XML(
+                    '<!DOCTYPE src [<!ENTITY x "X">]>'
+                    '<src><node/>a<![CDATA[<&>]]>b<![CDATA[]]>&x;after<keep/></src>',
+                    self.etree.XMLParser(strip_cdata=False, resolve_entities=False))
+                original = self.etree.tostring(source)
+
+                copied = copier(source[0])
+
+                self.assertEqual(self.etree.tostring(source), original)
+                del source
+                gc.collect()
+
+                self.assertEqual(
+                    self.etree.tostring(copied), b'<node/>a<![CDATA[<&>]]>b<![CDATA[]]>')
+                copied.tail = 'changed'
+                self.assertEqual(self.etree.tostring(copied), b'<node/>changed')
 
     def test_cdata_type(self):
         CDATA = self.etree.CDATA
