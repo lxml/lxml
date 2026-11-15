@@ -2,6 +2,47 @@
 lxml changelog
 ==============
 
+6.2.0 (2026-??-??)
+==================
+
+Bugs fixed
+----------
+
+* GHSA-23p9-v872-36p9: Passing ``CDATA()`` wrapped content ending with a bare ``]`` character
+  into an ``xmlfile`` reads arbitrary data from the Python heap and includes it in the generated XML document.
+  This allows reading random content from the application memory and/or crashing the application.
+  Issue found by shaggitza.
+
+* GHSA-59qx-3jjv-x996: Parsing a document defining a non-wellformed entity with the default configuration
+  of ``iterparse()`` could crash the application.
+  This issue is network exploitable if the application parses untrusted documents from remote sites.
+  Issue found by Claude and Ada Logics.
+
+* GHSA-27mw-m39x-fm32: Comments and PIs from the internal/external DTD subsets were reported
+  through the SAX/target-parser and iterparse/pull parser interfaces which could lead to internal
+  memory corruption and crashes.  They are no longer reported.
+  Issue found by Claude and Ada Logics.
+
+* The binary wheels include several security relevant bug fixes for libxml2 on all platforms.
+
+* LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
+  with ``IndexError``.  It is now kept as following sibling.
+  Patch by cherith.
+
+* GH#546: ``lxml.html.diff`` is a bit more stable on PyPy.
+  Patch by Matti Picus.
+
+* The souppoarser did not immediately close the file after parsing if it opened it.
+
+* The parallel ``make`` execution during library build could fail
+  when it tries to request more CPUs than available.
+
+Other changes
+-------------
+
+* Built with Cython 3.3.1.
+
+
 6.1.3 (2026-09-02)
 ==================
 
