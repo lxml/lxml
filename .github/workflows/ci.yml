@@ -64,27 +64,27 @@ jobs:
           #  python-version: "3.16-dev"
           #  allowed_failure: true
 
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.9"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.13"
             env: {STATIC_DEPS: true, WITH_REFNANNY: true}
             extra_hash: "-refnanny"
 
           # Coverage setup
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.10"
             env: { COVERAGE: true, STATIC_DEPS: true }
             extra_hash: "-coverage"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.10"
             env: { STATIC_DEPS: false, EXTRA_DEPS: "docutils pygments sphinx sphinx-rtd-theme" }
             extra_hash: "-docs"
 
           # Old library setup with minimum version requirements
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -92,7 +92,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.27,
             }
             extra_hash: "-oldlibs29"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -100,7 +100,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs210"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -108,7 +108,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs211"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -116,7 +116,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs212"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -125,7 +125,7 @@ jobs:
             }
             extra_hash: "-oldlibs213"
 
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             #allowed_failure: true
             env: {
@@ -135,7 +135,7 @@ jobs:
             }
             extra_hash: "-latestlibs"
 
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             #allowed_failure: true
             env: {
@@ -149,15 +149,15 @@ jobs:
           # Ubuntu sub-jobs:
           # ================
           # Pypy
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: pypy-3.9
             env: { STATIC_DEPS: false }
             allowed_failure: true
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: pypy-3.10
             env: { STATIC_DEPS: false }
             allowed_failure: true
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: pypy-3.11
             env: { STATIC_DEPS: false }
             allowed_failure: true
@@ -258,7 +258,7 @@ jobs:
           if-no-files-found: ignore
 
   benchmarks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     # The benchmarks are currently inconclusive and take a very long time to run.
     if: false
