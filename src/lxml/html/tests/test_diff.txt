@@ -61,6 +61,15 @@ images are treated like words:
     >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://yahoo.com">search</a>')
     <a href="http://yahoo.com">search</a>
 
+Link and image URLs are escaped like any other text:
+
+    >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://x/?&lt;b&gt;">search</a>')
+    <a href="http://x/?&lt;b&gt;">search <ins> Link:
+    http://x/?&lt;b&gt;</ins> <del> Link: http://yahoo.com</del> </a>
+    >>> pdiff('<p>Print this <img src="print.gif"></p>', '<p>Print this <img src="print.gif?&lt;b&gt;"></p>')
+    <p>Print this <ins><img src="print.gif?&lt;b&gt;"></ins> <del><img
+    src="print.gif"></del> </p>
+
 Images may sometimes not have 'src' attributes:
 
     >>> pdiff('<img src="tease"> <img> test <img src="test">', '<img> test <img src="toast">')
