@@ -1462,6 +1462,17 @@ cdef enum _IncrementalFileWriterStatus:
     WRITER_FINISHED = 4
 
 
+cdef int _writerNameValidOrRaise(bytes name, int c_method, str kind) except -1:
+    # Names are written verbatim, so reject anything that could break out of the tag.
+    # Unlike the tree API, this keeps accepting ':' in literal "prefix:name" names.
+    if c_method == OUTPUT_METHOD_HTML:
+        if not _htmlNameIsValid(_xcstr(name)):
+            raise ValueError(f"Invalid HTML {kind} name {name.decode('utf8')!r}")
+    elif not _xmlNameIsValid(_xcstr(name)):
+        raise ValueError(f"Invalid {kind} name {name.decode('utf8')!r}")
+    return 0
+
+
 @cython.final
 @cython.internal
 cdef class _IncrementalFileWriter:
@@ -1556,15 +1567,18 @@ cdef class _IncrementalFileWriter:
         method is one of (None, 'xml', 'html') where None means 'xml'.
         """
         assert self._c_out is not NULL
+        c_method = self._method if method is None else _findOutputMethod(method)
         attributes = []
         if attrib is not None:
             for name, value in _iter_attrib(attrib):
                 if name not in _extra:
                     ns, name = _getNsTag(name)
+                    _writerNameValidOrRaise(name, c_method, "attribute")
                     attributes.append((ns, name, _utf8(value)))
         if _extra:
             for name, value in _extra.iteritems():
                 ns, name = _getNsTag(name)
+                _writerNameValidOrRaise(name, c_method, "attribute")
                 attributes.append((ns, name, _utf8(value)))
         reversed_nsmap = {}
         if nsmap:
@@ -1574,8 +1588,7 @@ cdef class _IncrementalFileWriter:
                     _prefixValidOrRaise(prefix)
                 reversed_nsmap[_utf8(ns)] = prefix
         ns, name = _getNsTag(tag)
-
-        c_method = self._method if method is None else _findOutputMethod(method)
+        _writerNameValidOrRaise(name, c_method, "tag")
 
         return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap), c_method)
 
