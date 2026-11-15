@@ -203,18 +203,18 @@ class _XmlFileTestCaseBase(HelperTestCase):
 
     def test_element_name_invalid(self):
         with etree.xmlfile(self._file) as xf:
-            self.assertRaises(ValueError, xf.element, 'a><b')
-            self.assertRaises(ValueError, xf.element, 'na me')
-            self.assertRaises(ValueError, xf.element, '{ns}na"me')
+            self.assertRaisesRegex(ValueError, "Invalid tag name 'a><b'", xf.element, 'a><b')
+            self.assertRaisesRegex(ValueError, "Invalid tag name 'na me'", xf.element, 'na me')
+            self.assertRaisesRegex(ValueError, "Invalid tag name", xf.element, '{ns}na"me')
             with xf.element('test'):
                 pass
         self.assertXml('<test></test>')
 
     def test_attribute_name_invalid(self):
         with etree.xmlfile(self._file) as xf:
-            self.assertRaises(ValueError, xf.element, 'test', {'k="v" x': 'v'})
-            self.assertRaises(ValueError, xf.element, 'test', {'{ns}k>': 'v'})
-            self.assertRaises(ValueError, xf.element, 'test', **{'k><x': 'v'})
+            self.assertRaisesRegex(ValueError, "Invalid attribute name 'k=\"v\" x'", xf.element, 'test', {'k="v" x': 'v'})
+            self.assertRaisesRegex(ValueError, "Invalid attribute name", xf.element, 'test', {'{ns}k>': 'v'})
+            self.assertRaisesRegex(ValueError, "Invalid attribute name 'k><x'", xf.element, 'test', **{'k><x': 'v'})
             with xf.element('test', {'k': 'v'}):
                 pass
         self.assertXml('<test k="v"></test>')
@@ -659,9 +659,9 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
 
     def test_html_name_invalid(self):
         with etree.htmlfile(self._file) as xf:
-            self.assertRaises(ValueError, xf.element, 'p><script')
-            self.assertRaises(ValueError, xf.element, 'p', {'a><script': 'v'})
-            self.assertRaises(ValueError, xf.element, 'p', {'a onclick': 'v'})
+            self.assertRaisesRegex(ValueError, "Invalid HTML tag name 'p><script'", xf.element, 'p><script')
+            self.assertRaisesRegex(ValueError, "Invalid HTML attribute name 'a><script'", xf.element, 'p', {'a><script': 'v'})
+            self.assertRaisesRegex(ValueError, "Invalid HTML attribute name 'a onclick'", xf.element, 'p', {'a onclick': 'v'})
             with xf.element('p', {'@click': 'v'}):
                 pass
         self.assertXml('<p @click="v"></p>')
