@@ -64,9 +64,12 @@ jobs:
           - "ubuntu-22.04"
           - "ubuntu-22.04-arm"
           - "macos-latest"
-          - "windows-2022"    # win32
-          - "windows-latest"  # win_amd64
           - "windows-11-arm"
+        include:
+          - os: "windows-2022"
+            windows-arch: "win32"
+          - os: "windows-2022"
+            windows-arch: "win64"
 
     runs-on: ${{ matrix.os }}
 
@@ -80,6 +83,14 @@ jobs:
     - name: Check out the repo
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+    - name: Identify Windows compiler
+      if: runner.os == 'Windows'
+      id: msvc
+      shell: bash
+      run: |
+        version=$(python buildlibxml.py --msvc-version ${{ matrix.windows-arch }})
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
     - name: Cache [libs]
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
@@ -87,18 +98,18 @@ jobs:
           libs/*.xz
           libs/*.gz
           libs/*.zip
-        key: libs-${{ runner.os }}-${{ matrix.os == 'windows-2022' && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+        key: libs-${{ runner.os }}-${{ matrix.windows-arch == 'win32' && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}${{ steps.msvc.outputs.version && format('-msvc-{0}', steps.msvc.outputs.version) || '' }}
 
     - name: Download latest libraries
       env:
         GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python3 buildlibxml.py --download-only  ${{ matrix.os == 'windows-2022' && 'win32' || '' }}
+      run: python3 buildlibxml.py --download-only  ${{ matrix.windows-arch }}
 
     - name: Check Windows library versions
       if: ${{ contains(matrix.os, 'windows-') }}
       run: |
         bash -c '
-        for file in  libs/zlib-${{ inputs.WIN_ZLIB_VERSION }}.*.zip  libs/iconv-${{ inputs.WIN_LIBICONV_VERSION }}.*.zip  libs/libxml2-${{ inputs.WIN_LIBXML2_VERSION }}.*.zip  libs/libxslt-${{ inputs.WIN_LIBXSLT_VERSION }}.*.zip; do
+        for file in  libs/zlib-${{ inputs.WIN_ZLIB_VERSION }}.*.msvc-${{ steps.msvc.outputs.version }}.zip  libs/iconv-${{ inputs.WIN_LIBICONV_VERSION }}.*.msvc-${{ steps.msvc.outputs.version }}.zip  libs/libxml2-${{ inputs.WIN_LIBXML2_VERSION }}.*.msvc-${{ steps.msvc.outputs.version }}.zip  libs/libxslt-${{ inputs.WIN_LIBXSLT_VERSION }}.*.msvc-${{ steps.msvc.outputs.version }}.zip; do
             [[ -f "$file" ]] || { echo "MISSING: $file" ; exit 1; }
         done
         '

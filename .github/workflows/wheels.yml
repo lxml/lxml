@@ -142,6 +142,14 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Identify Windows compiler
+        if: runner.os == 'Windows'
+        id: msvc
+        shell: bash
+        run: |
+          version=$(python buildlibxml.py --msvc-version ${{ contains(matrix.only, 'win32') && 'win32' || contains(matrix.only, 'win_arm64') && 'win-arm64' || 'win64' }})
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Cache [libs]
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -149,7 +157,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ contains(matrix.only, 'win32') && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+          key: libs-${{ runner.os }}-${{ contains(matrix.only, 'win32') && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}${{ steps.msvc.outputs.version && format('-msvc-{0}', steps.msvc.outputs.version) || '' }}
 
       - name: Set up QEMU
         if: runner.os == 'Linux' && !(endsWith(matrix.platform, 'x86_64') || endsWith(matrix.platform, 'i686') || endsWith(matrix.platform, 'aarch64'))

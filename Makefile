@@ -164,7 +164,10 @@ pdf: apipdf pdfclean
 
 # Two pdflatex runs are needed to build the correct Table of contents.
 
-test: test_inplace
+test_windows_library_downloads:
+	$(PYTHON) -m unittest discover -s tools -p test_windows_library_downloads.py
+
+test: test_windows_library_downloads test_inplace
 
 valtest: valgrind_test_inplace
 
