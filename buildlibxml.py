@@ -49,14 +49,15 @@ def build_libxml2xslt_via_vcpkg(download_dir, static_include_dirs, static_librar
         vcpkg_arch = 'x64'
 
     triplet = f'{vcpkg_arch}-windows-static-md'
-    command = ['vcpkg', 'install', f'--downloads-root={download_dir}', f'--triplet={triplet}']
+    install_root = Path('build/vcpkg_installed')
+    command = ['vcpkg', 'install', f'--downloads-root={download_dir}', f'--triplet={triplet}', f'--x-install-root={install_root}']
     if download_only:
         command += ["--only-downloads"]
 
     import subprocess
     subprocess.run(command, check=True)
 
-    installed_path = Path('vcpkg_installed') / triplet
+    installed_path = Path('build/vcpkg_installed') / triplet
     include = installed_path / 'include'
     lib = installed_path / 'lib'
 
