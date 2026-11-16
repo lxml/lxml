@@ -262,9 +262,24 @@ def _init_node_converters(makeelement):
     @converter(Tag, _PseudoTag)
     def convert_tag(bs_node, parent):
         res = create_tag(bs_node, parent)
+
+        # Walk single-child tag chains without allocating a traversal frame for
+        # each element. This keeps deeply nested input stack-safe while avoiding
+        # per-level iterator and stack bookkeeping in the common narrow case.
+        current_parent = res
+        if type(bs_node) is Tag or type(bs_node) is _PseudoTag:
+            contents = bs_node.contents
+            while len(contents) == 1:
+                child = contents[0]
+                if type(child) is not Tag:
+                    break
+                current_parent = create_tag(child, current_parent)
+                bs_node = child
+                contents = child.contents
+
         # Keep a frame for each open tag to avoid recursion for deeply nested
         # BeautifulSoup trees.
-        stack: list[tuple] = [(iter(bs_node), res, [])]
+        stack: list[tuple] = [(iter(bs_node), current_parent, [])]
         while stack:
             children, current_parent, text_parts = stack[-1]
             for child in children:
