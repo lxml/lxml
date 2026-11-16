@@ -185,6 +185,7 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef void lxml_free(void* mem)
     cdef void* lxml_unpack_xmldoc_capsule(object capsule, bint* is_owned) except? NULL
     cdef bint _isString(object obj)
+    cdef bint _isStringOrByteArray(object obj)
     cdef str _typename "__lxml_typename" (object t)
     cdef str _fqtypename "__lxml_fqtypename" (object t)
     cdef bint IS_PYPY

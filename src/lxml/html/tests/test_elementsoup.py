@@ -35,6 +35,33 @@ if BS_INSTALLED:
             res = b'''<html>huhu</html>'''
             self.assertEqual(tostring(tree), res)
 
+        def test_adjacent_text_in_convert_tree(self):
+            source = (
+                '<html><body>before</span>after'
+                '<span>inner</span>tail</b>after'
+                '<!--comment-->more</em>next<?pi data?>end'
+                '</body></html>')
+            beautifulsoup = self.soupparser.BeautifulSoup
+            bsargs = {}
+            if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"):
+                bsargs["features"] = "html.parser"
+            soup = beautifulsoup(source, **bsargs)
+
+            body = self.soupparser.convert_tree(soup)[0]
+            span, comment, pi = body
+
+            self.assertEqual(body.text, "beforeafter")
+            self.assertEqual(span.text, "inner")
+            self.assertEqual(span.tail, "tailafter")
+            self.assertEqual(comment.text, "comment")
+            self.assertEqual(comment.tail, "morenext")
+            self.assertEqual(pi.text, "data")
+            self.assertEqual(pi.tail, "end")
+            self.assertEqual(
+                tostring(body, method="html"),
+                b"<body>beforeafter<span>inner</span>tailafter"
+                b"<!--comment-->morenext<?pi data>end</body>")
+
         def test_body(self):
             html = '''<body><p>test</p></body>'''
             res = b'''<html><body><p>test</p></body></html>'''

@@ -492,6 +492,8 @@ cdef class _ExsltRegExp:
     cdef _make_string(self, value):
         if _isString(value):
             return value
+        elif isinstance(value, bytearray):
+            return bytes(value)
         elif isinstance(value, list):
             # node set: take recursive text concatenation of first element
             if len(<list> value) == 0:
@@ -499,6 +501,8 @@ cdef class _ExsltRegExp:
             firstnode = (<list> value)[0]
             if _isString(firstnode):
                 return firstnode
+            elif isinstance(firstnode, bytearray):
+                return bytes(firstnode)
             elif isinstance(firstnode, _Element):
                 c_text = tree.xmlNodeGetContent((<_Element>firstnode)._c_node)
                 if c_text is NULL:
@@ -751,6 +755,17 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
 
 cdef extern from *:
     """
+    #if LXML_IN_LIMITED_API || CYTHON_COMPILING_IN_PYPY
+      #define LXML_USE_PY_STRING_RESULT 1
+    #else
+      #define LXML_USE_PY_STRING_RESULT 0
+    #endif
+    """
+    const int LXML_USE_PY_STRING_RESULT
+
+
+cdef extern from *:
+    """
     /* Fake PyUnicodeObject struct declaration that is at least as large as the original. */
     #if defined(Py_LIMITED_API)
         typedef struct {
@@ -798,13 +813,15 @@ class __ElementUnicodeResultPy(str):
     def is_attribute(self):
         return self.attrname is not None
 
-
-_ElementUnicodeResult = __ElementUnicodeResultPy if python.IN_LIMITED_API else __ElementUnicodeResultC
+if LXML_USE_PY_STRING_RESULT:
+    _ElementUnicodeResult = __ElementUnicodeResultPy
+else:
+    _ElementUnicodeResult = __ElementUnicodeResultC
 
 
 cdef object _elementStringResultFactory(string_value, _Element parent,
                                         attrname, bint is_tail):
-    if python.IN_LIMITED_API:
+    if LXML_USE_PY_STRING_RESULT:
         pyresult = __ElementUnicodeResultPy(string_value)
         pyresult._parent = parent
         pyresult.attrname = attrname

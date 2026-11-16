@@ -60,7 +60,7 @@ cdef class RelaxNG(_Validator):
                 raise
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
-            if _isString(file):
+            if isinstance(file, str):
                 if file[-4:].lower() == '.rnc':
                     _require_rnc2rng()
                     rng_data_utf8 = _utf8(_rnc2rng.dumps(_rnc2rng.load(file)))

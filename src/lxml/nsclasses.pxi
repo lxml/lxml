@@ -76,8 +76,10 @@ cdef class _NamespaceRegistry:
         #   @ns
         #   class elementname(ElementBase): pass
 
-        if obj is None or python._isString(obj):
+        if obj is None or python._isStringOrByteArray(obj):
             # @ns(None) or @ns('tag')
+            if isinstance(obj, bytearray):
+                obj = bytes(obj)
             return partial(self.__deco, obj)
         # plain @ns decorator
         self[obj.__name__] = obj

@@ -244,6 +244,9 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
     #define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
 #endif
 
+#define _isStringOrByteArray(obj)  (_isString(obj) || PyByteArray_Check(obj))
+
+
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \
          ((c_node)->type == XML_COMMENT_NODE) || \

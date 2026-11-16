@@ -26,7 +26,7 @@ cdef class ObjectPath:
         if self._c_path is not NULL:
             raise RuntimeError("Repeated call to ObjectPath.__init__()")
 
-        if python._isString(path):
+        if python._isStringOrByteArray(path):
             self._path = _parse_object_path_string(path)
             self._path_str = path
         else:
@@ -121,6 +121,8 @@ cdef list _parse_object_path_string(_path):
     new_path = []
     if isinstance(_path, bytes):
         path = (<bytes>_path).decode('ascii')
+    elif isinstance(_path, bytearray):
+        path = (<bytearray>_path).decode('ascii')
     elif type(_path) is not unicode:
         path = unicode(_path)
     else:

@@ -197,8 +197,8 @@ def _convert_tree(beautiful_soup_tree, makeelement):
 
 
 def _init_node_converters(makeelement):
-    converters = {}
-    ordered_node_types = []
+    converters: dict = {}
+    ordered_node_types: list[type] = []
 
     def converter(*types):
         def add(handler):
@@ -224,7 +224,7 @@ def _init_node_converters(makeelement):
             return None
         return handler(bs_node, parent)
 
-    def map_attrs(bs_attrs):
+    def map_attrs(bs_attrs) -> dict:
         if isinstance(bs_attrs, dict):  # bs4
             attribs = {}
             for k, v in bs_attrs.items():
@@ -236,10 +236,12 @@ def _init_node_converters(makeelement):
         return attribs
 
     def append_text(parent, text):
-        if len(parent) == 0:
+        try:
+            last_child = parent[-1]
+        except IndexError:
             parent.text = (parent.text or '') + text
         else:
-            parent[-1].tail = (parent[-1].tail or '') + text
+            last_child.tail = (last_child.tail or '') + text
 
     # converters are tried in order of their definition
 
@@ -253,17 +255,26 @@ def _init_node_converters(makeelement):
             attribs = map_attrs(attrs) if attrs else {}
             res = makeelement(bs_node.name, attrib=attribs)
 
+        # Join consecutive text nodes once to avoid quadratic string copying.
+        text_parts = []
         for child in bs_node:
             # avoid double recursion by inlining convert_node(), see above
             try:
                 handler = converters[type(child)]
             except KeyError:
-                pass
-            else:
-                if handler is not None:
-                    handler(child, res)
+                handler = converters[type(child)] = find_best_converter(child)
+            if handler is None:
                 continue
-            convert_node(child, res)
+            # The resolved handler keeps Comment and PI subclasses separate.
+            if handler is convert_text:
+                text_parts.append(unescape(child))
+                continue
+            if text_parts:
+                append_text(res, ''.join(text_parts))
+                text_parts.clear()
+            handler(child, res)
+        if text_parts:
+            append_text(res, ''.join(text_parts))
         return res
 
     @converter(Comment)
@@ -293,31 +304,19 @@ def _init_node_converters(makeelement):
     return convert_node
 
 
-# copied from ET's ElementSoup
+# Originally copied from ET's ElementSoup.
 
-try:
-    from html.entities import name2codepoint  # Python 3
-except ImportError:
-    from htmlentitydefs import name2codepoint
+from html.entities import name2codepoint
 
+# work around oddities in BeautifulSoup's entity handling
+def _unescape_entity(m):
+    try:
+        return chr(name2codepoint[m.group(1)])
+    except KeyError:
+        return m.group(0)  # use as is
 
 handle_entities = re.compile(r"&(\w+);").sub
 
 
-try:
-    unichr
-except NameError:
-    # Python 3
-    unichr = chr
-
-
-def unescape(string):
-    if not string:
-        return ''
-    # work around oddities in BeautifulSoup's entity handling
-    def unescape_entity(m):
-        try:
-            return unichr(name2codepoint[m.group(1)])
-        except KeyError:
-            return m.group(0)  # use as is
-    return handle_entities(unescape_entity, string)
+def unescape(string, _unescape_entity=_unescape_entity, _handle_entities=handle_entities) -> str:
+    return _handle_entities(_unescape_entity, string) if string else ''

@@ -236,6 +236,9 @@ cdef class _MultiTagMatcher:
         elif isinstance(tag, _Element):
             # This can have arbitrary effects on iteration below.
             raise ValueError(f"expected a tag to match, got {tag!r}")
+        elif isinstance(tag, bytearray):
+            # Probably rare enough to allow recursion overhead at the very end.
+            self._storeTags(bytes(tag), seen)
         else:
             # Prevent infinite recursion for arbitrary (container) types.
             key = (type(tag), id(tag))

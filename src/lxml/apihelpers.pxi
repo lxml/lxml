@@ -107,11 +107,13 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc, _BaseParser parser
 
     ns_utf, name_utf = _getNsTag(tag)
     if is_html:
-        _htmlTagValidOrRaise(name_utf)
+        if not _htmlTagNameIsValid(name_utf):
+            raise _buildHtmlTagInvalidError(name_utf)
         if c_doc is NULL:
             c_doc = _newHTMLDoc()
     else:
-        _tagValidOrRaise(name_utf)
+        if not _xmlTagNameIsValid(name_utf):
+            raise _buildXmlTagInvalidError(name_utf)
         if c_doc is NULL:
             c_doc = _newXMLDoc()
 
@@ -157,10 +159,12 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
     cdef xmlNode* c_node
     cdef _Document doc
     if is_html:
-        _htmlTagValidOrRaise(name_utf)
+        if not _htmlTagNameIsValid(name_utf):
+            raise _buildHtmlTagInvalidError(name_utf)
         c_doc = _newHTMLDoc()
     else:
-        _tagValidOrRaise(name_utf)
+        if not _xmlTagNameIsValid(name_utf):
+            raise _buildXmlTagInvalidError(name_utf)
         c_doc = _newXMLDoc()
 
     doc = _documentFactory(c_doc, parser)
@@ -192,9 +196,11 @@ cdef _Element _makeSubElement(_Element parent, tag, text=None, tail=None,
     c_doc = parent._doc._c_doc
 
     if parent._doc.ishtml():
-        _htmlTagValidOrRaise(name_utf)
+        if not _htmlTagNameIsValid(name_utf):
+            raise _buildHtmlTagInvalidError(name_utf)
     else:
-        _tagValidOrRaise(name_utf)
+        if not _xmlTagNameIsValid(name_utf):
+            raise _buildXmlTagInvalidError(name_utf)
 
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
@@ -230,11 +236,13 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
     if nsmap:
         for prefix, href in _iter_nsmap(nsmap):
             href_utf = _utf8(href)
-            _uriValidOrRaise(href_utf)
+            if not _uriIsValid(href_utf):
+                raise _buildURIInvalidError(href_utf)
             c_href = _xcstr(href_utf)
             if prefix is not None:
                 prefix_utf = _utf8(prefix)
-                _prefixValidOrRaise(prefix_utf)
+                if not _prefixNameIsValid(prefix_utf):
+                    raise _buildPrefixInvalidError(prefix_utf)
                 c_prefix = _xcstr(prefix_utf)
             else:
                 c_prefix = <const_xmlChar*>NULL
@@ -263,7 +271,8 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
                 node_ns_utf = None
 
     if node_ns_utf is not None:
-        _uriValidOrRaise(node_ns_utf)
+        if not _uriIsValid(node_ns_utf):
+            raise _buildURIInvalidError(node_ns_utf)
         doc._setNodeNs(c_node, _xcstr(node_ns_utf))
     return 0
 
@@ -360,12 +369,14 @@ cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,
         return 0
     seen_tags.add(tag)
     if not is_html:
-        _attributeValidOrRaise(name_utf)
+        if not _attributeNameIsValid(name_utf):
+            raise _buildAttributeNameInvalidError(name_utf)
     value_utf = _utf8(value)
     if ns_utf is None:
         new_attr = tree.xmlNewProp(c_node, _xcstr(name_utf), _xcstr(value_utf))
     else:
-        _uriValidOrRaise(ns_utf)
+        if not _uriIsValid(ns_utf):
+            raise _buildURIInvalidError(ns_utf)
         c_ns = doc._findOrBuildNodeNs(c_node, _xcstr(ns_utf), NULL, 1)
         new_attr = tree.xmlNewNsProp(c_node, c_ns, _xcstr(name_utf), _xcstr(value_utf))
     if new_attr is NULL:
@@ -613,7 +624,8 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     ns, tag = _getNsTag(key)
     is_html = element._doc.ishtml()
     if not is_html:
-        _attributeValidOrRaise(tag)
+        if not _attributeNameIsValid(tag):
+            raise _buildAttributeNameInvalidError(tag)
     c_tag = _xcstr(tag)
     if value is None and is_html:
         c_value = NULL
@@ -1657,6 +1669,8 @@ cdef object _getFSPathOrObject(object obj):
     """
     if _isString(obj):
         return obj
+    if isinstance(obj, bytearray):
+        return bytes(obj)
     try:
         return python.PyOS_FSPath(obj)
     except TypeError:
@@ -1668,8 +1682,6 @@ cdef object _encodeFilename(object filename):
     """
     if filename is None:
         return None
-    elif isinstance(filename, bytes):
-        return filename
     elif isinstance(filename, unicode):
         filename8 = (<unicode>filename).encode('utf8')
         if _isFilePath(<unsigned char*>filename8):
@@ -1679,6 +1691,10 @@ cdef object _encodeFilename(object filename):
             except UnicodeEncodeError:
                 pass
         return filename8
+    elif isinstance(filename, bytes):
+        return filename
+    elif isinstance(filename, bytearray):
+        return bytes(filename)
     else:
         raise TypeError("Argument must be string or unicode.")
 
@@ -1810,32 +1826,45 @@ cdef bint _characterReferenceIsValid(const_xmlChar* c_name) noexcept:
         c_name += 1
     return 1
 
-cdef int _tagValidOrRaise(tag_utf) except -1:
-    if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError(f"Invalid tag name {(<bytes>tag_utf).decode('utf8')!r}")
-    return 0
 
-cdef int _htmlTagValidOrRaise(tag_utf) except -1:
-    if not _pyHtmlNameIsValid(tag_utf):
-        raise ValueError(f"Invalid HTML tag name {(<bytes>tag_utf).decode('utf8')!r}")
-    return 0
+cdef bint _xmlTagNameIsValid(tag_utf):
+    return _pyXmlNameIsValid(tag_utf)
 
-cdef int _attributeValidOrRaise(name_utf) except -1:
-    if not _pyXmlNameIsValid(name_utf):
-        raise ValueError(f"Invalid attribute name {(<bytes>name_utf).decode('utf8')!r}")
-    return 0
+cdef ValueError _buildXmlTagInvalidError(tag_utf):
+    return ValueError(f"Invalid tag name {(<bytes> tag_utf).decode('utf8')!r}")
 
-cdef int _prefixValidOrRaise(tag_utf) except -1:
-    if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError(f"Invalid namespace prefix {(<bytes>tag_utf).decode('utf8')!r}")
-    return 0
 
-cdef int _uriValidOrRaise(uri_utf) except -1:
+cdef bint _htmlTagNameIsValid(tag_utf):
+    return _pyHtmlNameIsValid(tag_utf)
+
+cdef ValueError _buildHtmlTagInvalidError(tag_utf):
+    return ValueError(f"Invalid HTML tag name {(<bytes> tag_utf).decode('utf8')!r}")
+
+
+cdef bint _attributeNameIsValid(name_utf):
+    return _pyXmlNameIsValid(name_utf)
+
+cdef ValueError _buildAttributeNameInvalidError(name_utf):
+    return ValueError(f"Invalid attribute name {(<bytes> name_utf).decode('utf8')!r}")
+
+
+cdef bint _prefixNameIsValid(tag_utf):
+    return _pyXmlNameIsValid(tag_utf)
+
+cdef ValueError _buildPrefixInvalidError(tag_utf):
+    return ValueError(f"Invalid namespace prefix {(<bytes> tag_utf).decode('utf8')!r}")
+
+
+cdef bint _uriIsValid(uri_utf):
     cdef uri.xmlURI* c_uri = uri.xmlParseURI(_cstr(uri_utf))
     if c_uri is NULL:
-        raise ValueError(f"Invalid namespace URI {(<bytes>uri_utf).decode('utf8')!r}")
+        return False
     uri.xmlFreeURI(c_uri)
-    return 0
+    return True
+
+cdef ValueError _buildURIInvalidError(uri_utf):
+    return ValueError(f"Invalid namespace URI {(<bytes> uri_utf).decode('utf8')!r}")
+
 
 cdef inline unicode _namespacedName(xmlNode* c_node):
     return _namespacedNameFromNsName(_getNs(c_node), c_node.name)
@@ -1864,6 +1893,8 @@ cdef _getFilenameForFile(source):
         filename = source.name
         if _isString(filename):
             return os_path_abspath(filename)
+        elif isinstance(filename, bytearray):
+            return os_path_abspath(bytes(filename))
     except:
         pass
     # gzip file instances have a filename attribute (before Py3k)
@@ -1871,6 +1902,8 @@ cdef _getFilenameForFile(source):
         filename = source.filename
         if _isString(filename):
             return os_path_abspath(filename)
+        elif isinstance(filename, bytearray):
+            return os_path_abspath(bytes(filename))
     except:
         pass
     # can't determine filename
