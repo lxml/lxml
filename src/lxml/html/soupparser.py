@@ -264,32 +264,30 @@ def _init_node_converters(makeelement):
         res = create_tag(bs_node, parent)
         # Keep a frame for each open tag to avoid recursion for deeply nested
         # BeautifulSoup trees.
-        stack = [(iter(bs_node), res, [])]
+        stack: list[tuple] = [(iter(bs_node), res, [])]
         while stack:
             children, current_parent, text_parts = stack[-1]
-            try:
-                child = next(children)
-            except StopIteration:
+            for child in children:
+                handler = get_handler(child)
+                if handler is None:
+                    continue
+                if handler is convert_text:
+                    # Batch adjacent text nodes to avoid quadratic string copying.
+                    text_parts.append(unescape(child))
+                    continue
+                if text_parts:
+                    append_text(current_parent, ''.join(text_parts))
+                    text_parts.clear()
+                if handler is convert_tag:
+                    child_res = create_tag(child, current_parent)
+                    stack.append((iter(child), child_res, []))
+                    break
+                handler(child, current_parent)
+            else:
+                # All children are processed; flush remaining text and pop this frame.
                 if text_parts:
                     append_text(current_parent, ''.join(text_parts))
                 stack.pop()
-                continue
-
-            handler = get_handler(child)
-            if handler is None:
-                continue
-            if handler is convert_text:
-                # Batch adjacent text nodes to avoid quadratic string copying.
-                text_parts.append(unescape(child))
-                continue
-            if text_parts:
-                append_text(current_parent, ''.join(text_parts))
-                text_parts.clear()
-            if handler is convert_tag:
-                child_res = create_tag(child, current_parent)
-                stack.append((iter(child), child_res, []))
-            else:
-                handler(child, current_parent)
         return res
 
     @converter(Comment)
