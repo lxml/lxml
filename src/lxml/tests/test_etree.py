@@ -5108,15 +5108,17 @@ class ETreeOnlyTestCase(HelperTestCase):
             for leaf in root.iter():
                 pass
         else:
-            leaf = root
-            for _ in range(depth):
+            leaf = root[0]
+            root = None
+            for _ in range(depth - 1):
                 leaf = leaf[0]
 
         self.assertEqual(leaf.tag, 'leaf')
 
         # Releasing the root proxy must not invalidate the descendant.
-        del root
-        self.assertEqual(leaf.getroottree().getroot().tag, 'node')
+        root = None
+        root = leaf.getroottree().getroot()
+        self.assertEqual(root.tag, 'node')
         self.assertEqual(leaf.getparent().text, 'text')
         self.assertEqual(sum(1 for _ in leaf.iterancestors()), depth)
 
@@ -5125,6 +5127,28 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_deep_tree_iteration(self):
         self._test_deep_tree_traversal(use_iter=True)
+
+    def test_proxy_collect_sibling_traversal(self):
+        depth = 64
+        root = etree.Element('node')
+        node = root
+        for _ in range(depth):
+            leaf = etree.SubElement(node, 'leaf')
+            leaf.tail = 'text'
+            node = etree.SubElement(node, 'node')
+
+        parent = root
+        for _ in range(depth - 1):
+            parent = parent[1]
+        leaf = parent[0]
+        sibling = parent[1]
+
+        root = None
+        parent = None
+        leaf = None
+        self.assertEqual(sibling.tag, 'node')
+        self.assertEqual(sibling.getprevious().tag, 'leaf')
+        self.assertEqual(sibling.getparent().tag, 'node')
 
     def test_element_refcycle(self):
         class SubEl(etree.ElementBase):
