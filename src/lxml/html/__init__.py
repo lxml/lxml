@@ -71,13 +71,19 @@ _forms_xpath = etree.XPath("descendant-or-self::form|descendant-or-self::x:form"
 _class_xpath = etree.XPath("descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), concat(' ', $class_name, ' '))]")
 _id_xpath = etree.XPath("descendant-or-self::*[@id=$id]")
 _collect_string_content = etree.XPath("string()", smart_strings=False)
-_iter_css_urls = re.compile(r'url\(('+'["][^"]*["]|'+"['][^']*[']|"+r'[^)]*)\)', re.I).finditer
+_find_css_urls = re.compile(r'url\(('+'["][^"]*["]|'+"['][^']*[']|"+r'[^)]*)\)', re.I).finditer
 _iter_css_imports = re.compile(r'@import "(.*?)"').finditer
 _label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
                            namespaces={'x':XHTML_NAMESPACE})
 _archive_re = re.compile(r'[^ ]+')
 _parse_meta_refresh_url = re.compile(
-    r'[^;=]*;\s*(?:url\s*=\s*)?(?P<url>.*)$', re.I).search
+    r';\s*(?:url\s*=\s*)?(?P<url>.*)', re.I|re.S).search
+
+
+def _iter_css_urls(text):
+    # Every match ends with ')'.  Do not let the regex engine rescan an
+    # unterminated tail once per 'url(' in it, which takes quadratic time.
+    return _find_css_urls(text, 0, text.rfind(')') + 1)
 
 
 def _unquote_match(s, pos):
