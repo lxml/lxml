@@ -20,7 +20,7 @@
     },
     {
       "name": "libxml2",
-      "version": "2.11.9"
+      "version": "2.15.4"
     },
     {
       "name": "libxslt",

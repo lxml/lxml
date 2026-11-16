@@ -51,8 +51,15 @@ form of custom URL resolvers.
 """
 
 from lxml import etree
-from urllib.parse import urljoin
-from urllib.request import urlopen
+try:
+    from urlparse import urljoin
+    from urllib2 import urlopen
+except ImportError:
+    # Python 3
+    from urllib.parse import urljoin
+    from urllib.request import urlopen
+import sys
+from pathlib import Path
 
 XINCLUDE = "{http://www.w3.org/2001/XInclude}"
 
@@ -185,6 +192,9 @@ def _include(elem, loader=None, base_url=None,
 
     for e in include_elements:
         if e.tag == XINCLUDE_INCLUDE:
+            if sys.platform == "win32" and base_url and Path(base_url).is_absolute():
+              base_url = Path(base_url).as_uri()
+
             # process xinclude directive
             href = urljoin(base_url, e.get("href"))
             parse = e.get("parse", "xml")
