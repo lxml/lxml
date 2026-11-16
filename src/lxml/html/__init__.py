@@ -606,12 +606,12 @@ class HtmlMixin:
                 # are reported last to first.  Rebuild the value once,
                 # instead of once per link.
                 value = el.text if attr_name is None else el.get(attr_name)
-                end = len(value)
+                unprocessed_end = len(value)
                 chunks = []  # replacements and the text following them, reversed
                 removed = False
                 for _, _, link, pos in links:
                     new_link = link_repl_func(link.strip())
-                    if removed or new_link == link:
+                    if new_link == link:
                         continue
                     if new_link is None:
                         # Remove the attribute or element content
@@ -621,32 +621,31 @@ class HtmlMixin:
                         else:
                             del el.attrib[attr_name]
                         break
-                    chunks.append(value[pos+len(link):end])
+                    chunks.append(value[pos+len(link):unprocessed_end])
                     chunks.append(new_link)
-                    end = pos
+                    unprocessed_end = pos
                 if chunks and not removed:
-                    new = value[:end] + ''.join(reversed(chunks))
+                    new = value[:unprocessed_end] + ''.join(reversed(chunks))
                     if attr_name is None:
                         el.text = new
                     else:
                         el.set(attr_name, new)
-                continue
+            else:
+                for _, _, link, pos in links:
+                    new_link = link_repl_func(link.strip())
+                    if new_link == link:
+                        continue
+                    if new_link is None:
+                        # Remove the attribute
+                        del el.attrib[attr_name]
+                        continue
 
-            for _, _, link, pos in links:
-                new_link = link_repl_func(link.strip())
-                if new_link == link:
-                    continue
-                if new_link is None:
-                    # Remove the attribute
-                    del el.attrib[attr_name]
-                    continue
-
-                cur = el.get(attr_name)
-                if not pos and len(cur) == len(link):
-                    new = new_link  # most common case
-                else:
-                    new = cur[:pos] + new_link + cur[pos+len(link):]
-                el.set(attr_name, new)
+                    cur = el.get(attr_name)
+                    if not pos and len(cur) == len(link):
+                        new = new_link  # complete replacement, most common case
+                    else:
+                        new = cur[:pos] + new_link + cur[pos+len(link):]
+                    el.set(attr_name, new)
 
 
 class _MethodFunc:
