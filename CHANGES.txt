@@ -21,6 +21,8 @@ Features added
 Bugs fixed
 ----------
 
+* ``lxml.html.fill_form()`` now preserves multiple selections for ``<select multiple="">``.
+
 * GH#546: Usage in PyPy crashed since lxml 7.0.
   It now works correctly in PyPy 3.11 and 3.12.
   Patches by Matti Picus.

@@ -130,3 +130,19 @@ A single-valued ``<select>`` (without ``multiple``) gets the matching
         <option>green</option>
       </select>
     </form>
+
+A boolean ``multiple`` attribute enables multiple selections even when
+its value is empty.  Previously selected options are also cleared::
+
+    >>> from lxml.html import fromstring
+    >>> for attribute in ('multiple=""', 'multiple', 'multiple="multiple"'):
+    ...     html = ('<form><select name="colour" %s>'
+    ...             '<option value="red">Red</option>'
+    ...             '<option value="blue">Blue</option>'
+    ...             '<option value="green" selected>Green</option>'
+    ...             '</select></form>') % attribute
+    ...     result = fromstring(fill_form_html(html, dict(colour=['red', 'blue'])))
+    ...     print(result.forms[0].form_values())
+    [('colour', 'red'), ('colour', 'blue')]
+    [('colour', 'red'), ('colour', 'blue')]
+    [('colour', 'red'), ('colour', 'blue')]
