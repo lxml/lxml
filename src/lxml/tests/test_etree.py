@@ -626,6 +626,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         pi = ProcessingInstruction('abc', 'def')
         self.assertRaises(ValueError, setattr, pi, 'text', "xyz?>zyx")
 
+    def test_pi_target(self):
+        ProcessingInstruction = self.etree.ProcessingInstruction
+        tostring = self.etree.tostring
+        self.assertRaises(ValueError, ProcessingInstruction, "x?><evil/><?y")
+        self.assertRaises(ValueError, ProcessingInstruction, "xml")
+        pi = ProcessingInstruction('abc', 'def')
+        pi.target = 'xyz'
+        self.assertEqual(pi.target, 'xyz')
+        self.assertRaises(ValueError, setattr, pi, 'target', "x?><evil/><?y")
+        self.assertRaises(ValueError, setattr, pi, 'target', "a b")
+        self.assertRaises(ValueError, setattr, pi, 'target', "xml")
+        self.assertEqual(b'<?xyz def?>', tostring(pi))
+
     def test_pi_parse(self):
         XML = self.etree.XML
         root = XML(b"<test><?mypi my test ?></test>")
@@ -2004,6 +2017,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, Entity, 'a\0b')
         self.assertRaises(ValueError, Entity, '#abc')
         self.assertRaises(ValueError, Entity, '#xxyz')
+
+    def test_entity_name(self):
+        Entity = self.etree.Entity
+        tostring = self.etree.tostring
+        entity = Entity('test')
+        entity.name = 'other'
+        self.assertEqual(entity.text, '&other;')
+        entity.name = '#x1768'
+        self.assertEqual(entity.text, '&#x1768;')
+        self.assertRaises(ValueError, setattr, entity, 'name', 'a b c')
+        self.assertRaises(ValueError, setattr, entity, 'name', 'a<evil/>')
+        self.assertRaises(ValueError, setattr, entity, 'name', '#abc')
+        self.assertEqual(b'&#x1768;', tostring(entity))
 
     def test_cdata(self):
         CDATA = self.etree.CDATA
