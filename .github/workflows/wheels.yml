@@ -44,6 +44,87 @@ permissions: {}
 jobs:
   cache_libs:
     uses: ./.github/workflows/cache_libs.yml
+
+  sdist:
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Set up Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: "3.x"
+
+    - name: Install lib dependencies
+      run: sudo apt-get update -y -q && sudo apt-get install -y -q "libxml2=2.9.14*" "libxml2-dev=2.9.14*" libxslt1.1 libxslt1-dev
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -U  pip setuptools  || exit 1
+        python -m pip install -U  -r requirements.txt  -r docs-requirements.txt  -r test-requirements.txt  || exit 1
+
+    - name: Build docs and sdist
+      run: make html sdist
+      env: { STATIC_DEPS: false; CFLAGS="-Og" }  # it's run-once, so build more quickly
+
+    - name: Upload sdist
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: sdist
+        path: dist/*.tar.gz
+        compression-level: 0
+
+    - name: Upload website
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: website
+        path: doc/html
+
+  generate-wheels-matrix:
+    # Create a matrix of all architectures & versions to build.
+    # This enables the next step to run cibuildwheel in parallel.
+    # From https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
+    name: Generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install cibuildwheel
+        # Nb. keep cibuildwheel version pin consistent with job below
+        run: pipx install cibuildwheel==4.3.4
+
+      - id: set-matrix
+        run: |
+          MATRIX=$(
+            {
+              cibuildwheel --print-build-identifiers --platform linux \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-24.04"}' \
+              | sed -e '/aarch64\|armv7l/s|ubuntu-24.04|ubuntu-24.04-arm|' \
+              && cibuildwheel --print-build-identifiers --platform macos \
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform windows  --archs AMD64,x86 \
+              | jq -nRc '{"only": inputs, "os": "windows-2022"}' \
+              && cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
+              | jq -nRc '{"only": inputs, "os": "windows-11-arm"}'
+            } | jq -sc 'map(. + {"platform": (.only | sub("^[^-]+-";"")), "python_version": (.only | sub("-.+";""))})'
+          )
+          echo "include=$MATRIX"
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
+
+  build_wheels:
+    name: Build for ${{ matrix.only }}
+    needs: [ cache_libs, generate-wheels-matrix ]
+    runs-on: ${{ matrix.os }}
+
+    env:
       LXML_CSTD: "c11"
       STATIC_DEPS: "true"
       ZLIB_VERSION: ${{ startsWith(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
