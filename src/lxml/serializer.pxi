@@ -522,6 +522,8 @@ cdef _write_cdata_string(tree.xmlOutputBuffer* buf, bytes bstring):
         if not c_pos:
             break
         c_pos += 1
+        if c_pos == c_end:
+            break
         next_char = c_pos[0]
         c_pos += 1
         if next_char != b']':
