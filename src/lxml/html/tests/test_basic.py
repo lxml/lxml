@@ -70,6 +70,32 @@ class TestBasicFeatures(unittest.TestCase):
         self.assertIsNone(doc.head)
         self.assertIsNone(doc.body)
 
+    def test_tostring_meta_content_type(self):
+        doc = html.fromstring(
+            '<html><head><meta http-equiv="Content-Type" content="text/html">'
+            '<title>t</title></head><body><p>x</p></body></html>')
+        self.assertEqual(
+            html.tostring(doc),
+            b'<html><head><title>t</title></head><body><p>x</p></body></html>')
+        self.assertEqual(
+            html.tostring(doc, include_meta_content_type=True),
+            b'<html><head><meta http-equiv="Content-Type" content="text/html">'
+            b'<title>t</title></head><body><p>x</p></body></html>')
+        # The tree itself is left unchanged.
+        self.assertEqual(len(doc.head), 2)
+
+    def test_tostring_meta_content_type_in_text(self):
+        # Text that only looks like the meta tag must be written unchanged,
+        # especially when it is unescaped (script, style, comments).
+        source = (
+            '<div><style>p{}<meta http-equiv="Content-Type"</style>'
+            '<!--</style><img src=x onerror=alert(1)>-->'
+            '<script>var m = \'<meta http-equiv="Content-Type" content="">\';</script>'
+            '</div>')
+        div = html.fromstring(source)
+        self.assertEqual(html.tostring(div, encoding='unicode'), source)
+        self.assertEqual(html.tostring(div), source.encode())
+
 
 def test_suite():
     suite = unittest.TestSuite()
