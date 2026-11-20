@@ -1771,12 +1771,32 @@ def xhtml_to_html(xhtml):
         el.tag = el.tag[prefix_len:]
 
 
-# This isn't a general match, but it's a match for what libxml2
-# specifically serialises:
-__str_replace_meta_content_type = re.compile(
-    r'<meta http-equiv="Content-Type"[^>]*>').sub
-__bytes_replace_meta_content_type = re.compile(
-    br'<meta http-equiv="Content-Type"[^>]*>').sub
+def _find_meta_content_type(doc):
+    return [el for el in doc.iter('meta', '{%s}meta' % XHTML_NAMESPACE)
+            if el.get('http-equiv') == 'Content-Type']
+
+
+def _without_meta_content_type(doc):
+    # Remove the meta tags from a copy of the tree instead of from the
+    # serialised output, where a regex cannot tell a real tag from the same
+    # text inside a comment or a <script> or <style> element.
+    if not isinstance(doc, (etree._Element, etree._ElementTree)):
+        return doc
+    if not _find_meta_content_type(doc):
+        return doc
+    doc = copy.deepcopy(doc)
+    for meta in _find_meta_content_type(doc):
+        parent = meta.getparent()
+        if parent is None:
+            continue
+        if meta.tail:
+            previous = meta.getprevious()
+            if previous is not None:
+                previous.tail = (previous.tail or '') + meta.tail
+            else:
+                parent.text = (parent.text or '') + meta.tail
+        parent.remove(meta)
+    return doc
 
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
@@ -1842,15 +1862,11 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
         <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
         <html><body><p>Hello<br>world!</p></body></html>
     """
-    html = etree.tostring(doc, method=method, pretty_print=pretty_print,
+    if method == 'html' and not include_meta_content_type:
+        doc = _without_meta_content_type(doc)
+    return etree.tostring(doc, method=method, pretty_print=pretty_print,
                           encoding=encoding, with_tail=with_tail,
                           doctype=doctype)
-    if method == 'html' and not include_meta_content_type:
-        if isinstance(html, str):
-            html = __str_replace_meta_content_type('', html)
-        else:
-            html = __bytes_replace_meta_content_type(b'', html)
-    return html
 
 
 tostring.__doc__ = __fix_docstring(tostring.__doc__)
