@@ -606,7 +606,7 @@ class href_token(token):
     hide_when_equal = True
 
     def html(self):
-        return ' Link: %s' % self
+        return ' Link: %s' % html_escape(str(self))
 
 
 def tokenize(html, include_hrefs=True):
