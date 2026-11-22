@@ -525,9 +525,9 @@ class HtmlMixin:
                             value = urljoin(codebase, value)
                         yield (el, 'archive', value, match.start())
             else:
-                for attrib in link_attrs:
-                    if attrib in attribs:
-                        yield (el, attrib, attribs[attrib], 0)
+                for attrib, value in attribs.items():
+                    if attrib in link_attrs:
+                        yield (el, attrib, value, 0)
             if tag == 'meta':
                 http_equiv = attribs.get('http-equiv', '').lower()
                 if http_equiv == 'refresh':
