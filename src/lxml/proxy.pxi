@@ -191,6 +191,7 @@ cdef int attemptDeallocation(xmlNode* c_node) noexcept:
 cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
     """Return the left-most sibling at the top of the tree that can be deallocated, or NULL.
     """
+    cdef xmlNode* c_start_node
     cdef xmlNode* c_neighbour
     cdef xmlNode* c_next
     #print "trying to do deallocating:", c_node.type
@@ -198,21 +199,7 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
         #print "Not freeing: proxies still exist"
         return NULL
 
-    # Live nearby proxies prevent freeing an ancestor.  Check the adjacent
-    # elements before walking up the tree to speed up deep traversal.
-    c_neighbour = _findChildForwards(c_node, 0)
-    if c_neighbour is not NULL and hasProxy(c_neighbour):
-        return NULL
-    c_neighbour = _nextElement(c_node)
-    if c_neighbour is not NULL and hasProxy(c_neighbour):
-        return NULL
-    c_neighbour = _findChildBackwards(c_node, 0)
-    if c_neighbour is not NULL and hasProxy(c_neighbour):
-        return NULL
-    c_neighbour = _previousElement(c_node)
-    if c_neighbour is not NULL and hasProxy(c_neighbour):
-        return NULL
-
+    c_start_node = c_node
     while c_node.parent is not NULL:
         c_node = c_node.parent
         #print "checking:", c_current.type
@@ -224,6 +211,20 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
         if hasProxy(c_node):
             #print "Not freeing: proxies still exist"
             return NULL
+
+    # Check the original node's nearby elements after the ancestor walk.
+    c_neighbour = _findChildForwards(c_start_node, 0)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
+    c_neighbour = _nextElement(c_start_node)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
+    c_neighbour = _findChildBackwards(c_start_node, 0)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
+    c_neighbour = _previousElement(c_start_node)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
 
     # see whether we have children to deallocate
     if not canDeallocateChildNodes(c_node):
