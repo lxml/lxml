@@ -910,23 +910,33 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
             c_child = c_child.next
 
 
-cdef bint _node_has_text(xmlNode* c_node, const_xmlChar* c_text):
-    # Compare the string value of the whole subtree, as ElementTree does with itertext().
+cdef bint _node_has_text(xmlNode* c_node, const_xmlChar* c_text) noexcept:
+    # Match the text of the whole subtree (as ElementTree's itertext()) chunk by chunk,
+    # walking the tree like libxml2's xmlBufGetChildContent(), to fail on the first mismatch.
+    cdef xmlNode* c_child = c_node.children
+    cdef const_xmlChar* c_chunk
     if c_text is NULL:
         c_text = <const_xmlChar*> b""
-    c_child = c_node.children
-    if c_child is NULL:
-        return c_text[0] == c'\0'
-    if c_child.next is NULL and c_child.type in (tree.XML_TEXT_NODE, tree.XML_CDATA_SECTION_NODE):
+    if c_child is not NULL and c_child.next is NULL and (
+            c_child.type == tree.XML_TEXT_NODE or c_child.type == tree.XML_CDATA_SECTION_NODE):
         return tree.xmlStrEqual(c_child.content, c_text)
-
-    c_content = tree.xmlNodeGetContent(c_node)
-    if c_content is NULL:
-        raise MemoryError()
-    try:
-        return tree.xmlStrEqual(c_content, c_text)
-    finally:
-        tree.xmlFree(c_content)
+    while c_child is not NULL:
+        if c_child.type == tree.XML_TEXT_NODE or c_child.type == tree.XML_CDATA_SECTION_NODE:
+            c_chunk = c_child.content
+            while c_chunk[0] != c'\0':
+                if c_chunk[0] != c_text[0]:
+                    return False
+                c_chunk += 1
+                c_text += 1
+        elif c_child.type == tree.XML_ELEMENT_NODE and c_child.children is not NULL:
+            c_child = c_child.children
+            continue
+        while c_child.next is NULL:
+            c_child = c_child.parent
+            if c_child is c_node:
+                return c_text[0] == c'\0'
+        c_child = c_child.next
+    return c_text[0] == c'\0'
 
 
 cdef _prepare_path_descendant(token):

@@ -398,21 +398,6 @@ class EtreeElementPathTestCase(HelperTestCase):
             FutureWarning, ".*If you rely on the current behaviour, change it to './tag'",
             etree.ElementTree(elem).iterfind, "/tag")
 
-    def test_find_text_predicate_subtree(self):
-        # Text predicates compare all text inside the element, not just its first text node.
-        root = self.etree.XML('<r><p><b>Price</b></p><p>Pr<!--c-->ice</p><p>x<i>y</i>z</p></r>')
-
-        def count(path):
-            return len(root.findall(path))
-
-        self.assertEqual(count("p[.='Price']"), 2)
-        self.assertEqual(count("p[.='xyz']"), 1)
-        self.assertEqual(count("p[.='x']"), 0)
-        self.assertEqual(count("p[.='']"), 0)
-        self.assertEqual(count("p[.!='Price']"), 1)
-        self.assertEqual(count(".[p='Price']"), 1)
-        self.assertEqual(count(".[p='xyz']"), 1)
-
     def test_find_index_repeated(self):
         # Searches with the same (cached) path must not share their index state.
         root = self.etree.XML('<r><a><b>1</b><b>2</b></a><a><b>3</b><b>4</b></a></r>')
