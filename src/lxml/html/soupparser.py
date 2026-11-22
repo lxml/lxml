@@ -214,12 +214,16 @@ def _init_node_converters(makeelement):
                 return converters[t]
         return None
 
-    def convert_node(bs_node, parent=None):
-        # duplicated in convert_tag() below
+    def get_handler(bs_node):
         try:
-            handler = converters[type(bs_node)]
+            return converters[type(bs_node)]
         except KeyError:
-            handler = converters[type(bs_node)] = find_best_converter(bs_node)
+            handler = find_best_converter(bs_node)
+            converters[type(bs_node)] = handler
+            return handler
+
+    def convert_node(bs_node, parent=None):
+        handler = get_handler(bs_node)
         if handler is None:
             return None
         return handler(bs_node, parent)
@@ -245,8 +249,7 @@ def _init_node_converters(makeelement):
 
     # converters are tried in order of their definition
 
-    @converter(Tag, _PseudoTag)
-    def convert_tag(bs_node, parent):
+    def create_tag(bs_node, parent):
         attrs = bs_node.attrs
         if parent is not None:
             attribs = map_attrs(attrs) if attrs else None
@@ -254,27 +257,60 @@ def _init_node_converters(makeelement):
         else:
             attribs = map_attrs(attrs) if attrs else {}
             res = makeelement(bs_node.name, attrib=attribs)
+        return res
 
-        # Join consecutive text nodes once to avoid quadratic string copying.
-        text_parts = []
-        for child in bs_node:
-            # avoid double recursion by inlining convert_node(), see above
-            try:
-                handler = converters[type(child)]
-            except KeyError:
-                handler = converters[type(child)] = find_best_converter(child)
-            if handler is None:
-                continue
-            # The resolved handler keeps Comment and PI subclasses separate.
-            if handler is convert_text:
-                text_parts.append(unescape(child))
-                continue
-            if text_parts:
-                append_text(res, ''.join(text_parts))
-                text_parts.clear()
-            handler(child, res)
-        if text_parts:
-            append_text(res, ''.join(text_parts))
+    @converter(Tag, _PseudoTag)
+    def convert_tag(bs_node, parent):
+        res = create_tag(bs_node, parent)
+
+        # Walk single-child tag chains without allocating a traversal frame for
+        # each element. This keeps deeply nested input stack-safe while avoiding
+        # per-level iterator and stack bookkeeping in the common narrow case.
+        current_parent = res
+        if type(bs_node) is Tag or type(bs_node) is _PseudoTag:
+            contents = bs_node.contents
+            while len(contents) == 1:
+                child = contents[0]
+                if type(child) is not Tag:
+                    break
+                current_parent = create_tag(child, current_parent)
+                bs_node = child
+                contents = child.contents
+
+        # Keep a frame for each open tag to avoid recursion for deeply nested
+        # BeautifulSoup trees.
+        if type(bs_node) is Tag or type(bs_node) is _PseudoTag:
+            children = iter(bs_node.contents)
+        else:
+            children = iter(bs_node)
+        stack: list[tuple] = [(children, current_parent, [])]
+        while stack:
+            children, current_parent, text_parts = stack[-1]
+            for child in children:
+                handler = get_handler(child)
+                if handler is None:
+                    continue
+                if handler is convert_text:
+                    # Batch adjacent text nodes to avoid quadratic string copying.
+                    text_parts.append(unescape(child))
+                    continue
+                if text_parts:
+                    append_text(current_parent, ''.join(text_parts))
+                    text_parts.clear()
+                if handler is convert_tag:
+                    child_res = create_tag(child, current_parent)
+                    if type(child) is Tag:
+                        children = iter(child.contents)
+                    else:
+                        children = iter(child)
+                    stack.append((children, child_res, []))
+                    break
+                handler(child, current_parent)
+            else:
+                # All children are processed; flush remaining text and pop this frame.
+                if text_parts:
+                    append_text(current_parent, ''.join(text_parts))
+                stack.pop()
         return res
 
     @converter(Comment)

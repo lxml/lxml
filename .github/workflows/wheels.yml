@@ -44,7 +44,6 @@ permissions: {}
 jobs:
   cache_libs:
     uses: ./.github/workflows/cache_libs.yml
-    secrets: inherit
 
   sdist:
     runs-on: ubuntu-24.04
