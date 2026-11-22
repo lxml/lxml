@@ -856,7 +856,7 @@ cdef class _TextPredicatePathEvaluator(_PredicatePathEvaluator):
         return f"[. = {self.text.decode('utf8') if self.text else ''!r}]"
 
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        has_text = _node_has_text(c_node, self.text, self.c_text)
+        has_text = _node_has_text(c_node, self.c_text)
         if self.negated:
             has_text = not has_text
         return c_node if has_text else NULL
@@ -902,7 +902,7 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
             if c_child is NULL:
                 return NULL
             if self._matcher.matches(c_child):
-                has_text = _node_has_text(c_child, self.text, self.c_text)
+                has_text = _node_has_text(c_child, self.c_text)
                 if self.negated:
                     has_text = not has_text
                 if has_text:
@@ -910,35 +910,23 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
             c_child = c_child.next
 
 
-cdef bint _node_has_text(xmlNode* c_node, bytes text, const_xmlChar* c_text):
-    cdef const_xmlChar* c_node_text = NULL
-    cdef size_t scount = 0
-
-    c_text_node = c_first_text_node = _textNodeOrSkip(c_node.children)
-    while c_text_node is not NULL:
-        if c_text_node.content[0] != c'\0':
-            c_node_text = c_text_node.content
-        scount += 1
-        c_child = c_text_node.next  # skip over known text nodes
-        c_text_node = _textNodeOrSkip(c_text_node.next)
-
-    # handle quick cases first
-    if c_node_text is NULL:
-        return c_text is NULL
+cdef bint _node_has_text(xmlNode* c_node, const_xmlChar* c_text):
+    # Compare the string value of the whole subtree, as ElementTree does with itertext().
     if c_text is NULL:
-        return False
-    if scount == 1:
-        return tree.xmlStrEqual(c_node_text, c_text)
+        c_text = <const_xmlChar*> b""
+    c_child = c_node.children
+    if c_child is NULL:
+        return c_text[0] == c'\0'
+    if c_child.next is NULL and c_child.type in (tree.XML_TEXT_NODE, tree.XML_CDATA_SECTION_NODE):
+        return tree.xmlStrEqual(c_child.content, c_text)
 
-    # Collecting multiple text nodes is costly either way, so let's not optimise it much.
-    result = b''
-    c_text_node = c_first_text_node
-    while c_text_node is not NULL:
-        result += <unsigned char*> c_text_node.content
-        if len(result) > len(text):
-            return False
-        c_text_node = _textNodeOrSkip(c_text_node.next)
-    return result == text
+    c_content = tree.xmlNodeGetContent(c_node)
+    if c_content is NULL:
+        raise MemoryError()
+    try:
+        return tree.xmlStrEqual(c_content, c_text)
+    finally:
+        tree.xmlFree(c_content)
 
 
 cdef _prepare_path_descendant(token):
