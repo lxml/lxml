@@ -414,6 +414,22 @@ class EtreeElementPathTestCase(HelperTestCase):
             [(x.text, [y.text for y in root.iterfind('a/b[1]')]) for x in root.iterfind('a/b[1]')],
             [('1', ['1', '3']), ('3', ['1', '3'])])
 
+    def test_find_index_per_parent(self):
+        # Positions count among the same-tag siblings of each parent.
+        root = self.etree.XML(
+            '<r><x><b>1</b><b>2</b></x><b>3</b><x><b>4</b></x><a k="">5</a><a k="">6</a></r>')
+
+        def texts(path):
+            return [el.text for el in root.findall(path)]
+
+        self.assertEqual(texts('.//b[1]'), ['1', '3', '4'])
+        self.assertEqual(texts('.//b[last()]'), ['2', '3', '4'])
+        self.assertEqual(texts('.//b[2]'), ['2'])
+        self.assertEqual(texts('*[1]'), [None, '3', '5'])
+        self.assertEqual(texts('*[last()]'), ['3', None, '6'])
+        self.assertEqual(texts('a[@k][2]'), ['6'])
+        self.assertEqual(texts('a[@k][last()-1]'), ['5'])
+
 
 class ElementFindTest(unittest.TestCase):
     # Copied from CPython's test_xml_etree.py.
