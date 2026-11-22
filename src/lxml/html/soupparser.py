@@ -279,11 +279,8 @@ def _init_node_converters(makeelement):
 
         # Keep a frame for each open tag to avoid recursion for deeply nested
         # BeautifulSoup trees.
-        if type(bs_node) is Tag or type(bs_node) is _PseudoTag:
-            children = iter(bs_node.contents)
-        else:
-            children = iter(bs_node)
-        stack: list[tuple] = [(children, current_parent, [])]
+        children = bs_node.contents if type(bs_node) is Tag or type(bs_node) is _PseudoTag else bs_node
+        stack: list[tuple] = [(iter(children), current_parent, [])]
         while stack:
             children, current_parent, text_parts = stack[-1]
             for child in children:
@@ -299,11 +296,8 @@ def _init_node_converters(makeelement):
                     text_parts.clear()
                 if handler is convert_tag:
                     child_res = create_tag(child, current_parent)
-                    if type(child) is Tag:
-                        children = iter(child.contents)
-                    else:
-                        children = iter(child)
-                    stack.append((children, child_res, []))
+                    children = child.contents if type(child) is Tag else child
+                    stack.append((iter(children), child_res, []))
                     break
                 handler(child, current_parent)
             else:
