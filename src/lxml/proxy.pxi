@@ -188,31 +188,29 @@ cdef int attemptDeallocation(xmlNode* c_node) noexcept:
     c_top = getDeallocationTop(c_node)
     return freeSubtree(c_top)
 
-cdef inline bint _hasProxyOnNearbyElement(xmlNode* c_node, bint forward) noexcept:
-    if c_node is NULL:
-        return 0
-    if c_node.type == tree.XML_TEXT_NODE or c_node.type == tree.XML_CDATA_SECTION_NODE:
-        c_node = c_node.next if forward else c_node.prev
-    return c_node is not NULL and _isElement(c_node) and hasProxy(c_node)
-
-
 cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
     """Return the left-most sibling at the top of the tree that can be deallocated, or NULL.
     """
+    cdef xmlNode* c_neighbour
     cdef xmlNode* c_next
     #print "trying to do deallocating:", c_node.type
     if hasProxy(c_node):
         #print "Not freeing: proxies still exist"
         return NULL
 
-    # Live child and next sibling proxies prevent freeing an ancestor.  Check
-    # the first and last child, and the next element sibling, before walking up
-    # the tree.  This keeps deep child and breadth-first sibling traversal
-    # linear when newly created proxies replace their parents.  Skip at most
-    # one text node per probe, keeping these checks bounded.
-    if (_hasProxyOnNearbyElement(c_node.children, True) or
-            _hasProxyOnNearbyElement(c_node.last, False) or
-            _hasProxyOnNearbyElement(c_node.next, True)):
+    # Live nearby proxies prevent freeing an ancestor.  Check the adjacent
+    # elements before walking up the tree to speed up deep traversal.
+    c_neighbour = _findChildForwards(c_node, 0)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
+    c_neighbour = _nextElement(c_node)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
+    c_neighbour = _findChildBackwards(c_node, 0)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
+    c_neighbour = _previousElement(c_node)
+    if c_neighbour is not NULL and hasProxy(c_neighbour):
         return NULL
 
     while c_node.parent is not NULL:
