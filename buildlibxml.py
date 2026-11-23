@@ -713,7 +713,8 @@ def main(with_zlib=True, download_only=False, platform=None):
 
 
 if __name__ == '__main__':
-    args = sys.argv[1:]    download_only = '--download-only' in args
+    args = sys.argv[1:]
+    download_only = '--download-only' in args
     if download_only:
         args.remove('--download-only')
     platform_arg = args[0] if args else None
