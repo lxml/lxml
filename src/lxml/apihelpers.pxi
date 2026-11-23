@@ -716,7 +716,8 @@ cdef bint _hasNonWhitespaceText(xmlNode* c_node, bint tail=False) except -1:
     if c_text_node is NULL:
         return False
     while c_text_node is not NULL:
-        if c_text_node.content[0] != c'\0' and not _collectText(c_text_node).isspace():
+        # Check each text node by itself instead of collecting all following ones each time.
+        if c_text_node.content[0] != c'\0' and not funicode(c_text_node.content).isspace():
             return True
         c_text_node = _textNodeOrSkip(c_text_node.next)
     return False
@@ -748,10 +749,18 @@ cdef unicode _collectText(xmlNode* c_node):
         return funicode(c_text)
 
     # the rest is not performance critical anymore
-    result = b''
+    return _joinTextRun(c_node)
+
+cdef unicode _joinTextRun(xmlNode* c_node):
+    """Join the content of a run of adjacent text nodes, starting at c_node.
+
+    Joins all parts in one go, since repeated concatenation would take quadratic time.
+    """
+    chunks = []
     while c_node is not NULL:
-        result += <unsigned char*>c_node.content
+        chunks.append(<unsigned char*>c_node.content)
         c_node = _textNodeOrSkip(c_node.next)
+    result = b''.join(chunks)
     return funicode(<const_xmlChar*><unsigned char*>result)
 
 cdef void _removeText(xmlNode* c_node) noexcept:
