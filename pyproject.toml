@@ -4,7 +4,6 @@ requires = [
     "Cython~=3.2.9 ; python_version < '3.9'",
     "setuptools",
 ]
-requires-python = ">= 3.8"
 
 [tool.cibuildwheel]
 build-verbosity = 1
