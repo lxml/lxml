@@ -252,7 +252,7 @@ cdef class _SaxParserContext(_ParserContext):
 cdef class _ParseEventsIterator:
     """A reusable parse events iterator"""
     cdef list _events
-    cdef int _event_index
+    cdef Py_ssize_t _event_index
 
     def __cinit__(self):
         self._events = []
@@ -262,16 +262,19 @@ cdef class _ParseEventsIterator:
         return self
 
     def __next__(self):
-        cdef int event_index = self._event_index
+        cdef Py_ssize_t event_index = self._event_index
         events = self._events
-        if event_index >= 2**10 or event_index * 2 >= len(events):
+        if event_index * 2 >= len(events):
             if event_index:
-                # clean up from time to time
+                # Clean up from time to time, but only once half of the list was returned,
+                # since removing the returned events copies the rest of the list.
                 del events[:event_index]
                 self._event_index = event_index = 0
             if event_index >= len(events):
                 raise StopIteration
         item = events[event_index]
+        # Do not keep the returned events (and their elements) alive.
+        events[event_index] = None
         self._event_index = event_index + 1
         return item
 

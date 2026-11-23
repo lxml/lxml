@@ -5961,6 +5961,18 @@ class XMLPullParserTest(unittest.TestCase):
         self.assertFalse(list(events))
         self.assertEqual('close()', parser.close())
 
+    def test_pull_many_events_with_partial_reads(self):
+        parser = self.etree.XMLPullParser(['end'])
+        events = parser.read_events()
+
+        parser.feed('<root>' + '<a/>' * 3000)
+        self.assertEqual(['a'] * 2000, [next(events)[1].tag for _ in range(2000)])
+        parser.feed('<b/>' * 3000 + '</root>')
+        self.assertEqual(['a'] * 1000 + ['b'] * 3000 + ['root'],
+                         [elem.tag for _, elem in events])
+        self.assertFalse(list(events))
+        self.assertEqual('root', parser.close().tag)
+
     def test_pull_from_tree_builder(self):
         parser = self.etree.XMLPullParser(
             ['start', 'end'], target=etree.TreeBuilder())
