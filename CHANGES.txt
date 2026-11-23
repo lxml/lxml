@@ -49,6 +49,10 @@ Bugs fixed
 
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
+* LP#2175573: Reading the ``message`` or ``filename`` of a shared error log entry from several
+  threads at the same time could crash in free-threaded Python.
+  Patch by Pierre-Yves Le Borgne.
+
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
 
 * GH#535: ``element.classes.toggle()`` in ``lxml.html`` did not remove all occurrences

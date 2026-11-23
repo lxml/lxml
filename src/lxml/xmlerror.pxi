@@ -142,40 +142,44 @@ cdef class _LogEntry:
         """The log message string.
         """
         cdef size_t size
-        if self._message is not None:
-            return self._message
-        if self._c_message is NULL:
-            return None
-        size = cstring_h.strlen(self._c_message)
-        if size > 0 and self._c_message[size-1] == b'\n':
-            size -= 1  # strip EOL
-        # cannot use funicode() here because the message may contain
-        # byte encoded file paths etc.
-        try:
-            self._message = self._c_message[:size].decode('utf8')
-        except UnicodeDecodeError:
+        # Log entries can be shared between threads (e.g. through a validator's error_log),
+        # so the lazy decoding and early freeing of the C string must not run concurrently.
+        with cython.critical_section(self):
+            if self._message is not None:
+                return self._message
+            if self._c_message is NULL:
+                return None
+            size = cstring_h.strlen(self._c_message)
+            if size > 0 and self._c_message[size-1] == b'\n':
+                size -= 1  # strip EOL
+            # cannot use funicode() here because the message may contain
+            # byte encoded file paths etc.
             try:
-                self._message = self._c_message[:size].decode(
-                    'ascii', 'backslashreplace')
+                self._message = self._c_message[:size].decode('utf8')
             except UnicodeDecodeError:
-                self._message = '<undecodable error message>'
-        if self._c_message:
-            # clean up early
-            tree.xmlFree(self._c_message)
-            self._c_message = NULL
-        return self._message
+                try:
+                    self._message = self._c_message[:size].decode(
+                        'ascii', 'backslashreplace')
+                except UnicodeDecodeError:
+                    self._message = '<undecodable error message>'
+            if self._c_message:
+                # clean up early
+                tree.xmlFree(self._c_message)
+                self._c_message = NULL
+            return self._message
 
     @property
     def filename(self):
         """The file path where the report originated, if any.
         """
-        if self._filename is None:
-            if self._c_filename is not NULL:
-                self._filename = _decodeFilename(self._c_filename)
-                # clean up early
-                tree.xmlFree(self._c_filename)
-                self._c_filename = NULL
-        return self._filename
+        with cython.critical_section(self):
+            if self._filename is None:
+                if self._c_filename is not NULL:
+                    self._filename = _decodeFilename(self._c_filename)
+                    # clean up early
+                    tree.xmlFree(self._c_filename)
+                    self._c_filename = NULL
+            return self._filename
 
     @property
     def path(self):
