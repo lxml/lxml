@@ -1568,6 +1568,46 @@ class ETreeOnlyTestCase(HelperTestCase):
              ],
             events)
 
+    def test_iterwalk_skip_after_event_batch(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(b'<a><b><c/></b><!--x--><d><e/></d></a>')
+
+        iterator = iterwalk(root, events=('start', 'end', 'comment'))
+        events = []
+        for event, elem in iterator:
+            events.append((event, elem.text if event == 'comment' else elem.tag))
+            if event != 'start' or elem.tag == 'd':
+                # Only the request right after the 'start' event of 'd' has an effect.
+                iterator.skip_subtree()
+
+        self.assertEqual(
+            [('start', 'a'), ('start', 'b'), ('start', 'c'), ('end', 'c'), ('end', 'b'),
+             ('comment', 'x'), ('start', 'd'), ('end', 'd'), ('end', 'a')],
+            events)
+
+    def test_iterwalk_deep_tree(self):
+        iterwalk = self.etree.iterwalk
+        root = element = self.etree.Element('e0')
+        for i in range(1, 100):
+            element = self.etree.SubElement(element, 'e%d' % i)
+
+        events = [(event, elem.tag) for event, elem in iterwalk(root, events=('start', 'end'))]
+        self.assertEqual(
+            [('start', 'e%d' % i) for i in range(100)] +
+            [('end', 'e%d' % i) for i in reversed(range(100))],
+            events)
+
+    def test_iterwalk_comment_run(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML(b'<a>' + b'<!--c-->' * 100 + b'<b/></a>')
+
+        events = list(iterwalk(root, events=('start', 'end', 'comment')))
+        self.assertEqual(
+            [('start', root)] +
+            [('comment', comment) for comment in root[:100]] +
+            [('start', root[100]), ('end', root[100]), ('end', root)],
+            events)
+
     def test_iterwalk_getiterator(self):
         iterwalk = self.etree.iterwalk
         root = self.etree.XML(b'<a><b><d/></b><c/></a>')
@@ -1620,6 +1660,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         text = list(root.itertext(with_tail=False))
         self.assertEqual(["RTEXT", "ATEXT"],
                           text)
+
+    def test_itertext_comment_run(self):
+        root = self.etree.XML(b'<a>A' + b'<!--c-->t' * 100 + b'<b>B</b></a>')
+        self.assertEqual(['A'] + ['t'] * 100 + ['B'], list(root.itertext()))
 
     def test_resolve_string_dtd(self):
         parse = self.etree.parse
