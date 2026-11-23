@@ -105,6 +105,16 @@ class ETreeDtdTestCase(HelperTestCase):
         dtd = etree.DTD(BytesIO(b"<!ELEMENT b (a)><!ELEMENT a EMPTY>"))
         dtd.assertValid(root)
 
+    def test_dtd_error_log_last_validation(self):
+        dtd = etree.DTD(BytesIO(b"<!ELEMENT b EMPTY>"))
+        self.assertFalse(dtd.validate(etree.XML("<b><a/></b>")))
+        self.assertTrue(dtd.error_log)
+        self.assertIsNotNone(dtd.error_log.last_error)
+
+        self.assertTrue(dtd.validate(etree.XML("<b/>")))
+        self.assertFalse(dtd.error_log)
+        self.assertIsNone(dtd.error_log.last_error)
+
     def test_dtd_internal(self):
         root = etree.XML(b'''
         <!DOCTYPE b SYSTEM "none" [
