@@ -942,7 +942,7 @@ cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) noexcept nogil:
             return NULL
     return NULL
 
-cdef inline xmlNode* _nextElement(xmlNode* c_node) noexcept:
+cdef inline xmlNode* _nextElement(xmlNode* c_node) noexcept nogil:
     """Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
@@ -954,7 +954,7 @@ cdef inline xmlNode* _nextElement(xmlNode* c_node) noexcept:
         c_node = c_node.next
     return NULL
 
-cdef inline xmlNode* _previousElement(xmlNode* c_node) noexcept:
+cdef inline xmlNode* _previousElement(xmlNode* c_node) noexcept nogil:
     """Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
@@ -966,7 +966,7 @@ cdef inline xmlNode* _previousElement(xmlNode* c_node) noexcept:
         c_node = c_node.prev
     return NULL
 
-cdef inline xmlNode* _parentElement(xmlNode* c_node) noexcept:
+cdef inline xmlNode* _parentElement(xmlNode* c_node) noexcept nogil:
     "Given a node, find the parent element."
     if c_node is NULL or not _isElement(c_node):
         return NULL
