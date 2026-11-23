@@ -34,6 +34,10 @@ Bugs fixed
 
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
+* LP#2175570: ``Element.xpath()`` and ``XPathEvaluator(element)`` deadlocked since lxml 7.0
+  when a global extension function (``FunctionNamespace``) modified the tree.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.

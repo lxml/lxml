@@ -271,16 +271,16 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         path = _utf8(_path)
         doc = self._element._doc
 
-        # FIXME: as long as we cannot upgrade a read lock to a write lock,
-        # we assume that we need a write lock if the user provided extensions.
-        # Must do this after context.register_context() !
-        use_write_lock = self._context.has_user_extensions
-
         self._lock()
         self._xpathCtxt.node = self._element._c_node
         try:
             self._context.register_context(doc)
             self._context.registerVariables(_variables)
+
+            # FIXME: as long as we cannot upgrade a read lock to a write lock,
+            # we assume that we need a write lock if the user provided extensions.
+            # Must do this after context.register_context() !
+            use_write_lock = self._context.has_user_extensions
 
             if use_write_lock:
                 doc.lock_write()
