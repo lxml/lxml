@@ -68,6 +68,10 @@ Other changes
 
 * The valgrind suppressions file was updated to match CPython 3.16a1.
 
+* LP#2175761: The C code that Cython generates for ``lxml.etree`` no longer depends on ``PYTHONHASHSEED``.
+  The C types that Cython inferred for some untyped variables depended on the string hash seed.
+  Patch by Pierre-Yves Le Borgne.
+
 
 7.0.0b1 (2026-08-22)
 ====================
