@@ -685,7 +685,7 @@ cdef class _IndexPathEvaluator(_PathEvaluator):
         return f"[{self.index}]"
 
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        return c_node if _sameTagSiblingCount(c_node, self.index, following=False) == self.index else NULL
+        return c_node if _sameTagSiblingCount(c_node, self.index, _previousElement) == self.index else NULL
 
     cdef xmlNode* next_node(self, xmlNode* c_node):
         return NULL
@@ -706,13 +706,13 @@ cdef class _NegIndexPathEvaluator(_PathEvaluator):
         return "[last()]" if self.index == 0 else f"[last()-{self.index}]"
 
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        return c_node if _sameTagSiblingCount(c_node, self.index, following=True) == self.index else NULL
+        return c_node if _sameTagSiblingCount(c_node, self.index, _nextElement) == self.index else NULL
 
     cdef xmlNode* next_node(self, xmlNode* c_node):
         return NULL
 
 
-cdef Py_ssize_t _sameTagSiblingCount(xmlNode* c_node, Py_ssize_t limit, bint following) noexcept:
+cdef Py_ssize_t _sameTagSiblingCount(xmlNode* c_node, Py_ssize_t limit, xmlNode* (*next_element)(xmlNode*) noexcept) noexcept:
     """Count the preceding (or following) siblings with the same tag as c_node,
     like ElementTree does for its positions.  Stops counting after 'limit'.
     """
@@ -720,11 +720,11 @@ cdef Py_ssize_t _sameTagSiblingCount(xmlNode* c_node, Py_ssize_t limit, bint fol
     c_href = _getNs(c_node)
     if c_href is NULL:
         c_href = <const_xmlChar*> b""
-    c_sibling = _nextElement(c_node) if following else _previousElement(c_node)
+    c_sibling = next_element(c_node)
     while c_sibling is not NULL and count <= limit:
         if _tagMatches(c_sibling, c_href, c_node.name):
             count += 1
-        c_sibling = _nextElement(c_sibling) if following else _previousElement(c_sibling)
+        c_sibling = next_element(c_sibling)
     return count
 
 
