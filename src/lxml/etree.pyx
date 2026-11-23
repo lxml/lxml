@@ -497,7 +497,7 @@ cdef class _ExceptionContext:
 
 
 # type of a function that steps from node to node
-ctypedef public xmlNode* (*_node_to_node_function)(xmlNode*)
+ctypedef public xmlNode* (*_node_to_node_function)(xmlNode*) noexcept nogil
 
 
 ################################################################################
