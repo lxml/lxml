@@ -146,6 +146,38 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertTrue([error for error in dtd.error_log
                          if 'id1' in error.message])
 
+    def _validated_documents_with_ids(self):
+        # The documents declare 'id' as ID.  Validate one against a DTD that declares the same,
+        # and one against a DTD that declares 'key' as ID instead.
+        xml = b'''
+        <!DOCTYPE a [
+        <!ELEMENT a (b*)>
+        <!ELEMENT b EMPTY>
+        <!ATTLIST b id ID #REQUIRED key CDATA #IMPLIED>
+        ]>
+        <a><b id="i1" key="k1"/><b id="i2" key="k2"/></a>
+        '''
+        documents = []
+        for attlist in (b'id ID #REQUIRED key CDATA #IMPLIED', b'id CDATA #REQUIRED key ID #IMPLIED'):
+            dtd = etree.DTD(BytesIO(b"<!ELEMENT a (b*)><!ELEMENT b EMPTY><!ATTLIST b " + attlist + b">"))
+            root = etree.XML(xml)
+            self.assertTrue(dtd.validate(root))
+            documents.append((attlist, root))
+        return documents
+
+    def test_dtd_validation_keeps_ids(self):
+        for attlist, root in self._validated_documents_with_ids():
+            with self.subTest(attlist=attlist):
+                self.assertEqual([root[0]], root.xpath("id('i1')"))
+                self.assertEqual([], root.xpath("id('k1')"))
+
+    def test_dtd_validation_ids_of_removed_element(self):
+        for attlist, root in self._validated_documents_with_ids():
+            with self.subTest(attlist=attlist):
+                root.remove(root[0])  # also frees the element
+                self.assertEqual([], root.xpath("id('i1')"))
+                self.assertEqual(['i2'], root.xpath("id('i2')/@id"))
+
     def test_dtd_api_internal(self):
         root = etree.XML(b'''
         <!DOCTYPE b SYSTEM "none" [

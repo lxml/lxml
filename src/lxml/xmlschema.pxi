@@ -133,7 +133,7 @@ cdef class XMLSchema(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        doc.lock_fakedoc()
+        cdef bint write_locked = doc.lock_fakedoc(root_node._c_node)
         try:
             if self._add_attribute_defaults:
                 xmlschema.xmlSchemaSetValidOptions(
@@ -149,7 +149,7 @@ cdef class XMLSchema(_Validator):
                 ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
             xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
 
         if ret == -1:

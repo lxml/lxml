@@ -384,7 +384,7 @@ cdef class DTD(_Validator):
         try:
             with self._error_log:
                 c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-                ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
+                ret = _validateDtdKeepingIds(valid_ctxt, c_doc, self._c_dtd)
                 _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
             doc.unlock_write()
@@ -394,6 +394,56 @@ cdef class DTD(_Validator):
             raise DTDValidateError("Internal error in DTD validation",
                                    self._error_log)
         return ret == 1
+
+
+cdef extern from *:
+    """
+    /* libxml2 2.13+ links ID attributes to their entry in the ID table of the document. */
+    #if LIBXML_VERSION >= 21300
+    #define __lxml_set_attr_id(c_attr, c_id)  ((c_attr)->id = (c_id))
+    #else
+    #define __lxml_set_attr_id(c_attr, c_id)  ((void) (c_id))
+    #endif
+    """
+    void _setAttrIdEntry "__lxml_set_attr_id" (xmlAttr* c_attr, tree.xmlID* c_id) noexcept nogil
+
+
+cdef void _unlinkIdAttribute(void* c_id, void* data, const_xmlChar* name) noexcept nogil:
+    cdef xmlAttr* c_attr = (<tree.xmlID*> c_id).attr
+    if c_attr is not NULL:
+        _setAttrIdEntry(c_attr, NULL)
+
+
+cdef void _relinkIdAttribute(void* c_id, void* data, const_xmlChar* name) noexcept nogil:
+    cdef xmlAttr* c_attr = (<tree.xmlID*> c_id).attr
+    if c_attr is not NULL:
+        c_attr.atype = tree.XML_ATTRIBUTE_ID
+        _setAttrIdEntry(c_attr, <tree.xmlID*> c_id)
+
+
+cdef int _validateDtdKeepingIds(dtdvalid.xmlValidCtxt* valid_ctxt, xmlDoc* c_doc,
+                                tree.xmlDtd* c_dtd) noexcept:
+    """Validate the document against the DTD without changing its ID table.
+
+    xmlValidateDtd() replaces the ID table of the document with one for the validating
+    DTD (which libxml2 2.13+ discards when it is done), and it sets the type of the
+    validated attributes as declared in that DTD.  Keep the document's own ID table out
+    of its reach and restore the type of its attributes afterwards.
+    """
+    cdef tree.xmlHashTable* c_ids = c_doc.ids
+    cdef int ret
+    if c_ids is not NULL:
+        # Unlink the ID attributes from the table, as freeing it would.
+        tree.xmlHashScan(c_ids, <tree.xmlHashScanner> _unlinkIdAttribute, NULL)
+        c_doc.ids = NULL
+    ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, c_dtd)
+    if c_doc.ids is not NULL:
+        # libxml2 < 2.13 keeps the ID table of the validation.
+        dtdvalid.xmlFreeIDTable(c_doc.ids)
+    c_doc.ids = c_ids
+    if c_ids is not NULL:
+        tree.xmlHashScan(c_ids, <tree.xmlHashScanner> _relinkIdAttribute, NULL)
+    return ret
 
 
 cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
