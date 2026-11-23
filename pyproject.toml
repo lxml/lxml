@@ -1,5 +1,9 @@
 [build-system]
-requires = ["Cython>=3.3.1", "setuptools"]
+requires = [
+    "Cython>=3.3.1 ; python_version >= '3.9'",
+    "Cython~=3.2.9 ; python_version < '3.9'",
+    "setuptools",
+]
 
 [tool.cibuildwheel]
 build-verbosity = 1
@@ -37,6 +41,7 @@ skip = [
     "cp38-*_s390x",
     "cp39-*_s390x",
 ]
+requires-python = ">= 3.8"
 #test-command = "python {package}/test.py -vv"
 
 [tool.cibuildwheel.linux]
