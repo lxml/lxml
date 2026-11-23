@@ -973,7 +973,7 @@ cdef inline xmlNode* _parentElement(xmlNode* c_node) noexcept nogil:
     c_node = c_node.parent
     if c_node is NULL or not _isElement(c_node):
         return NULL
-    return c_node
+    return _originalNode(c_node)
 
 cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name) noexcept:
     """Tests if the node matches namespace URI and tag name.

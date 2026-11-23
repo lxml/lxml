@@ -2188,6 +2188,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 @cython.profile(False)
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
+    cdef xmlNode* c_original_node
 
     if c_node is NULL:
         return None
@@ -2201,6 +2202,11 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
                 return result
         finally:
             doc.unlock_proxies()
+
+    c_original_node = _originalNode(c_node)
+    if c_original_node is not c_node:
+        # Never create a proxy for the temporary root of a fake root document.
+        return _elementFactory(doc, c_original_node)
 
     element_class = _look_up_element_class(doc, c_node)
 

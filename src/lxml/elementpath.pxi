@@ -672,8 +672,7 @@ cdef class _ParentPathEvaluator(_PathEvaluator):
         return f"parent::*"
 
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        c_parent = c_node.parent
-        return c_parent if c_parent and _isElement(c_parent) else NULL
+        return _parentElement(c_node)
 
     cdef xmlNode* next_node(self, xmlNode* c_node):
         return NULL

@@ -51,6 +51,12 @@ Bugs fixed
   libxml2 2.14 and later.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175767: Python code that ran while an element was temporarily the root of a document,
+  e.g. an XPath extension function used with ``ElementTree(element).xpath()``, got a temporary
+  copy of the element from ``getparent()``, ``iterancestors()`` or ``find('..')`` of its
+  children, which crashed when used after the operation.  It now gets the original element.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.

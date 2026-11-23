@@ -87,6 +87,16 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
 cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node) except NULL:
     return _plainFakeRootDoc(c_base_doc, c_node, 1)
 
+cdef inline xmlNode* _originalNode(xmlNode* c_node) noexcept nogil:
+    # The root element of a fake root document only exists while the document is in use,
+    # but code can run in the meantime (e.g. extension functions) and look at the parents
+    # of its children.  It must see the original element instead, which the document
+    # stores in its '_private' field.
+    if (c_node.parent is not NULL and c_node.parent is <xmlNode*> c_node.doc
+            and c_node.doc._private is not NULL and c_node is c_node.doc.children):
+        return <xmlNode*> c_node.doc._private
+    return c_node
+
 cdef xmlDoc* _plainFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node,
                                bint with_siblings) except NULL:
     # build a temporary document that has the given node as root node

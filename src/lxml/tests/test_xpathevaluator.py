@@ -275,6 +275,37 @@ class ETreeXPathTestCase(HelperTestCase):
             [],
             e('/c'))
 
+    def _parent_navigation_in_extension(self, navigate):
+        # Calls 'navigate' for the first child of a sub-element from an extension
+        # function of an evaluator for the sub-tree, which lxml runs while the
+        # sub-element is temporarily the root of a document.
+        root = etree.XML('<root><sub><a/><b/></sub></root>')
+        sub = root[0]
+        results = []
+
+        def navigate_from(context, nodes):
+            results.append(navigate(nodes[0]))
+            return True
+
+        evaluator = etree.XPathEvaluator(
+            etree.ElementTree(sub), extensions={(None, 'navigate_from'): navigate_from})
+        self.assertTrue(evaluator('navigate_from(a)'))
+        self.assertEqual(1, len(results))
+        return root, sub, results[0]
+
+    def test_xpath_evaluator_tree_extension_getparent(self):
+        root, sub, parents = self._parent_navigation_in_extension(
+            lambda node: (node.getparent(), node.find('..')))
+        for parent in parents:
+            self.assertIs(sub, parent)
+            self.assertIs(root, parent.getparent())
+            self.assertEqual(['a', 'b'], [child.tag for child in parent])
+
+    def test_xpath_evaluator_tree_extension_iterancestors(self):
+        root, sub, ancestors = self._parent_navigation_in_extension(
+            lambda node: (list(node.iterancestors()), list(node.iterancestors('root'))))
+        self.assertEqual(([sub, root], [root]), ancestors)
+
     def test_xpath_evaluator_element(self):
         tree = self.parse('<a><b><c></c></b></a>')
         root = tree.getroot()
