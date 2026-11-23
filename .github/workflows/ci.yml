@@ -225,6 +225,10 @@ jobs:
         run: |
           version=$(python buildlibxml.py --msvc-version)
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Set different library versions for Windows.
+          echo 'LIBXML2_VERSION=2.11.9' >> $GITHUB_ENV
+          echo 'LIBXSLT_VERSION=1.1.45' >> $GITHUB_ENV
+          echo 'LIBICONV_VERSION=1.19' >> $GITHUB_ENV
 
       - name: Cache [libs]
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

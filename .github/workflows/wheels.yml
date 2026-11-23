@@ -43,6 +43,9 @@ env:
   LIBICONV_VERSION: "1.18"
   LIBXML2_VERSION: "2.14.6"
   LIBXSLT_VERSION: "1.1.43"
+  WINDOWS_LIBXML2_VERSION: "2.11.9"
+  WINDOWS_LIBXSLT_VERSION: "1.1.45"
+  WINDOWS_LIBICONV_VERSION: "1.19"
 
 
 jobs:
@@ -73,6 +76,15 @@ jobs:
           libs/*.gz
           libs/*.zip
         key: libs-${{ runner.os }}-${{ matrix.os == 'windows-2022' && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+
+    - name: Set Windows library versions
+      if: runner.os == 'Windows'
+      id: msvc
+      shell: bash
+      run: |
+        echo "LIBXML2_VERSION=$WINDOWS_LIBXML2_VERSION" >> $GITHUB_ENV
+        echo "LIBXSLT_VERSION=$WINDOWS_LIBXSLT_VERSION" >> $GITHUB_ENV
+        echo "LIBICONV_VERSION=$WINDOWS_LIBICONV_VERSION" >> $GITHUB_ENV
 
     - name: Download latest libraries
       env:
@@ -171,6 +183,10 @@ jobs:
         run: |
           version=$(python buildlibxml.py --msvc-version ${{ contains(matrix.only, 'win32') && 'win32' || contains(matrix.only, 'win_arm64') && 'win-arm64' || 'win64' }})
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Set different library versions for Windows.
+          echo "LIBXML2_VERSION=$WINDOWS_LIBXML2_VERSION" >> $GITHUB_ENV
+          echo "LIBXSLT_VERSION=$WINDOWS_LIBXSLT_VERSION" >> $GITHUB_ENV
+          echo "LIBICONV_VERSION=$WINDOWS_LIBICONV_VERSION" >> $GITHUB_ENV
 
       - name: Cache [libs]
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
