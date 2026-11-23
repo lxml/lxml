@@ -47,6 +47,10 @@ Bugs fixed
 
 * Parsing from a file path in the soupparser did not close the file it opened.
 
+* LP#2175761: Resolvers that returned a string with a ``base_url`` leaked a copy of the URL with
+  libxml2 2.14 and later.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
