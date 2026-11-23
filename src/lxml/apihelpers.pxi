@@ -420,6 +420,12 @@ cdef int _collectNsDefs(xmlNode* c_element, _ns_node_ref **_c_ns_list,
     _c_ns_list[0] = c_ns_list
 
 
+cdef enum:
+    # Unreferenced namespace declarations are searched for in a list.  Above this
+    # number of them, they are looked up by address instead, to avoid quadratic runtime.
+    _NS_LIST_INDEX_THRESHOLD = 16
+
+
 cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_keep) except -1:
     """Remove any namespace declarations from a subtree that are not used by
     any of its elements (or attributes).
@@ -428,6 +434,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_
     Any corresponding namespace mappings will not be removed as part of the cleanup.
     """
     cdef xmlNode* c_node
+    cdef xmlNode* c_start_node = c_element
     cdef _ns_node_ref* c_ns_list = NULL
     cdef size_t c_ns_list_size = 0
     cdef size_t c_ns_list_len = 0
@@ -441,6 +448,10 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_
     # collect all new namespace declarations into the ns list
     if c_element.nsDef:
         _collectNsDefs(c_element, &c_ns_list, &c_ns_list_len, &c_ns_list_size)
+        if c_ns_list_len > _NS_LIST_INDEX_THRESHOLD:
+            # Too many declarations for a linear search => start over with an index.
+            python.lxml_free(c_ns_list)
+            return _removeManyUnusedNamespaceDeclarations(c_start_node, prefixes_to_keep)
 
     # remove all namespace declarations from the list that are referenced
     if c_ns_list_len and c_element.type == tree.XML_ELEMENT_NODE:
@@ -462,10 +473,71 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_
 
     if c_ns_list is NULL:
         return 0
+    return _freeUnusedNsDefs(c_ns_list, c_ns_list_len, prefixes_to_keep)
 
-    # free all namespace declarations that remained in the list,
-    # except for those we should keep explicitly
+
+cdef int _removeManyUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_keep) except -1:
+    """Like _removeUnusedNamespaceDeclarations(), but looks up the declarations
+    by their address, for subtrees with many namespace declarations.
+    """
+    cdef xmlNode* c_node
+    cdef _ns_node_ref* c_ns_list = NULL
+    cdef size_t c_ns_list_size = 0
+    cdef size_t c_ns_list_len = 0
+    cdef size_t i, c_indexed_len
+    # Maps the address of each xmlNs in 'c_ns_list' to its list index.
+    cdef dict ns_index = {}
+
+    try:
+        if c_element.parent and c_element.parent.type == tree.XML_DOCUMENT_NODE:
+            # include declarations on the document node
+            _collectNsDefs(c_element.parent, &c_ns_list, &c_ns_list_len, &c_ns_list_size)
+            for i in range(c_ns_list_len):
+                ns_index[<size_t> c_ns_list[i].ns] = i
+
+        tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_element, c_element, 1)
+        # collect all new namespace declarations into the ns list
+        if c_element.nsDef:
+            c_indexed_len = c_ns_list_len
+            _collectNsDefs(c_element, &c_ns_list, &c_ns_list_len, &c_ns_list_size)
+            for i in range(c_indexed_len, c_ns_list_len):
+                ns_index[<size_t> c_ns_list[i].ns] = i
+
+        # remove all namespace declarations from the list that are referenced
+        if c_ns_list_len and c_element.type == tree.XML_ELEMENT_NODE:
+            c_node = c_element
+            while c_node and c_ns_list_len:
+                if c_node.ns:
+                    index = ns_index.pop(<size_t> c_node.ns, None)
+                    if index is not None:
+                        i = index
+                        c_ns_list_len -= 1
+                        if i < c_ns_list_len:
+                            c_ns_list[i] = c_ns_list[c_ns_list_len]
+                            ns_index[<size_t> c_ns_list[i].ns] = i
+                if c_node is c_element:
+                    # continue with attributes
+                    c_node = <xmlNode*>c_element.properties
+                else:
+                    c_node = c_node.next
+        tree.END_FOR_EACH_ELEMENT_FROM(c_element)
+    except:
+        python.lxml_free(c_ns_list)
+        raise
+
+    if c_ns_list is NULL:
+        return 0
+    return _freeUnusedNsDefs(c_ns_list, c_ns_list_len, prefixes_to_keep)
+
+
+cdef inline int _freeUnusedNsDefs(_ns_node_ref* c_ns_list, size_t c_ns_list_len,
+                                  set prefixes_to_keep) except -1:
+    """Free the namespace declarations that remained in the list (and the list itself),
+    except for those we should keep explicitly.
+    """
+    cdef xmlNode* c_node
     cdef xmlNs* c_nsdef
+    cdef size_t i
     for i in range(c_ns_list_len):
         if prefixes_to_keep is not None:
             if c_ns_list[i].ns.prefix and c_ns_list[i].ns.prefix in prefixes_to_keep:
@@ -480,8 +552,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_
             c_nsdef.next = c_nsdef.next.next
         tree.xmlFreeNs(c_ns_list[i].ns)
 
-    if c_ns_list is not NULL:
-        python.lxml_free(c_ns_list)
+    python.lxml_free(c_ns_list)
     return 0
 
 cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attribute) noexcept:
