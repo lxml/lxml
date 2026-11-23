@@ -784,7 +784,10 @@ def flatten_el(el, include_hrefs, skip_tag=False):
     not returned (just its contents)."""
     if not skip_tag:
         if el.tag == 'img':
-            yield ('img', el.get('src'), start_tag(el))
+            src = el.get('src')
+            if src is not None:
+                src = html_escape(src)
+            yield ('img', src, start_tag(el))
         else:
             yield start_tag(el)
     if el.tag in empty_tags and not el.text and not len(el) and not el.tail:
@@ -794,8 +797,10 @@ def flatten_el(el, include_hrefs, skip_tag=False):
         yield html_escape(word)
     for child in el:
         yield from flatten_el(child, include_hrefs=include_hrefs)
-    if el.tag == 'a' and el.get('href') and include_hrefs:
-        yield ('href', el.get('href'))
+    if el.tag == 'a' and include_hrefs:
+        href = el.get('href')
+        if href:
+            yield ('href', html_escape(href))
     if not skip_tag:
         yield end_tag(el)
         end_words = split_words(el.tail)
