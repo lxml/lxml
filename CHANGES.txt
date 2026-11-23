@@ -66,6 +66,14 @@ Bugs fixed
   of a document is now re-entrant per thread.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175570: Python code that lxml runs while it reads a document, e.g. ``ElementBase._init()``,
+  deadlocked when it modified the document, or serialised or validated one of its elements other
+  than the root element.  It now takes the write lock without giving up its read lock, so that no
+  other thread can modify the document in between.  If another thread already waits to modify the
+  document, it raises ``RuntimeError`` instead (the C-API functions ``lock_write()`` and
+  ``lock_write2()`` keep waiting).
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.

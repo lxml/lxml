@@ -368,6 +368,69 @@ class ClassLookupTestCase(HelperTestCase):
         del a
         self.assertEqual(root[0].tag, "a")
 
+    def _parse_with_init(self, init):
+        # Parses a document with an element class that calls init(element) in _init().
+        class InitElement(etree.ElementBase):
+            def _init(self):
+                init(self)
+
+        parser = self.etree.XMLParser()
+        parser.set_element_class_lookup(etree.ElementDefaultClassLookup(element=InitElement))
+        return self.etree.XML(b'<root><a/><b><c/></b></root>', parser)
+
+    def _run_bounded(self, function):
+        # Runs 'function' in a thread, so that a deadlock fails the test instead of the suite.
+        import threading
+        errors = []
+
+        def run():
+            try:
+                function()
+            except BaseException as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        thread.join(60)  # time out after x seconds
+        self.assertFalse(thread.is_alive(), "deadlocked")
+        if errors:
+            raise errors[0]
+
+    def test_init_modifies_tree(self):
+        # ElementBase._init() may modify the tree, also when the accessor that
+        # creates the element holds the read lock of the document.
+        def mark(element):
+            if element.get('seen') is None:
+                element.set('seen', '1')
+
+        results = []
+
+        def parse_and_access():
+            root = self._parse_with_init(mark)
+            results.append(root[0].get('seen'))
+            results.append([el.get('seen') for el in root.iter()])
+            results.append(root.find('b/c').get('seen'))
+
+        self._run_bounded(parse_and_access)
+        self.assertEqual(['1', ['1', '1', '1', '1'], '1'], results)
+
+    def test_init_uses_subelement_as_root(self):
+        # ElementBase._init() may serialise or inspect its element as the root of a
+        # (temporary) document, which needs the write lock for non-root elements.
+        def canonicalise(element):
+            element.c14n = self.etree.tostring(element, method='c14n')
+            if len(element):
+                element.child_path = self.etree.ElementTree(element).getpath(element[0])
+
+        results = []
+
+        def parse_and_access():
+            element = self._parse_with_init(canonicalise)[1]
+            results.append((element.c14n, element.child_path))
+
+        self._run_bounded(parse_and_access)
+        self.assertEqual([(b'<b><c></c></b>', '/b/c')], results)
+
     def test_lookup_without_fallback(self):
         class Lookup(etree.CustomElementClassLookup):
              def __init__(self):

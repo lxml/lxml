@@ -29,6 +29,11 @@ cdef class _RWLock:
         return self._lock._writer_reentry
 
     @property
+    def writers_waiting_for_upgrade(self):
+        # (A performance counter that other threads change.)
+        return atomic_load(&self._lock._perf_counters.write_wait_on_upgrade)
+
+    @property
     def lock_thread_id(self):
         return load_relaxed(&self._lock._write_locked_id) - 1
 

@@ -177,6 +177,156 @@ class RWLockTest(unittest.TestCase):
         self.assertEqual(0, other_lock.reader_count)
         self.assertFalse(lock.writer_blocking_readers)
 
+    def test_lock_write_while_holding_read(self):
+        lock = RWLock()
+
+        def upgrade():
+            lock.lock_read()
+            lock.lock_read()
+            lock.lock_write()
+            self.assertTrue(lock.writer_blocking_readers)
+            self.assertEqual(0, lock.writer_reentry)
+            lock.lock_read()
+            lock.unlock_read()
+            lock.lock_write()
+            lock.unlock_write()
+            lock.unlock_write()
+            self.assertFalse(lock.writer_blocking_readers)
+            self.assertEqual(2, lock.reader_count)
+            lock.unlock_read()
+            lock.unlock_read()
+
+        self.run_bounded(upgrade)
+        self.assertEqual(0, lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+        self.assertEqual(1, lock.get_perf_counters()['write_upgrade'])
+
+    def test_lock_write_while_holding_read_waits_for_other_readers(self):
+        lock = RWLock()
+        order = []
+        reading = threading.Event()
+        release = threading.Event()
+
+        def other_reader():
+            with lock.read_lock():
+                order.append("reading")
+                reading.set()
+                release.wait()
+                order.append("released read lock")
+
+        def release_when_writer_waits():
+            self.wait_for_writer(lock)
+            release.set()
+
+        def upgrade():
+            reading.wait()
+            # Not the first reader: its read lock is recorded in the thread-local stack.
+            with lock.read_lock():
+                releaser = threading.Thread(target=release_when_writer_waits)
+                releaser.start()
+                with lock.write_lock():
+                    order.append("writing")
+                releaser.join()
+
+        with self.run_threads(other_reader):
+            self.run_bounded(upgrade)
+        self.assertEqual(["reading", "released read lock", "writing"], order)
+        self.assertEqual(0, lock.reader_count)
+
+    def test_lock_write_while_holding_read_keeps_writers_out(self):
+        # A writer that comes while a thread upgrades its read lock waits until this thread
+        # released its read lock, i.e. it cannot modify what the upgrading code still reads.
+        lock = RWLock()
+        order = []
+        writer = threading.Thread(target=lambda: (lock.lock_write(), order.append("writer"), lock.unlock_write()))
+
+        def upgrade():
+            with lock.read_lock():
+                with lock.write_lock():
+                    writer.start()
+                    # Spin until the writer waits for the end of the upgrade.
+                    while not lock.writers_waiting_for_upgrade:
+                        pass
+                    order.append("upgraded")
+                order.append("still reading")
+            writer.join()
+
+        self.run_bounded(upgrade)
+        self.assertEqual(["upgraded", "still reading", "writer"], order)
+        self.assertEqual(0, lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+
+    def test_lock_write_while_holding_read_and_writer_waits(self):
+        # The waiting writer waits for this thread's read lock => fail instead of letting it go first.
+        lock = RWLock()
+        writer = threading.Thread(target=lambda: (lock.lock_write(), lock.unlock_write()))
+
+        def upgrade():
+            with lock.read_lock():
+                writer.start()
+                self.wait_for_writer(lock)
+                with self.assertRaises(RuntimeError):
+                    lock.lock_write()
+                self.assertEqual(1, lock.reader_count)
+            writer.join()
+
+        self.run_bounded(upgrade)
+        self.assertEqual(0, lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+        self.assertEqual(1, lock.get_perf_counters()['write_upgrade_conflict'])
+
+    def test_lock_write_while_holding_read_in_two_threads(self):
+        # The second thread that upgrades its read lock fails, the first one waits for it.
+        lock = RWLock()
+        reading = threading.Barrier(2)
+        results = []
+
+        def first():
+            with lock.read_lock():
+                reading.wait()
+                with lock.write_lock():
+                    results.append("first wrote")
+
+        def second():
+            with lock.read_lock():
+                reading.wait()
+                self.wait_for_writer(lock)
+                try:
+                    lock.lock_write()
+                except RuntimeError:
+                    results.append("second failed")
+                else:
+                    lock.unlock_write()
+                    results.append("second wrote")
+
+        def upgrade_in_two_threads():
+            with self.run_threads(first, second):
+                pass
+
+        self.run_bounded(upgrade_in_two_threads)
+        self.assertEqual(["first wrote", "second failed"], sorted(results))
+        self.assertEqual(0, lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+
+    def test_lock_write_while_holding_read_released_while_writing(self):
+        # Read locks taken before the upgrade may be released before the write lock.
+        lock = RWLock()
+
+        def upgrade():
+            lock.lock_read()
+            lock.lock_write()
+            lock.unlock_read()
+            lock.unlock_write()
+            self.assertEqual(0, lock.reader_count)
+            self.assertFalse(lock.writer_blocking_readers)
+            # Nothing is left behind that would block other writers.
+            writer = threading.Thread(target=lambda: (lock.lock_write(), lock.unlock_write()))
+            writer.start()
+            writer.join()
+
+        self.run_bounded(upgrade)
+        self.assertEqual(0, lock.reader_count)
+
     @assert_perf_counters(write_acquired=3)
     def test_lock_write(self, lock):
         assert not lock.writer_blocking_readers
@@ -361,23 +511,35 @@ class RWLockTest(unittest.TestCase):
                 with lock.read_lock():
                     read()
 
-        """
-        # Deadlocks! - would require remembering what threads own the read lock to allow upgrading to a write lock.
+        upgrade_conflicts = []
+
         def reader_writer():
             start.wait()
             with lock.read_lock():
                 read()
-                with lock.write_lock():
-                    write()
-        """
+                try:
+                    lock.lock_write()
+                except RuntimeError:
+                    # Another thread waits for our read lock in order to write.
+                    upgrade_conflicts.append(1)
+                else:
+                    try:
+                        write()
+                        read()
+                    finally:
+                        lock.unlock_write()
+                read()
 
-        threads = [reader, writer, writereader] * 33
+        threads = [reader, writer, writereader, reader_writer] * 25
         start = threading.Barrier(len(threads))
 
-        with self.run_threads(*threads):
-            pass
+        def run_all():
+            with self.run_threads(*threads):
+                pass
 
-        n_writers = len(threads) - threads.count(reader)
+        self.run_bounded(run_all)
+
+        n_writers = len(threads) - threads.count(reader) - len(upgrade_conflicts)
         self.assertEqual(memory, bytearray(range(n_writers, n_writers + len(memory))))
 
         self.assertFalse(failures)
