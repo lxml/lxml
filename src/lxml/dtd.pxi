@@ -362,7 +362,6 @@ cdef class DTD(_Validator):
         """
         cdef _Document doc
         cdef _Element root_node
-        cdef xmlDoc* c_doc
         cdef dtdvalid.xmlValidCtxt* valid_ctxt
         cdef int ret = -1
 
@@ -379,13 +378,12 @@ cdef class DTD(_Validator):
         valid_ctxt.error = <dtdvalid.xmlValidityErrorFunc>_nullGenericErrorFunc
         valid_ctxt.userData = NULL
 
-        # xmlValidateDtd() modifies the document (its DTD pointers and ID/IDREF tables).
+        # xmlValidateDtd() modifies the document (its DTD pointers and ID/IDREF tables),
+        # and validating an element other than the root element changes the tree temporarily.
         doc.lock_write()
         try:
             with self._error_log:
-                c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-                ret = _validateDtdKeepingIds(valid_ctxt, c_doc, self._c_dtd)
-                _destroyFakeDoc(doc._c_doc, c_doc)
+                ret = _validateDtdKeepingIds(valid_ctxt, doc._c_doc, root_node._c_node, self._c_dtd)
         finally:
             doc.unlock_write()
             dtdvalid.xmlFreeValidCtxt(valid_ctxt)
@@ -422,27 +420,75 @@ cdef void _relinkIdAttribute(void* c_id, void* data, const_xmlChar* name) noexce
 
 
 cdef int _validateDtdKeepingIds(dtdvalid.xmlValidCtxt* valid_ctxt, xmlDoc* c_doc,
-                                tree.xmlDtd* c_dtd) noexcept:
-    """Validate the document against the DTD without changing its ID table.
+                                xmlNode* c_node, tree.xmlDtd* c_dtd) except? -1:
+    """Validate an element of the document and its descendants against the DTD without
+    changing the ID table of the document.
 
-    xmlValidateDtd() replaces the ID table of the document with one for the validating
-    DTD (which libxml2 2.13+ discards when it is done), and it sets the type of the
-    validated attributes as declared in that DTD.  Keep the document's own ID table out
-    of its reach and restore the type of its attributes afterwards.
+    xmlValidateDtd() validates the root element of a document.  It replaces the ID table
+    of the document with one for the validating DTD (which libxml2 2.13+ discards when it
+    is done), and it sets the type of the validated attributes as declared in that DTD.
+    Keep the document's own ID table out of its reach and restore the type of its
+    attributes afterwards.
+
+    For another element, a copy of it (with the namespace declarations in its scope)
+    temporarily replaces the root element of the document and takes its children, like
+    the root element of a fake root document.  Keeping the copy in the validated document
+    keeps all validated attributes in that document, which libxml2 2.13+ requires for
+    adding them to its ID table.
     """
     cdef tree.xmlHashTable* c_ids = c_doc.ids
-    cdef int ret
+    cdef xmlNode* c_temp_root = NULL
+    cdef xmlNode* c_doc_children = c_doc.children
+    cdef xmlNode* c_doc_last = c_doc.last
+    cdef void* c_doc_private = c_doc._private
+    cdef xmlNode* c_child
+    cdef bint no_memory = False
+    cdef int ret = 0
     if c_ids is not NULL:
         # Unlink the ID attributes from the table, as freeing it would.
         tree.xmlHashScan(c_ids, <tree.xmlHashScanner> _unlinkIdAttribute, NULL)
         c_doc.ids = NULL
-    ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, c_dtd)
+
+    if _needsFakeRootDoc(c_doc, c_node, True):
+        c_temp_root = tree.xmlDocCopyNode(c_node, c_doc, 2)  # non recursive!
+        if c_temp_root is not NULL:
+            _copyParentNamespaces(c_node, c_temp_root)
+            c_temp_root.parent = <xmlNode*> c_doc
+            c_temp_root.children = c_node.children
+            c_temp_root.last = c_node.last
+            c_child = c_temp_root.children
+            while c_child is not NULL:
+                c_child.parent = c_temp_root
+                c_child = c_child.next
+            c_doc.children = c_doc.last = c_temp_root
+            # As in a fake root document, '_private' refers to the original element.
+            c_doc._private = c_node
+        else:
+            no_memory = True
+
+    if not no_memory:
+        ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, c_dtd)
+
+    if c_temp_root is not NULL:
+        c_doc.children = c_doc_children
+        c_doc.last = c_doc_last
+        c_doc._private = c_doc_private
+        c_child = c_temp_root.children
+        while c_child is not NULL:
+            c_child.parent = c_node
+            c_child = c_child.next
+        c_temp_root.children = c_temp_root.last = c_temp_root.parent = NULL
+        tree.xmlFreeNode(c_temp_root)
+
     if c_doc.ids is not NULL:
         # libxml2 < 2.13 keeps the ID table of the validation.
         dtdvalid.xmlFreeIDTable(c_doc.ids)
     c_doc.ids = c_ids
     if c_ids is not NULL:
         tree.xmlHashScan(c_ids, <tree.xmlHashScanner> _relinkIdAttribute, NULL)
+
+    if no_memory:
+        raise MemoryError()
     return ret
 
 

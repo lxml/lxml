@@ -61,6 +61,11 @@ Bugs fixed
   the validating DTD, or removed it (libxml2 2.13+), so that XPath ``id()`` lost its elements.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175768: With libxml2 2.13+, ``DTD.validate()`` of an element other than the root element
+  failed if its descendants had ID attributes, without an error message or with wrong errors
+  about unknown IDs.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
