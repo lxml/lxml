@@ -40,6 +40,10 @@ Bugs fixed
   the validator's ``error_log`` when the validation finishes.  This also resets the
   ``error_log.last_error`` of a ``DTD`` after a successful validation.
 
+* LP#1222132: The ``SchematronParseError`` of ``isoschematron.Schematron()`` for an invalid
+  schema could report the errors of a schema that another thread validated at the same time,
+  or no errors at all.  It now reports the errors of its own schema, also in its ``error_log``.
+
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.

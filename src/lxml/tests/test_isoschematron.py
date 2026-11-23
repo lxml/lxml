@@ -3,6 +3,7 @@ Test cases related to ISO-Schematron parsing and validation
 """
 
 
+import os.path
 import unittest
 from lxml import isoschematron
 
@@ -60,6 +61,58 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 ''')
         self.assertRaises(etree.SchematronParseError,
                           isoschematron.Schematron, schema)
+
+    @unittest.skipIf(not isoschematron.schematron_schema_valid_supported,
+                     'SchematronParseError is only raised when validate_schema is true')
+    def test_schematron_invalid_schema_error_log(self):
+        # The error describes the validation of this schema, even if other threads
+        # used the shared schema validator in the meantime.
+        valid_schema = self.parse('''\
+<schema xmlns="http://purl.oclc.org/dsdl/schematron">
+  <pattern><rule context="a"><assert test="b">b</assert></rule></pattern>
+</schema>''')
+        invalid_schema = self.parse('''\
+<schema xmlns="http://purl.oclc.org/dsdl/schematron">
+  <pattern><unexpected/></pattern>
+</schema>''')
+
+        class SharedRelaxNG(etree.RelaxNG):
+            @property
+            def error_log(self):
+                # Another thread validates a schema before this one reads the log.
+                self.validate(valid_schema)
+                return super().error_log
+
+        shared_validator = isoschematron.schematron_schema_valid
+        isoschematron.schematron_schema_valid = SharedRelaxNG(file=os.path.join(
+            os.path.dirname(isoschematron.__file__), 'resources', 'rng', 'iso-schematron.rng'))
+        try:
+            with self.assertRaises(etree.SchematronParseError) as cm:
+                isoschematron.Schematron(invalid_schema)
+        finally:
+            isoschematron.schematron_schema_valid = shared_validator
+        self.assertIn('unexpected', str(cm.exception))
+
+    def test_schematron_validate_schema_without_rng(self):
+        # Some distributions remove the RelaxNG schema for schematron schemas.
+        def schematron_schema_valid(arg):
+            raise NotImplementedError("Validating the ISO schematron requires iso-schematron.rng")
+
+        schema = self.parse('''\
+<schema xmlns="http://purl.oclc.org/dsdl/schematron">
+  <pattern><rule context="a"><assert test="b">b</assert></rule></pattern>
+</schema>''')
+        shared_validator = isoschematron.schematron_schema_valid
+        supported = isoschematron.schematron_schema_valid_supported
+        isoschematron.schematron_schema_valid = schematron_schema_valid
+        isoschematron.schematron_schema_valid_supported = False
+        try:
+            self.assertRaises(NotImplementedError, isoschematron.Schematron,
+                              schema, validate_schema=True)
+            self.assertTrue(isoschematron.Schematron(schema, validate_schema=False))
+        finally:
+            isoschematron.schematron_schema_valid = shared_validator
+            isoschematron.schematron_schema_valid_supported = supported
 
     def test_schematron_invalid_schema_namespace(self):
         schema = self.parse('''\

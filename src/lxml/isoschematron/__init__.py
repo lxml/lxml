@@ -287,10 +287,17 @@ class Schematron(_etree._Validator):
             schematron = self._include(schematron, **include_params)
         if expand:
             schematron = self._expand(schematron, **expand_params)
-        if validate_schema and not schematron_schema_valid(schematron):
-            raise _etree.SchematronParseError(
-                "invalid schematron schema: %s" %
-                schematron_schema_valid.error_log)
+        if validate_schema:
+            if not schematron_schema_valid_supported:
+                schematron_schema_valid(schematron)  # raises NotImplementedError
+            try:
+                schematron_schema_valid.assertValid(schematron)
+            except _etree.DocumentInvalid as exc:
+                # Report the errors of this validation, other threads may use
+                # the shared validator, too.
+                raise _etree.SchematronParseError(
+                    "invalid schematron schema: %s" % exc.error_log,
+                    exc.error_log) from None
         if store_schematron:
             self._schematron = schematron
         # add new compile keyword args here if exposing them
