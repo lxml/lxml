@@ -384,6 +384,25 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
+    def test_xslt_string_parameters_computed_names(self):
+        # Names that a transformation with parameters creates at runtime
+        # must stay valid in the result trees.
+        tree = self.parse('<a/>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:param name="p" select="'x'"/>
+  <xsl:template match="/">
+    <out><xsl:element name="{concat('computed_', $p)}">
+      <xsl:attribute name="{concat('attr_', $p)}">v</xsl:attribute></xsl:element></out>
+  </xsl:template>
+</xsl:stylesheet>''')
+        st = etree.XSLT(style)
+        results = [st(tree, p=etree.XSLT.strparam(f"name{i}")) for i in range(5)]
+        for i, res in enumerate(results):
+            self.assertEqual(f'<out><computed_name{i} attr_name{i}="v"/></out>'.encode(),
+                             etree.tostring(res.getroot()))
+
     def test_xslt_parameter_invalid(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\

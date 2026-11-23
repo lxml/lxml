@@ -656,11 +656,14 @@ cdef class XSLT:
         result_doc = _documentFactory(c_result, input_doc._parser)
         result_doc.initDict()
 
-        if self._c_style.doc.dict is not c_result.dict:
+        # With parameters, the transformation used a per-call sub-dict of the stylesheet dict
+        # (freed below) that also holds the names created at runtime.  Re-intern from it,
+        # which covers its parent dict as well.
+        if c_dict is not c_result.dict:
             with nogil:
-                if self._c_style.doc.dict is not c_result.dict:
+                if c_dict is not c_result.dict:
                     fixThreadDictNames(<xmlNode*>c_result,
-                                       self._c_style.doc.dict, c_result.dict)
+                                       c_dict, c_result.dict)
 
         if input_doc._c_doc.dict is not c_result.dict:
             input_doc.lock_read()
