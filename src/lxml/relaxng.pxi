@@ -28,6 +28,16 @@ class RelaxNGValidateError(RelaxNGError):
     """
 
 
+# Data types of the XML Schema datatype library whose validation adds the attributes
+# that hold them to the ID and IDREF tables of the validated document (see _ID_TYPE_NAMES).
+# Included or referenced schema documents are out of reach, so assume that they use them.
+cdef XPath _check_for_relaxng_id_types = XPath(
+    "boolean(descendant-or-self::rng:include | descendant-or-self::rng:externalRef | "
+    "descendant-or-self::rng:data[contains(' ID IDREF IDREFS ENTITY ENTITIES ', "
+    "                                      concat(' ', normalize-space(@type), ' '))])",
+    namespaces={'rng': 'http://relaxng.org/ns/structure/1.0'})
+
+
 ################################################################################
 # RelaxNG
 
@@ -39,6 +49,10 @@ cdef class RelaxNG(_Validator):
     filename through the ``file`` keyword argument.
     """
     cdef relaxng.xmlRelaxNG* _c_schema
+    cdef bint _uses_id_types
+
+    def __cinit__(self):
+        self._uses_id_types = True # play it safe
 
     def __init__(self, etree=None, *, file=None):
         if self._c_schema is not NULL:
@@ -53,6 +67,7 @@ cdef class RelaxNG(_Validator):
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
+            self._uses_id_types = _check_for_relaxng_id_types(root_node)
             write_locked = doc.lock_fakedoc(root_node._c_node)
             try:
                 fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
@@ -66,6 +81,7 @@ cdef class RelaxNG(_Validator):
                     _require_rnc2rng()
                     rng_data_utf8 = _utf8(_rnc2rng.dumps(_rnc2rng.load(file)))
                     doc = _parseMemoryDocument(rng_data_utf8, parser=None, url=file)
+                    self._uses_id_types = _check_for_relaxng_id_types(doc)
                     parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
                 else:
                     doc = None
@@ -77,9 +93,11 @@ cdef class RelaxNG(_Validator):
                 rng_data_utf8 = _utf8(_rnc2rng.dumps(_rnc2rng.load(file)))
                 doc = _parseMemoryDocument(
                     rng_data_utf8, parser=None, url=_getFilenameForFile(file))
+                self._uses_id_types = _check_for_relaxng_id_types(doc)
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
             else:
                 doc = _parseDocument(file, parser=None, base_url=None)
+                self._uses_id_types = _check_for_relaxng_id_types(doc)
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:
             raise RelaxNGParseError, "No tree or file given"
@@ -126,6 +144,7 @@ cdef class RelaxNG(_Validator):
         cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
+        cdef tree.xmlHashTable* c_refs = NULL
         cdef int ret
 
         assert self._c_schema is not NULL, "RelaxNG instance not initialised"
@@ -136,7 +155,13 @@ cdef class RelaxNG(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        cdef bint write_locked = doc.lock_fakedoc(root_node._c_node)
+        cdef bint uses_id_types = self._uses_id_types
+        cdef bint write_locked = uses_id_types
+        if uses_id_types:
+            # Validation adds attributes to the ID and IDREF tables of the document.
+            doc.lock_write()
+        else:
+            write_locked = doc.lock_fakedoc(root_node._c_node)
         try:
             self._error_log.clear()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
@@ -144,8 +169,12 @@ cdef class RelaxNG(_Validator):
                 valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
             _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGV)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            if uses_id_types:
+                c_refs = _replaceIdRefTable(doc._c_doc, NULL)
             with nogil:
                 ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
+            if uses_id_types:
+                _freeIdRefTable(_replaceIdRefTable(doc._c_doc, c_refs))
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
             doc.unlock_fakedoc(write_locked)

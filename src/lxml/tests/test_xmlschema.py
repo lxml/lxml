@@ -87,6 +87,42 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         error_path = schema.error_log[0].path
         self.assertTrue(tree_path == error_path)
 
+    _ID_SCHEMA = """\
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="r"><xs:complexType><xs:sequence>
+    <xs:element name="e" minOccurs="0" maxOccurs="unbounded"><xs:complexType>
+      <xs:attribute name="id" type="xs:ID"/>
+      <xs:attribute name="ref" type="xs:IDREF"/>
+    </xs:complexType></xs:element>
+  </xs:sequence></xs:complexType></xs:element>
+</xs:schema>"""
+
+    def test_xmlschema_id_attributes(self):
+        # Validation adds the attributes of type xs:ID to the ID table of the document.
+        schema = etree.XMLSchema(etree.XML(self._ID_SCHEMA))
+        root = etree.XML('<r><e id="i1"/><e id="i2" ref="i1"/></r>')
+        self.assertEqual([], root.xpath("id('i1')"))
+        self.assertTrue(schema.validate(root))
+        self.assertEqual([root[0]], root.xpath("id('i1')"))
+
+    def test_xmlschema_idrefs_not_kept(self):
+        # The IDREFs that validation finds do not stay in the document,
+        # where a later RelaxNG validation would check them.
+        schema = etree.XMLSchema(etree.XML(self._ID_SCHEMA))
+        relaxng = etree.RelaxNG(etree.XML('''\
+<element name="r" xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <zeroOrMore><element name="e">
+    <optional><attribute name="id"><data type="ID"/></attribute></optional>
+    <optional><attribute name="ref"/></optional>
+    <optional><attribute name="other"><data type="IDREF"/></attribute></optional>
+  </element></zeroOrMore>
+</element>'''))
+        root = etree.XML('<r><e id="i1"/><e id="i2" ref="i1"/></r>')
+        self.assertTrue(schema.validate(root))
+        root.remove(root[0])  # removes the ID that 'ref' refers to
+        self.assertTrue(relaxng.validate(root), [error.message for error in relaxng.error_log])
+
     def test_xmlschema_default_attributes(self):
         schema = self.parse('''
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">

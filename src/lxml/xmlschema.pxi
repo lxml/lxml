@@ -22,6 +22,54 @@ cdef XPath _check_for_default_attributes = XPath(
     "boolean(//xs:attribute[@default or @fixed][1])",
     namespaces={'xs': 'http://www.w3.org/2001/XMLSchema'})
 
+# Validating values of these built-in types adds the attributes that hold them to the
+# ID and IDREF tables of the validated document, or changes their attribute type.
+cdef frozenset _ID_TYPE_NAMES = frozenset({'ID', 'IDREF', 'IDREFS', 'ENTITY', 'ENTITIES'})
+
+cdef XPath _check_for_other_schema_documents = XPath(
+    "boolean(//xs:include | //xs:import | //xs:redefine | //xs:override)",
+    namespaces={'xs': 'http://www.w3.org/2001/XMLSchema'})
+
+cdef XPath _find_type_references = XPath(
+    "//xs:*/@type | //xs:*/@base | //xs:*/@itemType | //xs:*/@memberTypes",
+    namespaces={'xs': 'http://www.w3.org/2001/XMLSchema'}, smart_strings=False)
+
+
+cdef bint _xmlSchemaUsesIdTypes(_Document doc) except -1:
+    """Check if the schema document refers to one of the built-in types in _ID_TYPE_NAMES,
+    from which all its types with ID semantics derive.
+
+    Included or imported schema documents are out of reach, so assume that they do.
+    """
+    if _check_for_other_schema_documents(doc):
+        return True
+    for type_names in _find_type_references(doc):
+        for qname in (<str> type_names).split():
+            if qname.rpartition(':')[2] in _ID_TYPE_NAMES:
+                return True
+    return False
+
+
+cdef void _freeIdRefList(void* c_ref_list, const_xmlChar* name) noexcept nogil:
+    tree.xmlListDelete(<tree.xmlList*> c_ref_list)
+
+
+cdef tree.xmlHashTable* _replaceIdRefTable(xmlDoc* c_doc, tree.xmlHashTable* c_refs) noexcept nogil:
+    """Replace the IDREF table of the document and return the previous one.
+
+    libxml2 adds the IDREF attributes of the validated document to its IDREF table on each
+    validation and never removes them.  Only a RelaxNG or DTD validation reads the table, at
+    its end, so let validations start with an empty table and discard it afterwards.
+    """
+    cdef tree.xmlHashTable* c_old_refs = c_doc.refs
+    c_doc.refs = c_refs
+    return c_old_refs
+
+
+cdef void _freeIdRefTable(tree.xmlHashTable* c_refs) noexcept nogil:
+    if c_refs is not NULL:
+        tree.xmlHashFree(c_refs, <tree.xmlHashDeallocator> _freeIdRefList)
+
 
 cdef class XMLSchema(_Validator):
     """XMLSchema(self, etree=None, file=None)
@@ -37,10 +85,12 @@ cdef class XMLSchema(_Validator):
     cdef _Document _doc
     cdef bint _has_default_attributes
     cdef bint _add_attribute_defaults
+    cdef bint _uses_id_types
 
     def __cinit__(self):
         self._has_default_attributes = True # play it safe
         self._add_attribute_defaults = False
+        self._uses_id_types = True # play it safe
 
     def __init__(self, etree=None, *, file=None, bint attribute_defaults=False):
         if self._c_schema is not NULL:
@@ -107,6 +157,7 @@ cdef class XMLSchema(_Validator):
 
         if self._doc is not None:
             self._has_default_attributes = _check_for_default_attributes(self._doc)
+            self._uses_id_types = _xmlSchemaUsesIdTypes(self._doc)
         self._add_attribute_defaults = attribute_defaults and self._has_default_attributes
 
     def __dealloc__(self):
@@ -123,6 +174,7 @@ cdef class XMLSchema(_Validator):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
+        cdef tree.xmlHashTable* c_refs = NULL
         cdef int ret
 
         assert self._c_schema is not NULL, "Schema instance not initialised"
@@ -133,7 +185,13 @@ cdef class XMLSchema(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        cdef bint write_locked = doc.lock_fakedoc(root_node._c_node)
+        cdef bint uses_id_types = self._uses_id_types
+        cdef bint write_locked = uses_id_types
+        if uses_id_types:
+            # Validation adds attributes to the ID and IDREF tables of the document.
+            doc.lock_write()
+        else:
+            write_locked = doc.lock_fakedoc(root_node._c_node)
         try:
             if self._add_attribute_defaults:
                 xmlschema.xmlSchemaSetValidOptions(
@@ -145,8 +203,12 @@ cdef class XMLSchema(_Validator):
                 valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
 
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            if uses_id_types:
+                c_refs = _replaceIdRefTable(doc._c_doc, NULL)
             with nogil:
                 ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
+            if uses_id_types:
+                _freeIdRefTable(_replaceIdRefTable(doc._c_doc, c_refs))
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
             doc.unlock_fakedoc(write_locked)

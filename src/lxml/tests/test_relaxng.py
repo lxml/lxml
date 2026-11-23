@@ -120,6 +120,29 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertTrue([log for log in errors if "IDREF" in log.message])
         self.assertTrue([log for log in errors if "myref" in log.message])
 
+    def test_relaxng_idrefs_not_kept(self):
+        # The IDREFs that a validation finds do not stay in the document,
+        # where a later validation would check them.
+        def schema(ref_pattern):
+            return etree.RelaxNG(etree.XML('''\
+<element name="r" xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <zeroOrMore><element name="e">
+    <optional><attribute name="id"><data type="ID"/></attribute></optional>
+    <optional><attribute name="ref">%s</attribute></optional>
+    <optional><attribute name="other"><data type="IDREF"/></attribute></optional>
+  </element></zeroOrMore>
+</element>''' % ref_pattern))
+
+        idref_schema = schema('<data type="IDREF"/>')
+        text_schema = schema('<text/>')
+        root = etree.XML('<r><e id="i1"/><e id="i2" ref="i1"/></r>')
+        self.assertTrue(idref_schema.validate(root))
+        root.remove(root[0])  # removes the ID that 'ref' refers to
+        self.assertTrue(text_schema.validate(root),
+                        [error.message for error in text_schema.error_log])
+        self.assertFalse(idref_schema.validate(root))
+
     def test_relaxng_invalid_schema(self):
         schema = self.parse('''\
 <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">

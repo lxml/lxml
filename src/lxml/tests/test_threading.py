@@ -438,6 +438,54 @@ class ThreadingTestCase(HelperTestCase):
                 del el
         self._run_threads(10, testrun)
 
+    def _validate_concurrently_with_ids(self, validator):
+        # Threads validate one document, which adds its ID attributes to the ID table of
+        # the document and its IDREFs to the IDREF table, while other threads look up IDs.
+        root = self.etree.XML('<r>' + ''.join(
+            f'<e id="i{k}" ref="i{(k + 1) % 50}"/>' for k in range(50)) + '</r>')
+        elements = list(root)
+        thread_count = 8
+        start = threading.Barrier(thread_count)
+        results = []
+
+        def validate():
+            start.wait()
+            results.append(all([validator.validate(root) for _ in range(30)]))
+
+        def look_up_ids():
+            start.wait()
+            # The IDs are only known after the first validation.
+            results.append(all([root.xpath(f"id('i{k % 50}')") in ([], [elements[k % 50]])
+                                for k in range(300)]))
+
+        threads = [threading.Thread(target=validate if i % 2 else look_up_ids)
+                   for i in range(thread_count)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual([True] * thread_count, results)
+
+    def test_concurrent_xmlschema_with_ids(self):
+        self._validate_concurrently_with_ids(self.etree.XMLSchema(self.etree.XML('''\
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="r"><xs:complexType><xs:sequence>
+    <xs:element name="e" maxOccurs="unbounded"><xs:complexType>
+      <xs:attribute name="id" type="xs:ID"/><xs:attribute name="ref" type="xs:IDREF"/>
+    </xs:complexType></xs:element>
+  </xs:sequence></xs:complexType></xs:element>
+</xs:schema>''')))
+
+    def test_concurrent_relaxng_with_ids(self):
+        self._validate_concurrently_with_ids(self.etree.RelaxNG(self.etree.XML('''\
+<element name="r" xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <oneOrMore><element name="e">
+    <attribute name="id"><data type="ID"/></attribute>
+    <attribute name="ref"><data type="IDREF"/></attribute>
+  </element></oneOrMore>
+</element>''')))
+
     def test_concurrent_class_lookup(self):
         XML = self.etree.XML
 
