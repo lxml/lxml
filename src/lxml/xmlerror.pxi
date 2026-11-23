@@ -400,8 +400,6 @@ cdef class _ErrorLogContext:
     """
     cdef xmlerror.xmlStructuredErrorFunc old_error_func
     cdef void* old_error_context
-    cdef xmlerror.xmlGenericErrorFunc old_xslt_error_func
-    cdef void* old_xslt_error_context
     cdef _BaseErrorLog old_xslt_error_log
 
     cdef int push_error_log(self, _BaseErrorLog log) except -1:
@@ -410,20 +408,15 @@ cdef class _ErrorLogContext:
         xmlerror.xmlSetStructuredErrorFunc(
             <void*>log, <xmlerror.xmlStructuredErrorFunc>_receiveError)
 
-        # xslt.xsltSetGenericErrorFunc() is not thread-local => keep error log in TLS
-        self.old_xslt_error_func = xslt.xsltGenericError
-        self.old_xslt_error_context = xslt.xsltGenericErrorContext
+        # xslt.xsltSetGenericErrorFunc() is not thread-local => keep error log in TLS.
+        # _initThreadLogging() set up the error function once for all threads.
         self.old_xslt_error_log = _getThreadErrorLog(XSLT_ERROR_LOG)
         _setThreadErrorLog(XSLT_ERROR_LOG, log)
-        xslt.xsltSetGenericErrorFunc(
-            NULL, <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
         return 0
 
     cdef int pop_error_log(self) except -1:
         xmlerror.xmlSetStructuredErrorFunc(
             self.old_error_context, self.old_error_func)
-        xslt.xsltSetGenericErrorFunc(
-            self.old_xslt_error_context, self.old_xslt_error_func)
         _setThreadErrorLog(XSLT_ERROR_LOG, self.old_xslt_error_log)
         self.old_xslt_error_log= None
         return 0
@@ -492,6 +485,14 @@ cdef class _ErrorLog(_ListErrorLog):
             if self._first_error is None and entry.level >= xmlerror.XML_ERR_ERROR:
                 self._first_error = entry
             self._entries.append(entry)
+
+
+cdef inline _ErrorLog _newErrorLog():
+    # Faster than calling '_ErrorLog()'.
+    cdef _ErrorLog error_log = _ErrorLog.__new__(_ErrorLog)
+    error_log._entries = []
+    return error_log
+
 
 cdef class _DomainErrorLog(_ErrorLog):
     def __init__(self, domains):

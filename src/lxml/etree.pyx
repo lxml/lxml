@@ -4234,13 +4234,6 @@ cdef _FailedValidationLog _getThreadFailedValidationLog():
     return failed_log
 
 
-cdef inline _ErrorLog _newValidationErrorLog():
-    # Faster than calling '_ErrorLog()'.
-    cdef _ErrorLog error_log = _ErrorLog.__new__(_ErrorLog)
-    error_log._entries = []
-    return error_log
-
-
 cdef object _SlotWrapperType = type(object.__init__)
 
 
@@ -4337,7 +4330,7 @@ cdef class _Validator:
             error_log = self._spare_error_log
             self._spare_error_log = None
         if error_log is None:
-            error_log = _newValidationErrorLog()
+            error_log = _newErrorLog()
         return error_log
 
     @cython.final
@@ -4375,7 +4368,7 @@ cdef class _Validator:
         """Replace the error log by a new, empty one and return the new log.
         """
         # Do not clear the current log, other threads might still be using it.
-        cdef _ErrorLog error_log = _newValidationErrorLog()
+        cdef _ErrorLog error_log = _newErrorLog()
         cdef _FailedValidationLog failed_log
         with cython.critical_section(self):
             self._error_log = error_log

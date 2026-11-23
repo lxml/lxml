@@ -15,14 +15,44 @@ cdef class XInclude:
     Create an instance and call it on an Element to run XInclude
     processing.
     """
+    # Each run collects its errors in a new log that other threads cannot
+    # clear or fill, and publishes it as 'error_log' when it finishes.
     cdef _ErrorLog _error_log
+    # An unused, empty log for the next run.  It was never published.
+    cdef _ErrorLog _spare_error_log
+
     def __init__(self):
-        self._error_log = _ErrorLog()
+        self._error_log = _newErrorLog()
 
     @property
     def error_log(self):
-        assert self._error_log is not None, "XInclude instance not initialised"
-        return self._error_log.copy()
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._error_log
+        assert error_log is not None, "XInclude instance not initialised"
+        return error_log.copy()
+
+    @cython.final
+    cdef _ErrorLog _new_error_log(self):
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._spare_error_log
+            self._spare_error_log = None
+        if error_log is None:
+            error_log = _newErrorLog()
+        return error_log
+
+    @cython.final
+    cdef int _publish_error_log(self, _ErrorLog error_log, bint succeeded) except -1:
+        # Only this thread has seen the new log so far.
+        cdef bint is_empty = succeeded and not error_log._entries
+        with cython.critical_section(self):
+            if is_empty and self._error_log is not None and not self._error_log._entries:
+                # Publishing an empty log would not change anything => keep it for the next run.
+                self._spare_error_log = error_log
+            else:
+                self._error_log = error_log
+        return 0
 
     def __call__(self, _Element node not None):
         "__call__(self, node)"
@@ -36,7 +66,7 @@ cdef class XInclude:
         cdef xinclude.xmlXIncludeCtxt* xctxt = NULL
         cdef int result
         _assertValidNode(node)
-        assert self._error_log is not None, "XInclude processor not initialised"
+        cdef _ErrorLog error_log = self._new_error_log()
         if node._doc._parser is not None:
             parse_options = node._doc._parser._parse_options
             context = node._doc._parser._getParserContext()
@@ -58,7 +88,7 @@ cdef class XInclude:
                 xinclude.xmlXIncludeSetFlags(xctxt, parse_options)
 
         try:
-            self._error_log.connect()
+            error_log.connect()
             old_loader = _register_resource_loader()
             try:
                 doc = node._doc
@@ -74,12 +104,13 @@ cdef class XInclude:
                     doc.unlock_write()
             finally:
                 _reset_resource_loader(old_loader)
-                self._error_log.disconnect()
+                error_log.disconnect()
         finally:
             xinclude.xmlXIncludeFreeContext(xctxt)
 
+        self._publish_error_log(error_log, result != -1)
         if result == -1:
             raise XIncludeError(
-                self._error_log._buildExceptionMessage(
+                error_log._buildExceptionMessage(
                     "XInclude processing failed"),
-                self._error_log)
+                error_log)

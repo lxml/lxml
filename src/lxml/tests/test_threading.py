@@ -336,53 +336,67 @@ class ThreadingTestCase(HelperTestCase):
         for t in threads:
             t.join()
 
-    def _assert_while_other_thread_reports(self, validator, assert_method):
-        # Calls 'assert_method' of the validator for an invalid document in a thread,
-        # pauses that thread when it reports its first validation error, and calls
-        # it for another invalid document in this thread in the meantime.
-        # Returns the exceptions of both calls (thread first).
+    def _run_while_thread_paused(self, call_in_thread, exception_types, while_paused,
+                                 pause_at_error=1):
+        # Runs call_in_thread() in a thread, pauses that thread when it reports its
+        # 'pause_at_error'-th error, and runs while_paused() in this thread in the meantime.
+        # Returns the exception of the call in the thread and the result of while_paused().
         error_reported = threading.Event()
         resume = threading.Event()
-        paused = []
+        reported = []
 
-        class PauseAtFirstError(self.etree.PyErrorLog):
+        class PauseAtError(self.etree.PyErrorLog):
             # As global error log of the thread, this receives each error before
-            # the validator's error log receives it.
+            # the error log of the called object receives it.
             def receive(self, log_entry):
-                if not paused:
-                    paused.append(log_entry)
+                reported.append(log_entry)
+                if len(reported) == pause_at_error:
                     error_reported.set()
                     resume.wait()
 
         thread_exceptions = []
-        validation_errors = (self.etree.DocumentInvalid, AssertionError)
 
-        def validate_in_thread():
-            self.etree.use_global_python_log(PauseAtFirstError())
+        def run_in_thread():
+            self.etree.use_global_python_log(PauseAtError())
             try:
-                getattr(validator, assert_method)(self.etree.XML('<in_thread/>'))
-            except validation_errors as exc:
+                call_in_thread()
+            except exception_types as exc:
                 thread_exceptions.append(exc)
             finally:
                 error_reported.set()
 
-        thread = threading.Thread(target=validate_in_thread)
+        thread = threading.Thread(target=run_in_thread)
         thread.start()
         try:
             error_reported.wait()
-            try:
-                getattr(validator, assert_method)(self.etree.XML('<in_main/>'))
-            except validation_errors as exc:
-                main_exception = exc
-            else:
-                main_exception = None
+            result = while_paused()
         finally:
             resume.set()
             thread.join()
 
-        self.assertTrue(paused)
+        self.assertGreaterEqual(len(reported), pause_at_error)
         self.assertEqual(1, len(thread_exceptions))
-        return thread_exceptions[0], main_exception
+        return thread_exceptions[0], result
+
+    def _call_while_other_thread_reports(self, call, exception_types):
+        # Runs call('in_thread') in a thread, pauses that thread when it reports
+        # its first error, and runs call('in_main') in this thread in the meantime.
+        # Returns the exceptions of both calls (thread first).
+        def call_in_main():
+            try:
+                call('in_main')
+            except exception_types as exc:
+                return exc
+            return None
+
+        return self._run_while_thread_paused(
+            lambda: call('in_thread'), exception_types, call_in_main)
+
+    def _assert_while_other_thread_reports(self, validator, assert_method):
+        # Calls 'assert_method' of the validator for invalid documents (see above).
+        return self._call_while_other_thread_reports(
+            lambda name: getattr(validator, assert_method)(self.etree.XML(f'<{name}/>')),
+            (self.etree.DocumentInvalid, AssertionError))
 
     def _assert_own_validation_errors(self, validator):
         thread_error, main_error = self._assert_while_other_thread_reports(
@@ -456,6 +470,57 @@ class ThreadingTestCase(HelperTestCase):
             '<schema xmlns="http://purl.oclc.org/dsdl/schematron"><pattern>'
             '<rule context="/*"><assert test="false()">invalid <value-of select="name()"/></assert></rule>'
             '</pattern></schema>')))
+
+    def test_thread_xslt_error_log(self):
+        transform = self.etree.XSLT(self.etree.XML('''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/*">
+    <xsl:message>processing <xsl:value-of select="name()"/></xsl:message>
+    <xsl:message terminate="yes">failed <xsl:value-of select="name()"/></xsl:message>
+  </xsl:template>
+</xsl:stylesheet>'''))
+
+        def messages(error_log):
+            return [entry.message for entry in error_log]
+
+        self.assertRaises(self.etree.XSLTApplyError, transform, self.etree.XML('<in_main/>'))
+        self.assertEqual(['processing in_main', 'failed in_main'], messages(transform.error_log))
+
+        # While a transformation runs in another thread, 'error_log' shows the last
+        # finished one.  (A running transformation holds the document loader lock,
+        # so this thread cannot start another one in the meantime.)
+        thread_error, messages_while_running = self._run_while_thread_paused(
+            lambda: transform(self.etree.XML('<in_thread/>')),
+            self.etree.XSLTApplyError,
+            lambda: messages(transform.error_log),
+            pause_at_error=2)
+        self.assertEqual(['processing in_main', 'failed in_main'], messages_while_running)
+
+        self.assertEqual('failed in_thread', str(thread_error))
+        self.assertEqual(['processing in_thread', 'failed in_thread'], messages(thread_error.error_log))
+        self.assertEqual(['processing in_thread', 'failed in_thread'], messages(transform.error_log))
+
+    def test_thread_xinclude_error_log(self):
+        xinclude = self.etree.XInclude()
+        thread_error, main_error = self._call_while_other_thread_reports(
+            lambda name: xinclude(self.etree.XML(
+                '<doc xmlns:xi="http://www.w3.org/2001/XInclude">'
+                f'<xi:include href="lxml-test-missing-{name}.xml"/></doc>')),
+            self.etree.XIncludeError)
+
+        for error, own, other in [(thread_error, 'in_thread', 'in_main'),
+                                  (main_error, 'in_main', 'in_thread')]:
+            self.assertIsInstance(error, self.etree.XIncludeError)
+            self.assertIn(own, str(error))
+            self.assertNotIn(other, str(error))
+            messages = [entry.message for entry in error.error_log]
+            self.assertTrue(any(own in message for message in messages), messages)
+            self.assertFalse(any(other in message for message in messages), messages)
+
+        # The XInclude processing in the thread finished last.
+        self.assertEqual(
+            [entry.message for entry in thread_error.error_log],
+            [entry.message for entry in xinclude.error_log])
 
     def test_thread_mix(self):
         XML = self.etree.XML
