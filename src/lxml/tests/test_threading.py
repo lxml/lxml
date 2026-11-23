@@ -468,6 +468,30 @@ class ThreadingTestCase(HelperTestCase):
                 del el
         self._run_threads(10, testrun)
 
+    def test_concurrent_extend_with_elements_of_each_other(self):
+        # Two threads extend two documents, each with an element of the other one.
+        # extend() must not keep documents locked while it consumes the iterable
+        # and must lock all documents in a consistent order.
+        XML, XMLParser = self.etree.XML, self.etree.XMLParser
+        a = XML('<a><a1/></a>', XMLParser())
+        b = XML('<b><b1/></b>', XMLParser())
+        x = XML('<x/>', XMLParser())
+        y = XML('<y/>', XMLParser())
+        both_started = threading.Barrier(2)
+
+        def elements(first, second):
+            yield first
+            both_started.wait()
+            yield second
+
+        thread = threading.Thread(target=b.extend, args=(elements(y, a[0]),))
+        thread.start()
+        a.extend(elements(x, b[0]))
+        thread.join()
+
+        self.assertEqual(b'<a><x/><b1/></a>', self.etree.tostring(a))
+        self.assertEqual(b'<b><y/><a1/></b>', self.etree.tostring(b))
+
 
 class ThreadPipelineTestCase(HelperTestCase):
     """Threading tests based on a thread worker pipeline.

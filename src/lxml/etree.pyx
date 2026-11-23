@@ -1007,6 +1007,65 @@ cdef void _releaseProxyNode(_Element self) noexcept:
         freeSubtree(c_top)
 
 
+cdef int _appendElements(_Element parent, tuple elements) except -1:
+    """Append the elements to 'parent' while holding the write locks of all involved
+    documents, which are acquired in the same order as in RWLock.lock_write_with().
+    An invalid element raises an exception after the preceding elements were appended.
+    """
+    cdef _Element element
+    cdef RWLock lock
+    cdef RWLock parent_lock = parent._doc._lock
+    cdef RWLock last_lock = parent_lock
+    cdef dict other_locks = None
+    cdef list locks
+    cdef Py_ssize_t count = 0
+    try:
+        for element in elements:
+            if element is None:
+                raise TypeError, "Node must not be None"
+            _assertValidNode(element)
+            lock = element._doc._lock
+            if lock is not last_lock:
+                # Usually, all documents share the target's lock (e.g. same parser).
+                if other_locks is None:
+                    other_locks = {}
+                other_locks[<size_t><void*>lock] = lock
+                last_lock = lock
+            count += 1
+    finally:
+        if count:
+            if other_locks is None:
+                parent_lock.lock_write()
+                try:
+                    _appendElementsLocked(parent, elements, count)
+                finally:
+                    parent_lock.unlock_write()
+            else:
+                other_locks[<size_t><void*>parent_lock] = parent_lock
+                locks = [other_locks[address] for address in sorted(other_locks, reverse=True)]
+                for lock in locks:
+                    lock.lock_write()
+                try:
+                    _appendElementsLocked(parent, elements, count)
+                finally:
+                    for lock in reversed(locks):
+                        lock.unlock_write()
+    return 0
+
+
+cdef int _appendElementsLocked(_Element parent, tuple elements, Py_ssize_t count) except -1:
+    cdef _Element element
+    cdef _Document doc = None
+    cdef Py_ssize_t i
+    for i in range(count):
+        element = <_Element> elements[i]
+        if element._doc is not doc:
+            # Keep the source document alive while its element moves, as in append().
+            doc = element._doc
+        _appendChild(parent, element)
+    return 0
+
+
 @cython.no_gc_clear
 cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     """Element class.
@@ -1256,36 +1315,28 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Extends the current children by the elements in the iterable.
         """
         cdef _Element element
+        cdef list items
         _assertValidNode(self)
         if not elements:
             return
 
-        cdef _Document locked_main_doc = None
-        cdef _Document last_element_doc = None
-
+        # Collect the elements before locking: the iterable must not run while documents
+        # are write-locked, and knowing all documents up front lets us lock them in the
+        # same order as RWLock.lock_write_with() does (no ABBA deadlocks).
+        if type(elements) is list or type(elements) is tuple:
+            _appendElements(self, tuple(elements))
+            return
+        # As before, the elements preceding an invalid item are still appended.
+        items = []
         try:
             for element in elements:
                 if element is None:
                     raise TypeError, "Node must not be None"
                 _assertValidNode(element)
-
-                element_doc = element._doc
-                if element_doc is not last_element_doc and element_doc is not locked_main_doc:
-                    # Most likely, all elements will come from a single document, so try to lock it only once.
-                    if last_element_doc is not None:
-                        last_element_doc.unlock_write()
-                    if locked_main_doc is None:
-                        locked_main_doc = self._doc
-                        locked_main_doc.lock_write_with(element_doc)
-                    else:
-                        # FIXME: we do not follow the locking order in "lock_write_with()"" here.
-                        element_doc.lock_write()
-                    last_element_doc = element_doc
-
-                _appendChild(self, element)
+                items.append(element)
         finally:
-            if locked_main_doc is not None:
-                locked_main_doc.unlock_write_with(last_element_doc)
+            if items:
+                _appendElements(self, tuple(items))
 
     def clear(self, bint keep_tail=False):
         """clear(self, keep_tail=False)
