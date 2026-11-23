@@ -2140,6 +2140,25 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, child2.append, child)
         self.assertEqual('child2', root[0][0].tag)
 
+    def test_extend_elements_from_own_and_other_document(self):
+        # The first element shares the target's document lock, the second one
+        # comes from a document with a separate lock (i.e. another parser).
+        root = self.etree.Element('root')
+        child = self.etree.SubElement(root, 'child')
+        other = self.etree.XML('<other/>', self.etree.XMLParser())
+
+        # Unbalanced lock releases show up as ignored AssertionErrors.
+        unraisable = []
+        old_hook = sys.unraisablehook
+        sys.unraisablehook = lambda u: unraisable.append(f"{u.exc_type.__name__}: {u.exc_value}")
+        try:
+            root.extend([child, other])
+        finally:
+            sys.unraisablehook = old_hook
+
+        self.assertEqual([], unraisable)
+        self.assertEqual(b'<root><child/><other/></root>', self.etree.tostring(root))
+
     def test_addnext(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
