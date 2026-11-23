@@ -2,8 +2,10 @@
 lxml changelog
 ==============
 
-6.2.0 (2026-??-??)
+6.2.0 (2026-11-23)
 ==================
+
+This release contains several security fixes. Upgrading is recommended.
 
 Bugs fixed
 ----------
@@ -23,7 +25,8 @@ Bugs fixed
   memory corruption and crashes.  They are no longer reported.
   Issue found by Claude and Ada Logics.
 
-* The binary wheels include several security relevant bug fixes for libxml2 on all platforms.
+* GH#550: The output of ``htmldiff()`` could contain unescaped links, allowing for content injection.
+  Patch by Nayana-Naik73.
 
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
@@ -39,6 +42,8 @@ Bugs fixed
 
 Other changes
 -------------
+
+* The binary wheels include several security relevant bug fixes for libxml2 on all platforms.
 
 * Built with Cython 3.3.1.
 
