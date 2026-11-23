@@ -185,6 +185,19 @@ cdef extern from * nogil:
     #endif
 #endif
 
+/* Thread ids of lock owners, which other threads read to see if they own the lock. */
+#if defined(__GNUC__) || defined(__clang__)
+    #define __lxml_load_relaxed(ptr)  __atomic_load_n((ptr), __ATOMIC_RELAXED)
+    #define __lxml_store_relaxed(ptr, value)  __atomic_store_n((ptr), (value), __ATOMIC_RELAXED)
+#elif defined(Py_ATOMIC_H)
+    #define __lxml_load_relaxed(ptr)  _Py_atomic_load_uintptr_relaxed(ptr)
+    #define __lxml_store_relaxed(ptr, value)  _Py_atomic_store_uintptr_relaxed((ptr), (value))
+#else
+    /* Without free-threading, the GIL serialises the accesses. */
+    #define __lxml_load_relaxed(ptr)  (*(volatile uintptr_t *) (ptr))
+    #define __lxml_store_relaxed(ptr, value)  (*(volatile uintptr_t *) (ptr) = (value))
+#endif
+
 #if LXML_LOCK_PERFORMANCE
     #define __lxml_inc_counter(counter)  __lxml_atomic_incr((counter))
     typedef struct {
@@ -218,6 +231,10 @@ cdef extern from * nogil:
     nonatomic_int atomic_load "__lxml_atomic_load"  (atomic_int *value) noexcept
     int atomic_compare_exchange "__lxml_atomic_compare_exchange"  (atomic_int *value, nonatomic_int *expected, nonatomic_int desired) noexcept
 
+    ctypedef size_t thread_id "uintptr_t"
+    thread_id load_relaxed "__lxml_load_relaxed" (thread_id *value) noexcept
+    void store_relaxed "__lxml_store_relaxed" (thread_id *value, thread_id new_value) noexcept
+
     const bint COUNT_LOCK_PERFORMANCE "LXML_LOCK_PERFORMANCE"
     void inc_perf_counter "__lxml_inc_counter" (atomic_int *counter)
 
@@ -243,7 +260,8 @@ cdef class RWLock:
     Uses atomics to avoid locking in the non-congested case.
     Uses 'PyMutex' to block readers and writers while writing.
     """
-    cdef unsigned long _write_locked_id
+    # Read by other threads in _owns_write_lock().
+    cdef thread_id _write_locked_id
     cdef atomic_int _reader_count
     cdef atomic_int _readers_departing
     cdef atomic_int _readers_waiting
@@ -263,7 +281,8 @@ cdef class RWLock:
     @cython.inline
     @cython.profile(False)
     cdef bint _owns_write_lock(self, unsigned long lock_id) noexcept nogil:
-        return lock_id == self._write_locked_id
+        # Only this thread sets or clears its own id, so another value is stale at most.
+        return lock_id == load_relaxed(&self._write_locked_id)
 
     def get_perf_counters(self) -> dict:
         """Return the current performance counters as dict.
@@ -390,18 +409,18 @@ cdef class RWLock:
                 assert readers >= 0, "Writer claimed the lock but did not acquire it!"
 
         # No readers, no writers => go.
-        self._write_locked_id = my_lock_id
+        store_relaxed(&self._write_locked_id, my_lock_id)
         inc_perf_counter(&self._perf_counters.write_acquired)
 
     cdef void unlock_write(self) noexcept:
-        assert self._owns_write_lock(self._my_lock_id()), f"{self._write_locked_id} != {self._my_lock_id()}"
+        assert self._owns_write_lock(self._my_lock_id()), f"{load_relaxed(&self._write_locked_id)} != {self._my_lock_id()}"
         assert atomic_load(&self._reader_count) < 0, atomic_load(&self._reader_count)
 
         if self._writer_reentry > 0:
             self._writer_reentry -= 1
             return
 
-        self._write_locked_id = 0
+        store_relaxed(&self._write_locked_id, 0)
 
         readers = atomic_add(&self._reader_count, max_lock_reader_count) + max_lock_reader_count
         if readers > 0:

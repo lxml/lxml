@@ -41,6 +41,12 @@ Bugs fixed
 * GH#543: Repeated ElementPath searches could leak an index counter into the next run since lxml 7.0.
   Patch by Nayana-Naik73.
 
+* LP#2175776: ``getparent()``, ``getnext()`` and ``getprevious()`` could return ``None`` in free-threaded
+  Python while another thread moved the element.  Several other checks of thread-shared state
+  (lock owners, element proxies, the parser contexts) were data races, i.e. undefined behaviour
+  in C, which ThreadSanitizer reported.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#545: ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
   instead of setting a ``value`` attribute on the ``<select>`` element.
   Patch by Alex Castillo Gonzalez.

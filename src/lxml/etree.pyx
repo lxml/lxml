@@ -1901,8 +1901,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         #_assertValidNode(self) # not needed
-        if self._c_node is NULL or self._c_node.parent is NULL:
+        if self._c_node is NULL:
             return None
+        # Other threads may change '.parent', so it can only be read under the lock.
         doc = self._doc
         doc.lock_read()
         try:
@@ -1920,8 +1921,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         #_assertValidNode(self) # not needed
-        if self._c_node is NULL or self._c_node.next is NULL:
+        if self._c_node is NULL:
             return None
+        # Other threads may change '.next', so it can only be read under the lock.
         doc = self._doc
         doc.lock_read()
         try:
@@ -1939,8 +1941,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         #_assertValidNode(self) # not needed
-        if self._c_node is NULL or self._c_node.prev is NULL:
+        if self._c_node is NULL:
             return None
+        # Other threads may change '.prev', so it can only be read under the lock.
         doc = self._doc
         doc.lock_read()
         try:
