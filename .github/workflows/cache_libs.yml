@@ -80,4 +80,4 @@ jobs:
     - name: Download latest libraries
       env:
         GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python3 buildlibxml.py --download-only  ${{ matrix.os == 'windows-2022' && 'win32' || '' }}
+      run: python3 buildlibxml.py --download-only  ${{ matrix.windows-arch }}
