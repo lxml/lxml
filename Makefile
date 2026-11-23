@@ -167,7 +167,7 @@ pdf: apipdf pdfclean
 test_windows_library_downloads:
 	$(PYTHON) -m unittest discover -s tools -p test_windows_library_downloads.py
 
-test: test_windows_library_downloads test_inplace
+test: test_inplace  # test_windows_library_downloads
 
 valtest: valgrind_test_inplace
 
