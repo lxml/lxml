@@ -380,14 +380,22 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     if not tree._isElementOrXInclude(c_element):
         return 0
 
+    # The proxies that we look up must stay alive until we have released the proxy
+    # lock: if another thread drops its references meanwhile, releasing ours runs
+    # _Element.__del__, which takes the same (non-reentrant) lock.
     doc.lock_proxies()
     try:
-        return moveNodeToDocument_locked(doc, c_source_doc, c_element)
+        proxies = moveNodeToDocument_locked(doc, c_source_doc, c_element)
     finally:
         doc.unlock_proxies()
+    proxies = None
+    return 0
 
 
-cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode* c_element) except -1:
+cdef object moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode* c_element):
+    """Returns the proxies that it looked up (None, a proxy or a list of proxies),
+    which the caller must keep alive until it has released the proxy lock.
+    """
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
     cdef xmlDoc* c_doc = doc._c_doc
@@ -445,12 +453,10 @@ cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode*
             if proxy is not None:
                 if proxy._doc is not doc:
                     proxy._doc = doc
-            else:
-                fixElementDocument(c_start_node, doc, proxy_count)
-        else:
-            fixElementDocument(c_start_node, doc, proxy_count)
+                return proxy
+        return fixElementDocument(c_start_node, doc, proxy_count)
 
-    return 0
+    return None
 
 
 cdef void _setTreeDoc(xmlNode* c_node, xmlDoc* c_doc) noexcept:
@@ -509,20 +515,25 @@ cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
     return 0
 
 
-cdef int fixElementDocument(xmlNode* c_element, _Document doc,
-                             size_t proxy_count) except -1:
+cdef list fixElementDocument(xmlNode* c_element, _Document doc,
+                             size_t proxy_count):
+    """Returns the proxies that it looked up, see moveNodeToDocument_locked().
+    """
     cdef xmlNode* c_node = c_element
     cdef _Element proxy = None # init-to-None required due to fake-loop below
+    cdef list proxies = []
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
     if hasProxy(c_node):
         proxy = getProxy(c_node)
         if proxy is not None:
+            proxies.append(proxy)
             if proxy._doc is not doc:
                 proxy._doc = doc
             proxy_count -= 1
             if proxy_count == 0:
-                return 0
+                return proxies
     tree.END_FOR_EACH_FROM(c_node)
+    return proxies
 
 
 cdef void fixThreadDictNames(xmlNode* c_element,
