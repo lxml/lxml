@@ -26,6 +26,14 @@ class ExternalDocumentTestCase(HelperTestCase):
             self._test_external_document_adoption()
             return
 
+        # The test calls libxml2 through the symbols that lxml.etree exports.  Static builds
+        # do not export them when linked with "-Wl,--exclude-libs,ALL", which the Python
+        # builds of python-build-standalone (e.g. uv's) use for extension modules.
+        # Looking up a symbol does not change any ctypes state.
+        import ctypes
+        if not hasattr(ctypes.CDLL(etree.__file__), 'xmlReadMemory'):
+            self.skipTest("lxml.etree does not export the libxml2 functions it is linked with")
+
         basedir = os.path.dirname(os.path.dirname(os.path.dirname(
             os.path.dirname(os.path.abspath(__file__)))))
         env = os.environ.copy()
