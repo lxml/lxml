@@ -482,6 +482,7 @@ cdef inline void _fixDocChildren(xmlNode* c_child, xmlDoc* c_doc) noexcept:
 cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
                  _nscache* c_ns_cache, xmlNs* c_del_ns_list) except -1:
     cdef xmlNs* c_ns = NULL
+    cdef xmlNs* c_old_ns
     cdef bint is_prefixed_attr = (c_node.type == tree.XML_ATTRIBUTE_NODE and c_node.ns.prefix)
 
     for ns_map in c_ns_cache.ns_map[:c_ns_cache.last]:
@@ -501,8 +502,11 @@ cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
             c_ns = doc._findOrBuildNodeNs(
                 c_start_node, c_node.ns.href, c_node.ns.prefix,
                 c_node.type == tree.XML_ATTRIBUTE_NODE)
+            c_old_ns = c_node.ns
             c_node.ns = c_ns
-            _appendToNsCache(c_ns_cache, c_node.ns, c_ns)
+            # Map the original declaration (not the new one) so that the
+            # following nodes that use it find the replacement in the cache.
+            _appendToNsCache(c_ns_cache, c_old_ns, c_ns)
         except:
             _cleanUpFromNamespaceAdaptation(c_start_node, c_ns_cache, c_del_ns_list)
             raise
