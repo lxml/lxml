@@ -1305,7 +1305,8 @@ cdef tree.xmlEntity* _getInternalEntityOnly(void* ctxt, const_xmlChar* name) noe
         err_context = xmlerror.xmlStructuredErrorContext
         err_func(err_context, &c_error)
 
-    _abortParser(c_ctxt)
+    c_ctxt.wellFormed = 0
+    c_ctxt.disableSAX = 1
     # The entity was looked up and does not need to be freed.
     return NULL
 
