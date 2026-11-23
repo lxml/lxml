@@ -148,7 +148,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ contains(matrix.only, 'win32') && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}${{ steps.msvc.outputs.version && format('-msvc-{0}', steps.msvc.outputs.version) || '' }}
+          key: libs-${{ runner.os }}-${{ contains(matrix.only, 'win32') && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - name: Set up QEMU
         if: runner.os == 'Linux' && !(endsWith(matrix.platform, 'x86_64') || endsWith(matrix.platform, 'i686') || endsWith(matrix.platform, 'aarch64'))

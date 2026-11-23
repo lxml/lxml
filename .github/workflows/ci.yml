@@ -269,7 +269,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}${{ steps.msvc.outputs.version && format('-msvc-{0}', steps.msvc.outputs.version) || '' }}
+          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
