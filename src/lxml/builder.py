@@ -195,6 +195,7 @@ class ElementMaker:
             typemap[dict] = add_dict
 
         self._typemap = typemap
+        self._add_text = add_text
 
     def __call__(self, tag, *children, **attrib):
         typemap = self._typemap
@@ -209,10 +210,26 @@ class ElementMaker:
         if attrib:
             typemap[dict](elem, attrib)
 
+        add_text = self._add_text
+        # Pending string children: None, a string or a list of strings.
+        # Consecutive strings are joined before adding them, adding them one by one
+        # would copy the whole text or tail each time.
+        text = None
         for item in children:
             if callable(item):
                 item = item()
             t = typemap.get(type(item))
+            if t is add_text:
+                if text is None:
+                    text = item
+                elif type(text) is list:
+                    text.append(item)
+                else:
+                    text = [text, item]
+                continue
+            if text is not None:
+                add_text(elem, text if type(text) is not list else ''.join(text))
+                text = None
             if t is None:
                 if ET.iselement(item):
                     elem.append(item)
@@ -229,6 +246,8 @@ class ElementMaker:
             if v:
                 typemap.get(type(v))(elem, v)
 
+        if text is not None:
+            add_text(elem, text if type(text) is not list else ''.join(text))
         return elem
 
     def __getattr__(self, tag):
