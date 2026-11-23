@@ -51,15 +51,11 @@ form of custom URL resolvers.
 """
 
 from lxml import etree
-try:
-    from urlparse import urljoin
-    from urllib2 import urlopen
-except ImportError:
-    # Python 3
-    from urllib.parse import urljoin
-    from urllib.request import urlopen
-import sys
+from urllib.parse import urljoin
+from urllib.request import urlopen
 from pathlib import Path
+
+import sys
 
 XINCLUDE = "{http://www.w3.org/2001/XInclude}"
 

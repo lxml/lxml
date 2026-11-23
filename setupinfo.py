@@ -303,7 +303,7 @@ def library_dirs(static_library_dirs):
             static_library_dirs = env_var('LIBRARY')
         # MSVC's link.exe searches the LIB environment variable itself
         if sys.platform != 'win32':
-          assert static_library_dirs, "Static build not configured, see doc/build.txt"
+            assert static_library_dirs, "Static build not configured, see doc/build.txt"
         return static_library_dirs
     # filter them from xslt-config --libs
     result = []
