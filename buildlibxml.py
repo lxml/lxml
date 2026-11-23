@@ -3,8 +3,10 @@ import json
 import os
 import platform
 import re
+import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 from contextlib import closing
 from ftplib import FTP
@@ -712,6 +714,10 @@ def main(with_zlib=True, download_only=False, platform=None):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
+    if '--msvc-version' in args:
+        args.remove('--msvc-version')
+        print(configure_windows_msvc(windows_architecture(args[0] if args else None)))
+        sys.exit(0)
     download_only = '--download-only' in args
     if download_only:
         args.remove('--download-only')

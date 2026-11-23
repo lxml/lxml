@@ -369,7 +369,6 @@ cdef extern from "libxml/tree.h" nogil:
     cdef void xmlFreeNodeList(xmlNode* cur)
     cdef void xmlFreeNsList(xmlNs* ns)
     cdef void xmlFreeNs(xmlNs* ns)
-    cdef void xmlFree(void* buf)
 
     cdef xmlNode* xmlNewNode(xmlNs* ns, const_xmlChar* name)
     cdef xmlNode* xmlNewDocText(xmlDoc* doc, const_xmlChar* content)
@@ -522,6 +521,7 @@ cdef extern from "libxml/globals.h" nogil:
 
 cdef extern from "libxml/xmlmemory.h" nogil:
     cdef void* xmlMalloc(size_t size)
+    cdef void xmlFree(void* buf)
     cdef int xmlMemBlocks()
     cdef int xmlMemUsed()
 

@@ -8,7 +8,7 @@ LXMLVERSION:=$(shell $(PYTHON) -c 'import re; print(re.findall(r"__version__\s*=
 PYTHON_WITH_CYTHON?=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 CYTHON_WITH_COVERAGE?=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
-BUILD_COMMAND=setup.py $(SETUPFLAGS) build_ext $(PYTHON_WITH_CYTHON) --warnings $(subst --,--with-,$(CYTHON_WITH_COVERAGE)) -j7
+BUILD_COMMAND=setup.py $(SETUPFLAGS) build_ext $(PYTHON_WITH_CYTHON) --warnings $(subst --,--with-,$(CYTHON_WITH_COVERAGE)) -j3
 
 PYTHON_BUILD_VERSION ?= *
 MANYLINUX_LIBXML2_VERSION=2.15.4
@@ -164,7 +164,10 @@ pdf: apipdf pdfclean
 
 # Two pdflatex runs are needed to build the correct Table of contents.
 
-test: test_inplace
+test_windows_library_downloads:
+	$(PYTHON) -m unittest discover -s tools -p test_windows_library_downloads.py
+
+test: test_inplace  # test_windows_library_downloads
 
 valtest: valgrind_test_inplace
 

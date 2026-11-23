@@ -254,12 +254,20 @@ jobs:
           ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
 
       - name: ccache
-        uses: hendrikmuhs/ccache-action@f09c25b45002a07be2955cbe52e8cee55643f89d # v1.2.24
+        uses: hendrikmuhs/ccache-action@dbeefd73e8e2ffc1bbc412570072735eb4db3607 # v1.2.25
         if: runner.os == 'Linux' || runner.os == 'macOS'
         with:
           max-size: 100M
           create-symlink: true
           key: ${{ runner.os }}-${{ runner.arch }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}-${{ matrix.env.LIBXML2_VERSION || env.LIBXML2_VERSION }}-${{ matrix.env.LIBXSLT_VERSION || env.LIBXSLT_VERSION }}
+
+      - name: Identify Windows compiler
+        if: runner.os == 'Windows' && matrix.env.STATIC_DEPS
+        id: msvc
+        shell: bash
+        run: |
+          version=$(python buildlibxml.py --msvc-version)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Cache [libs]
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -269,7 +277,7 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
+          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}${{ steps.msvc.outputs.version && format('-msvc-{0}', steps.msvc.outputs.version) || '' }}
 
       - name: Run CI
         continue-on-error: ${{ matrix.allowed_failure || false }}
