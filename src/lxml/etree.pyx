@@ -193,8 +193,10 @@ def register_namespace(prefix, uri):
     prefix_utf, uri_utf = _utf8(prefix), _utf8(uri)
     if _check_internal_prefix(prefix_utf):
         raise ValueError("Prefix format reserved for internal use")
-    _tagValidOrRaise(prefix_utf)
-    _uriValidOrRaise(uri_utf)
+    if not _prefixNameIsValid(prefix_utf):
+        raise _buildPrefixInvalidError(prefix_utf)
+    if not _uriIsValid(uri_utf):
+        raise _buildURIInvalidError(uri_utf)
     if (uri_utf == b"http://www.w3.org/XML/1998/namespace" and prefix_utf != b'xml'
             or prefix_utf == b'xml' and uri_utf != b"http://www.w3.org/XML/1998/namespace"):
         raise ValueError("Cannot change the 'xml' prefix of the XML namespace")
@@ -1444,9 +1446,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             ns, name = _getNsTag(value)
             parser = self._doc._parser
             if self._doc.ishtml():
-                _htmlTagValidOrRaise(name)
+                if not _htmlTagNameIsValid(name):
+                    raise _buildHtmlTagInvalidError(name)
             else:
-                _tagValidOrRaise(name)
+                if not _xmlTagNameIsValid(name):
+                    raise _buildXmlTagInvalidError(name)
             doc = self._doc
             doc.lock_write()
             try:
@@ -2472,7 +2476,8 @@ cdef class QName:
             if ns_utf is None:
                 ns_utf = tag_utf # case 1: namespace ended up as tag name
             tag_utf = _utf8(tag)
-        _tagValidOrRaise(tag_utf)
+        if not _xmlTagNameIsValid(tag_utf):
+            raise _buildXmlTagInvalidError(tag_utf)
         self.localname = (<bytes>tag_utf).decode('utf8')
         if ns_utf is None:
             self.namespace = None
@@ -3623,7 +3628,8 @@ def ProcessingInstruction(target, text=None):
     special element that will be serialized as an XML processing instruction.
     """
     target = _utf8(target)
-    _tagValidOrRaise(target)
+    if not _xmlTagNameIsValid(target):
+        raise _buildXmlTagInvalidError(target)
     if target.lower() == b'xml':
         raise ValueError, f"Invalid PI name '{target}'"
 

@@ -1462,6 +1462,10 @@ cdef enum _IncrementalFileWriterStatus:
     WRITER_FINISHED = 4
 
 
+cdef ValueError _buildWriterNameInvalidException(name, int c_method, str kind):
+    return ValueError(f"Invalid {'HTML ' if c_method == OUTPUT_METHOD_HTML else ''}{kind} name {(<bytes> name).decode('utf8')!r}")
+
+
 @cython.final
 @cython.internal
 cdef class _IncrementalFileWriter:
@@ -1557,25 +1561,35 @@ cdef class _IncrementalFileWriter:
         """
         assert self._c_out is not NULL
         attributes = []
+        c_method = self._method if method is None else _findOutputMethod(method)
+        # Names are written verbatim, so reject anything that could break out of the tag.
+        # Unlike the tree API, this keeps accepting ':' in literal "prefix:name" names.
+        name_is_valid = _htmlNameIsValid if c_method == OUTPUT_METHOD_HTML else _xmlNameIsValid
+
         if attrib is not None:
             for name, value in _iter_attrib(attrib):
                 if name not in _extra:
                     ns, name = _getNsTag(name)
+                    if not name_is_valid(_xcstr(name)):
+                        raise _buildWriterNameInvalidException(name, c_method, "attribute")
                     attributes.append((ns, name, _utf8(value)))
         if _extra:
             for name, value in _extra.iteritems():
                 ns, name = _getNsTag(name)
+                if not name_is_valid(_xcstr(name)):
+                    raise _buildWriterNameInvalidException(name, c_method, "attribute")
                 attributes.append((ns, name, _utf8(value)))
         reversed_nsmap = {}
         if nsmap:
             for prefix, ns in nsmap.items():
                 if prefix is not None:
                     prefix = _utf8(prefix)
-                    _prefixValidOrRaise(prefix)
+                    if not _prefixNameIsValid(prefix):
+                        raise _buildPrefixInvalidError(prefix)
                 reversed_nsmap[_utf8(ns)] = prefix
         ns, name = _getNsTag(tag)
-
-        c_method = self._method if method is None else _findOutputMethod(method)
+        if not name_is_valid(_xcstr(name)):
+            raise _buildWriterNameInvalidException(name, c_method, "tag")
 
         return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap), c_method)
 

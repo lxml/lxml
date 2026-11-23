@@ -8,15 +8,22 @@ lxml changelog
 Features added
 --------------
 
-* ``CDATA`` objects gained a string representation.
-
 * LP#2172456: Several parts of the API now accept ``bytearray`` values in addition to ``bytes``.
 
-* GH#542: soupparser is faster for large input trees.
+* GH#541: ``xmlfile.element()`` now validates its tag names.
+  Patch by Nayana-Naik73.
+
+* GH#542, GH#552: soupparser is faster for large input trees.
   It is also compiled now which improves the overall conversion performance.
   Patches by Pierre-Louis Peeters.
 
+* GH#551: ``rewrite_links()`` in ``lxml.html`` avoids quadratic runtime when replacing
+  many links in the same style text.
+  Patches by Pierre-Louis Peeters.
+
 * formfill is slightly faster.
+
+* ``CDATA`` objects gained a string representation.
 
 Bugs fixed
 ----------
@@ -47,6 +54,9 @@ Bugs fixed
 * GH#535: ``element.classes.toggle()`` in ``lxml.html`` did not remove all occurrences
   if class names were duplicated.
   Patch by Huanyi Xie.
+
+* Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
+  were not validated and could inject arbitrary markup into the output.
 
 Other changes
 -------------
