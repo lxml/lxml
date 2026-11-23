@@ -103,6 +103,80 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_read()
         assert lock.reader_count == 0, lock.reader_count
 
+    def run_bounded(self, function):
+        # Runs 'function' in a thread, so that a deadlock fails the test instead of the suite.
+        errors = []
+
+        def run():
+            try:
+                function()
+            except BaseException as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        thread.join(60)  # time out after x seconds
+        self.assertFalse(thread.is_alive(), "deadlocked")
+        if errors:
+            raise errors[0]
+
+    def wait_for_writer(self, lock):
+        # Spins until another thread waits for the write lock (and blocks new readers).
+        while not lock.writer_blocking_readers:
+            pass
+
+    def test_lock_read_reentry_while_writer_waits(self):
+        lock = RWLock()
+        writer = threading.Thread(target=lambda: (lock.lock_write(), lock.unlock_write()))
+
+        def read_nested():
+            lock.lock_read()
+            writer.start()
+            self.wait_for_writer(lock)
+            # The writer waits for this thread's read lock, which it already holds.
+            lock.lock_read()
+            lock.unlock_read()
+            lock.unlock_read()
+            writer.join()
+
+        self.run_bounded(read_nested)
+        self.assertEqual(0, lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+
+    def test_lock_read_reentry_while_writer_waits_after_other_reader(self):
+        # Another thread took the read lock first, and this one releases another lock
+        # in a different order than it took it.
+        lock, other_lock = RWLock(), RWLock()
+        first_reading = threading.Event()
+        release_first = threading.Event()
+        writer = threading.Thread(target=lambda: (lock.lock_write(), lock.unlock_write()))
+
+        def first_reader():
+            with lock.read_lock():
+                first_reading.set()
+                release_first.wait()
+
+        def read_nested():
+            first_reading.wait()
+            other_lock.lock_read()
+            lock.lock_read()
+            other_lock.unlock_read()
+            writer.start()
+            self.wait_for_writer(lock)
+            lock.lock_read()
+            lock.unlock_read()
+            lock.unlock_read()
+
+        with self.run_threads(first_reader):
+            try:
+                self.run_bounded(read_nested)
+            finally:
+                release_first.set()
+        writer.join()
+        self.assertEqual(0, lock.reader_count)
+        self.assertEqual(0, other_lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+
     @assert_perf_counters(write_acquired=3)
     def test_lock_write(self, lock):
         assert not lock.writer_blocking_readers

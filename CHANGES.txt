@@ -61,6 +61,11 @@ Bugs fixed
   the validating DTD, or removed it (libxml2 2.13+), so that XPath ``id()`` lost its elements.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175570: Python code that lxml runs while it reads a document, e.g. ``ElementBase._init()``,
+  deadlocked when it read the document while another thread waited to modify it.  The read lock
+  of a document is now re-entrant per thread.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
