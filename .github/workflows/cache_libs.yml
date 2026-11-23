@@ -60,14 +60,6 @@ jobs:
     - name: Check out the repo
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-    - name: Identify Windows compiler
-      if: runner.os == 'Windows'
-      id: msvc
-      shell: bash
-      run: |
-        version=$(python buildlibxml.py --msvc-version ${{ matrix.windows-arch }})
-        echo "version=$version" >> "$GITHUB_OUTPUT"
-
     - name: Cache [libs]
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:

@@ -261,14 +261,6 @@ jobs:
           create-symlink: true
           key: ${{ runner.os }}-${{ runner.arch }}-ccache${{ matrix.extra_hash }}-${{ matrix.python-version }}-${{ matrix.env.STATIC_DEPS }}-${{ matrix.env.LIBXML2_VERSION || env.LIBXML2_VERSION }}-${{ matrix.env.LIBXSLT_VERSION || env.LIBXSLT_VERSION }}
 
-      - name: Identify Windows compiler
-        if: runner.os == 'Windows' && matrix.env.STATIC_DEPS
-        id: msvc
-        shell: bash
-        run: |
-          version=$(python buildlibxml.py --msvc-version)
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
       - name: Cache [libs]
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: matrix.env.STATIC_DEPS
