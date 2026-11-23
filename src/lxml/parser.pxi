@@ -621,16 +621,27 @@ cdef cython.pymutex _doc_loader_config_lock
 @cython.final
 @cython.internal
 cdef class _DocLoaderConfig:
+    # Replaces the global external entity loader of libxml2 while at least one 'with' block
+    # is running, in any thread.  The lock only protects the counting and replacing, so that
+    # the blocks can run in parallel and nest, e.g. when an XSLT extension function or
+    # resolver parses or applies another stylesheet.
     cdef xmlparser.xmlExternalEntityLoader _old_entity_loader
+    cdef Py_ssize_t _users
 
     @cython.inline
     cdef void __enter__(self) noexcept:
         _doc_loader_config_lock.acquire()
-        self._old_entity_loader = xmlparser.xmlGetExternalEntityLoader()
-        xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader> _local_resolver)
+        if self._users == 0:
+            self._old_entity_loader = xmlparser.xmlGetExternalEntityLoader()
+            xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader> _local_resolver)
+        self._users += 1
+        _doc_loader_config_lock.release()
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        xmlparser.xmlSetExternalEntityLoader(self._old_entity_loader)
+        _doc_loader_config_lock.acquire()
+        self._users -= 1
+        if self._users == 0:
+            xmlparser.xmlSetExternalEntityLoader(self._old_entity_loader)
         _doc_loader_config_lock.release()
 
 

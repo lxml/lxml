@@ -48,6 +48,13 @@ Bugs fixed
   without an error message no longer reports the last error of a previous run.  XPath errors in
   transformations of a copied ``XSLT`` object no longer end up in the error log of the original.
 
+* LP#2175778: XSLT extension functions and resolvers deadlocked since lxml 7.0 when they created or
+  applied an ``XSLT`` object, or created a ``DTD``, a ``Schematron`` schema or a ``RelaxNG`` schema
+  from a file.  XSLT processing in different threads also no longer waits on a global lock.
+  Instead, each run of an ``XSLT`` object adds new names to a dictionary of its own, which avoids
+  the crashes of lxml 6.x when several threads used the same ``XSLT`` object, and keeps the names
+  that a run with parameters creates valid (LP#2175569).
+
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.

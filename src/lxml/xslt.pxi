@@ -555,6 +555,8 @@ cdef class XSLT:
         cdef xmlDoc* c_result = NULL
         cdef xmlDoc* c_doc
         cdef tree.xmlDict* c_dict
+        cdef tree.xmlDict* c_src_dict
+        cdef size_t c_dict_size
         cdef const_char** params = NULL
 
         assert self._c_style is not NULL, "XSLT stylesheet not initialised"
@@ -584,27 +586,19 @@ cdef class XSLT:
                 input_doc.unlock_fakedoc()
             raise MemoryError()
 
-        # using the stylesheet dict is safer than using a possibly
-        # unrelated dict from the current thread.  Almost all
-        # non-input tag/attr names will come from the stylesheet
-        # anyway.
-        if transform_ctxt.dict is not NULL:
-            tree.xmlDictFree(transform_ctxt.dict)
-        if kw:
-            # parameter values are stored in the dict
-            # => avoid unnecessarily cluttering the global dict
-            transform_ctxt.dict = tree.xmlDictCreateSub(self._c_style.doc.dict)
-            if transform_ctxt.dict is NULL:
-                xslt.xsltFreeTransformContext(transform_ctxt)
-                _destroyFakeDoc(input_doc._c_doc, c_doc)
-                if use_write_lock:
-                    input_doc.unlock_write()
-                else:
-                    input_doc.unlock_fakedoc()
-                raise MemoryError()
-        else:
-            transform_ctxt.dict = self._c_style.doc.dict
-            tree.xmlDictReference(transform_ctxt.dict)
+        # libxslt gives each transformation a dict of its own that falls back to the stylesheet
+        # dict.  New names (and the parameter values) go into it, so that runs in different
+        # threads never modify the same dict.
+        if transform_ctxt.dict is NULL:
+            xslt.xsltFreeTransformContext(transform_ctxt)
+            _destroyFakeDoc(input_doc._c_doc, c_doc)
+            if use_write_lock:
+                input_doc.unlock_write()
+            else:
+                input_doc.unlock_fakedoc()
+            raise MemoryError()
+        # Includes the size of the stylesheet dict.
+        c_dict_size = tree.xmlDictSize(transform_ctxt.dict)
 
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
@@ -688,11 +682,15 @@ cdef class XSLT:
         result_doc = _documentFactory(c_result, input_doc._parser)
         result_doc.initDict()
 
-        if self._c_style.doc.dict is not c_result.dict:
+        # The dict of the run (freed below) falls back to the stylesheet dict, so re-interning
+        # its names covers both.  If the run added no names, the stylesheet dict is enough.
+        if tree.xmlDictSize(c_dict) != c_dict_size:
+            c_src_dict = c_dict
+        else:
+            c_src_dict = self._c_style.doc.dict
+        if c_src_dict is not NULL and c_src_dict is not c_result.dict:
             with nogil:
-                if self._c_style.doc.dict is not c_result.dict:
-                    fixThreadDictNames(<xmlNode*>c_result,
-                                       self._c_style.doc.dict, c_result.dict)
+                fixThreadDictNames(<xmlNode*>c_result, c_src_dict, c_result.dict)
 
         if input_doc._c_doc.dict is not c_result.dict:
             input_doc.lock_read()

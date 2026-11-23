@@ -271,6 +271,73 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(b'<root class="xyz"/>',
                           tostring(result[0]))
 
+    def test_thread_xslt_extension_waits_for_thread(self):
+        # An extension function that waits for stylesheets to be parsed and applied
+        # in another thread, e.g. in a thread pool.
+        XML = self.etree.XML
+        style = b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="text"/>
+  <xsl:template match="/">inner-<xsl:value-of select="name(*)"/></xsl:template>
+</xsl:stylesheet>'''
+        inner = self.etree.XSLT(XML(style))
+        threads = []
+        inner_results = []
+
+        def transform_in_thread(context):
+            done = threading.Event()
+
+            def run_thread():
+                # Parse in this thread: transformations with extension functions lock
+                # all documents of the parser of their input document for writing.
+                try:
+                    inner_results.append(str(inner(XML('<b/>'))))
+                    inner_results.append(str(self.etree.XSLT(XML(style))(XML('<c/>'))))
+                finally:
+                    done.set()
+
+            thread = threading.Thread(target=run_thread)
+            threads.append(thread)
+            thread.start()
+            # The time limit only bounds the time it takes to fail.
+            return 'done' if done.wait(60) else 'deadlock'
+
+        transform = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="test:transform-in-thread()"/></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'transform-in-thread'): transform_in_thread})
+
+        try:
+            result = str(transform(XML('<a/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('done', result)
+        self.assertEqual(['inner-b', 'inner-c'], inner_results)
+
+    def test_thread_xslt_shared_new_names(self):
+        # Concurrent runs of one stylesheet that copy names which the stylesheet does not contain.
+        XML = self.etree.XML
+        identity = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="@*|node()">
+    <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>'''))
+
+        def run_thread():
+            thread_id = threading.get_ident()
+            for i in range(50):
+                names = [f"t{thread_id}i{i}n{k}" for k in range(20)]
+                result = identity(XML(
+                    '<r>' + ''.join(f'<{name} {name}="v"/>' for name in names) + '</r>'))
+                self.assertEqual(names, [el.tag for el in result.getroot()])
+                self.assertEqual(names, [el.keys()[0] for el in result.getroot()])
+
+        self._run_threads(8, run_thread)
+
     def test_thread_create_xslt(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
@@ -487,8 +554,7 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(['processing in_main', 'failed in_main'], messages(transform.error_log))
 
         # While a transformation runs in another thread, 'error_log' shows the last
-        # finished one.  (A running transformation holds the document loader lock,
-        # so this thread cannot start another one in the meantime.)
+        # finished one.
         thread_error, messages_while_running = self._run_while_thread_paused(
             lambda: transform(self.etree.XML('<in_thread/>')),
             self.etree.XSLTApplyError,
