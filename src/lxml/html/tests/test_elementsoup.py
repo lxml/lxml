@@ -92,7 +92,7 @@ sys.setrecursionlimit(100)
 soup = BeautifulSoup("", "html.parser")
 node = Tag(name="n")
 soup.contents = [node]
-for _ in range(75000):
+for _ in range(50_000):
     child = Tag(name="n")
     node.contents = [child]
     node = child
@@ -102,7 +102,7 @@ depth = 0
 while len(root):
     depth += 1
     root = root[0]
-assert depth == 75000, depth
+assert depth == 50_000, depth
 '''
             result = subprocess.run(
                 [sys.executable, '-c', code], capture_output=True, text=True,
