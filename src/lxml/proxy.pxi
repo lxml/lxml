@@ -273,6 +273,31 @@ ctypedef struct _nscache:
     _ns_update_map* ns_map
     size_t size
     size_t last
+    # Owned reference to a dict that maps the address of each original xmlNs to the
+    # position of its first mapping in 'ns_map', or NULL as long as 'ns_map' is short.
+    python.PyObject* index
+
+
+cdef enum:
+    # Number of cached mappings above which they are looked up through the index.
+    _NS_CACHE_INDEX_THRESHOLD = 16
+
+
+cdef void _freeNsCache(_nscache* c_ns_cache) noexcept:
+    python.lxml_free(c_ns_cache.ns_map)
+    c_ns_cache.ns_map = NULL
+    cpython.ref.Py_XDECREF(c_ns_cache.index)
+    c_ns_cache.index = NULL
+
+
+cdef int _indexNsCache(_nscache* c_ns_cache) except -1:
+    cdef size_t i
+    index = {}
+    for i in range(c_ns_cache.last):
+        index.setdefault(<size_t> c_ns_cache.ns_map[i].old, i)
+    cpython.ref.Py_INCREF(index)
+    c_ns_cache.index = <python.PyObject*> index
+    return 0
 
 
 cdef int _growNsCache(_nscache* c_ns_cache) except -1:
@@ -297,6 +322,10 @@ cdef inline int _appendToNsCache(_nscache* c_ns_cache,
         _growNsCache(c_ns_cache)
     c_ns_cache.ns_map[c_ns_cache.last] = _ns_update_map(old=c_old_ns, new=c_new_ns)
     c_ns_cache.last += 1
+    if c_ns_cache.index is not NULL:
+        (<dict> c_ns_cache.index).setdefault(<size_t> c_old_ns, c_ns_cache.last - 1)
+    elif c_ns_cache.last > _NS_CACHE_INDEX_THRESHOLD:
+        _indexNsCache(c_ns_cache)
 
 
 cdef int _stripRedundantNamespaceDeclarations(xmlNode* c_element, _nscache* c_ns_cache,
@@ -334,8 +363,7 @@ cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
     # of ripping out xmlNS-es and likely ran out of memory.  Try to fix up the tree
     # by re-adding the original xmlNs declarations (which might still be used in some
     # places).
-    if c_ns_cache.ns_map:
-        python.lxml_free(c_ns_cache.ns_map)
+    _freeNsCache(c_ns_cache)
     if c_del_ns_list:
         if not c_start_node.nsDef:
             c_start_node.nsDef = c_del_ns_list
@@ -392,7 +420,7 @@ cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode*
     cdef xmlNode* c_node
     cdef xmlDoc* c_doc = doc._c_doc
     cdef tree.xmlAttr* c_attr
-    cdef _nscache c_ns_cache = [NULL, 0, 0]
+    cdef _nscache c_ns_cache = [NULL, 0, 0, NULL]
     cdef xmlNs* c_del_ns_list = NULL
     cdef size_t proxy_count = 0
 
@@ -430,8 +458,7 @@ cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode*
         tree.xmlFreeNsList(c_del_ns_list)
 
     # cleanup
-    if c_ns_cache.ns_map is not NULL:
-        python.lxml_free(c_ns_cache.ns_map)
+    _freeNsCache(&c_ns_cache)
 
     # 3) fix the names in the tree if we moved it from a different thread
     if doc._c_doc.dict is not c_source_doc.dict:
@@ -479,13 +506,30 @@ cdef inline void _fixDocChildren(xmlNode* c_child, xmlDoc* c_doc) noexcept:
         c_child = c_child.next
 
 
+cdef Py_ssize_t _firstNsCacheMapping(_nscache* c_ns_cache, xmlNs* c_old_ns) except -1:
+    """Return the position of the first mapping of the declaration in the indexed cache,
+    or the end of the cache if there is none.
+    """
+    first = (<dict> c_ns_cache.index).get(<size_t> c_old_ns)
+    return c_ns_cache.last if first is None else <Py_ssize_t> first
+
+
 cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
                  _nscache* c_ns_cache, xmlNs* c_del_ns_list) except -1:
     cdef xmlNs* c_ns = NULL
     cdef xmlNs* c_old_ns
+    cdef Py_ssize_t start = 0
     cdef bint is_prefixed_attr = (c_node.type == tree.XML_ATTRIBUTE_NODE and c_node.ns.prefix)
 
-    for ns_map in c_ns_cache.ns_map[:c_ns_cache.last]:
+    if c_ns_cache.index is not NULL:
+        # Skip the mappings before the first one of this namespace declaration.
+        try:
+            start = _firstNsCacheMapping(c_ns_cache, c_node.ns)
+        except:
+            _cleanUpFromNamespaceAdaptation(c_start_node, c_ns_cache, c_del_ns_list)
+            raise
+
+    for ns_map in c_ns_cache.ns_map[start:c_ns_cache.last]:
         if c_node.ns is ns_map.old:
             if is_prefixed_attr and not ns_map.new.prefix:
                 # avoid dropping prefix from attributes
