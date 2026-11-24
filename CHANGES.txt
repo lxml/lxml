@@ -88,6 +88,18 @@ Bugs fixed
   (reading freed memory).
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175779: XSLT transformations with extension functions or elements, including the regular
+  expression functions that are enabled by default, write-locked all documents of the parser of
+  their input document also while they called Python extensions or resolvers, so that callbacks
+  that waited for another thread that read one of these documents deadlocked.  Transformations
+  without extensions held only the read lock, although libxslt modifies the input document.  All
+  transformations now take an update lock, which they upgrade to the write lock while libxslt runs,
+  and which lets other threads read these documents while the Python callbacks run (except for an
+  input element other than the root element).  ``XSLTExtension.apply_templates()`` and
+  ``process_children()`` now raise ``RuntimeError`` when called in another thread than the one that
+  runs the transformation.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.

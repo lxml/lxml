@@ -34,6 +34,16 @@ cdef class _RWLock:
         return atomic_load(&self._lock._perf_counters.write_wait_on_upgrade)
 
     @property
+    def readers_waiting_for_writer(self):
+        # (A performance counter that other threads change.)
+        return atomic_load(&self._lock._perf_counters.read_wait_on_writer)
+
+    @property
+    def writers_waiting_for_update(self):
+        # (A performance counter that other threads change.)
+        return atomic_load(&self._lock._perf_counters.write_wait_on_update)
+
+    @property
     def lock_thread_id(self):
         return load_relaxed(&self._lock._write_locked_id) - 1
 
@@ -56,6 +66,14 @@ cdef class _RWLock:
         finally:
             self.unlock_write()
 
+    @contextmanager
+    def update_lock(self):
+        self.lock_update()
+        try:
+            yield
+        finally:
+            self.unlock_update()
+
     def lock_read(self):
         self._lock.lock_read()
 
@@ -67,6 +85,21 @@ cdef class _RWLock:
 
     def unlock_write(self):
         self._lock.unlock_write()
+
+    def lock_update(self):
+        self._lock.lock_update()
+
+    def unlock_update(self):
+        self._lock.unlock_update()
+
+    def owns_upgraded_update_lock(self):
+        return self._lock.owns_upgraded_update_lock()
+
+    def downgrade_update(self):
+        return self._lock.downgrade_update()
+
+    def upgrade_update(self, int holds):
+        self._lock.upgrade_update(holds)
 
     def lock_write_with(self, _RWLock second_lock):
         """Lock two locks for writing at the same time.

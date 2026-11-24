@@ -56,6 +56,13 @@ cdef class _BaseContext:
     cdef _ErrorLog _error_log
     cdef _XPathExtensionFlags _flags
     cdef bint has_user_extensions
+    # The input document of an XSLT run, whose update lock the run upgrades to the write lock
+    # while libxslt runs, see _downgrade_doc_lock().
+    cdef _Document _update_doc
+    cdef bint _doc_downgraded
+    cdef int _update_holds
+    # The thread that runs the XSLT transformation.
+    cdef unsigned long _run_thread
 
     def __init__(self, namespaces, extensions, error_log, enable_regexp,
                  build_smart_strings):
@@ -116,6 +123,43 @@ cdef class _BaseContext:
         if enable_regexp:
             _regexp = _ExsltRegExp()
             _regexp._register_in_context(self)
+
+    @cython.final
+    cdef bint _downgrade_doc_lock(self) noexcept:
+        """Return from the write lock to the update lock of the XSLT input document while the
+        run calls Python code, which may wait for other threads that read the documents of the
+        input document's parser.  The tree does not change meanwhile: writers still wait.
+        """
+        # (Not if this thread holds the write lock again, e.g. in a nested XPath evaluation.)
+        if (self._update_doc is None or self._doc_downgraded or
+                not self._update_doc._lock.owns_upgraded_update_lock()):
+            return False
+        self._update_holds = self._update_doc._lock.downgrade_update()
+        self._doc_downgraded = True
+        return True
+
+    @cython.final
+    cdef void _restore_doc_lock(self) noexcept:
+        """Take the write lock again after _downgrade_doc_lock() (which cannot fail)."""
+        self._doc_downgraded = False
+        self._update_doc._lock.upgrade_update(self._update_holds)
+
+    @cython.final
+    cdef int _lock_doc_for_libxslt(self) except -1:
+        """Before Python code calls back into libxslt (XSLTExtension.apply_templates()), take
+        the write lock again if the run returned to the update lock for the Python code.
+        Returns 1 if it did, so that the caller returns to the update lock afterwards.
+        """
+        if python.PyThread_get_thread_ident() != self._run_thread:
+            raise RuntimeError(
+                "XSLT templates can only be applied in the thread that runs the transformation")
+        if not self._doc_downgraded:
+            return 0
+        if self._update_doc._lock.owned_update_lock_state() == 2:
+            # This thread holds the write lock again (e.g. in a nested XPath evaluation).
+            return 0
+        self._restore_doc_lock()
+        return 1
 
     cdef _BaseContext _copy(self):
         cdef _BaseContext context
@@ -886,6 +930,7 @@ cdef void _extension_function_call(_BaseContext context, function,
     cdef xpath.xmlXPathObject* obj
     cdef list args
     cdef int i
+    cdef bint downgraded
     doc = context._doc
     try:
         args = []
@@ -898,7 +943,12 @@ cdef void _extension_function_call(_BaseContext context, function,
             args.append(o)
         args.reverse()
 
-        res = function(context, *args)
+        downgraded = context._downgrade_doc_lock()
+        try:
+            res = function(context, *args)
+        finally:
+            if downgraded:
+                context._restore_doc_lock()
         # wrap result for XPath consumption
         obj = _wrapXPathObject(res, doc, context)
         # prevent Python from deallocating elements handed to libxml2

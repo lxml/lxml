@@ -561,6 +561,14 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void unlock_write(self) noexcept:
         self._lock.unlock_write()
 
+    cdef int lock_update(self) except -1:
+        # A read lock that keeps out writers, so that lock_write() can always upgrade it.
+        # Raises RuntimeError if this thread holds the read lock and cannot upgrade it.
+        return self._lock.lock_update()
+
+    cdef void unlock_update(self) noexcept:
+        self._lock.unlock_update()
+
     cdef int lock_fakedoc(self, xmlNode* c_node, bint with_siblings=True) except -1:
         # Lock for creating a 'fake root doc' for 'c_node' (see _plainFakeRootDoc()).
         # The read lock is enough if no fake root doc is needed, i.e. for the root node.

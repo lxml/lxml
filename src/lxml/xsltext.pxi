@@ -62,11 +62,20 @@ cdef class XSLTExtension:
             c_parent = tree.xmlNewDocNode(
                 context._xsltCtxt.output, NULL, <unsigned char*>"fake-parent", NULL)
 
+        # libxslt may change the input document (see XSLT.__call__()).
+        try:
+            restored = context._lock_doc_for_libxslt()
+        except BaseException:
+            if output_parent is None:
+                tree.xmlFreeNode(c_parent)
+            raise
         c_node = context._xsltCtxt.insert
         context._xsltCtxt.insert = c_parent
         xslt.xsltProcessOneNode(
             context._xsltCtxt, c_context_node, NULL)
         context._xsltCtxt.insert = c_node
+        if restored:
+            context._downgrade_doc_lock()
 
         if output_parent is not None:
             return None
@@ -115,10 +124,19 @@ cdef class XSLTExtension:
             c_parent = tree.xmlNewDocNode(
                 context._xsltCtxt.output, NULL, <unsigned char*>"fake-parent", NULL)
 
+        # libxslt may change the input document (see XSLT.__call__()).
+        try:
+            restored = context._lock_doc_for_libxslt()
+        except BaseException:
+            if output_parent is None:
+                tree.xmlFreeNode(c_parent)
+            raise
         c_ctxt.insert = c_parent
         xslt.xsltApplyOneTemplate(c_ctxt,
             c_ctxt.node, c_ctxt.inst.children, NULL, NULL)
         c_ctxt.insert = c_old_output_parent
+        if restored:
+            context._downgrade_doc_lock()
 
         if output_parent is not None:
             return None
@@ -220,7 +238,12 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
 
                 # run the XSLT extension
                 context._extension_element_proxy = self_node
-                extension.execute(context, self_node, context_node, output_parent)
+                downgraded = context._downgrade_doc_lock()
+                try:
+                    extension.execute(context, self_node, context_node, output_parent)
+                finally:
+                    if downgraded:
+                        context._restore_doc_lock()
             finally:
                 context._extension_element_proxy = None
                 if self_node is not None:

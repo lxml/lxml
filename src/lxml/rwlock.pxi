@@ -244,6 +244,8 @@ static LXML_THREAD_LOCAL __lxml_read_holds __lxml_thread_read_holds;
         __lxml_atomic_int_type write_wait_on_upgrade;
         __lxml_atomic_int_type write_upgrade;
         __lxml_atomic_int_type write_upgrade_conflict;
+        __lxml_atomic_int_type update_acquired;
+        __lxml_atomic_int_type write_wait_on_update;
     } __lxml_lock_perf;
 #else
     /* Fake counter struct that just provides all attributes. */
@@ -258,6 +260,8 @@ static LXML_THREAD_LOCAL __lxml_read_holds __lxml_thread_read_holds;
         unsigned int write_wait_on_upgrade: 1;
         unsigned int write_upgrade: 1;
         unsigned int write_upgrade_conflict: 1;
+        unsigned int update_acquired: 1;
+        unsigned int write_wait_on_update: 1;
     } __lxml_lock_perf;
 #endif
     """
@@ -296,6 +300,8 @@ static LXML_THREAD_LOCAL __lxml_read_holds __lxml_thread_read_holds;
         atomic_int write_wait_on_upgrade
         atomic_int write_upgrade
         atomic_int write_upgrade_conflict
+        atomic_int update_acquired
+        atomic_int write_wait_on_update
 
 
 cdef const nonatomic_int max_lock_reader_count = 1 << 30
@@ -303,7 +309,8 @@ cdef const nonatomic_int max_lock_reader_count = 1 << 30
 # States of the upgrade of a read lock to the write lock (RWLock._upgrade_state).
 cdef enum:
     UPGRADE_NONE = 0
-    UPGRADE_ACTIVE = 1  # a thread claimed (or is about to claim) the lock for its upgrade
+    # a thread claimed (or is about to claim) the lock for its upgrade, or holds the update lock
+    UPGRADE_ACTIVE = 1
     UPGRADE_ENDING = 2  # the upgrading thread is releasing the claim
 
 
@@ -324,6 +331,11 @@ cdef class RWLock:
     lock ("upgrade"), so that no other thread modifies what it is reading in between.  Since
     only one thread can do that at a time, lock_write() raises RuntimeError if another thread
     already waits for the read lock of this thread to write (see _upgrade()).
+
+    The update lock is a read lock that reserves the upgrade for its owner: it excludes
+    writers and other update locks, but not readers.  Its owner takes the write lock without
+    such conflicts and returns to the update lock when it releases the write lock, also
+    temporarily (see downgrade_update()).
     """
     cdef thread_id _write_locked_id
     # The fast paths of lock_read() and unlock_read() only write the next three fields.  They
@@ -349,6 +361,11 @@ cdef class RWLock:
     cdef int _upgraded_holds            # (write lock owner) its read locks when it upgraded
     cdef int _upgraded_released         # (write lock owner) of those, released while writing
     cdef int _owner_unrecorded_reads    # (write lock owner) nested read locks beyond MAX_READ_HOLDS
+    # The owner of the update lock (read by other threads), which holds '_writer_lock' and
+    # the upgrade state UPGRADE_ACTIVE besides a read lock that it does not record as reader
+    # (see _counted_read_holds()).
+    cdef thread_id _update_owner
+    cdef int _update_reentry
     cdef lock_perf _perf_counters
 
     @cython.inline
@@ -573,7 +590,8 @@ cdef class RWLock:
         """Acquire the write lock.
 
         Raises RuntimeError if this thread holds the read lock and another thread already
-        waits for it in order to write, which the upgrade would otherwise have to let go first.
+        waits for it in order to write, which the upgrade would otherwise have to let go first,
+        or holds the update lock.
         """
         cdef int result = self._try_lock_write()
         if result:
@@ -611,7 +629,7 @@ cdef class RWLock:
             self._writer_reentry += 1
             return 0
 
-        holds = self._counted_read_holds()
+        holds = self._counted_read_holds(my_lock_id)
         if holds:
             return self._upgrade(holds, my_lock_id) if holds > 0 else 2
 
@@ -619,16 +637,18 @@ cdef class RWLock:
         return 0
 
     @cython.final
-    cdef int _counted_read_holds(self) noexcept:
+    cdef int _counted_read_holds(self, unsigned long my_lock_id) noexcept:
         """Return the number of (counted) read locks that this thread holds,
         or -1 if they might exceed the thread-local records.
         """
         cdef read_holds* holds
         cdef thread_id hold
         cdef Py_ssize_t i
+        # The read lock of the update lock is not recorded.
+        cdef int update_hold = load_relaxed(&self._update_owner) == my_lock_id
         cdef int count = 0
         if load_relaxed(&self._first_reader) == current_thread_id():
-            return self._first_reader_holds
+            return update_hold + self._first_reader_holds
         if atomic_load(&self._reader_count) == 0:
             # No readers at all.
             return 0
@@ -639,7 +659,7 @@ cdef class RWLock:
                 count += 1
         if count and holds.count > MAX_READ_HOLDS:
             return -1
-        return count
+        return update_hold + count
 
     @cython.final
     cdef inline void _lock_write_as_writer(self, unsigned long my_lock_id) noexcept:
@@ -650,6 +670,8 @@ cdef class RWLock:
                 # Risks race conditions if a writer finishes between now and us acquiring
                 # the writer lock below, but that seems acceptable for a performance counter.
                 inc_perf_counter(&self._perf_counters.write_wait_on_writer)
+            elif load_relaxed(&self._update_owner) != 0:
+                inc_perf_counter(&self._perf_counters.write_wait_on_update)
 
         self._writer_lock.acquire()
 
@@ -688,10 +710,13 @@ cdef class RWLock:
         """
         cdef nonatomic_int state = UPGRADE_NONE
         cdef nonatomic_int readers
+        # The owner of the update lock reserved the upgrade and keeps out writers.
+        cdef bint reserved = load_relaxed(&self._update_owner) == my_lock_id
 
-        while not atomic_compare_exchange(&self._upgrade_state, &state, UPGRADE_ACTIVE):
+        while not reserved and not atomic_compare_exchange(&self._upgrade_state, &state, UPGRADE_ACTIVE):
             if state == UPGRADE_ACTIVE:
-                # Another reading thread upgrades and waits for our read lock.
+                # Another reading thread upgrades and waits for our read lock,
+                # or holds the update lock and may do so.
                 inc_perf_counter(&self._perf_counters.write_upgrade_conflict)
                 return 1
             # The last upgrade is ending, which does not wait for anything.
@@ -706,6 +731,8 @@ cdef class RWLock:
             readers = atomic_load(&self._reader_count)
             if readers < 0:
                 # A writer claimed the lock and waits for our read lock.
+                # (Not while this thread holds the update lock.)
+                assert not reserved
                 self._upgrade_lock.release()
                 atomic_add(&self._upgrade_state, UPGRADE_NONE - UPGRADE_ACTIVE)
                 inc_perf_counter(&self._perf_counters.write_upgrade_conflict)
@@ -752,9 +779,12 @@ cdef class RWLock:
         """
         cdef nonatomic_int holds = self._upgraded_holds
         cdef nonatomic_int released = self._upgraded_released
+        # The owner of the update lock keeps its reservation of the upgrade.
+        cdef bint reserved = load_relaxed(&self._update_owner) == self._my_lock_id()
         self._upgraded_holds = self._upgraded_released = 0
 
-        atomic_add(&self._upgrade_state, UPGRADE_ENDING - UPGRADE_ACTIVE)
+        if not reserved:
+            atomic_add(&self._upgrade_state, UPGRADE_ENDING - UPGRADE_ACTIVE)
 
         # Lift the claim.  The read locks that this thread released while writing still count
         # => drop them now.  Wake up the readers that came in the meantime.
@@ -763,7 +793,102 @@ cdef class RWLock:
             self._unblock_readers(readers)
 
         self._upgrade_lock.release()
-        atomic_add(&self._upgrade_state, UPGRADE_NONE - UPGRADE_ENDING)
+        if not reserved:
+            atomic_add(&self._upgrade_state, UPGRADE_NONE - UPGRADE_ENDING)
+
+    # Update locking.
+
+    cdef int lock_update(self) except -1:
+        """Acquire the update lock, see the class docstring.
+
+        A thread that holds the write lock takes it again instead.  A thread that already reads
+        cannot wait for writers, which may wait for its read lock, and takes the write lock
+        instead, which raises RuntimeError if that is impossible (see lock_write()).
+        """
+        cdef unsigned long my_lock_id = self._my_lock_id()
+        cdef nonatomic_int state
+
+        if load_relaxed(&self._update_owner) == my_lock_id:
+            self._update_reentry += 1
+            return 0
+        if self._owns_write_lock(my_lock_id) or self._counted_read_holds(my_lock_id):
+            return self.lock_write()
+
+        # Keep out writers and other update locks.
+        self._writer_lock.acquire()
+
+        # Reserve the upgrade.  An upgrade of a reading thread that is in progress does not wait
+        # for this thread, which does not read yet => wait for it to end.
+        state = UPGRADE_NONE
+        while not atomic_compare_exchange(&self._upgrade_state, &state, UPGRADE_ACTIVE):
+            if state == UPGRADE_ACTIVE:
+                self._upgrade_lock.acquire()
+                self._upgrade_lock.release()
+            else:
+                with nogil:
+                    pass
+            state = UPGRADE_NONE
+
+        # Nothing can claim the lock now, so the read lock does not wait.  It is not recorded
+        # like other read locks, so that the upgrade always knows it (and cannot fail).
+        atomic_incr(&self._reader_count)
+        inc_perf_counter(&self._perf_counters.read_acquired)
+        store_relaxed(&self._update_owner, my_lock_id)
+        inc_perf_counter(&self._perf_counters.update_acquired)
+        return 0
+
+    cdef void unlock_update(self) noexcept:
+        cdef unsigned long my_lock_id = self._my_lock_id()
+        if load_relaxed(&self._update_owner) != my_lock_id:
+            # lock_update() took the write lock.
+            self.unlock_write()
+            return
+
+        if self._update_reentry > 0:
+            self._update_reentry -= 1
+            return
+
+        assert not self._owns_write_lock(my_lock_id), "update lock released while writing"
+        store_relaxed(&self._update_owner, 0)
+        # No writer can wait for this read lock.
+        atomic_decr(&self._reader_count)
+        atomic_add(&self._upgrade_state, UPGRADE_NONE - UPGRADE_ACTIVE)
+        self._writer_lock.release()
+
+    cdef int owned_update_lock_state(self) noexcept:
+        """Return 0 if this thread does not own the update lock, 1 if it owns it without
+        holding the write lock, 2 if it also holds the write lock.
+        """
+        cdef unsigned long my_lock_id = self._my_lock_id()
+        if load_relaxed(&self._update_owner) != my_lock_id:
+            return 0
+        return 2 if self._owns_write_lock(my_lock_id) else 1
+
+    cdef bint owns_upgraded_update_lock(self) noexcept:
+        """Check if this thread owns the update lock and holds the write lock from a single
+        upgrade of it, i.e. if downgrade_update() can return to the update lock.
+        """
+        cdef unsigned long my_lock_id = self._my_lock_id()
+        return (load_relaxed(&self._update_owner) == my_lock_id and
+                self._owns_write_lock(my_lock_id) and self._writer_reentry == 0 and
+                self._upgraded_holds > 0)
+
+    cdef int downgrade_update(self) noexcept:
+        """Return from the write lock to the update lock (see owns_upgraded_update_lock()),
+        e.g. while calling code that may wait for other readers.  Pass the result to
+        upgrade_update() to take the write lock again.
+        """
+        # The read locks that this thread still holds after the upgrade ends.
+        cdef int holds = self._upgraded_holds - self._upgraded_released
+        self.unlock_write()
+        return holds
+
+    cdef void upgrade_update(self, int holds) noexcept:
+        """Take the write lock again after downgrade_update(), which cannot fail since this
+        thread reserved the upgrade (and the read locks of this thread are balanced).
+        """
+        cdef int result = self._upgrade(holds, self._my_lock_id())
+        assert result == 0, result
 
     # Double lock locking.
 

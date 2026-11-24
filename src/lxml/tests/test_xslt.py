@@ -6,6 +6,7 @@ Test cases related to XSLT processing
 import copy
 import gzip
 import os.path
+import threading
 import unittest
 import contextlib
 
@@ -16,6 +17,30 @@ from tempfile import NamedTemporaryFile, mkdtemp
 from .common_imports import (
     etree, HelperTestCase, fileInTestDir, make_doctest, SimpleFSPath
 )
+
+
+def _run_in_thread(func):
+    """Calls func() in a separate thread and returns its result.
+
+    A deadlock in func() fails the test after a minute instead of blocking the test run.
+    """
+    outcome = []
+
+    def run():
+        try:
+            outcome.append((True, func()))
+        except BaseException as exc:
+            outcome.append((False, exc))
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    thread.join(60)
+    if thread.is_alive():
+        raise AssertionError("The call did not finish within a minute (deadlock?)")
+    succeeded, result = outcome[0]
+    if not succeeded:
+        raise result
+    return result
 
 
 class ETreeXSLTTestCase(HelperTestCase):
@@ -1423,6 +1448,33 @@ class ETreeXSLTExtFuncTestCase(HelperTestCase):
         self.assertEqual(self._rootstring(result),
                           b'<A>X</A>')
 
+    def test_extensions_modify_documents_of_input_parser(self):
+        # Extension functions can modify documents that share the parser (and the lock) of
+        # the input document.
+        tree = etree.XML('<root><a/><b/></root>')
+        other = etree.XML('<other/>')
+
+        def modify(ctxt):
+            other.set('modified', 'yes')
+            new = etree.SubElement(etree.Element('new'), 'child')
+            new.text = 'text'
+            return new.text
+
+        st = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="/*"><A><xsl:value-of select="myns:modify()"/></A></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'modify'): modify})
+
+        # The root element and a child element as input.
+        for input_element in (tree, tree[1]):
+            other.attrib.clear()
+            result = _run_in_thread(lambda: st(input_element))
+            self.assertEqual(self._rootstring(result), b'<A>text</A>')
+            self.assertEqual('yes', other.get('modified'))
+
     def test_variable_result_tree_fragment(self):
         tree = self.parse('<a><b>B</b><b/></a>')
         style = self.parse('''\
@@ -1675,6 +1727,59 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
         result = tree.xslt(style, extensions=extensions)
         self.assertEqual(self._rootstring(result),
                           b'<A><T>Y</T><T>XYZ</T></A>')
+
+    _apply_templates_stylesheet = '''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns">
+  <xsl:template match="a"><A><myns:myext/></A></xsl:template>
+  <xsl:template match="b"><B/></xsl:template>
+</xsl:stylesheet>'''
+
+    def test_extension_element_apply_templates_in_other_thread(self):
+        # Templates can only be applied in the thread that runs the transformation.
+        errors = []
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                def apply_templates():
+                    try:
+                        self.apply_templates(context, input_node[0], output_parent)
+                    except RuntimeError as exc:
+                        errors.append(exc)
+
+                thread = threading.Thread(target=apply_templates)
+                thread.start()
+                thread.join()
+                self.apply_templates(context, input_node[0], output_parent)
+
+        st = etree.XSLT(etree.XML(self._apply_templates_stylesheet),
+                        extensions={('testns', 'myext'): MyExt()})
+        result = _run_in_thread(lambda: st(etree.XML('<a><b/></a>')))
+        self.assertEqual(b'<A><B/></A>', self._rootstring(result))
+        self.assertEqual(1, len(errors))
+
+    def test_extension_element_apply_templates_in_xpath_extension(self):
+        # An extension element evaluates XPath with an extension function that applies
+        # templates, with a document of the parser of the input document (and its lock).
+        tree = etree.XML('<a><b/></a>')
+        other = etree.XML('<other/>')
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                def apply_templates(xpath_context):
+                    self.apply_templates(context, input_node[0], output_parent)
+                    return 'applied'
+
+                output_parent.text = other.xpath(
+                    'string(t:apply-templates())', namespaces={'t': 'testns'},
+                    extensions={('testns', 'apply-templates'): apply_templates})
+
+        st = etree.XSLT(etree.XML(self._apply_templates_stylesheet),
+                        extensions={('testns', 'myext'): MyExt()})
+        result = _run_in_thread(lambda: st(tree))
+        self.assertEqual(b'<A>applied<B/></A>', self._rootstring(result))
 
     def test_extension_element_apply_templates_elements_only(self):
         tree = self.parse('<a><b>B</b></a>')
