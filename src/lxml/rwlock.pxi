@@ -325,13 +325,17 @@ cdef class RWLock:
     only one thread can do that at a time, lock_write() raises RuntimeError if another thread
     already waits for the read lock of this thread to write (see _upgrade()).
     """
+    cdef thread_id _write_locked_id
+    # The fast paths of lock_read() and unlock_read() only write the next three fields.  They
+    # follow the object header (16 or 32 bytes), the vtable pointer and _write_locked_id, so they
+    # fill one 16-byte aligned block and thus one cache line of the (16-byte aligned) object.
+    # Otherwise, concurrent readers move two cache lines back and forth.
+    cdef atomic_int _reader_count
     # The read locks of the "first reader", which took the read lock while no other thread
     # held it, are tracked here.  Other threads record theirs in a thread-local stack.
-    cdef thread_id _first_reader
     cdef int _first_reader_holds   # counted read locks
+    cdef thread_id _first_reader
     cdef int _first_reader_nested  # nested read locks that do not count as readers
-    cdef thread_id _write_locked_id
-    cdef atomic_int _reader_count
     cdef atomic_int _readers_departing
     cdef atomic_int _readers_waiting
     cdef cython.pymutex _readers_wait_lock
