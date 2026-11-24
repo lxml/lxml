@@ -529,6 +529,10 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef RWLock _lock
     # Short-lived lock to guard proxy link changes.
     cdef cython.pymutex _proxy_lock
+    # Keeps out other RelaxNG validations of the document while one temporarily changes
+    # the 'psvi' fields of its elements, see _validateRelaxNGKeepingPsvi().
+    cdef cython.pymutex _psvi_lock
+    cdef thread_id _psvi_lock_owner  # read by other threads
 
     def __dealloc__(self):
         # If there are no more references to the document, it is safe
@@ -547,6 +551,23 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
 
     cdef void unlock_proxies(self) noexcept:
         self._proxy_lock.release()
+
+    cdef bint lock_psvi(self) noexcept:
+        # Returns False if this thread holds the lock already, e.g. when a Python error log
+        # validates the document while it receives the errors of a validation.
+        cdef thread_id my_id = current_thread_id()
+        # Only this thread sets or clears its own id, so another value is stale at most.
+        if load_relaxed(&self._psvi_lock_owner) == my_id:
+            return False
+        self._psvi_lock.acquire()
+        store_relaxed(&self._psvi_lock_owner, my_id)
+        return True
+
+    cdef void unlock_psvi(self, bint locked) noexcept:
+        # Unlock after lock_psvi().
+        if locked:
+            store_relaxed(&self._psvi_lock_owner, 0)
+            self._psvi_lock.release()
 
     cdef void lock_read(self) noexcept:
         self._lock.lock_read()

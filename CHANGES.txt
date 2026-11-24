@@ -100,6 +100,13 @@ Bugs fixed
   runs the transformation.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175779: ``RelaxNG`` validation cleared the ids of ``generate-id()`` that libxslt keeps in the
+  elements of the input document of an XSLT transformation, so that ``generate-id()`` returned
+  different ids for the same elements after an extension function validated the input document, or
+  waited for another thread that did.  RelaxNG validation now keeps them, for which RelaxNG
+  validations of the same document no longer run at the same time.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.

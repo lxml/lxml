@@ -142,7 +142,6 @@ cdef class RelaxNG(_Validator):
         Returns true if document is valid, false if not."""
         cdef _Document doc
         cdef _Element root_node
-        cdef xmlDoc* c_doc
         cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
         cdef tree.xmlHashTable* c_refs = NULL
         cdef int ret
@@ -168,14 +167,13 @@ cdef class RelaxNG(_Validator):
             relaxng.xmlRelaxNGSetValidStructuredErrors(
                 valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
             _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGV)
-            c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             if uses_id_types:
                 c_refs = _replaceIdRefTable(doc._c_doc, NULL)
-            with nogil:
-                ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
-            if uses_id_types:
-                _freeIdRefTable(_replaceIdRefTable(doc._c_doc, c_refs))
-            _destroyFakeDoc(doc._c_doc, c_doc)
+            try:
+                ret = _validateRelaxNGKeepingPsvi(valid_ctxt, doc, root_node._c_node)
+            finally:
+                if uses_id_types:
+                    _freeIdRefTable(_replaceIdRefTable(doc._c_doc, c_refs))
         finally:
             doc.unlock_fakedoc(write_locked)
             _connectGenericErrorLog(None)
@@ -202,6 +200,70 @@ cdef class RelaxNG(_Validator):
         _require_rnc2rng()
         rng_str = utf8(_rnc2rng.dumps(_rnc2rng.loads(src)))
         return cls(_parseMemoryDocument(rng_str, parser=None, url=base_url))
+
+
+cdef struct _ElementPsvi:
+    xmlNode* c_node
+    void* psvi
+
+
+cdef Py_ssize_t _collectElementPsvi(xmlNode* c_node, _ElementPsvi* c_saved,
+                                    Py_ssize_t max_count) noexcept nogil:
+    """Count the elements below 'c_node' (inclusive) whose 'psvi' field is set, and store
+    the first 'max_count' of them with that value in 'c_saved'.
+    """
+    cdef Py_ssize_t count = 0
+    cdef xmlNode* c_element = c_node
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_element, 1)
+    if c_element.type == tree.XML_ELEMENT_NODE and c_element.psvi is not NULL:
+        if count < max_count:
+            c_saved[count].c_node = c_element
+            c_saved[count].psvi = c_element.psvi
+        count += 1
+    tree.END_FOR_EACH_ELEMENT_FROM(c_element)
+    return count
+
+
+cdef int _validateRelaxNGKeepingPsvi(relaxng.xmlRelaxNGValidCtxt* valid_ctxt, _Document doc,
+                                     xmlNode* c_node) except? -1:
+    """Validate an element of the document and its descendants without changing the 'psvi'
+    fields of the elements.
+
+    xmlRelaxNGValidateDoc() marks the elements that it validated in their 'psvi' fields and
+    resets these to NULL when it is done, but libxslt keeps the ids of generate-id() there
+    while it transforms the document, during which Python extensions may validate it (or wait
+    for other threads that do).  Restore them afterwards, and keep out the other RelaxNG
+    validations of the document meanwhile, which also change these fields.
+
+    Transformations hold the update lock of their input document from before libxslt runs
+    until it is done, so the fields need saving only while a thread holds it.
+    """
+    cdef _ElementPsvi* c_saved = NULL
+    cdef Py_ssize_t count = 0, i
+    cdef xmlDoc* c_doc
+    cdef int ret
+    cdef bint locked = doc.lock_psvi()
+    try:
+        if doc._lock.is_update_locked():
+            with nogil:
+                count = _collectElementPsvi(c_node, NULL, 0)
+        if count:
+            c_saved = <_ElementPsvi*> python.lxml_malloc(count, sizeof(_ElementPsvi))
+            if c_saved is NULL:
+                raise MemoryError()
+            count = min(count, _collectElementPsvi(c_node, c_saved, count))
+
+        c_doc = _fakeRootDoc(doc._c_doc, c_node)
+        with nogil:
+            ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
+        _destroyFakeDoc(doc._c_doc, c_doc)
+
+        for i in range(count):
+            c_saved[i].c_node.psvi = c_saved[i].psvi
+    finally:
+        python.lxml_free(c_saved)
+        doc.unlock_psvi(locked)
+    return ret
 
 
 cdef xmlparser.xmlExternalEntityLoader _register_relaxng_resource_loader(relaxng.xmlRelaxNGParserCtxt *rng_ctxt) noexcept nogil:

@@ -234,6 +234,7 @@ cdef extern from "libxml/tree.h" nogil:
         xmlAttr* properties
         xmlNs* ns
         xmlNs* nsDef
+        void* psvi
         unsigned short line
 
     ctypedef struct xmlElementContent:

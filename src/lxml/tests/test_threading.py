@@ -362,6 +362,60 @@ class ThreadingTestCase(HelperTestCase):
                 thread.join()
         self.assertEqual('child', result)
 
+    def test_thread_xslt_extension_waits_for_relaxng_validations(self):
+        # An extension function that waits for other threads that validate the input document
+        # with RelaxNG at the same time, which must not change the ids of generate-id() that
+        # libxslt keeps in the nodes of the input document.
+        etree = self.etree
+        root = etree.XML('<r>' + '<a><b/></a>' * 500 + '</r>')
+        relaxng = etree.RelaxNG(etree.XML('''\
+<element name="r" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore><element name="a"><element name="b"><empty/></element></element></zeroOrMore>
+</element>'''))
+        thread_count = 4
+        threads = []
+
+        def validate_in_threads(context):
+            start = threading.Barrier(thread_count)
+            results = []
+
+            def validate():
+                start.wait(60)
+                results.append(all([relaxng.validate(root) for _ in range(20)]))
+
+            validators = [threading.Thread(target=validate) for _ in range(thread_count)]
+            threads.extend(validators)
+            for thread in validators:
+                thread.start()
+            for thread in validators:
+                # The time limit only bounds the time it takes to fail.
+                thread.join(60)
+            return str(results == [True] * thread_count)
+
+        transform = etree.XSLT(etree.XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:template match="/">
+    <out>
+      <xsl:for-each select="//*"><id><xsl:value-of select="generate-id()"/></id></xsl:for-each>
+      <valid><xsl:value-of select="test:validate-in-threads()"/></valid>
+      <xsl:for-each select="//*"><id><xsl:value-of select="generate-id()"/></id></xsl:for-each>
+    </out>
+  </xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'validate-in-threads'): validate_in_threads})
+
+        try:
+            # (Races between the validations show up more reliably in several runs.)
+            for _ in range(5):
+                result = transform(root).getroot()
+                self.assertEqual('True', result.findtext('valid'))
+                ids = [id_element.text for id_element in result.iterfind('id')]
+                self.assertEqual(1001, len(set(ids[:1001])))
+                self.assertEqual(ids[:1001], ids[1001:])
+        finally:
+            for thread in threads:
+                thread.join()
+
     def test_thread_xslt_extensions_concurrent_readers(self):
         # Transformations with extension functions let other threads read their input documents
         # while the extension functions run, but not while libxslt changes the input documents

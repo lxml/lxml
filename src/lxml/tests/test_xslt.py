@@ -1475,6 +1475,47 @@ class ETreeXSLTExtFuncTestCase(HelperTestCase):
             self.assertEqual(self._rootstring(result), b'<A>text</A>')
             self.assertEqual('yes', other.get('modified'))
 
+    def test_extensions_validate_input_with_relaxng(self):
+        # RelaxNG validation of the input document does not change the ids of generate-id(),
+        # which libxslt keeps in the nodes of the input document while it runs.
+        tree = etree.XML('<r><a><b/><b/></a><a><b/></a></r>')
+        relaxng = etree.RelaxNG(etree.XML('''\
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <start><choice><ref name="r"/><ref name="a"/></choice></start>
+  <define name="r"><element name="r"><zeroOrMore><ref name="a"/></zeroOrMore></element></define>
+  <define name="a">
+    <element name="a"><zeroOrMore><element name="b"><empty/></element></zeroOrMore></element>
+  </define>
+</grammar>'''))
+        validated = []
+
+        def validate(ctxt):
+            return str(relaxng.validate(validated[0]))
+
+        st = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="/">
+    <out>
+      <xsl:for-each select="//*"><id><xsl:value-of select="generate-id()"/></id></xsl:for-each>
+      <valid><xsl:value-of select="myns:validate()"/></valid>
+      <xsl:for-each select="//*"><id><xsl:value-of select="generate-id()"/></id></xsl:for-each>
+    </out>
+  </xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'validate'): validate})
+
+        # The root element and a child element (validated in a fake root document).
+        for element in (tree, tree[0]):
+            with self.subTest(element=element.tag):
+                validated[:] = [element]
+                result = st(tree).getroot()
+                self.assertEqual('True', result.findtext('valid'))
+                ids = [id_element.text for id_element in result.iterfind('id')]
+                self.assertEqual(6, len(set(ids[:6])))
+                self.assertEqual(ids[:6], ids[6:])
+
     def test_variable_result_tree_fragment(self):
         tree = self.parse('<a><b>B</b><b/></a>')
         style = self.parse('''\

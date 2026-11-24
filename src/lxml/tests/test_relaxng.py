@@ -3,6 +3,7 @@ Test cases related to RelaxNG parsing and validation
 """
 
 
+import threading
 import unittest
 
 from .common_imports import (
@@ -236,6 +237,36 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertEqual(self._rootstring(b_tree), b'<b>B</b>')
         self.assertTrue(schema.validate(b_tree))
         self.assertFalse(schema.error_log.filter_from_errors())
+
+    def test_relaxng_validate_in_python_error_log(self):
+        # A Python error log that validates the document while it receives the errors
+        # of a validation of the same document.
+        schema_tree = self.parse('''\
+<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore><element name="b"><empty/></element></zeroOrMore>
+</element>''')
+        schema = etree.RelaxNG(schema_tree)
+        inner_schema = etree.RelaxNG(schema_tree)
+        # (A parser of its own keeps a deadlock away from the documents of other tests.)
+        root = etree.XML('<a><b/><c/></a>', etree.XMLParser())
+        results = []
+
+        class ValidatingLog(etree.PyErrorLog):
+            def receive(self, entry):
+                if not results:
+                    results.append('receive')
+                    results.append(inner_schema.validate(root))
+
+        def validate():
+            # The global error log is local to this thread.
+            etree.use_global_python_log(ValidatingLog())
+            results.append(schema.validate(root))
+
+        thread = threading.Thread(target=validate, daemon=True)
+        thread.start()
+        # The time limit only bounds the time it takes to fail.
+        thread.join(60)
+        self.assertEqual(['receive', False, False], results)
 
 
 class RelaxNGCompactTestCase(HelperTestCase):

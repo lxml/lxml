@@ -873,6 +873,12 @@ cdef class RWLock:
                 self._owns_write_lock(my_lock_id) and self._writer_reentry == 0 and
                 self._upgraded_holds > 0)
 
+    cdef bint is_update_locked(self) noexcept:
+        """Check if a thread owns the update lock.  A reader of the lock sees the update lock
+        that a thread took before it upgraded it to the write lock (which waits for readers).
+        """
+        return load_relaxed(&self._update_owner) != 0
+
     cdef int downgrade_update(self) noexcept:
         """Return from the write lock to the update lock (see owns_upgraded_update_lock()),
         e.g. while calling code that may wait for other readers.  Pass the result to
