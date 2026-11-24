@@ -2159,6 +2159,32 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual([], unraisable)
         self.assertEqual(b'<root><child/><other/></root>', self.etree.tostring(root))
 
+    def test_setslice_elements_from_several_documents(self):
+        # Some elements share the target's document lock, others come from documents
+        # with separate locks (i.e. other parsers).
+        XML, XMLParser, tostring = self.etree.XML, self.etree.XMLParser, self.etree.tostring
+        root = XML('<root><a/><b/><c/><d><e/></d></root>')
+        other1 = XML('<o1><x/><y/></o1>', XMLParser())
+        other2 = XML('<o2><z/><v/></o2>', XMLParser())
+
+        # Unbalanced lock releases show up as ignored AssertionErrors.
+        unraisable = []
+        old_hook = sys.unraisablehook
+        sys.unraisablehook = lambda u: unraisable.append(f"{u.exc_type.__name__}: {u.exc_value}")
+        try:
+            root[1:3] = [other1[0], root[3][0], other2[0]]
+            self.assertEqual(b'<root><a/><x/><e/><z/><d/></root>', tostring(root))
+            root[::-2] = (el for el in [other1[0], other2[0], root[1]])
+            self.assertEqual(b'<root><x/><v/><z/><y/></root>', tostring(root))
+            with self.assertRaises(ValueError):
+                root[4:] = [other2, None]
+        finally:
+            sys.unraisablehook = old_hook
+
+        self.assertEqual([], unraisable)
+        self.assertEqual(b'<root><x/><v/><z/><y/><o2/></root>', tostring(root))
+        self.assertEqual(b'<o1/>', tostring(other1))
+
     def test_addnext(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement

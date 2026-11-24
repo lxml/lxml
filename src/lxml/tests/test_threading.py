@@ -492,6 +492,28 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(b'<a><x/><b1/></a>', self.etree.tostring(a))
         self.assertEqual(b'<b><y/><a1/></b>', self.etree.tostring(b))
 
+    def test_concurrent_slice_assignment_with_elements_of_each_other(self):
+        # Two threads move an element of the other one's document into their own one by
+        # slice assignment.  It must not keep documents locked while it consumes the
+        # iterable and must lock all documents in a consistent order.
+        XML, XMLParser = self.etree.XML, self.etree.XMLParser
+        a = XML('<a><a1/></a>', XMLParser())
+        b = XML('<b><b1/></b>', XMLParser())
+        a1, b1 = a[0], b[0]
+        both_started = threading.Barrier(2)
+
+        def elements(element):
+            both_started.wait()
+            yield element
+
+        thread = threading.Thread(target=b.__setitem__, args=(slice(0, 0), elements(a1)))
+        thread.start()
+        a[0:0] = elements(b1)
+        thread.join()
+
+        self.assertEqual(b'<a><b1/></a>', self.etree.tostring(a))
+        self.assertEqual(b'<b><a1/></b>', self.etree.tostring(b))
+
 
 class ThreadPipelineTestCase(HelperTestCase):
     """Threading tests based on a thread worker pipeline.
