@@ -167,6 +167,17 @@ ValueError: There is no option with the value 'asdf'
 >>> select.value.add(' 02')
 >>> select.value # doctest:+NOPARSE_MARKUP
 <MultipleSelectOptions {'01 ', ' 02'} for select name='select4'>
+>>> repeated = fromstring('''<form>
+...   <input type="checkbox" name="c" value="1" checked>
+...   <input type="checkbox" name="c" value="1" checked>
+...   <select name="m" multiple><option selected>x</option><option selected>x</option></select>
+... </form>''')
+>>> len(repeated.inputs['c'].value), repeated.inputs['c'].value == {'1'}
+(1, True)
+>>> len(repeated.inputs['m'].value), repeated.inputs['m'].value == {'x'}
+(1, True)
+>>> repeated.form_values()
+[('c', '1'), ('c', '1'), ('m', 'x'), ('m', 'x')]
 >>> try: from urllib import urlencode
 ... except ImportError: from urllib.parse import urlencode
 >>> print(urlencode(f.form_values()))
