@@ -531,6 +531,30 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(b'<root><c/></root>', self.etree.tostring(root))
         self.assertEqual('c', root[0].tag)
 
+    def test_concurrent_moves_between_documents(self):
+        # Threads that use an element while another thread moves it between two documents
+        # with different locks (different parsers) must lock its current document.
+        SubElement = self.etree.SubElement
+        doc_a = self.etree.XML('<a/>', self.etree.XMLParser())
+        doc_b = self.etree.XML('<b/>', self.etree.XMLParser())
+        moved = SubElement(doc_a, 'x')
+        for i in range(5):
+            SubElement(moved, 'c').text = str(i)
+
+        def mover():
+            for i in range(3000):
+                (doc_b if i % 2 == 0 else doc_a).append(moved)
+
+        def user():
+            for i in range(3000):
+                SubElement(moved, 'c').text = str(i)
+                self.assertTrue(all(child.tag == 'c' for child in moved))
+                del moved[0]
+                moved.text = str(i)
+
+        self._run_threads(3, user, main_func=mover)
+        self.assertEqual(5, len(moved))
+
 
 class ThreadPipelineTestCase(HelperTestCase):
     """Threading tests based on a thread worker pipeline.

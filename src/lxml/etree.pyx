@@ -1076,6 +1076,79 @@ cdef void _releaseProxyNode(_Element self) noexcept:
         _releasePendingDocuments(pending_docs, pending_count)
 
 
+# Locking the document of an element.
+#
+# Another thread may move the element to another document (with the write locks of both
+# documents) until we hold the lock of its document.  Moves change '_doc' under the doc-ref
+# lock of the element (see _setProxyDocument()), so while we read '_doc' under that lock, it
+# stays the element's document, which the element keeps alive.  If we can take its read lock
+# there without waiting, we are done.  Otherwise, we wait for the lock of the document that
+# _documentOf() returned, and check afterwards that the element still belongs to it, or else
+# try again.  Once we hold the lock of the element's document, the element cannot move.
+
+cdef enum _LockMode:
+    LOCK_READ, LOCK_WRITE, LOCK_FAKEDOC
+
+
+cdef int _lockDocumentOf(_Element element, _LockMode mode) except -1:
+    """Lock the current document of the element, waiting for the lock if necessary.
+    """
+    cdef _Document doc
+    while True:
+        doc = _documentOf(element)
+        if mode == LOCK_READ:
+            doc.lock_read()
+        elif mode == LOCK_WRITE:
+            doc.lock_write()
+        else:
+            doc.lock_fakedoc()
+        if _isDocumentOf(element, doc):
+            return 0
+        if mode == LOCK_READ:
+            doc.unlock_read()
+        elif mode == LOCK_WRITE:
+            doc.unlock_write()
+        else:
+            doc.unlock_fakedoc()
+
+
+@cython.linetrace(False)
+@cython.profile(False)
+cdef inline bint _tryReadLockDocumentOf(_Element element) noexcept:
+    """Read-lock the current document of the element if that does not require waiting.
+    """
+    cdef bint locked
+    begin_doc_ref_read(<void*> element)
+    locked = element._doc._lock.try_lock_read()
+    end_doc_ref_read(<void*> element)
+    return locked
+
+
+@cython.linetrace(False)
+@cython.profile(False)
+cdef inline _Document _readLockedDocument(_Element element):
+    """Read-lock the document of the element and return it."""
+    if not _tryReadLockDocumentOf(element):
+        _lockDocumentOf(element, LOCK_READ)
+    return element._doc
+
+
+@cython.linetrace(False)
+@cython.profile(False)
+cdef inline _Document _writeLockedDocument(_Element element):
+    """Write-lock the document of the element and return it."""
+    _lockDocumentOf(element, LOCK_WRITE)
+    return element._doc
+
+
+@cython.linetrace(False)
+@cython.profile(False)
+cdef inline _Document _fakedocLockedDocument(_Element element):
+    """Lock the document of the element for a fake root document (see lock_fakedoc())."""
+    _lockDocumentOf(element, LOCK_FAKEDOC)
+    return element._doc
+
+
 @cython.no_gc_clear
 cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     """Element class.
@@ -1129,8 +1202,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         if isinstance(x, slice):
             # slice assignment
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             try:
                 _findChildSlice(<slice>x, self._c_node, &c_node, &step, &slicelength)
                 if step > 0:
@@ -1146,9 +1218,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             element = value
             _assertValidNode(element)
 
-            doc = self._doc
-            other_doc = element._doc
-            doc.lock_write_with(other_doc)
+            while True:
+                doc = _documentOf(self)
+                other_doc = _documentOf(element)
+                doc.lock_write_with(other_doc)
+                if _isDocumentOf(self, doc) and _isDocumentOf(element, other_doc):
+                    break
+                doc.unlock_write_with(other_doc)
             try:
                 c_node = _findChild(self._c_node, x)
                 if c_node is NULL:
@@ -1177,8 +1253,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if isinstance(x, slice):
             # slice deletion
             is_full_slice: cython.bint = _isFullSlice(<slice>x)
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             try:
                 if is_full_slice:
                     c_node = self._c_node.children
@@ -1196,8 +1271,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 doc.unlock_write()
         else:
             # item deletion
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             try:
                 c_node = _findChild(self._c_node, x)
                 if c_node is NULL:
@@ -1217,8 +1291,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef _Document new_doc
         _assertValidNode(self)
 
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             c_doc = _copyDocRoot(self._doc._c_doc, self._c_node) # recursive
         finally:
@@ -1244,8 +1317,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         _assertValidNode(self)
 
-        doc = self._doc
-        doc.lock_write()
+        doc = _writeLockedDocument(self)
         try:
             _setAttributeValue(self, key, value)
         finally:
@@ -1260,9 +1332,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         _assertValidNode(element)
 
-        doc = self._doc
-        other_doc = element._doc
-        doc.lock_write_with(other_doc)
+        while True:
+            doc = _documentOf(self)
+            other_doc = _documentOf(element)
+            doc.lock_write_with(other_doc)
+            if _isDocumentOf(self, doc) and _isDocumentOf(element, other_doc):
+                break
+            doc.unlock_write_with(other_doc)
         try:
             _appendChild(self, element)
         finally:
@@ -1281,9 +1357,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         _assertValidNode(element)
 
-        doc = self._doc
-        other_doc = element._doc
-        doc.lock_write_with(other_doc)
+        while True:
+            doc = _documentOf(self)
+            other_doc = _documentOf(element)
+            doc.lock_write_with(other_doc)
+            if _isDocumentOf(self, doc) and _isDocumentOf(element, other_doc):
+                break
+            doc.unlock_write_with(other_doc)
         try:
             if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
                 if element._c_node.type not in (tree.XML_PI_NODE, tree.XML_COMMENT_NODE):
@@ -1306,9 +1386,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         _assertValidNode(element)
 
-        doc = self._doc
-        other_doc = element._doc
-        doc.lock_write_with(other_doc)
+        while True:
+            doc = _documentOf(self)
+            other_doc = _documentOf(element)
+            doc.lock_write_with(other_doc)
+            if _isDocumentOf(self, doc) and _isDocumentOf(element, other_doc):
+                break
+            doc.unlock_write_with(other_doc)
         try:
             if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
                 if element._c_node.type != tree.XML_PI_NODE:
@@ -1370,8 +1454,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_node_next
         _assertValidNode(self)
 
-        doc = self._doc
-        doc.lock_write()
+        doc = _writeLockedDocument(self)
         try:
             c_node = self._c_node
             # remove self.text and self.tail
@@ -1405,9 +1488,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         _assertValidNode(element)
 
-        doc = self._doc
-        other_doc = element._doc
-        doc.lock_write_with(other_doc)
+        while True:
+            doc = _documentOf(self)
+            other_doc = _documentOf(element)
+            doc.lock_write_with(other_doc)
+            if _isDocumentOf(self, doc) and _isDocumentOf(element, other_doc):
+                break
+            doc.unlock_write_with(other_doc)
         try:
             c_node = _findChild(self._c_node, index)
             if c_node is NULL:
@@ -1436,9 +1523,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         _assertValidNode(element)
 
-        doc = self._doc
-        other_doc = element._doc
-        doc.lock_write_with(other_doc)
+        while True:
+            doc = _documentOf(self)
+            other_doc = _documentOf(element)
+            doc.lock_write_with(other_doc)
+            if _isDocumentOf(self, doc) and _isDocumentOf(element, other_doc):
+                break
+            doc.unlock_write_with(other_doc)
         try:
             c_node = element._c_node
             if c_node.parent is not self._c_node:
@@ -1465,9 +1556,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         _assertValidNode(old_element)
         _assertValidNode(new_element)
-        old_doc = old_element._doc
-        new_doc = new_element._doc
-        old_doc.lock_write_with(new_doc)
+        while True:
+            old_doc = _documentOf(old_element)
+            new_doc = _documentOf(new_element)
+            old_doc.lock_write_with(new_doc)
+            if _isDocumentOf(old_element, old_doc) and _isDocumentOf(new_element, new_doc):
+                break
+            old_doc.unlock_write_with(new_doc)
         try:
             c_old_node = old_element._c_node
             if c_old_node.parent is not self._c_node:
@@ -1498,8 +1593,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if tag is not None:
                 return tag
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             try:
                 with cython.critical_section(self):
                     tag = self._tag
@@ -1520,8 +1614,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             else:
                 if not _xmlTagNameIsValid(name):
                     raise _buildXmlTagInvalidError(name)
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             try:
                 tree.xmlNodeSetName(self._c_node, _xcstr(name))
                 if ns is None:
@@ -1545,8 +1638,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         def __get__(self):
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             try:
                 return _collectText(self._c_node.children)
             finally:
@@ -1555,8 +1647,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         def __set__(self, value):
             _assertValidNode(self)
             is_qname: cython.bint = type(value) is not str and isinstance(value, QName)
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             try:
                 if is_qname:
                     value = _resolveQNameText(self, value).decode('utf8')
@@ -1575,8 +1666,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         def __get__(self):
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             try:
                 return _collectText(self._c_node.next)
             finally:
@@ -1584,8 +1674,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         def __set__(self, value):
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             try:
                 _setTailText(self._c_node, value)
             finally:
@@ -1600,8 +1689,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     def prefix(self):
         """Namespace prefix or None.
         """
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             if self._c_node.ns is not NULL:
                 if self._c_node.ns.prefix is not NULL:
@@ -1616,8 +1704,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         def __get__(self):
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             with cython.critical_section(self):
                 c_line = tree.xmlGetLineNo(self._c_node)
             doc.unlock_read()
@@ -1643,8 +1730,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Note that changing the returned dict has no effect on the Element.
         """
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             return _build_nsmap(self._c_node)
         finally:
@@ -1665,8 +1751,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         def __get__(self):
             cdef xmlChar* c_base
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             result = tree.xmlNodeGetBaseSafe(self._doc._c_doc, self._c_node, &c_base)
             doc.unlock_read()
 
@@ -1687,8 +1772,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             else:
                 url = _encodeFilename(url)
                 c_base = _xcstr(url)
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             result = tree.xmlNodeSetBase(self._c_node, c_base)
             doc.unlock_write()
             if tree.LIBXML_VERSION >= 21300 and result == -1:
@@ -1712,8 +1796,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if isinstance(x, slice):
             # slicing
             is_full_slice: cython.bint = _isFullSlice(<slice>x)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             try:
                 if is_full_slice:
                     return _collectChildren(self)
@@ -1739,8 +1822,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return result
         else:
             # indexing
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             try:
                 c_node = _findChild(self._c_node, x)
                 if c_node is NULL:
@@ -1755,8 +1837,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Returns the number of subelements.
         """
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         count = _countElements(self._c_node.children)
         doc.unlock_read()
         return count
@@ -1772,8 +1853,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             )
         # emulate old behaviour
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         has_child = _hasChild(self._c_node)
         doc.unlock_read()
         return has_child
@@ -1809,8 +1889,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         _assertValidNode(child)
 
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             c_child = child._c_node
             if c_child.parent is not self._c_node:
@@ -1896,8 +1975,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Gets an element attribute.
         """
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             return _getAttributeValue(self, key, default)
         finally:
@@ -1910,8 +1988,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         arbitrary order (just like for an ordinary Python dictionary).
         """
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             return _collectAttributes(self._c_node, 1)
         finally:
@@ -1924,8 +2001,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         attributes are returned in an arbitrary order.
         """
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             return _collectAttributes(self._c_node, 2)
         finally:
@@ -1938,8 +2014,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         an arbitrary order.
         """
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             return _collectAttributes(self._c_node, 3)
         finally:
@@ -1956,8 +2031,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
           ``list(element)`` or simply iterate over elements.
         """
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             return _collectChildren(self)
         finally:
@@ -1973,8 +2047,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node is NULL:
             return None
         # Other threads may change '.parent', so it can only be read under the lock.
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             c_node = _parentElement(self._c_node)
             if c_node is NULL:
@@ -1993,8 +2066,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node is NULL:
             return None
         # Other threads may change '.next', so it can only be read under the lock.
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             c_node = _nextElement(self._c_node)
             if c_node is NULL:
@@ -2013,8 +2085,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node is NULL:
             return None
         # Other threads may change '.prev', so it can only be read under the lock.
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             c_node = _previousElement(self._c_node)
             if c_node is NULL:
@@ -2169,8 +2240,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Creates a new element associated with the same document.
         """
         _assertValidDoc(self._doc)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             return _makeElement(
                 _tag, NULL, self._doc,
@@ -2354,8 +2424,7 @@ cdef class __ContentOnlyElement(_Element):
 
 
 cdef _get_node_content(element: _Element):
-    doc = element._doc
-    doc.lock_read()
+    doc = _readLockedDocument(element)
     try:
         return funicodeOrEmpty(element._c_node.content)
     finally:
@@ -2370,8 +2439,7 @@ cdef int _set_node_content(element: _Element, bytes value) noexcept:
         c_text = _xcstr(value)
         length = len(value)
 
-    doc = element._doc
-    doc.lock_write()
+    doc = _writeLockedDocument(element)
     result = tree.xmlNodeSetContentLen(element._c_node, c_text, length)  # 'Py_ssize_t length'
     doc.unlock_write()
     return result
@@ -2405,8 +2473,7 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
         # not in ElementTree
         def __get__(self):
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             try:
                 return funicode(self._c_node.name)
             finally:
@@ -2416,8 +2483,7 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
             _assertValidNode(self)
             value = _utf8(value)
             c_text = _xcstr(value)
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             tree.xmlNodeSetName(self._c_node, c_text)
             doc.unlock_write()
 
@@ -2471,8 +2537,7 @@ cdef class _Entity(__ContentOnlyElement):
         # not in ElementTree
         def __get__(self):
             _assertValidNode(self)
-            doc = self._doc
-            doc.lock_read()
+            doc = _readLockedDocument(self)
             try:
                 return funicode(self._c_node.name)
             finally:
@@ -2483,16 +2548,14 @@ cdef class _Entity(__ContentOnlyElement):
             value_utf = _utf8(value)
             if b'&' in value_utf or b';' in value_utf:
                 raise ValueError, f"Invalid entity name '{value}'"
-            doc = self._doc
-            doc.lock_write()
+            doc = _writeLockedDocument(self)
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
             doc.unlock_write()
 
     @property
     def text(self):
         _assertValidNode(self)
-        doc = self._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self)
         try:
             name = funicode(self._c_node.name)
         finally:
@@ -2746,8 +2809,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 raise ValueError("Cannot enable XML declaration in C14N")
 
             if method == 'c14n':
-                doc = self._context_node._doc
-                doc.lock_read()
+                doc = _readLockedDocument(self._context_node)
                 try:
                     _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
                                     compression, inclusive_ns_prefixes)
@@ -2792,8 +2854,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 DeprecationWarning)
             doctype = docstring
 
-        doc = self._context_node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._context_node)
         try:
             _tofilelike(file, self._context_node, encoding, doctype, method,
                         write_declaration, 1, pretty_print, with_tail,
@@ -2873,8 +2934,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if element._doc is not root._doc:
             raise ValueError, "Element is not in this tree"
 
-        doc = root._doc
-        doc.lock_read()
+        doc = _readLockedDocument(root)
         try:
             return self._getelementpath(root, element)
         finally:
@@ -3179,8 +3239,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if compression is None or compression < 0:
             compression = 0
 
-        doc = self._context_node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._context_node)
         try:
             _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
                             compression, inclusive_ns_prefixes)
@@ -3219,8 +3278,7 @@ cdef class _Attrib:
     # MANIPULATORS
     def __setitem__(self, key, value):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_write()
+        doc = _writeLockedDocument(self._element)
         try:
             _setAttributeValue(self._element, key, value)
         finally:
@@ -3228,8 +3286,7 @@ cdef class _Attrib:
 
     def __delitem__(self, key):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_write()
+        doc = _writeLockedDocument(self._element)
         try:
             _delAttribute(self._element, key)
         finally:
@@ -3239,8 +3296,7 @@ cdef class _Attrib:
         _assertValidNode(self._element)
         if isinstance(sequence_or_dict, (dict, _Attrib)):
             sequence_or_dict = sequence_or_dict.items()
-        doc = self._element._doc
-        doc.lock_write()
+        doc = _writeLockedDocument(self._element)
         try:
             for key, value in sequence_or_dict:
                 _setAttributeValue(self._element, key, value)
@@ -3251,8 +3307,7 @@ cdef class _Attrib:
         if len(default) > 1:
             raise TypeError, f"pop expected at most 2 arguments, got {len(default)+1}"
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_write()
+        doc = _writeLockedDocument(self._element)
         try:
             result = _getAttributeValue(self._element, key, None)
             if result is None:
@@ -3267,8 +3322,7 @@ cdef class _Attrib:
 
     def clear(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_write()
+        doc = _writeLockedDocument(self._element)
         c_attrs = self._element._c_node.properties
         if c_attrs:
             self._element._c_node.properties = NULL
@@ -3278,8 +3332,7 @@ cdef class _Attrib:
     # ACCESSORS
     def __repr__(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             attributes = _collectAttributes(self._element._c_node, 3)
         finally:
@@ -3288,8 +3341,7 @@ cdef class _Attrib:
 
     def __copy__(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             attributes = _collectAttributes(self._element._c_node, 3)
         finally:
@@ -3298,8 +3350,7 @@ cdef class _Attrib:
 
     def __deepcopy__(self, memo):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             attributes = _collectAttributes(self._element._c_node, 3)
         finally:
@@ -3308,8 +3359,7 @@ cdef class _Attrib:
 
     def __getitem__(self, key):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             result = _getAttributeValue(self._element, key, None)
         finally:
@@ -3322,8 +3372,7 @@ cdef class _Attrib:
         _assertValidNode(self._element)
         cdef xmlAttr* c_attr
 
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         c_attr = self._element._c_node.properties
         while c_attr is not NULL:
             if c_attr.type == tree.XML_ATTRIBUTE_NODE:
@@ -3337,8 +3386,7 @@ cdef class _Attrib:
         cdef xmlAttr* c_attr
         cdef Py_ssize_t count = 0
 
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         c_attr = self._element._c_node.properties
         while c_attr is not NULL:
             count += (c_attr.type == tree.XML_ATTRIBUTE_NODE)
@@ -3348,8 +3396,7 @@ cdef class _Attrib:
 
     def get(self, key, default=None):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             return _getAttributeValue(self._element, key, default)
         finally:
@@ -3357,8 +3404,7 @@ cdef class _Attrib:
 
     def keys(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             return _collectAttributes(self._element._c_node, 1)
         finally:
@@ -3366,8 +3412,7 @@ cdef class _Attrib:
 
     def __iter__(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             attributes = _collectAttributes(self._element._c_node, 1)
         finally:
@@ -3376,8 +3421,7 @@ cdef class _Attrib:
 
     def iterkeys(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             attributes = _collectAttributes(self._element._c_node, 1)
         finally:
@@ -3386,8 +3430,7 @@ cdef class _Attrib:
 
     def values(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             return _collectAttributes(self._element._c_node, 2)
         finally:
@@ -3395,8 +3438,7 @@ cdef class _Attrib:
 
     def itervalues(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             attributes = _collectAttributes(self._element._c_node, 2)
         finally:
@@ -3405,8 +3447,7 @@ cdef class _Attrib:
 
     def items(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             return _collectAttributes(self._element._c_node, 3)
         finally:
@@ -3414,8 +3455,7 @@ cdef class _Attrib:
 
     def iteritems(self):
         _assertValidNode(self._element)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             attributes = _collectAttributes(self._element._c_node, 3)
         finally:
@@ -3430,8 +3470,7 @@ cdef class _Attrib:
         _assertValidNode(self._element)
         cdef xmlNode* c_node
         ns, tag = _getNsTag(key)
-        doc = self._element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._element)
         try:
             c_node = self._element._c_node
             c_href = <const_xmlChar*>NULL if ns is None else _xcstr(ns)
@@ -3471,8 +3510,7 @@ cdef class _AttribIterator:
         cdef Py_ssize_t index
         if self._node is None:
             raise StopIteration
-        doc = self._node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._node)
         try:
             c_attr = self._node._c_node.properties
             index = self._index
@@ -3551,8 +3589,7 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
 
     cdef void _storeNext(self, _Element node):
         cdef xmlNode* c_node
-        doc = self._node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(self._node)
         try:
             c_node = self._next_element(node._c_node)
             while c_node is not NULL and \
@@ -3793,8 +3830,7 @@ def SubElement(_Element _parent not None, _tag,
     Subelement factory.  This function creates an element instance, and
     appends it to an existing element.
     """
-    doc = _parent._doc
-    doc.lock_write()
+    doc = _writeLockedDocument(_parent)
     try:
         return _makeSubElement(
             _parent, _tag,
@@ -3970,8 +4006,7 @@ def indent(tree, space="  ", *, Py_ssize_t level=0):
 
     space = _utf8(space)
     indent = b"\n" + level * space
-    doc = root._doc
-    doc.lock_write()
+    doc = _writeLockedDocument(root)
     try:
         if _hasChild(root._c_node):
             _indent_children(root._c_node, 1, space, [indent, indent + space])

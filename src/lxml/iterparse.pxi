@@ -284,8 +284,7 @@ cdef class iterwalk:
 
         if self._event_filter:
             self._index = 0
-            doc = root._doc
-            doc.lock_read()
+            doc = _readLockedDocument(root)
             try:
                 if self._matcher is not None and self._event_filter & PARSE_EVENT_FILTER_START:
                     self._matcher.cacheTags(root._doc)
@@ -324,8 +323,7 @@ cdef class iterwalk:
         try:
             if self._matcher is not None and self._index >= 0:
                 node = self._node_stack[self._index][0]
-                doc = node._doc
-                doc.lock_read()
+                doc = _readLockedDocument(node)
                 self._matcher.cacheTags(doc)
 
             # find next node
@@ -336,8 +334,7 @@ cdef class iterwalk:
                     # while we're still traversing them, we should handle a document switch as well.
                     if doc is not None:
                         doc.unlock_read()
-                    doc = node._doc
-                    doc.lock_read()
+                    doc = _readLockedDocument(node)
 
                 if self._skip_state == IWSKIP_SKIP_NEXT:
                     c_child = NULL

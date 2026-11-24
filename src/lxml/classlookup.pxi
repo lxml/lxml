@@ -86,8 +86,7 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                                  (_collectText(last_child._c_node.next) or '') + child)
             elif isinstance(child, _Element):
                 last_child = <_Element> child
-                child_doc = last_child._doc
-                child_doc.lock_write()
+                child_doc = _writeLockedDocument(last_child)
                 try:
                     _appendChild(self, last_child)
                 finally:

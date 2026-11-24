@@ -61,8 +61,7 @@ cdef class XInclude:
             self._error_log.connect()
             old_loader = _register_resource_loader()
             try:
-                doc = node._doc
-                doc.lock_write()
+                doc = _writeLockedDocument(node)
                 try:
                     with nogil:
                         if tree.LIBXML_VERSION >= 21400:

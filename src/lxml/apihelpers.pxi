@@ -1277,8 +1277,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 if doc is not element._doc and doc is not parent._doc:
                     if doc is not None:
                         doc.unlock_write()
-                    doc = element._doc
-                    doc.lock_write()
+                    doc = _writeLockedDocument(element)
 
                 add_child(parent, element)
 
@@ -1335,8 +1334,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 if doc is not element._doc and doc is not parent._doc:
                     if doc is not None:
                         doc.unlock_write()
-                    doc = element._doc
-                    doc.lock_write()
+                    doc = _writeLockedDocument(element)
 
                 _appendChild(parent, element)
                 c_node = element._c_node
@@ -1370,8 +1368,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 if doc is not element._doc and doc is not parent._doc:
                     if doc is not None:
                         doc.unlock_write()
-                    doc = element._doc
-                    doc.lock_write()
+                    doc = _writeLockedDocument(element)
 
                 # move element and tail over
                 c_source_doc = element._c_node.doc
@@ -1410,8 +1407,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
             if doc is not element._doc and doc is not parent._doc:
                 if doc is not None:
                     doc.unlock_write()
-                doc = element._doc
-                doc.lock_write()
+                doc = _writeLockedDocument(element)
 
             add_child(parent, element)
 

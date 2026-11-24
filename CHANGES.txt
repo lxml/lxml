@@ -52,6 +52,10 @@ Bugs fixed
   since lxml 7.0.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175571: Using an element in free-threaded Python while another thread moved it to
+  another document could lock the wrong document and crash, since lxml 7.0.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#545: ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
   instead of setting a ``value`` attribute on the ``<select>`` element.
   Patch by Alex Castillo Gonzalez.
