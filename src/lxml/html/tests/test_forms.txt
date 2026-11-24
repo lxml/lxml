@@ -177,6 +177,14 @@ ValueError: There is no option with the value 'asdf'
 >>> multi_select.value = ['1']
 >>> ['selected' in option.attrib for option in multi_select]
 [True, False, False, False]
+>>> options = fromstring('''<form><select name="s" multiple>
+...   <option>p</option><option selected>q</option>
+... </select></form>''').inputs['s'].value
+>>> options.discard('p')
+>>> options.discard('no such option')
+>>> options -= {'p', 'q'}
+>>> options # doctest:+NOPARSE_MARKUP
+<MultipleSelectOptions {} for select name='s'>
 >>> select = f.inputs['select3']
 >>> select.value
 '01 '

@@ -1487,6 +1487,13 @@ class MultipleSelectOptions(SetMixin):
         for option in selected:
             del option.attrib['selected']
 
+    def discard(self, item):
+        # remove() raises ValueError, not the KeyError that SetMixin.discard() ignores.
+        try:
+            self.remove(item)
+        except ValueError:
+            pass
+
     def __repr__(self):
         return '<%s {%s} for select name=%r>' % (
             self.__class__.__name__,

@@ -61,6 +61,10 @@ Bugs fixed
   A ``<select multiple>`` raised ``ValueError`` in the same case for repeated option values.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175699: ``discard()`` and in-place set operators like ``-=`` on the value of a
+  ``<select multiple>`` in ``lxml.html`` raised ``ValueError`` for options that were not selected.
+  Patch by Pierre-Yves Le Borgne.
+
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
 
