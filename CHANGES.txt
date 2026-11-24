@@ -63,6 +63,14 @@ Bugs fixed
   parallel.  Use separate (e.g. copied) ``XSLT`` objects for parallel runs.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175778: An ``XSLT`` object shared the name dictionary of the parser of its stylesheet
+  document, and the results of transformations added their names to the dictionary of the parser of
+  their input document, without holding the lock of the documents that use these dictionaries.
+  Parsing or modifying documents in other threads at the same time could corrupt names.  The
+  stylesheet now has a dictionary of its own, and result documents keep the dictionary of their
+  transformation.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.

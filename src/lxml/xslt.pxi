@@ -282,6 +282,36 @@ cdef dict EMPTY_DICT = {}
 cdef _RunLock _xslt_profile_lock = _RunLock()
 
 
+cdef xmlDoc* _copyStylesheetDoc(xmlDoc* c_doc, xmlNode* c_root) except NULL:
+    """Copy a stylesheet document (with c_root as root element) for compiling it.
+
+    The copy gets a new name dict: libxslt adds names to the dict of the stylesheet document
+    while it compiles the stylesheet, and the transformations look up names in it, so it must
+    not be the dict of a parser, which other threads use for their documents.
+    """
+    cdef xmlDoc* result
+    cdef xmlNode* c_node
+    result = tree.xmlCopyDoc(c_doc, 0)  # non recursive
+    if result is NULL:
+        raise MemoryError()
+    result.dict = tree.xmlDictCreate()
+    if result.dict is NULL:
+        tree.xmlFreeDoc(result)
+        raise MemoryError()
+
+    # The copied nodes take their names from the new dict.
+    with nogil:
+        c_node = tree.xmlDocCopyNode(c_root, result, 1)  # recursive
+    if c_node is NULL:
+        tree.xmlFreeDoc(result)
+        raise MemoryError()
+
+    tree.xmlDocSetRootElement(result, c_node)
+    # Copy the tail text after setting the root element since libxml2 otherwise unlinks the tail.
+    _copyTail(c_root.next, c_node)
+    return result
+
+
 @cython.final
 @cython.internal
 cdef class _XSLTContext(_BaseContext):
@@ -408,7 +438,7 @@ cdef class XSLT:
         # make a copy of the document as stylesheet parsing modifies it
         doc.lock_read()
         try:
-            c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            c_doc = _copyStylesheetDoc(doc._c_doc, root_node._c_node)
         finally:
             doc.unlock_read()
 
@@ -566,9 +596,6 @@ cdef class XSLT:
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result = NULL
         cdef xmlDoc* c_doc
-        cdef tree.xmlDict* c_dict
-        cdef tree.xmlDict* c_src_dict
-        cdef size_t c_dict_size
         cdef const_char** params = NULL
 
         assert self._c_style is not NULL, "XSLT stylesheet not initialised"
@@ -614,8 +641,6 @@ cdef class XSLT:
             else:
                 input_doc.unlock_fakedoc()
             raise MemoryError()
-        # Includes the size of the stylesheet dict.
-        c_dict_size = tree.xmlDictSize(transform_ctxt.dict)
 
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
@@ -698,31 +723,18 @@ cdef class XSLT:
             if resolver_context is not None:
                 resolver_context.clear()
 
-        c_dict = c_result.dict
-        tree.xmlDictReference(c_dict)
-
+        # The result keeps the dict of the run, which falls back to the stylesheet dict.  Both
+        # are private to the stylesheet, as opposed to the dict of the input parser, which other
+        # threads may use while the result is being created.  Names that were copied from the
+        # input document are re-interned, since the input dict may go away before the result.
         result_doc = _documentFactory(c_result, input_doc._parser)
-        result_doc.initDict()
 
-        # The dict of the run (freed below) falls back to the stylesheet dict, so re-interning
-        # its names covers both.  If the run added no names, the stylesheet dict is enough.
-        if tree.xmlDictSize(c_dict) != c_dict_size:
-            c_src_dict = c_dict
-        else:
-            c_src_dict = self._c_style.doc.dict
-        if c_src_dict is not NULL and c_src_dict is not c_result.dict:
-            with nogil:
-                fixThreadDictNames(<xmlNode*>c_result, c_src_dict, c_result.dict)
-
-        if input_doc._c_doc.dict is not c_result.dict:
+        if c_result.dict is not NULL and input_doc._c_doc.dict is not c_result.dict:
             input_doc.lock_read()
             with nogil:
-                if input_doc._c_doc.dict is not c_result.dict:
-                    fixThreadDictNames(<xmlNode*>c_result,
-                                       input_doc._c_doc.dict, c_result.dict)
+                fixThreadDictNames(<xmlNode*>c_result,
+                                   input_doc._c_doc.dict, c_result.dict)
             input_doc.unlock_read()
-
-        tree.xmlDictFree(c_dict)
 
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
@@ -800,7 +812,8 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
     new_xslt._xslt_resolver_context._c_style_doc = _copyDoc(
         stylesheet._xslt_resolver_context._c_style_doc, 1)
 
-    c_doc = _copyDoc(stylesheet._c_style.doc, 1)
+    c_doc = _copyStylesheetDoc(
+        stylesheet._c_style.doc, tree.xmlDocGetRootElement(stylesheet._c_style.doc))
     with nogil:
         new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
     if new_xslt._c_style is NULL:

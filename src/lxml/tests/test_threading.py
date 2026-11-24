@@ -460,6 +460,52 @@ class ThreadingTestCase(HelperTestCase):
 
         self._run_threads(8, run_thread)
 
+    _computed_name_stylesheet = b"""\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/*">
+    <out><xsl:element name="{concat('computed_', name())}"/></out>
+  </xsl:template>
+</xsl:stylesheet>"""
+
+    def test_thread_xslt_stylesheet_names(self):
+        # Runs look up names in the stylesheet while another thread adds names to the
+        # documents of the parser that parsed the stylesheet.
+        XML = self.etree.XML
+        parser = self.etree.XMLParser()
+        stylesheet = self.etree.XSLT(XML(self._computed_name_stylesheet, parser))
+        other = XML('<other/>', parser)
+
+        def add_names():
+            for i in range(1000):
+                other.set(f'name{i}', 'value')
+
+        def transform():
+            for i in range(100):
+                result = stylesheet(XML(f'<in{i}/>'))
+                self.assertEqual(f'computed_in{i}', result.getroot()[0].tag)
+
+        self._run_threads(4, transform, main_func=add_names)
+
+    def test_thread_xslt_result_names(self):
+        # The results of runs keep their names apart from the documents of the input's
+        # parser, to which another thread adds names meanwhile.
+        XML = self.etree.XML
+        parser = self.etree.XMLParser()
+        stylesheet = self.etree.XSLT(XML(self._computed_name_stylesheet))
+        inputs = [[XML(f'<in{thread}_{i}/>', parser) for i in range(100)] for thread in range(4)]
+        other = XML('<other/>', parser)
+
+        def add_names():
+            for i in range(1000):
+                other.set(f'name{i}', 'value')
+
+        def transform():
+            for doc in inputs.pop():
+                result = stylesheet(doc)
+                self.assertEqual('computed_' + doc.tag, result.getroot()[0].tag)
+
+        self._run_threads(4, transform, main_func=add_names)
+
     def test_thread_create_xslt(self):
         XML = self.etree.XML
         tostring = self.etree.tostring

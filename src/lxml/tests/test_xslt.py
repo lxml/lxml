@@ -471,6 +471,22 @@ class ETreeXSLTTestCase(HelperTestCase):
             [f'<out><computed_name{i} attr_name{i}="v"/></out>' for i in range(5)],
             [etree.tostring(res.getroot(), encoding='unicode') for res in results])
 
+    def test_xslt_parser_dicts_unchanged(self):
+        # Compiling a stylesheet and transforming a document must not add names to the
+        # dictionaries of their parsers, which other threads may use at the same time.
+        style_parser, input_parser = etree.XMLParser(), etree.XMLParser()
+        style = etree.XML('''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/"><result><xsl:element name="computed"/></result></xsl:template>
+</xsl:stylesheet>''', style_parser)
+        tree = etree.XML('<input/>', input_parser)
+        dict_sizes = (style_parser.dict_size, input_parser.dict_size)
+        st = etree.XSLT(style)
+        self.assertEqual(dict_sizes, (style_parser.dict_size, input_parser.dict_size))
+        result = st(tree)
+        self.assertEqual(dict_sizes, (style_parser.dict_size, input_parser.dict_size))
+        self.assertEqual(b'<result><computed/></result>', etree.tostring(result.getroot()))
+
     def test_xslt_parameter_invalid(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
