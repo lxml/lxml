@@ -49,6 +49,11 @@ Bugs fixed
 
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
+* XSLT transformations with ``regexp=False`` could run with only a read lock on their input
+  document, although libxslt modifies it, e.g. for ``xsl:strip-space``.  Concurrent readers
+  in other threads could see inconsistent trees or crash.
+  Patch by Pierre-Yves Le Borgne.
+
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
 
 * GH#535: ``element.classes.toggle()`` in ``lxml.html`` did not remove all occurrences
