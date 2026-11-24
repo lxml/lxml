@@ -58,6 +58,12 @@ Bugs fixed
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
 
+* LP#2175692: Setting ``form.fields`` in ``lxml.html`` raised ``ValueError`` or ``TypeError``
+  and left the form partly reset when the new values did not include a checkbox group or a
+  ``<select multiple>``.  Setting the ``.value`` of these fields to ``None`` now unchecks
+  or deselects all their options, as for the other fields.
+  Patch by Pierre-Yves Le Borgne.
+
 Other changes
 -------------
 

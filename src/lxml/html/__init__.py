@@ -1370,7 +1370,9 @@ class SelectElement(InputMixin, HtmlElement):
                 raise TypeError("You must pass in a sequence")
             values = self.value
             values.clear()
-            values.update(value)
+            # None deselects all options, as for a single-valued select.
+            if value is not None:
+                values.update(value)
             return
         checked_option = None
         if value is not None:
@@ -1566,6 +1568,9 @@ class CheckboxGroup(list):
     def value(self, value):
         values = self.value
         values.clear()
+        # None unchecks all checkboxes, as for a radio group.
+        if value is None:
+            return
         if not hasattr(value, '__iter__'):
             raise ValueError(
                 "A CheckboxGroup (name=%r) must be set to a sequence (not %r)"
