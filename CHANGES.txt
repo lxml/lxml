@@ -32,6 +32,11 @@ Bugs fixed
   It now works correctly in PyPy 3.11 and 3.12.
   Patches by Matti Picus.
 
+* LP#583249: XSLT with ``xsl:strip-space`` could crash when it transformed an element other
+  than the root element.  libxslt removes the stripped whitespace from the input tree, and the
+  element kept references to the removed text nodes.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
