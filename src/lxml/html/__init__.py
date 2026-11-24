@@ -42,6 +42,7 @@ __all__ = [
 import copy
 import re
 
+from collections import defaultdict
 from collections.abc import MutableMapping, MutableSet
 from functools import partial
 from itertools import groupby
@@ -993,20 +994,20 @@ class FormElement(HtmlElement):
     def fields(self, value):
         # Look up all fields in one pass instead of searching the form for each name.
         fields = dict(self.inputs.items())
-        unset_names = dict.fromkeys(fields)
+        unset_fields = fields.copy()
         for key, value in value.items():
             try:
                 field = fields[key]
             except KeyError:
                 raise KeyError("No input element with the name %r" % key) from None
-            unset_names.pop(key, None)
+            unset_fields.pop(key, None)
             field.value = value
-        for key in unset_names:
+        for key, field in unset_fields.items():
             if key is None:
                 # Case of an unnamed input; these aren't really
                 # expressed in form_values() anyway.
                 continue
-            fields[key].value = None
+            field.value = None
 
     def _name(self):
         if self.get('name'):
@@ -1253,9 +1254,9 @@ class InputGetter:
         :return: A list of (name, field) tuples.
         """
         # Group the fields in one pass instead of searching the form for each name.
-        fields_by_name = {}
+        fields_by_name = defaultdict(list)
         for el in self:
-            fields_by_name.setdefault(el.name, []).append(el)
+            fields_by_name[el.name].append(el)
         return [(name, self._group_fields(name, fields))
                 for name, fields in fields_by_name.items()]
 
