@@ -23,6 +23,11 @@ Features added
 
 * formfill is slightly faster.
 
+* LP#2175797: In free-threaded Python, modifying a document while other threads read it
+  is much faster.  Each hand-off of the document lock between readers and writers waited
+  for the whole spinning phase of CPython's mutex (CPython issue gh-162421).
+  Patch by Pierre-Yves Le Borgne.
+
 * ``CDATA`` objects gained a string representation.
 
 Bugs fixed
