@@ -572,15 +572,19 @@ cdef class RWLock:
         waits for it in order to write, which the upgrade would otherwise have to let go first.
         """
         cdef int result = self._try_lock_write()
+        if result:
+            return self._raise_cannot_upgrade(result)
+        return 0
+
+    @cython.final
+    cdef int _raise_cannot_upgrade(self, int result) except -1:
         if result == 1:
             raise RuntimeError(
                 "Cannot lock the document for writing while this thread is reading it, "
                 "because another thread is waiting to modify it.")
-        elif result:
-            raise RuntimeError(
-                "Cannot lock the document for writing while this thread is reading it "
-                "with more nested read locks than it keeps track of.")
-        return 0
+        raise RuntimeError(
+            "Cannot lock the document for writing while this thread is reading it "
+            "with more nested read locks than it keeps track of.")
 
     cdef void lock_write_blocking(self) noexcept:
         """Acquire the write lock without raising exceptions (for the C-API).
@@ -634,7 +638,7 @@ cdef class RWLock:
         return count
 
     @cython.final
-    cdef void _lock_write_as_writer(self, unsigned long my_lock_id) noexcept:
+    cdef inline void _lock_write_as_writer(self, unsigned long my_lock_id) noexcept:
         cdef nonatomic_int readers
 
         if COUNT_LOCK_PERFORMANCE:
@@ -763,17 +767,18 @@ cdef class RWLock:
         """Acquire two locks for writing at the same time.
         """
         cdef RWLock first = self, second = second_lock
+        cdef int result
         # Avoid deadlocks by deterministically locking an arbitrary lock first.
         if self is second_lock:
             return self.lock_write()
         if <void*>self < <void*>second_lock:
             first, second = second_lock, self
         first.lock_write()
-        try:
-            second.lock_write()
-        except:
+        # (No try-except: saving the exception state costs more than the locking itself.)
+        result = second._try_lock_write()
+        if result:
             first.unlock_write()
-            raise
+            return second._raise_cannot_upgrade(result)
         return 0
 
     cdef void lock_write_with_blocking(self, RWLock second_lock) noexcept:
