@@ -60,6 +60,11 @@ Bugs fixed
   if class names were duplicated.
   Patch by Huanyi Xie.
 
+* LP#2175780: XPath could return nodes in the wrong order after an XSLT transformation of their
+  document, when the tree changed after the transformation or when the transformation was applied
+  to subtrees.  libxslt left document order indices in the elements of the input tree.
+  Patch by Pierre-Yves Le Borgne.
+
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
 

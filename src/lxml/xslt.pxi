@@ -544,6 +544,7 @@ cdef class XSLT:
 
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
+            _resetDocumentOrder(c_doc)
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             input_doc.unlock_write()
             raise MemoryError()
@@ -560,6 +561,7 @@ cdef class XSLT:
             transform_ctxt.dict = tree.xmlDictCreateSub(self._c_style.doc.dict)
             if transform_ctxt.dict is NULL:
                 xslt.xsltFreeTransformContext(transform_ctxt)
+                _resetDocumentOrder(c_doc)
                 _destroyFakeDoc(input_doc._c_doc, c_doc)
                 input_doc.unlock_write()
                 raise MemoryError()
@@ -605,6 +607,7 @@ cdef class XSLT:
                 python.lxml_free(params)
             if context is not None:
                 context.free_context()
+            _resetDocumentOrder(c_doc)
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             input_doc.unlock_write()
 
@@ -674,6 +677,26 @@ cdef class XSLT:
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
         return c_result
+
+
+cdef void _resetDocumentOrder(xmlDoc* c_doc) noexcept nogil:
+    # libxslt numbers the elements of the input document in document order, which XPath uses
+    # to sort nodes (xmlXPathOrderDocElems() stores the negative numbers in the otherwise unused
+    # 'content' pointers).  They would be wrong after changes to the tree, and those of a fake
+    # root document only order the elements of the transformed subtree => remove them.
+    cdef xmlNode* c_node = c_doc.children
+    while c_node is not NULL:
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            if <Py_ssize_t> c_node.content < 0:
+                c_node.content = NULL
+            if c_node.children is not NULL:
+                c_node = c_node.children
+                continue
+        while c_node.next is NULL:
+            c_node = c_node.parent
+            if c_node is NULL or c_node is <xmlNode*> c_doc:
+                return
+        c_node = c_node.next
 
 
 cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
