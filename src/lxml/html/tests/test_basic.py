@@ -71,18 +71,40 @@ class TestBasicFeatures(unittest.TestCase):
         self.assertIsNone(doc.body)
 
     def test_tostring_meta_content_type(self):
-        doc = html.fromstring(
+        source = (
             '<html><head><meta http-equiv="Content-Type" content="text/html">'
             '<title>t</title></head><body><p>x</p></body></html>')
+        doc = html.fromstring(source)
         self.assertEqual(
             html.tostring(doc),
             b'<html><head><title>t</title></head><body><p>x</p></body></html>')
         self.assertEqual(
             html.tostring(doc, include_meta_content_type=True),
-            b'<html><head><meta http-equiv="Content-Type" content="text/html">'
-            b'<title>t</title></head><body><p>x</p></body></html>')
+            source.encode())
         # The tree itself is left unchanged.
         self.assertEqual(len(doc.head), 2)
+
+    def test_tostring_meta_content_type_restores_tree(self):
+        # The elements are taken out of the tree only while it is being
+        # serialised, so the tree must come back exactly as it was,
+        # surrounding text included.
+        source = (
+            '<div>a'
+            '<meta http-equiv="Content-Type" content="text/html">b'
+            '<meta http-equiv="Content-Type" content="text/plain">c'
+            '<span>s</span>d'
+            '<meta http-equiv="Content-Type">e'
+            '</div>')
+        div = html.fromstring(source)
+        self.assertEqual(
+            html.tostring(div), b'<div>abc<span>s</span>de</div>')
+        self.assertEqual(
+            html.tostring(div, include_meta_content_type=True),
+            source.encode())
+        self.assertEqual(
+            [el.tag for el in div], ['meta', 'meta', 'span', 'meta'])
+        self.assertEqual(div.text, 'a')
+        self.assertEqual([el.tail for el in div], ['b', 'c', 'd', 'e'])
 
     def test_tostring_meta_content_type_in_text(self):
         # Text that only looks like the meta tag must be written unchanged,
