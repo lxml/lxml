@@ -44,12 +44,24 @@ class ParserError(LxmlError):
     """
 
 
+cdef extern from *:
+    """
+    #if defined(Py_GIL_DISABLED)
+        #define __lxml_free_threading 1
+    #else
+        #define __lxml_free_threading 0
+    #endif
+    """
+    const bint FREE_THREADING "__lxml_free_threading"
+
+
 @cython.final
 @cython.internal
 cdef class _ParserDictionary:
-    # The string dictionary of a parser, shared by all of its parsed documents.
+    # A string dictionary of a parser, see _ParserContext.prepare().
 
     cdef tree.xmlDict* _c_dict
+    cdef bint _unlimited
 
     def __cinit__(self):
         self._c_dict = tree.xmlDictCreate()
@@ -61,6 +73,7 @@ cdef class _ParserDictionary:
         self._c_dict = NULL
 
     cdef void disableSizeLimit(self) noexcept:
+        self._unlimited = True
         tree.xmlDictSetLimit(self._c_dict, 0)
 
     cdef tree.xmlDict *getDict(self) noexcept:
@@ -663,6 +676,8 @@ cdef void _reset_resource_loader(xmlparser.xmlExternalEntityLoader old) noexcept
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef _ParserDictionary _dict
+    # The dictionary of the last completed parse, for documents that are not parsed.
+    cdef _ParserDictionary _doc_dict
     cdef _ParserSchemaValidationContext _validator
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     cdef xmlparser.xmlExternalEntityLoader _orig_loader
@@ -674,7 +689,7 @@ cdef class _ParserContext(_ResolverContext):
     def __cinit__(self):
         self._collect_ids = True
         self._error_log = _ErrorLog()
-        self._dict = _ParserDictionary()
+        self._dict = self._doc_dict = _ParserDictionary()
 
     def __dealloc__(self):
         if self._c_ctxt is not NULL:
@@ -718,6 +733,8 @@ cdef class _ParserContext(_ResolverContext):
     cdef int prepare(self, bint set_document_loader=True) except -1:
         cdef int result
         cdef unsigned long current_tid
+        # Created before we lock, since it can fail.
+        cdef _ParserDictionary new_dict = _ParserDictionary()
         if config.ENABLE_THREADING:
             current_tid = python.PyThread_get_thread_ident() + 1  # allow 0 == no thread
             if self._lock_owner_tid == current_tid:
@@ -726,6 +743,7 @@ cdef class _ParserContext(_ResolverContext):
             self._lock_owner_tid = current_tid
         self._error_log.clear()
         self._doc = None
+        self._useNewDict(new_dict)
         # Connect the lxml error log with libxml2's error handling. In the case of parsing
         # HTML, ctxt->sax is not set to null, so this always works. The libxml2 function
         # that does this is htmlInitParserCtxt in HTMLparser.c. For HTML (and possibly XML
@@ -745,6 +763,41 @@ cdef class _ParserContext(_ResolverContext):
                 raise
         return 0
 
+    cdef void _useNewDict(self, _ParserDictionary new_dict) noexcept:
+        """Parse into a new string dictionary.
+
+        libxml2 adds names to the dictionary of a document without locking, so the users of
+        a dictionary must hold the same lock.  The documents of a parser share its RWLock,
+        but parsing does not hold it, so it must not use the dictionary of other documents.
+        """
+        if self._dict._unlimited:
+            new_dict.disableSizeLimit()
+        new_dict.initParserDict(self._c_ctxt)
+        # Other threads may read the dictionaries, see initDocDict() and getDictSize().
+        with cython.critical_section(self):
+            old_dict = self._dict
+            self._dict = new_dict
+
+    cdef void _shareDict(self) noexcept:
+        """After a parse, let the documents that are not parsed share its dictionary
+        (with the GIL, see _BaseParser.initDocDict()).
+        """
+        with cython.critical_section(self):
+            old_doc_dict = self._doc_dict
+            self._doc_dict = self._dict
+
+    cdef void initDocDict(self, tree.xmlDoc *c_doc) noexcept:
+        """Let the document share the dictionary of the last completed parse.
+        """
+        with cython.critical_section(self):
+            self._doc_dict.initDocDict(c_doc)
+
+    cdef size_t getDictSize(self) noexcept:
+        cdef size_t size
+        with cython.critical_section(self):
+            size = self._dict.getDictSize()
+        return size
+
     cdef int cleanup(self) except -1:
         if self._orig_loader is not NULL:
             _reset_resource_loader(self._orig_loader)
@@ -756,6 +809,7 @@ cdef class _ParserContext(_ResolverContext):
             self._doc = None
             self._c_ctxt.sax.serror = NULL
         finally:
+            self._shareDict()
             if config.ENABLE_THREADING:
                 self._lock_owner_tid = 0
                 self._lock.release()
@@ -1187,7 +1241,20 @@ cdef class _BaseParser:
 
     @cython.final
     cdef void initDocDict(self, tree.xmlDoc *c_doc) noexcept:
-        self._getParserContext()._dict.initDocDict(c_doc)
+        # Not the dictionary of the current parse, see _ParserContext._useNewDict().
+        cdef tree.xmlDict* c_dict
+        if FREE_THREADING:
+            # This thread adds names to the new document without holding its lock,
+            # so it cannot share the dictionary with other documents.
+            c_dict = tree.xmlDictCreate()
+            if c_dict is not NULL:
+                if c_doc.dict is not NULL:
+                    tree.xmlDictFree(c_doc.dict)
+                c_doc.dict = c_dict
+                return
+            # Out of memory: share the dictionary (as before).
+        # With the GIL, the threads that add names to it hold the GIL.
+        self._getParserContext().initDocDict(c_doc)
 
     @cython.final
     cdef tree.xmlDict* getDict(self) noexcept:
@@ -1215,9 +1282,9 @@ cdef class _BaseParser:
     def dict_size(self):
         cdef size_t size = 0
         if self._parser_context is not None:
-            size += self._parser_context._dict.getDictSize()
+            size += self._parser_context.getDictSize()
         if self._push_parser_context is not None:
-            size += self._push_parser_context._dict.getDictSize()
+            size += self._push_parser_context.getDictSize()
         return size
 
     def set_element_class_lookup(self, ElementClassLookup lookup = None):

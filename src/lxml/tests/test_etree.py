@@ -751,6 +751,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = XMLParser(huge_tree=True)
         self.assertEqual(2, len(fromstring(xml, parser=parser)))
 
+    def test_parse_new_names_dict(self):
+        # Other threads may add names to the documents of earlier parses while the parser
+        # runs, so it must not add names to their dictionary.
+        fromstring = self.etree.fromstring
+        XMLParser = self.etree.XMLParser
+
+        xml = b'<b1><b2/><b3 b4="x"/></b1>'
+        parser = XMLParser()
+        fromstring(b'<a1 a2="x"/>', parser)
+        fromstring(xml, parser)
+        new_parser = XMLParser()
+        fromstring(xml, new_parser)
+        self.assertEqual(new_parser.dict_size, parser.dict_size)
+
     def test_parse_premature_end(self):
         fromstring = self.etree.fromstring
         XMLParser = self.etree.XMLParser
