@@ -55,6 +55,14 @@ Bugs fixed
   the crashes of lxml 6.x when several threads used the same ``XSLT`` object, and keeps the names
   that a run with parameters creates valid (LP#2175569).
 
+* LP#2175778: Threads that ran the same ``XSLT`` object or libxml2 ``Schematron`` schema at the
+  same time wrote to the shared compiled stylesheet or schema: libxml2 caches the function lookups
+  of compiled XPath expressions in them, and libxslt adds the data of ``profile_run=True`` runs to
+  the templates, which could corrupt memory.  Runs of the same object now take turns while libxslt
+  and libxml2 execute them; their extension functions, resolvers and Python error logs still run in
+  parallel.  Use separate (e.g. copied) ``XSLT`` objects for parallel runs.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.

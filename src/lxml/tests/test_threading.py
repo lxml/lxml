@@ -3,6 +3,7 @@ Tests for thread usage in lxml.etree.
 """
 
 
+import copy
 import re
 import sys
 import unittest
@@ -335,6 +336,127 @@ class ThreadingTestCase(HelperTestCase):
                     '<r>' + ''.join(f'<{name} {name}="v"/>' for name in names) + '</r>'))
                 self.assertEqual(names, [el.tag for el in result.getroot()])
                 self.assertEqual(names, [el.keys()[0] for el in result.getroot()])
+
+        self._run_threads(8, run_thread)
+
+    def test_thread_xslt_shared_function_calls(self):
+        # Concurrent runs of one stylesheet that calls XPath functions, extension functions
+        # and an extension element that applies templates.
+        XML = self.etree.XML
+
+        class Wrap(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                wrapper = etree.Element('wrapped')
+                wrapper.text = ''.join(self.process_children(context))
+                output_parent.append(wrapper)
+
+        stylesheet = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:ext="testns" extension-element-prefixes="ext">
+  <xsl:template match="/r">
+    <out count="{count(*)}"><xsl:apply-templates/></out>
+  </xsl:template>
+  <xsl:template match="item">
+    <ext:wrap><xsl:value-of select="concat(ext:double(string(@n)), '-', name())"/></ext:wrap>
+  </xsl:template>
+</xsl:stylesheet>'''), extensions={
+            ('testns', 'double'): lambda context, value: str(2 * int(value)),
+            ('testns', 'wrap'): Wrap(),
+        })
+
+        def run_thread():
+            for i in range(20):
+                values = [i * 10 + k for k in range(5)]
+                result = stylesheet(XML(
+                    '<r>' + ''.join(f'<item n="{n}"/>' for n in values) + '</r>'))
+                out = result.getroot()
+                self.assertEqual(str(len(values)), out.get('count'))
+                self.assertEqual([f'{2 * n}-item' for n in values],
+                                 [el.text for el in out.iterchildren('wrapped')])
+
+        self._run_threads(8, run_thread)
+
+    def test_thread_xslt_shared_profiled_runs(self):
+        # Profiled runs of one stylesheet add their profiles to the compiled templates.
+        XML = self.etree.XML
+        callers = 'abcdef'
+        stylesheet = self.etree.XSLT(XML(
+            '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">'
+            '<xsl:template match="/r"><out><xsl:apply-templates/></out></xsl:template>' +
+            ''.join(f'<xsl:template match="{name}"><xsl:call-template name="leaf"/></xsl:template>'
+                    for name in callers) +
+            '<xsl:template name="leaf"><leaf/></xsl:template>'
+            '</xsl:stylesheet>'))
+        source = '<r>' + ''.join(f'<{name}/>' for name in callers) + '</r>'
+
+        def run_thread(transform):
+            for _ in range(20):
+                result = transform(XML(source), profile_run=True)
+                self.assertEqual(['leaf'] * len(callers), [el.tag for el in result.getroot()])
+                self.assertEqual('profile', result.xslt_profile.getroot().tag)
+
+        self._run_threads(8, lambda: run_thread(stylesheet))
+        # Copies use separate templates, but the profiling timer of libxslt is global.
+        copies = [copy.copy(stylesheet) for _ in range(8)]
+        self._run_threads(8, lambda: run_thread(copies.pop()))
+
+    def test_thread_xslt_extension_waits_for_same_stylesheet(self):
+        # An extension function that waits for the same stylesheet to run in another thread.
+        XML = self.etree.XML
+        threads = []
+        inner_results = []
+
+        def transform_in_thread(context, name):
+            if name != 'outer':
+                return name
+            done = threading.Event()
+
+            def run_thread():
+                try:
+                    inner_results.append(str(transform(XML('<inner/>'))))
+                finally:
+                    done.set()
+
+            thread = threading.Thread(target=run_thread)
+            threads.append(thread)
+            thread.start()
+            # The time limit only bounds the time it takes to fail.
+            return 'done' if done.wait(60) else 'deadlock'
+
+        transform = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="test:transform-in-thread(name(*))"/></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'transform-in-thread'): transform_in_thread})
+
+        try:
+            result = str(transform(XML('<outer/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('done', result)
+        self.assertEqual(['inner'], inner_results)
+
+    def test_thread_schematron_shared(self):
+        # Concurrent validations with one Schematron schema that calls XPath functions.
+        XML = self.etree.XML
+        schematron = self.etree.Schematron(XML(b'''\
+<schema xmlns="http://purl.oclc.org/dsdl/schematron">
+  <pattern id="items">
+    <rule context="/r">
+      <assert test="count(item) = number(@expected)">wrong item count</assert>
+      <assert test="not(item[string-length(@n) = 0])">empty item</assert>
+    </rule>
+  </pattern>
+</schema>'''))
+
+        def run_thread():
+            for i in range(30):
+                valid = XML(f'<r expected="{i % 5}">' + '<item n="1"/>' * (i % 5) + '</r>')
+                invalid = XML(f'<r expected="{i % 5 + 1}"><item n=""/></r>')
+                self.assertTrue(schematron.validate(valid))
+                self.assertFalse(schematron.validate(invalid))
 
         self._run_threads(8, run_thread)
 

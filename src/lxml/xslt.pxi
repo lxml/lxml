@@ -48,6 +48,8 @@ LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
     cdef _BaseParser _parser
+    # The current XSLT run, which releases its lock while calling the resolvers.
+    cdef _Run _run
 
     @cython.final
     cdef _XSLTResolverContext _copy(self):
@@ -76,6 +78,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
 
     error[0] = 0
     context = <_XSLTResolverContext>c_context
+    cdef bint released = context._run is not None and context._run.release_if_held()
 
     # shortcut if we resolve the stylesheet itself
     c_doc = context._c_style_doc
@@ -111,6 +114,8 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
         error[0] = 1
         context._store_raised()
     finally:
+        if released:
+            context._run.acquire()
         return c_return_doc  # and swallow any further exceptions
 
 
@@ -273,6 +278,9 @@ cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf) noexcept:
 
 cdef dict EMPTY_DICT = {}
 
+# The calibration of the profiling timer in libxslt is global.
+cdef _RunLock _xslt_profile_lock = _RunLock()
+
 
 @cython.final
 @cython.internal
@@ -376,6 +384,10 @@ cdef class XSLT:
     cdef _ErrorLog _error_log
     # An unused, empty log for the next run.  It was never published.
     cdef _ErrorLog _spare_error_log
+    cdef _RunLock _run_lock
+
+    def __cinit__(self):
+        self._run_lock = _RunLock()
 
     def __init__(self, xslt_input, *, extensions=None, regexp=True,
                  access_control=None):
@@ -577,8 +589,12 @@ cdef class XSLT:
                 input_doc.unlock_fakedoc()
             raise
 
+        # From here on, libxslt uses the compiled stylesheet.  Profiled runs also use global
+        # state of libxslt.
+        run = _Run.start(self._run_lock, _xslt_profile_lock if profile_run else None)
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
+            run.release()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             if use_write_lock:
                 input_doc.unlock_write()
@@ -591,6 +607,7 @@ cdef class XSLT:
         # threads never modify the same dict.
         if transform_ctxt.dict is NULL:
             xslt.xsltFreeTransformContext(transform_ctxt)
+            run.release()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             if use_write_lock:
                 input_doc.unlock_write()
@@ -614,9 +631,11 @@ cdef class XSLT:
                 xslt.xsltFreeTransformContext(transform_ctxt)
                 raise
 
+            context._run = error_log._run = run
             context.register_context(transform_ctxt, input_doc)
 
             resolver_context = self._xslt_resolver_context._copy()
+            resolver_context._run = run
             transform_ctxt._private = <python.PyObject*>resolver_context
 
             _convert_xslt_parameters(transform_ctxt, kw, &params)
@@ -639,6 +658,9 @@ cdef class XSLT:
                 python.lxml_free(params)
             if context is not None:
                 context.free_context()
+            run.release_if_held()
+            if error_log is not None:
+                error_log._run = None
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             if use_write_lock:
                 input_doc.unlock_write()
