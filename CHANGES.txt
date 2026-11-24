@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-6.2.0 (2026-11-23)
+6.2.0 (2026-??-??)
 ==================
 
 This release contains several security fixes. Upgrading is recommended.
