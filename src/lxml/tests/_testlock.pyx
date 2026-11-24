@@ -4,6 +4,7 @@
 cimport cython
 
 cimport cpython.pythread as python
+cimport cpython.ref
 
 from contextlib import contextmanager
 
@@ -54,6 +55,26 @@ cdef class _RWLock:
     def lock_read(self):
         self._lock.lock_read()
 
+    def try_lock_read(self) -> bool:
+        return self._lock.try_lock_read()
+
+    def add_pending_item(self, item):
+        """Leave an object to the next thread that releases the write lock.
+        """
+        cpython.ref.Py_INCREF(item)
+        if self._lock._add_pending_item(<void*> item) < 0:
+            cpython.ref.Py_DECREF(item)
+            raise MemoryError()
+
+    def watch_pending_items(self) -> list:
+        """Start logging the pending items that this lock processes and releases,
+        with the lock state at that time.  Returns the (new) log.
+        """
+        global _watched_lock, _pending_items_log
+        _watched_lock = self._lock
+        _pending_items_log = []
+        return _pending_items_log
+
     def unlock_read(self):
         self._lock.unlock_read()
 
@@ -78,6 +99,29 @@ cdef class _RWLock:
             self._lock.unlock_write()
         else:
             self._lock.unlock_write_with(second_lock._lock)
+
+
+cdef RWLock _watched_lock = None
+cdef list _pending_items_log = None
+
+
+cdef void _log_processed_items(void** items, Py_ssize_t count) noexcept:
+    _pending_items_log.append((
+        "processed", [<object> items[i] for i in range(count)],
+        atomic_load(&_watched_lock._reader_count) < 0))
+
+
+cdef void _log_released_items(void** items, Py_ssize_t count) noexcept:
+    _pending_items_log.append((
+        "released", [<object> items[i] for i in range(count)],
+        atomic_load(&_watched_lock._reader_count) < 0))
+    for i in range(count):
+        cpython.ref.Py_DECREF(<object> items[i])
+    cpython.mem.PyMem_Free(items)
+
+
+_process_pending_items = _log_processed_items
+_release_pending_items = _log_released_items
 
 
 def trace(test_function):

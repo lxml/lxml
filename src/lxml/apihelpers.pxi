@@ -562,7 +562,7 @@ cdef int _replaceNodeByChildren(_Document doc, xmlNode* c_node) except -1:
     if c_node.nsDef is not NULL:
         c_child = c_node.children
         while c_child is not NULL:
-            moveNodeToDocument(doc, doc._c_doc, c_child)
+            moveNodeToDocument(doc, doc, doc._c_doc, c_child)
             c_child = c_child.next
 
     # fix sibling links to/from child slice
@@ -1124,7 +1124,7 @@ cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
     _moveTail(c_next, c_node)
     if not attemptDeallocation(c_node):
         # make namespaces absolute
-        moveNodeToDocument(doc, c_node.doc, c_node)
+        moveNodeToDocument(doc, doc, c_node.doc, c_node)
     return 0
 
 cdef int _removeSiblings(xmlNode* c_element, tree.xmlElementType node_type, bint with_tail) except -1:
@@ -1380,7 +1380,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 _moveTail(c_next, element._c_node)
 
                 # integrate element into new document
-                moveNodeToDocument(parent._doc, c_source_doc, element._c_node)
+                moveNodeToDocument(parent._doc, element._doc, c_source_doc, element._c_node)
 
                 # stop at the end of the slice
                 if slicelength > 0:
@@ -1455,7 +1455,7 @@ cdef int _appendChild(_Element parent, _Element child) except -1:
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
-    moveNodeToDocument(parent._doc, c_source_doc, c_node)
+    moveNodeToDocument(parent._doc, child._doc, c_source_doc, c_node)
     return 0
 
 cdef int _prependChild(_Element parent, _Element child) except -1:
@@ -1479,7 +1479,7 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
-    moveNodeToDocument(parent._doc, c_source_doc, c_node)
+    moveNodeToDocument(parent._doc, child._doc, c_source_doc, c_node)
     return 0
 
 cdef int _appendSibling(_Element element, _Element sibling) except -1:
@@ -1518,7 +1518,7 @@ cdef int _addSibling(_Element element, _Element sibling, bint as_next) except -1
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
-    moveNodeToDocument(element._doc, c_source_doc, c_node)
+    moveNodeToDocument(element._doc, sibling._doc, c_source_doc, c_node)
     return 0
 
 cdef bint isutf8l(const_xmlChar* s, size_t length) noexcept:

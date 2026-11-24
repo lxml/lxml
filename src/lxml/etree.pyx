@@ -508,6 +508,10 @@ include "rwlock.pxi"       # A read-write lock
 include "apihelpers.pxi"   # Private helper functions
 include "xmlerror.pxi"     # Error and log handling
 
+# Document locks finish the proxy releases that threads left to them (see _releaseProxyNode()).
+_process_pending_items = _processPendingReleases
+_release_pending_items = _releasePendingDocuments
+
 
 ################################################################################
 # Public Python API
@@ -529,12 +533,50 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef RWLock _lock
     # Short-lived lock to guard proxy link changes.
     cdef cython.pymutex _proxy_lock
+    # Nodes with a deferred proxy release (see _releaseProxyNode()), under the proxy lock.
+    cdef xmlNode** _pending_nodes
+    cdef Py_ssize_t _pending_count
+    cdef Py_ssize_t _pending_capacity
 
     def __dealloc__(self):
         # If there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes hold a reference to
         # the _Document.  No locking is needed.
+        # (Its lock references it while it has pending nodes, so there are none.)
+        python.lxml_free(self._pending_nodes)
         tree.xmlFreeDoc(self._c_doc)
+
+    cdef int _addPendingNode(self, xmlNode* c_node) noexcept:
+        """Add a node to the pending releases, under the proxy lock.
+        Returns -1 if out of memory.
+        """
+        cdef xmlNode** c_nodes
+        if self._pending_count >= self._pending_capacity:
+            c_nodes = <xmlNode**> python.lxml_realloc(
+                self._pending_nodes, self._pending_capacity * 2 + 4, sizeof(xmlNode*))
+            if c_nodes is NULL:
+                return -1
+            self._pending_nodes = c_nodes
+            self._pending_capacity = self._pending_capacity * 2 + 4
+        if self._pending_count == 0:
+            # Let the next writer process them (see _processPendingReleases()).
+            cpython.ref.Py_INCREF(self)
+            if self._lock._add_pending_item(<void*> self) < 0:
+                cpython.ref.Py_DECREF(self)
+                return -1
+        self._pending_nodes[self._pending_count] = c_node
+        self._pending_count += 1
+        return 0
+
+    cdef void _removePendingNode(self, xmlNode* c_node) noexcept:
+        """Remove a node from the pending releases, under the proxy lock.
+        """
+        cdef Py_ssize_t i
+        for i in range(self._pending_count):
+            if self._pending_nodes[i] is c_node:
+                self._pending_count -= 1
+                self._pending_nodes[i] = self._pending_nodes[self._pending_count]
+                return
 
     # Allow locking and working with the names dict to be done per document
     # to avoid letting code know that it currently isn't document specific.
@@ -972,39 +1014,66 @@ cdef extern from *:
 @cython.linetrace(False)
 @cython.profile(False)
 cdef void _releaseProxyNode(_Element self) noexcept:
-    #print("trying to free node:", <int>self._c_node)
-    #displayNode(self._c_node, 0)
-    c_node = self._c_node
-    if c_node is NULL:
+    """Unregister the proxy from its node and free the node's tree if nothing refers to it
+    any more (i.e. if it was removed from the document and has no other proxies).
+    """
+    cdef xmlNode* c_node
+    cdef xmlNode* c_top = NULL
+    cdef _Document doc
+    cdef bint read_locked, is_registered
+    cdef void** pending_docs
+    cdef Py_ssize_t pending_count = 0
+    if load_ptr_relaxed(<void**> &self._c_node) is NULL:
+        # Never registered, or replaced by another proxy (see _replaceUnusableProxy()).
         return
 
-    #assert c_node._private is not NULL
-    #assert cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private) > 0, \
-    #    cpython.ref._Py_REFCNT(<cpython.object.PyObject*> c_node._private)
-
-    doc = self._doc
-    # None probably means that the unregistration has happened concurrently.
-    if doc is not None:
-        doc.lock_proxies()
-
-    try:
-        # Now, owning the lock, make sure there is still something to deallocate.
-        c_node = self._c_node
-        if c_node is NULL:
+    while True:
+        # Another thread may be moving the node to another document.
+        doc = _documentOf(self)
+        if doc is None:
             return
+        # Looking at the tree needs a read lock.  Waiting for it here could deadlock, e.g. if
+        # this thread holds it and a writer waits for it, so if a writer holds the lock or
+        # waits for it, we leave the node to the next thread that holds the lock.
+        read_locked = doc._lock.try_lock_read()
+        doc.lock_proxies()
+        # Moving the node to another document requires the proxy locks of both documents.
+        if _isDocumentOf(self, doc):
+            break
+        doc.unlock_proxies()
+        if read_locked:
+            doc._lock.unlock_read()
+    self._doc = None
 
-        # First, disconnect and invalidate this proxy.
-        _unregisterProxy(self)
+    # Under the proxy lock, '_c_node' is our node, or NULL if another thread replaced
+    # this proxy while it waited for the lock.
+    c_node = self._c_node
+    is_registered = c_node is not NULL and load_ptr_relaxed(&c_node._private) is <void*> self
+    store_ptr_relaxed(<void**> &self._c_node, NULL)
+    self._tag = None
+    if is_registered:
+        if read_locked:
+            store_ptr_relaxed(&c_node._private, NULL)
+            # Search for other references to the tree.
+            c_top = getDeallocationTop(c_node)
+        elif doc._addPendingNode(c_node) == 0:
+            store_ptr_relaxed(&c_node._private, PENDING_RELEASE)
+        else:
+            # Out of memory.  We cannot keep the node, so its tree might never be freed.
+            store_ptr_relaxed(&c_node._private, NULL)
+    doc.unlock_proxies()
 
-        # Search for other proxy references to the tree.
-        c_top = getDeallocationTop(c_node)
-    finally:
-        if doc is not None:
-            doc.unlock_proxies()
-
-    if c_top is not NULL:
-        # No more references => no locking needed to free it.
-        freeSubtree(c_top)
+    if read_locked:
+        if c_top is not NULL:
+            # Nothing refers to the tree any more.
+            freeSubtree(c_top)
+        doc._lock.unlock_read()
+    elif is_registered and doc._lock.try_lock_read():
+        # The writer may have released the lock before it could see our pending node.
+        pending_docs = doc._lock._take_pending_items(&pending_count)
+        _processPendingReleases(pending_docs, pending_count)
+        doc._lock.unlock_read()
+        _releasePendingDocuments(pending_docs, pending_count)
 
 
 @cython.no_gc_clear
@@ -1089,9 +1158,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 _removeText(c_node.next)
                 tree.xmlReplaceNode(c_node, element._c_node)
                 _moveTail(c_next, element._c_node)
-                moveNodeToDocument(self._doc, c_source_doc, element._c_node)
+                moveNodeToDocument(self._doc, other_doc, c_source_doc, element._c_node)
                 if not attemptDeallocation(c_node):
-                    moveNodeToDocument(self._doc, c_node.doc, c_node)
+                    moveNodeToDocument(doc, doc, c_node.doc, c_node)
             finally:
                 doc.unlock_write_with(other_doc)
 
@@ -1351,7 +1420,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_next = element._c_node.next
             tree.xmlAddPrevSibling(c_node, element._c_node)
             _moveTail(c_next, element._c_node)
-            moveNodeToDocument(self._doc, c_source_doc, element._c_node)
+            moveNodeToDocument(self._doc, other_doc, c_source_doc, element._c_node)
         finally:
             doc.unlock_write_with(other_doc)
 
@@ -1378,7 +1447,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             tree.xmlUnlinkNode(c_node)
             _moveTail(c_next, c_node)
             # fix namespace declarations
-            moveNodeToDocument(self._doc, c_node.doc, c_node)
+            moveNodeToDocument(doc, doc, c_node.doc, c_node)
         finally:
             doc.unlock_write_with(other_doc)
 
@@ -1414,9 +1483,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             tree.xmlReplaceNode(c_old_node, c_new_node)
             _moveTail(c_new_next, c_new_node)
             _moveTail(c_old_next, c_old_node)
-            moveNodeToDocument(self._doc, c_source_doc, c_new_node)
+            moveNodeToDocument(self._doc, new_doc, c_source_doc, c_new_node)
             # fix namespace declarations
-            moveNodeToDocument(self._doc, c_old_node.doc, c_old_node)
+            moveNodeToDocument(old_doc, old_doc, c_old_node.doc, c_old_node)
         finally:
             old_doc.unlock_write_with(new_doc)
 
@@ -2219,6 +2288,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
             proxy = getProxy(c_node)
             if proxy is not None:
                 return proxy
+            _replaceUnusableProxy(doc, c_node)
 
         _registerProxy(result, doc, c_node)
     finally:

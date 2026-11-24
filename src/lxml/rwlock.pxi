@@ -1,6 +1,8 @@
 """Read-write lock implementation.
 """
 
+cimport cpython.mem
+
 cdef extern from * nogil:
     """
 #include <pythread.h>
@@ -70,7 +72,6 @@ cdef extern from * nogil:
     #define __lxml_atomic_decr(value)  __sync_fetch_and_sub((value), 1)
     #define __lxml_atomic_load(value)  __sync_fetch_and_add((value), 0)
 
-    /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = __sync_val_compare_and_swap(value, *expected, desired);
         if (old_value != *expected) {
@@ -79,7 +80,6 @@ cdef extern from * nogil:
         }
         return 1;
     }
-    */
 
     #ifdef LXML_DEBUG_ATOMICS
         #warning "Using GNU atomics"
@@ -96,16 +96,15 @@ cdef extern from * nogil:
     #define __lxml_atomic_decr(value)  __lxml_atomic_add((value), -1)
     #define __lxml_atomic_load(value)  (*(value))
 
-    /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
-        __lxml_nonatomic_int_type old_value = _InterlockedCompareExchange(value, *expected, desired);
+        __lxml_nonatomic_int_type old_value = (__lxml_nonatomic_int_type) _InterlockedCompareExchange(
+            (volatile long *) value, (long) desired, (long) *expected);
         if (old_value != *expected) {
             *expected = old_value;
             return 0;
         }
         return 1;
     }
-    */
 
     #ifdef LXML_DEBUG_ATOMICS
         #pragma message ("Using MSVC atomics")
@@ -130,7 +129,6 @@ cdef extern from * nogil:
     #define __lxml_atomic_decr(value)  __lxml_atomic_add((value), -1)
     #define __lxml_atomic_load(value)  (*(value))
 
-    /* UNUSED
     static int __lxml_atomic_compare_exchange_cs(PyObject *cs, __lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value;
         int retval;
@@ -148,7 +146,6 @@ cdef extern from * nogil:
     }
 
     #define __lxml_atomic_compare_exchange(value, expected, desired)  __lxml_atomic_compare_exchange_cs(__pyx_v_self, (value), (expected), (desired))
-    */
 
     #if defined(LXML_DEBUG_ATOMICS) && defined(_MSC_VER)
         #pragma message ("Not using atomics, using CPython critical section")
@@ -165,7 +162,6 @@ cdef extern from * nogil:
     #define __lxml_atomic_decr(value)  (*(value))--
     #define __lxml_atomic_load(value)  (*(value))
 
-    /* UNUSED
     static int __lxml_atomic_compare_exchange(__lxml_atomic_int_type *value, __lxml_nonatomic_int_type *expected, __lxml_nonatomic_int_type desired) {
         __lxml_nonatomic_int_type old_value = *value;
         if (old_value == *expected) {
@@ -176,7 +172,6 @@ cdef extern from * nogil:
             return 0;
         }
     }
-    */
 
     #if defined(LXML_DEBUG_ATOMICS) && defined(_MSC_VER)
         #pragma message ("Not using atomics, using the GIL")
@@ -249,6 +244,13 @@ cdef extern from * nogil:
 
 cdef const nonatomic_int max_lock_reader_count = 1 << 30
 
+# Work that threads leave to the next holder of a lock, see RWLock._add_pending_item().
+# The user of the lock sets these functions:  the first one processes the pending items
+# under the lock, the second one releases them after the lock was released.
+ctypedef void (*pending_items_function)(void** items, Py_ssize_t count) noexcept
+cdef pending_items_function _process_pending_items = NULL
+cdef pending_items_function _release_pending_items = NULL
+
 
 @cython.final
 @cython.internal
@@ -271,6 +273,16 @@ cdef class RWLock:
     cdef cython.pymutex _writer_lock
     cdef int _writer_reentry
     cdef lock_perf _perf_counters
+    # Work left to the next thread that holds the lock (see _add_pending_item()).
+    # '_pending_items_count' is read without the '_pending_lock'.
+    cdef cython.pymutex _pending_lock
+    cdef atomic_int _pending_items_count
+    cdef void** _pending_items
+    cdef Py_ssize_t _pending_items_capacity
+
+    def __dealloc__(self):
+        # (Pending items keep their lock alive, so there are none.)
+        cpython.mem.PyMem_Free(self._pending_items)
 
     @cython.inline
     @cython.profile(False)
@@ -343,6 +355,21 @@ cdef class RWLock:
 
         # A writer is waiting => wait for lock to become free.
         self._wait_to_read()
+
+    cdef bint try_lock_read(self) noexcept:
+        """Acquire the read lock unless that requires waiting for a writer, which holds the
+        lock or waits for it.  Like lock_read(), this succeeds if this thread owns the write
+        lock.  Returns True if the read lock was acquired.
+        """
+        cdef nonatomic_int readers = atomic_load(&self._reader_count)
+        while readers >= 0:
+            if atomic_compare_exchange(&self._reader_count, &readers, readers + 1):
+                inc_perf_counter(&self._perf_counters.read_acquired)
+                return True
+        if self._owns_write_lock(self._my_lock_id()):
+            inc_perf_counter(&self._perf_counters.read_acquired)
+            return True
+        return False
 
     cdef void unlock_read(self) noexcept:
         readers_before = atomic_decr(&self._reader_count)
@@ -420,6 +447,13 @@ cdef class RWLock:
             self._writer_reentry -= 1
             return
 
+        cdef void** pending_items = NULL
+        cdef Py_ssize_t pending_count = 0
+        if atomic_load(&self._pending_items_count):
+            # Other threads left work to us.
+            pending_items = self._take_pending_items(&pending_count)
+            _process_pending_items(pending_items, pending_count)
+
         store_relaxed(&self._write_locked_id, 0)
 
         readers = atomic_add(&self._reader_count, max_lock_reader_count) + max_lock_reader_count
@@ -427,6 +461,49 @@ cdef class RWLock:
             self._unblock_readers(readers)
 
         self._writer_lock.release()
+
+        if pending_items is not NULL:
+            _release_pending_items(pending_items, pending_count)
+
+    # Pending items.
+
+    cdef int _add_pending_item(self, void* item) noexcept:
+        """Leave an item to the next thread that holds the write lock, which processes it in
+        unlock_write() (see '_process_pending_items'), if this thread could not acquire the
+        lock without waiting.  To be safe from races with that writer, call
+        _take_pending_items() if try_lock_read() succeeds afterwards.
+        Returns -1 if out of memory.
+        """
+        cdef void** items
+        cdef Py_ssize_t count
+        with self._pending_lock:
+            count = atomic_load(&self._pending_items_count)
+            if count >= self._pending_items_capacity:
+                items = <void**> cpython.mem.PyMem_Realloc(
+                    self._pending_items, (self._pending_items_capacity * 2 + 4) * sizeof(void*))
+                if items is NULL:
+                    return -1
+                self._pending_items = items
+                self._pending_items_capacity = self._pending_items_capacity * 2 + 4
+            self._pending_items[count] = item
+            atomic_incr(&self._pending_items_count)
+        return 0
+
+    cdef void** _take_pending_items(self, Py_ssize_t* count) noexcept:
+        """Return the pending items (in a memory block for '_release_pending_items') and
+        their number.
+        """
+        cdef void** items
+        count[0] = 0
+        if atomic_load(&self._pending_items_count) == 0:
+            return NULL
+        with self._pending_lock:
+            items = self._pending_items
+            count[0] = atomic_load(&self._pending_items_count)
+            self._pending_items = NULL
+            self._pending_items_capacity = 0
+            atomic_add(&self._pending_items_count, -count[0])
+        return items
 
     # Double lock locking.
 

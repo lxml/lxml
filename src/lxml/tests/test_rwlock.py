@@ -103,6 +103,98 @@ class RWLockTest(unittest.TestCase):
         lock.unlock_read()
         assert lock.reader_count == 0, lock.reader_count
 
+    @assert_perf_counters(read_acquired=3, write_acquired=1)
+    def test_try_lock_read(self, lock):
+        self.assertTrue(lock.try_lock_read())
+        self.assertEqual(1, lock.reader_count)
+        self.assertTrue(lock.try_lock_read())
+        self.assertEqual(2, lock.reader_count)
+        lock.unlock_read()
+        lock.unlock_read()
+        self.assertEqual(0, lock.reader_count)
+
+        # The owner of the write lock can read.
+        lock.lock_write()
+        self.assertTrue(lock.try_lock_read())
+        lock.unlock_read()
+        lock.unlock_write()
+        self.assertEqual(0, lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+
+    def test_try_lock_read_while_writing(self):
+        lock = RWLock()
+        locked = threading.Event()
+        release = threading.Event()
+
+        def write():
+            lock.lock_write()
+            locked.set()
+            release.wait()
+            lock.unlock_write()
+
+        with self.run_threads(write):
+            locked.wait()
+            self.assertFalse(lock.try_lock_read())
+            self.assertEqual(0, lock.reader_count)
+            release.set()
+
+        self.assertTrue(lock.try_lock_read())
+        lock.unlock_read()
+        self.assertEqual(0, lock.reader_count)
+
+    def test_try_lock_read_while_writer_waits(self):
+        lock = RWLock()
+        lock.lock_read()
+
+        def write():
+            lock.lock_write()
+            lock.unlock_write()
+
+        with self.run_threads(write):
+            while not lock.writer_blocking_readers:
+                pass  # until the writer has claimed the lock and waits for our read lock
+            self.assertFalse(lock.try_lock_read())
+            lock.unlock_read()
+
+        self.assertEqual(0, lock.reader_count)
+        self.assertFalse(lock.writer_blocking_readers)
+
+    def test_pending_items_processed_by_writer(self):
+        lock = RWLock()
+        log = lock.watch_pending_items()
+        locked = threading.Event()
+        release = threading.Event()
+
+        def write():
+            lock.lock_write()
+            locked.set()
+            release.wait()
+            lock.lock_write()
+            lock.unlock_write()
+            log.append("inner unlock")
+            lock.unlock_write()
+
+        with self.run_threads(write):
+            locked.wait()
+            lock.add_pending_item("a")
+            lock.add_pending_item("b")
+            release.set()
+
+        # Processed before the writer releases the lock, released after that.
+        self.assertEqual(
+            ["inner unlock", ("processed", ["a", "b"], True), ("released", ["a", "b"], False)],
+            log)
+
+        # Readers leave them to the next writer.
+        del log[:]
+        lock.add_pending_item("c")
+        lock.lock_read()
+        lock.unlock_read()
+        self.assertEqual([], log)
+        lock.lock_write()
+        lock.unlock_write()
+        self.assertEqual([("processed", ["c"], True), ("released", ["c"], False)], log)
+
     @assert_perf_counters(write_acquired=3)
     def test_lock_write(self, lock):
         assert not lock.writer_blocking_readers

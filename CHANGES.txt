@@ -47,6 +47,11 @@ Bugs fixed
   in C, which ThreadSanitizer reported.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175571: Dropping the last reference to an element in free-threaded Python could crash
+  (double free) while another thread removed or moved a subtree that contains the element,
+  since lxml 7.0.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#545: ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
   instead of setting a ``value`` attribute on the ``<select>`` element.
   Patch by Alex Castillo Gonzalez.

@@ -24,18 +24,24 @@ cdef extern from *:
         #define __lxml_store_ptr_relaxed(ptr, value)  (*(void * volatile *) (ptr) = (value))
     #endif
 
+    /* The value of xmlNode->_private while the release of the node's last proxy is deferred
+       (see _releaseProxyNode()).  It keeps the node and its tree from being freed, but it is
+       not a proxy. */
+    static char __lxml_pending_release_marker;
+    #define __LXML_PENDING_RELEASE  ((void*) &__lxml_pending_release_marker)
+
+    /* Return a new reference to the proxy of the node, or None.
+       Must be called under the proxy lock of the document.  In FT-Python, a proxy that is
+       being deallocated is not returned (and not resurrected).  It remains registered until
+       its release (which waits for the proxy lock) or until the caller replaces it. */
     static CYTHON_INLINE PyObject* _lx__getProxy(xmlNode *c_node) {
         PyObject *proxy = c_node ? (PyObject*) __lxml_load_ptr_relaxed(&c_node->_private) : NULL;
-        if (proxy) {
+        if (proxy && proxy != (PyObject*) __LXML_PENDING_RELEASE) {
             #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030e0000 && defined(Py_GIL_DISABLED)
-            /* In FT-Python, prevent concurrent disposal and resurrection. */
             if (PyUnstable_TryIncRef(proxy)) {
                 return proxy;
-            } else {
-                /* NOTE: potential race condition, requires outside guard. */
-                __lxml_store_ptr_relaxed(&c_node->_private, NULL);
-                proxy = Py_None;
             }
+            proxy = Py_None;
             #endif
         } else {
             proxy = Py_None;
@@ -43,10 +49,78 @@ cdef extern from *:
         Py_INCREF(proxy);
         return proxy;
     }
+
+    #define __lxml_element_doc_ptr(element)  ((void**) &((struct LxmlElement*) (element))->_doc)
+
+    /* Read-write locks for the '_doc' reference of element proxies, which moves to another
+       document change while other threads read it (see _documentOf()).  With the GIL, there is
+       nothing to do.  In free-threaded Python, a small array of them, one per cache line and
+       chosen by the proxy's address.  Readers only count themselves in for the few instructions
+       that they need to look at '_doc', so they do not exclude each other.  A change waits
+       for the readers that are counted in, and readers that arrive during a change wait for
+       it on its mutex. */
+    #if defined(Py_GIL_DISABLED) && PY_VERSION_HEX >= 0x030d0000 && CYTHON_COMPILING_IN_CPYTHON && !defined(Py_LIMITED_API)
+        #define __LXML_DOC_REF_LOCKS 64
+        typedef struct {
+            PyMutex change_lock;  /* serialises the changes */
+            int changing;         /* 1 during a change */
+            int readers;          /* readers that are counted in */
+            char padding[64 - sizeof(PyMutex) - 2 * sizeof(int)];
+        } __lxml_doc_ref_lock;
+        static __lxml_doc_ref_lock __lxml_doc_ref_locks[__LXML_DOC_REF_LOCKS];
+
+        static CYTHON_INLINE __lxml_doc_ref_lock* __lxml_doc_ref_lock_of(void *proxy) {
+            return &__lxml_doc_ref_locks[((size_t) proxy >> 6) % __LXML_DOC_REF_LOCKS];
+        }
+
+        static CYTHON_INLINE void __lxml_begin_doc_ref_read(void *proxy) {
+            __lxml_doc_ref_lock *lock = __lxml_doc_ref_lock_of(proxy);
+            for (;;) {
+                _Py_atomic_add_int(&lock->readers, 1);
+                if (!_Py_atomic_load_int(&lock->changing))
+                    return;
+                /* Step back and wait for the change to end. */
+                _Py_atomic_add_int(&lock->readers, -1);
+                PyMutex_Lock(&lock->change_lock);
+                PyMutex_Unlock(&lock->change_lock);
+            }
+        }
+
+        static CYTHON_INLINE void __lxml_end_doc_ref_read(void *proxy) {
+            _Py_atomic_add_int(&__lxml_doc_ref_lock_of(proxy)->readers, -1);
+        }
+
+        static void __lxml_begin_doc_ref_change(void *proxy) {
+            __lxml_doc_ref_lock *lock = __lxml_doc_ref_lock_of(proxy);
+            PyMutex_Lock(&lock->change_lock);
+            _Py_atomic_store_int(&lock->changing, 1);
+            while (_Py_atomic_load_int(&lock->readers)) {
+                /* Readers are counted in for a few instructions only. */
+            }
+        }
+
+        static void __lxml_end_doc_ref_change(void *proxy) {
+            __lxml_doc_ref_lock *lock = __lxml_doc_ref_lock_of(proxy);
+            _Py_atomic_store_int(&lock->changing, 0);
+            PyMutex_Unlock(&lock->change_lock);
+        }
+    #else
+        #define __lxml_begin_doc_ref_read(proxy)  ((void) (proxy))
+        #define __lxml_end_doc_ref_read(proxy)  ((void) (proxy))
+        #define __lxml_begin_doc_ref_change(proxy)  ((void) (proxy))
+        #define __lxml_end_doc_ref_change(proxy)  ((void) (proxy))
+    #endif
     """
     _Element getProxy "_lx__getProxy" (xmlNode* c_node)
     void* load_ptr_relaxed "__lxml_load_ptr_relaxed" (void** ptr) noexcept nogil
     void store_ptr_relaxed "__lxml_store_ptr_relaxed" (void** ptr, void* value) noexcept nogil
+    void* PENDING_RELEASE "__LXML_PENDING_RELEASE"
+    void begin_doc_ref_read "__lxml_begin_doc_ref_read" (void* proxy) noexcept nogil
+    void end_doc_ref_read "__lxml_end_doc_ref_read" (void* proxy) noexcept nogil
+    void begin_doc_ref_change "__lxml_begin_doc_ref_change" (void* proxy) noexcept nogil
+    void end_doc_ref_change "__lxml_end_doc_ref_change" (void* proxy) noexcept nogil
+    # The address of the '_doc' field of an _Element, which moves change atomically.
+    void** element_doc_ptr "__lxml_element_doc_ptr" (cpython.object.PyObject* element) noexcept nogil
 
     void PyUnstable_EnableTryIncRef(object o)
     # Enables subsequent uses of PyUnstable_TryIncRef() on obj.
@@ -69,30 +143,27 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     """
     #print "registering for:", <int>proxy._c_node
     assert not hasProxy(c_node), "double registering proxy!"
-    store_ptr_relaxed(&c_node._private, <void*> proxy)
     proxy._doc = doc
-    proxy._c_node = c_node
+    store_ptr_relaxed(<void**> &proxy._c_node, c_node)
     PyUnstable_EnableTryIncRef(proxy)
+    store_ptr_relaxed(&c_node._private, <void*> proxy)
     return 0
 
 
-@cython.linetrace(False)
-@cython.profile(False)
-cdef inline int _unregisterProxy(_Element proxy) except -1:
-    """Unregister a proxy for the node it's proxying for.
+cdef int _replaceUnusableProxy(_Document doc, xmlNode* c_node) noexcept:
+    """Unregister what getProxy() does not return for the node: a proxy that is being
+    deallocated in another thread, which then leaves the node alone, or the marker of a
+    deferred release, which is no longer needed.  Must be called under the proxy lock.
     """
-    cdef xmlNode* c_node = proxy._c_node
-    #if c_node._private is not <void*>proxy:
-    #    import tracemalloc
-    #    print(tracemalloc.get_object_traceback(proxy))
-    #assert c_node._private is NULL or c_node._private is <void*>proxy, \
-    #    f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> c_node._private:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}"
-
-    if load_ptr_relaxed(&c_node._private) is <void*>proxy:
-        store_ptr_relaxed(&c_node._private, NULL)
-    proxy._c_node = NULL
-    proxy._doc = None
-    proxy._tag = None
+    cdef void* c_proxy = load_ptr_relaxed(&c_node._private)
+    if c_proxy is NULL:
+        return 0
+    if c_proxy is PENDING_RELEASE:
+        doc._removePendingNode(c_node)
+    else:
+        # The dying proxy waits for the proxy lock in _releaseProxyNode(), so its memory is valid.
+        store_ptr_relaxed(<void**> &(<_Element> c_proxy)._c_node, NULL)
+    store_ptr_relaxed(&c_node._private, NULL)
     return 0
 
 
@@ -259,6 +330,59 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent) noexcept:
     return 1
 
 ################################################################################
+# deferred release of the last proxy of a node
+#
+# Releasing a proxy (_releaseProxyNode()) may have to free the tree of its node, if it
+# was removed from the document and no other proxies refer to it.  Finding that out
+# requires a read lock of the document.  If a writer holds the lock or waits for it,
+# the release leaves the node to the next thread that holds the lock:  it replaces the
+# proxy in the node by the PENDING_RELEASE marker (which keeps the tree from being
+# freed by others) and adds the node to the document's list of pending nodes, under
+# its proxy lock.  The document becomes a pending item of its lock, which processes
+# the pending nodes of its documents in unlock_write(), before it releases the write lock.
+
+cdef void _processPendingReleases(void** docs, Py_ssize_t count) noexcept:
+    """Finish the deferred proxy releases of the documents (the pending items of their
+    lock, see RWLock._take_pending_items()).  The caller holds the lock.
+    """
+    cdef Py_ssize_t i, j, node_count
+    cdef xmlNode** c_nodes
+    cdef xmlNode* c_node
+    cdef xmlNode* c_top
+    cdef _Document doc
+    for i in range(count):
+        doc = <_Document> docs[i]
+        doc.lock_proxies()
+        c_nodes = doc._pending_nodes
+        node_count = doc._pending_count
+        doc._pending_nodes = NULL
+        doc._pending_count = doc._pending_capacity = 0
+        # Each pending node has a marker, which blocks freeing its tree until it is processed.
+        j = 0
+        for c_node in c_nodes[:node_count]:
+            if load_ptr_relaxed(&c_node._private) is not PENDING_RELEASE:
+                continue  # (not expected: replacing the marker removes the node from the list)
+            store_ptr_relaxed(&c_node._private, NULL)
+            c_top = getDeallocationTop(c_node)
+            if c_top is not NULL:
+                c_nodes[j] = c_top
+                j += 1
+        doc.unlock_proxies()
+        # Nothing refers to these trees any more.
+        for c_top in c_nodes[:j]:
+            freeSubtree(c_top)
+        python.lxml_free(c_nodes)
+
+
+cdef void _releasePendingDocuments(void** docs, Py_ssize_t count) noexcept:
+    """Release the document references of RWLock._take_pending_items().
+    """
+    cdef Py_ssize_t i
+    for i in range(count):
+        cpython.ref.Py_DECREF(<object> docs[i])
+    python.lxml_free(docs)
+
+################################################################################
 # fix _Document references and namespaces when a node changes documents
 
 cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) noexcept nogil:
@@ -361,7 +485,7 @@ cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
             c_ns.next = c_del_ns_list
 
 
-cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
+cdef int moveNodeToDocument(_Document doc, _Document source_doc, xmlDoc* c_source_doc,
                             xmlNode* c_element) except -1:
     """Fix the xmlNs pointers of a node and its subtree that were moved.
 
@@ -384,32 +508,57 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
        target document *iff* it is different from the dict used in the
        source subtree.
 
-    4) Set the Document reference to the new Document (if different).
-       This is done on backtracking to keep the original Document
-       alive as long as possible, until all its elements are updated.
+    4) If the subtree comes from another Document ('source_doc'), set
+       the Document reference of its proxies to the new Document.
 
     Note that the namespace declarations are removed from the tree in
     step 1), but freed only after the complete subtree was traversed
     and all occurrences were replaced by tree-internal pointers.
+
+    The caller must hold the write locks of both Documents, and a
+    reference to 'source_doc'.
     """
+    cdef Py_ssize_t proxy_count
     if not tree._isElementOrXInclude(c_element):
         return 0
 
-    doc.lock_proxies()
-    try:
-        return moveNodeToDocument_locked(doc, c_source_doc, c_element)
-    finally:
-        doc.unlock_proxies()
+    proxy_count = _fixMovedNodeNames(doc, c_source_doc, c_element)
+
+    if proxy_count and source_doc is not doc:
+        # The proxies (and pending releases) of the source document change under its
+        # proxy lock, and the target document's proxy lock protects the result.
+        _lockProxiesOf(doc, source_doc)
+        fixElementDocument(c_element, doc, source_doc, <size_t> proxy_count)
+        _unlockProxiesOf(doc, source_doc)
+    return 0
 
 
-cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode* c_element) except -1:
+cdef void _lockProxiesOf(_Document doc, _Document other_doc) noexcept:
+    # Lock two different documents in the same order as RWLock.lock_write_with().
+    if <void*> doc < <void*> other_doc:
+        other_doc.lock_proxies()
+        doc.lock_proxies()
+    else:
+        doc.lock_proxies()
+        other_doc.lock_proxies()
+
+
+cdef void _unlockProxiesOf(_Document doc, _Document other_doc) noexcept:
+    doc.unlock_proxies()
+    other_doc.unlock_proxies()
+
+
+cdef Py_ssize_t _fixMovedNodeNames(_Document doc, xmlDoc* c_source_doc, xmlNode* c_element) except -1:
+    """Steps 1) to 3) of moveNodeToDocument().  Returns the number of nodes in the subtree
+    that refer to a proxy (or a deferred release).
+    """
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
     cdef xmlDoc* c_doc = doc._c_doc
     cdef tree.xmlAttr* c_attr
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_del_ns_list = NULL
-    cdef size_t proxy_count = 0
+    cdef Py_ssize_t proxy_count = 0
 
     c_start_node = c_element
 
@@ -452,20 +601,7 @@ cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode*
     if doc._c_doc.dict is not c_source_doc.dict:
         fixThreadDictNames(c_start_node, c_source_doc.dict, doc._c_doc.dict)
 
-    # 4) fix _Document references
-    #    (and potentially deallocate the source document)
-    if proxy_count > 0:
-        if proxy_count == 1 and hasProxy(c_start_node):
-            proxy = getProxy(c_start_node)
-            if proxy is not None:
-                if proxy._doc is not doc:
-                    proxy._doc = doc
-            else:
-                fixElementDocument(c_start_node, doc, proxy_count)
-        else:
-            fixElementDocument(c_start_node, doc, proxy_count)
-
-    return 0
+    return proxy_count
 
 
 cdef void _setTreeDoc(xmlNode* c_node, xmlDoc* c_doc) noexcept:
@@ -524,20 +660,63 @@ cdef int _fixCNs(_Document doc, xmlNode* c_start_node, xmlNode* c_node,
     return 0
 
 
-cdef int fixElementDocument(xmlNode* c_element, _Document doc,
-                             size_t proxy_count) except -1:
+cdef void fixElementDocument(xmlNode* c_element, _Document doc, _Document source_doc,
+                             size_t proxy_count) noexcept:
+    """Step 4) of moveNodeToDocument(), under the proxy locks of both documents.
+
+    The proxies may be in their deallocation in other threads, which wait for the proxy
+    lock of 'source_doc' in _releaseProxyNode().  So we must not take references to them.
+    """
     cdef xmlNode* c_node = c_element
-    cdef _Element proxy = None # init-to-None required due to fake-loop below
+    cdef void* c_proxy
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
-    if hasProxy(c_node):
-        proxy = getProxy(c_node)
-        if proxy is not None:
-            if proxy._doc is not doc:
-                proxy._doc = doc
-            proxy_count -= 1
-            if proxy_count == 0:
-                return 0
+    c_proxy = load_ptr_relaxed(&c_node._private)
+    if c_proxy is not NULL:
+        if c_proxy is PENDING_RELEASE:
+            # Someone moves the tree, i.e. holds a proxy in it => there is nothing to free.
+            source_doc._removePendingNode(c_node)
+            store_ptr_relaxed(&c_node._private, NULL)
+        else:
+            _setProxyDocument(<cpython.object.PyObject*> c_proxy, doc)
+        proxy_count -= 1
+        if proxy_count == 0:
+            return
     tree.END_FOR_EACH_FROM(c_node)
+
+
+cdef void _setProxyDocument(cpython.object.PyObject* c_proxy, _Document doc) noexcept:
+    # Readers take a reference to '_doc' under the same lock (see _documentOf()), or compare
+    # it without one (see _isDocumentOf()).  The caller keeps the old document alive.
+    cdef void* old_doc
+    begin_doc_ref_change(c_proxy)
+    old_doc = element_doc_ptr(c_proxy)[0]
+    cpython.ref.Py_INCREF(doc)
+    store_ptr_relaxed(element_doc_ptr(c_proxy), <void*> doc)
+    end_doc_ref_change(c_proxy)
+    cpython.ref.Py_DECREF(<object> old_doc)
+
+
+@cython.linetrace(False)
+@cython.profile(False)
+cdef inline _Document _documentOf(_Element element):
+    """Return the current document of the element, which moves to another document change
+    (see _setProxyDocument()).  Callers that lock it must check after locking that the
+    element did not move in between (see _isDocumentOf()), since they would hold the wrong
+    lock.  Once they hold the lock of the element's document, nobody can change it.
+    """
+    cdef _Document doc
+    begin_doc_ref_read(<void*> element)
+    doc = element._doc
+    end_doc_ref_read(<void*> element)
+    return doc
+
+
+@cython.linetrace(False)
+@cython.profile(False)
+cdef inline bint _isDocumentOf(_Element element, _Document doc) noexcept:
+    """Check that the element (still) belongs to the document, without a reference.
+    """
+    return load_ptr_relaxed(element_doc_ptr(<cpython.object.PyObject*> element)) is <void*> doc
 
 
 cdef void fixThreadDictNames(xmlNode* c_element,

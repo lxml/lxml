@@ -502,6 +502,35 @@ class ThreadingTestCase(HelperTestCase):
                 del el
         self._run_threads(10, testrun)
 
+    def test_concurrent_proxy_release_while_writing(self):
+        # A thread drops the last proxies of an element in a removed subtree and of an
+        # element in the tree while another thread modifies the document.  The release
+        # (which frees the removed subtree) must not wait for the writer, which here waits
+        # for it in an XPath extension function, i.e. while it holds the document lock.
+        root = self.etree.XML('<root><a><b/></a><c/></root>')
+        proxies = [root[0][0], root[1]]
+        removed = threading.Event()
+        released = threading.Event()
+
+        def release_proxies():
+            removed.wait()
+            proxies.clear()
+            released.set()
+
+        def remove_subtree(context):
+            del root[0]
+            removed.set()
+            released.wait()
+            return len(root)
+
+        thread = threading.Thread(target=release_proxies)
+        thread.start()
+        self.assertEqual(1, root.xpath('f()', extensions={(None, 'f'): remove_subtree}))
+        thread.join()
+
+        self.assertEqual(b'<root><c/></root>', self.etree.tostring(root))
+        self.assertEqual('c', root[0].tag)
+
 
 class ThreadPipelineTestCase(HelperTestCase):
     """Threading tests based on a thread worker pipeline.

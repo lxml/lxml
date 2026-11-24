@@ -27,7 +27,7 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None):
         if top_nsmap:
             # declare namespaces from nsmap, then apply them to the subtree
             _setNodeNamespaces(c_element, doc, None, top_nsmap)
-            moveNodeToDocument(doc, c_element.doc, c_element)
+            moveNodeToDocument(doc, doc, c_element.doc, c_element)
 
         _removeUnusedNamespaceDeclarations(c_element, keep_ns_prefixes)
     finally:
@@ -234,7 +234,7 @@ cdef _strip_tags(_Document doc, xmlNode* c_node, _MultiTagMatcher matcher):
                 if not attemptDeallocation(c_child):
                     if c_child.nsDef is not NULL:
                         # make namespaces absolute
-                        moveNodeToDocument(doc, doc._c_doc, c_child)
+                        moveNodeToDocument(doc, doc, doc._c_doc, c_child)
                 c_child = c_next
             else:
                 c_next = _nextElement(c_child)

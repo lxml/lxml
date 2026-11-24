@@ -2140,6 +2140,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, child2.append, child)
         self.assertEqual('child2', root[0][0].tag)
 
+    @unittest.skipIf(IS_PYPY, "PyPy deallocates objects later")
+    def test_element_proxy_freed_with_last_reference(self):
+        root = self.etree.XML('<root><a/><b/></root>')
+
+        def count_proxies():
+            return sum(1 for obj in gc.get_objects() if isinstance(obj, self.etree._Element))
+
+        gc.collect()
+        count = count_proxies()
+        for _ in range(10):
+            root[0], root[1]
+        self.assertEqual(count, count_proxies())
+
     def test_addnext(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
