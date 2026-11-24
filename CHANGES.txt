@@ -51,6 +51,11 @@ Bugs fixed
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
 
+* LP#2175697: Assigning the value of a checkbox group or of a ``<select multiple>`` in
+  ``lxml.html`` back to it, also through ``form.fields = dict(form.fields)``, unchecked or
+  deselected all of its options.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#535: ``element.classes.toggle()`` in ``lxml.html`` did not remove all occurrences
   if class names were duplicated.
   Patch by Huanyi Xie.

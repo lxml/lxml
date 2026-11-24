@@ -220,6 +220,22 @@ textarea_field: 'some text'
 
 >>> ('foo', 'bar') not in tree.forms[0].form_values()
 True
+
+>>> form_html = '''<form>
+...   <input type="checkbox" name="c" value="x" checked>
+...   <input type="checkbox" name="c" value="y">
+...   <select name="m" multiple><option selected>p</option><option>q</option></select>
+... </form>'''
+>>> form = fromstring(form_html)
+>>> form.inputs['c'].value = form.inputs['c'].value
+>>> form.inputs['m'].value = form.inputs['m'].value
+>>> form.form_values()
+[('c', 'x'), ('m', 'p')]
+>>> form = fromstring(form_html)
+>>> form.fields = dict(form.fields)
+>>> form.form_values()
+[('c', 'x'), ('m', 'p')]
+
 >>> tree = lxml.html.fromstring('''
 ... <html><body>
 ...  <form>
