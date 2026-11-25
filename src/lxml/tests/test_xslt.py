@@ -91,6 +91,21 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
+    def test_xslt_copy_error_log(self):
+        transform = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:f="urn:unregistered">
+  <xsl:template match="/"><foo><xsl:value-of select="f:missing()"/></foo></xsl:template>
+</xsl:stylesheet>'''))
+        transform_copy = copy.deepcopy(transform)
+        with self.assertRaises(etree.XSLTApplyError) as cm:
+            transform_copy(etree.XML('<a/>'))
+
+        # The unregistered function is reported by XPath.
+        self.assertTrue(cm.exception.error_log.filter_domains(etree.ErrorDomains.XPATH))
+        self.assertTrue(transform_copy.error_log.filter_domains(etree.ErrorDomains.XPATH))
+        self.assertFalse(transform.error_log)
+
     @contextlib.contextmanager
     def _xslt_setup(
             self, encoding='UTF-16', expected_encoding=None,
@@ -347,6 +362,33 @@ class ETreeXSLTTestCase(HelperTestCase):
             self.assertTrue(':ERROR:XSLT:' in str(error))
         for error in transform.error_log:
             self.assertTrue(':ERROR:XSLT:' in str(error))
+
+    def test_xslt_error_log_last_run(self):
+        transform = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:template match="/fail"><xsl:message terminate="yes">FAIL</xsl:message></xsl:template>
+    <xsl:template match="/silent"><xsl:message terminate="yes"/></xsl:template>
+    <xsl:template match="/ok"><ok/></xsl:template>
+</xsl:stylesheet>'''))
+        self.assertRaises(etree.XSLTApplyError, transform, etree.XML('<fail/>'))
+        self.assertEqual('FAIL', transform.error_log.last_error.message)
+
+        for _ in range(2):
+            transform(etree.XML('<ok/>'))
+            self.assertFalse(transform.error_log)
+            self.assertIsNone(transform.error_log.last_error)
+
+        with self.assertRaises(etree.XSLTApplyError) as cm:
+            transform(etree.XML('<fail/>'))
+        self.assertEqual(['FAIL'], [entry.message for entry in cm.exception.error_log])
+        self.assertEqual(['FAIL'], [entry.message for entry in transform.error_log])
+        # Terminating without a message does not report the error of the previous run.
+        with self.assertRaises(etree.XSLTApplyError) as cm:
+            transform(etree.XML('<silent/>'))
+        self.assertEqual('Error applying stylesheet', str(cm.exception))
+        self.assertIsNone(cm.exception.error_log.last_error)
+        self.assertIsNone(transform.error_log.last_error)
 
     def test_xslt_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')

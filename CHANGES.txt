@@ -34,6 +34,20 @@ Bugs fixed
 
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
+* LP#1222132: Validators that were used in several threads at the same time mixed up the errors
+  of concurrent validations, so that ``assertValid()`` and ``assert_()`` could report the errors
+  of a different document.  Each validation now collects its errors in a new log, which becomes
+  the validator's ``error_log`` when the validation finishes.  This also resets the
+  ``error_log.last_error`` of a ``DTD`` after a successful validation.
+
+* LP#1222132: ``XSLT`` and ``XInclude`` objects that were used in several threads at the same time
+  mixed up the errors of concurrent runs, so that ``XSLTApplyError`` and ``XIncludeError`` could
+  report the errors of a different document, or crash in free-threaded Python.  Each run now
+  collects its errors in a new log, which becomes the object's ``error_log`` when the run finishes.
+  This also resets ``error_log.last_error`` for each run, so that a transformation that fails
+  without an error message no longer reports the last error of a previous run.  XPath errors in
+  transformations of a copied ``XSLT`` object no longer end up in the error log of the original.
+
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.

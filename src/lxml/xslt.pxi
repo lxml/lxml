@@ -371,7 +371,11 @@ cdef class XSLT:
     cdef xslt.xsltStylesheet* _c_style
     cdef _XSLTResolverContext _xslt_resolver_context
     cdef XSLTAccessControl _access_control
+    # Each run collects its errors in a new log that other threads cannot
+    # clear or fill, and publishes it as 'error_log' when it finishes.
     cdef _ErrorLog _error_log
+    # An unused, empty log for the next run.  It was never published.
+    cdef _ErrorLog _spare_error_log
 
     def __init__(self, xslt_input, *, extensions=None, regexp=True,
                  access_control=None):
@@ -454,7 +458,32 @@ cdef class XSLT:
     @property
     def error_log(self):
         """The log of errors and warnings of an XSLT execution."""
-        return self._error_log.copy()
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._error_log
+        return error_log.copy()
+
+    @cython.final
+    cdef _ErrorLog _new_error_log(self):
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._spare_error_log
+            self._spare_error_log = None
+        if error_log is None:
+            error_log = _newErrorLog()
+        return error_log
+
+    @cython.final
+    cdef int _publish_error_log(self, _ErrorLog error_log, bint succeeded) except -1:
+        # Only this thread has seen the new log so far.
+        cdef bint is_empty = succeeded and not error_log._entries
+        with cython.critical_section(self):
+            if is_empty and not self._error_log._entries:
+                # Publishing an empty log would not change anything => keep it for the next run.
+                self._spare_error_log = error_log
+            else:
+                self._error_log = error_log
+        return 0
 
     @staticmethod
     def strparam(strval):
@@ -516,6 +545,7 @@ cdef class XSLT:
         """
         cdef _XSLTContext context = None
         cdef _XSLTResolverContext resolver_context
+        cdef _ErrorLog error_log
         cdef _Document input_doc
         cdef _Element root_node
         cdef _Document result_doc
@@ -585,6 +615,7 @@ cdef class XSLT:
         try:
             try:
                 context = self._context._copy()
+                error_log = context._error_log = self._new_error_log()
             except:
                 xslt.xsltFreeTransformContext(transform_ctxt)
                 raise
@@ -620,6 +651,7 @@ cdef class XSLT:
             else:
                 input_doc.unlock_fakedoc()
 
+        self._publish_error_log(error_log, c_result is not NULL)
         try:
             if resolver_context is not None and resolver_context._has_raised():
                 if c_result is not NULL:
@@ -635,7 +667,7 @@ cdef class XSLT:
 
             if c_result is NULL:
                 # last error seems to be the most accurate here
-                error = self._error_log.last_error
+                error = error_log.last_error
                 if error is not None and error.message:
                     if error.line > 0:
                         message = f"{error.message}, line {error.line}"
@@ -645,7 +677,7 @@ cdef class XSLT:
                     message = f"Error applying stylesheet, line {error.line}"
                 else:
                     message = "Error applying stylesheet"
-                raise XSLTApplyError(message, self._error_log)
+                raise XSLTApplyError(message, error_log)
         finally:
             if resolver_context is not None:
                 resolver_context.clear()
@@ -678,11 +710,12 @@ cdef class XSLT:
                                 const_char** params, _XSLTContext context,
                                 xslt.xsltTransformContext* transform_ctxt) except? NULL:
         cdef xmlDoc* c_result
-        xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
+        cdef _ErrorLog error_log = context._error_log
+        xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>error_log,
                                        <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
-        with self._error_log, lxml_document_loader, nogil:
+        with error_log, lxml_document_loader, nogil:
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
         return c_result
