@@ -195,7 +195,7 @@ class RWLockTest(unittest.TestCase):
             # Release the first writer only when the second one waits for it.  (An event that
             # the second writer sets before calling lock_write() can let the first one release
             # the lock before, and then the second writer does not wait.)
-            while not lock.writers_waited_for_writer:
+            while not lock.writers_waiting_for_writer:
                 pass
             release.set()
 

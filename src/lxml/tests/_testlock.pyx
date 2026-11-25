@@ -36,7 +36,7 @@ cdef class _RWLock:
         return self._lock.get_perf_counters()
 
     @property
-    def writers_waited_for_writer(self):
+    def writers_waiting_for_writer(self):
         # A performance counter that writers increment before they wait for another writer.
         return atomic_load(&self._lock._perf_counters.write_wait_on_writer)
 
