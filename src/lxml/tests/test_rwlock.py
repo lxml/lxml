@@ -165,7 +165,6 @@ class RWLockTest(unittest.TestCase):
         order = []
 
         start = threading.Barrier(2)
-        waiting = threading.Event()
         release = threading.Event()
 
         def thread_lock():
@@ -187,15 +186,17 @@ class RWLockTest(unittest.TestCase):
             start.wait()
             order.append("waiting")
 
-            waiting.set()
-
             lock.lock_write()
             order.append("locked (2)")
             lock.unlock_write()
             order.append("released (2)")
 
         with self.run_threads(thread_lock, thread_wait):
-            waiting.wait()
+            # Release the first writer only when the second one waits for it.  (An event that
+            # the second writer sets before calling lock_write() can let the first one release
+            # the lock before, and then the second writer does not wait.)
+            while not lock.writers_waiting_for_writer:
+                pass
             release.set()
 
         self.assertListEqual(['locking (1)', 'locked (1)', 'waiting', 'waiting', 'releasing (1)'], order[:5])
