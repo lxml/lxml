@@ -438,6 +438,40 @@ class ThreadingTestCase(HelperTestCase):
                 del el
         self._run_threads(10, testrun)
 
+    def test_concurrent_parsing_with_shared_parser(self):
+        parser = self.etree.XMLParser()
+
+        def parse():
+            thread_id = threading.get_ident()
+            for i in range(200):
+                root = self.etree.XML(f'<root thread="{thread_id}"><child>{i}</child></root>', parser)
+                self.assertEqual(str(thread_id), root.get('thread'))
+                self.assertEqual(str(i), root[0].text)
+
+        self._run_threads(8, parse)
+
+    def test_concurrent_navigation_while_moving(self):
+        root = self.etree.XML('<root><a><p1/><moving/><p2/></a><b><q1/><q2/></b></root>')
+        a, b = root
+        p1, moving, p2 = a
+        q1, q2 = b
+
+        def move():
+            for _ in range(1000):
+                b.insert(1, moving)
+                a.insert(1, moving)
+
+        def navigate():
+            # The element is never outside of 'a' or 'b' for other threads.
+            for _ in range(1000):
+                self.assertIn(moving.getparent(), (a, b))
+                self.assertIn(moving.getprevious(), (p1, q1))
+                self.assertIn(moving.getnext(), (p2, q2))
+
+        self._run_threads(4, navigate, main_func=move)
+        self.assertEqual([p1, moving, p2], list(a))
+        self.assertEqual([q1, q2], list(b))
+
     def test_concurrent_class_lookup(self):
         XML = self.etree.XML
 

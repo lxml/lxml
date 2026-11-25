@@ -10,17 +10,30 @@ cdef extern from *:
         #define PyUnstable_EnableTryIncRef(obj)
     #endif
 
+    /* The proxy pointer in xmlNode->_private is changed under the proxy lock of the document,
+       but read without it to see if there is a proxy at all. */
+    #if defined(__GNUC__) || defined(__clang__)
+        #define __lxml_load_ptr_relaxed(ptr)  __atomic_load_n((ptr), __ATOMIC_RELAXED)
+        #define __lxml_store_ptr_relaxed(ptr, value)  __atomic_store_n((ptr), (value), __ATOMIC_RELAXED)
+    #elif defined(Py_ATOMIC_H)
+        #define __lxml_load_ptr_relaxed(ptr)  _Py_atomic_load_ptr_relaxed(ptr)
+        #define __lxml_store_ptr_relaxed(ptr, value)  _Py_atomic_store_ptr_relaxed((ptr), (value))
+    #else
+        /* Without free-threading, the GIL serialises the accesses. */
+        #define __lxml_load_ptr_relaxed(ptr)  (*(void * volatile *) (ptr))
+        #define __lxml_store_ptr_relaxed(ptr, value)  (*(void * volatile *) (ptr) = (value))
+    #endif
+
     static CYTHON_INLINE PyObject* _lx__getProxy(xmlNode *c_node) {
-        PyObject *proxy;
-        if (c_node && c_node->_private) {
-            proxy = c_node->_private;
+        PyObject *proxy = c_node ? (PyObject*) __lxml_load_ptr_relaxed(&c_node->_private) : NULL;
+        if (proxy) {
             #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030e0000 && defined(Py_GIL_DISABLED)
             /* In FT-Python, prevent concurrent disposal and resurrection. */
             if (PyUnstable_TryIncRef(proxy)) {
                 return proxy;
             } else {
                 /* NOTE: potential race condition, requires outside guard. */
-                c_node->_private = NULL;
+                __lxml_store_ptr_relaxed(&c_node->_private, NULL);
                 proxy = Py_None;
             }
             #endif
@@ -32,6 +45,8 @@ cdef extern from *:
     }
     """
     _Element getProxy "_lx__getProxy" (xmlNode* c_node)
+    void* load_ptr_relaxed "__lxml_load_ptr_relaxed" (void** ptr) noexcept nogil
+    void store_ptr_relaxed "__lxml_store_ptr_relaxed" (void** ptr, void* value) noexcept nogil
 
     void PyUnstable_EnableTryIncRef(object o)
     # Enables subsequent uses of PyUnstable_TryIncRef() on obj.
@@ -43,7 +58,7 @@ cdef extern from *:
 @cython.linetrace(False)
 @cython.profile(False)
 cdef inline bint hasProxy(xmlNode* c_node) noexcept:
-    return c_node._private is not NULL
+    return load_ptr_relaxed(&c_node._private) is not NULL
 
 
 @cython.linetrace(False)
@@ -54,7 +69,7 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     """
     #print "registering for:", <int>proxy._c_node
     assert not hasProxy(c_node), "double registering proxy!"
-    c_node._private = <void*> proxy
+    store_ptr_relaxed(&c_node._private, <void*> proxy)
     proxy._doc = doc
     proxy._c_node = c_node
     PyUnstable_EnableTryIncRef(proxy)
@@ -73,8 +88,8 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     #assert c_node._private is NULL or c_node._private is <void*>proxy, \
     #    f"Tried to unregister unknown proxy 0x{<stdint.intptr_t> c_node._private:x}, should be 0x{<stdint.intptr_t> <void*> proxy:x}"
 
-    if c_node._private is <void*>proxy:
-        c_node._private = NULL
+    if load_ptr_relaxed(&c_node._private) is <void*>proxy:
+        store_ptr_relaxed(&c_node._private, NULL)
     proxy._c_node = NULL
     proxy._doc = None
     proxy._tag = None
