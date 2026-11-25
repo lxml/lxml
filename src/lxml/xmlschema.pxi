@@ -119,10 +119,14 @@ cdef class XMLSchema(_Validator):
 
         Returns true if document is valid, false if not.
         """
+        return self._validate(etree) is None
+
+    cdef _ErrorLog _validate(self, etree):
         cdef xmlschema.xmlSchemaValidCtxt* valid_ctxt
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
+        cdef _ErrorLog error_log
         cdef int ret
 
         assert self._c_schema is not NULL, "Schema instance not initialised"
@@ -139,10 +143,10 @@ cdef class XMLSchema(_Validator):
                 xmlschema.xmlSchemaSetValidOptions(
                     valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
 
-            self._error_log.clear()
+            error_log = self._new_validation_log()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             xmlschema.xmlSchemaSetValidStructuredErrors(
-                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>error_log)
 
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
@@ -152,14 +156,15 @@ cdef class XMLSchema(_Validator):
             doc.unlock_fakedoc()
             xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
 
+        self._set_validation_log(error_log, ret == 0)
         if ret == -1:
             raise XMLSchemaValidateError(
                 "Internal error in XML Schema validation.",
-                self._error_log)
+                error_log)
         if ret == 0:
-            return True
+            return None
         else:
-            return False
+            return error_log
 
     cdef _ParserSchemaValidationContext _newSaxValidator(
             self, bint add_default_attributes):

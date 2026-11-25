@@ -48,6 +48,8 @@ LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
     cdef _BaseParser _parser
+    # The current XSLT run, which releases its lock while calling the resolvers.
+    cdef _Run _run
 
     @cython.final
     cdef _XSLTResolverContext _copy(self):
@@ -76,6 +78,7 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
 
     error[0] = 0
     context = <_XSLTResolverContext>c_context
+    cdef bint released = context._run is not None and context._run.release_if_held()
 
     # shortcut if we resolve the stylesheet itself
     c_doc = context._c_style_doc
@@ -111,6 +114,8 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
         error[0] = 1
         context._store_raised()
     finally:
+        if released:
+            context._run.acquire()
         return c_return_doc  # and swallow any further exceptions
 
 
@@ -273,6 +278,39 @@ cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf) noexcept:
 
 cdef dict EMPTY_DICT = {}
 
+# The calibration of the profiling timer in libxslt is global.
+cdef _RunLock _xslt_profile_lock = _RunLock()
+
+
+cdef xmlDoc* _copyStylesheetDoc(xmlDoc* c_doc, xmlNode* c_root) except NULL:
+    """Copy a stylesheet document (with c_root as root element) for compiling it.
+
+    The copy gets a new name dict: libxslt adds names to the dict of the stylesheet document
+    while it compiles the stylesheet, and the transformations look up names in it, so it must
+    not be the dict of a parser, which other threads use for their documents.
+    """
+    cdef xmlDoc* result
+    cdef xmlNode* c_node
+    result = tree.xmlCopyDoc(c_doc, 0)  # non recursive
+    if result is NULL:
+        raise MemoryError()
+    result.dict = tree.xmlDictCreate()
+    if result.dict is NULL:
+        tree.xmlFreeDoc(result)
+        raise MemoryError()
+
+    # The copied nodes take their names from the new dict.
+    with nogil:
+        c_node = tree.xmlDocCopyNode(c_root, result, 1)  # recursive
+    if c_node is NULL:
+        tree.xmlFreeDoc(result)
+        raise MemoryError()
+
+    tree.xmlDocSetRootElement(result, c_node)
+    # Copy the tail text after setting the root element since libxml2 otherwise unlinks the tail.
+    _copyTail(c_root.next, c_node)
+    return result
+
 
 @cython.final
 @cython.internal
@@ -371,7 +409,15 @@ cdef class XSLT:
     cdef xslt.xsltStylesheet* _c_style
     cdef _XSLTResolverContext _xslt_resolver_context
     cdef XSLTAccessControl _access_control
+    # Each run collects its errors in a new log that other threads cannot
+    # clear or fill, and publishes it as 'error_log' when it finishes.
     cdef _ErrorLog _error_log
+    # An unused, empty log for the next run.  It was never published.
+    cdef _ErrorLog _spare_error_log
+    cdef _RunLock _run_lock
+
+    def __cinit__(self):
+        self._run_lock = _RunLock()
 
     def __init__(self, xslt_input, *, extensions=None, regexp=True,
                  access_control=None):
@@ -392,7 +438,7 @@ cdef class XSLT:
         # make a copy of the document as stylesheet parsing modifies it
         doc.lock_read()
         try:
-            c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            c_doc = _copyStylesheetDoc(doc._c_doc, root_node._c_node)
         finally:
             doc.unlock_read()
 
@@ -454,7 +500,32 @@ cdef class XSLT:
     @property
     def error_log(self):
         """The log of errors and warnings of an XSLT execution."""
-        return self._error_log.copy()
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._error_log
+        return error_log.copy()
+
+    @cython.final
+    cdef _ErrorLog _new_error_log(self):
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._spare_error_log
+            self._spare_error_log = None
+        if error_log is None:
+            error_log = _newErrorLog()
+        return error_log
+
+    @cython.final
+    cdef int _publish_error_log(self, _ErrorLog error_log, bint succeeded) except -1:
+        # Only this thread has seen the new log so far.
+        cdef bint is_empty = succeeded and not error_log._entries
+        with cython.critical_section(self):
+            if is_empty and not self._error_log._entries:
+                # Publishing an empty log would not change anything => keep it for the next run.
+                self._spare_error_log = error_log
+            else:
+                self._error_log = error_log
+        return 0
 
     @staticmethod
     def strparam(strval):
@@ -516,6 +587,7 @@ cdef class XSLT:
         """
         cdef _XSLTContext context = None
         cdef _XSLTResolverContext resolver_context
+        cdef _ErrorLog error_log
         cdef _Document input_doc
         cdef _Element root_node
         cdef _Document result_doc
@@ -524,7 +596,6 @@ cdef class XSLT:
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result = NULL
         cdef xmlDoc* c_doc
-        cdef tree.xmlDict* c_dict
         cdef const_char** params = NULL
 
         assert self._c_style is not NULL, "XSLT stylesheet not initialised"
@@ -545,8 +616,12 @@ cdef class XSLT:
                 input_doc.unlock_fakedoc()
             raise
 
+        # From here on, libxslt uses the compiled stylesheet.  Profiled runs also use global
+        # state of libxslt.
+        run = _Run.start(self._run_lock, _xslt_profile_lock if profile_run else None)
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
+            run.release()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             if use_write_lock:
                 input_doc.unlock_write()
@@ -554,27 +629,18 @@ cdef class XSLT:
                 input_doc.unlock_fakedoc()
             raise MemoryError()
 
-        # using the stylesheet dict is safer than using a possibly
-        # unrelated dict from the current thread.  Almost all
-        # non-input tag/attr names will come from the stylesheet
-        # anyway.
-        if transform_ctxt.dict is not NULL:
-            tree.xmlDictFree(transform_ctxt.dict)
-        if kw:
-            # parameter values are stored in the dict
-            # => avoid unnecessarily cluttering the global dict
-            transform_ctxt.dict = tree.xmlDictCreateSub(self._c_style.doc.dict)
-            if transform_ctxt.dict is NULL:
-                xslt.xsltFreeTransformContext(transform_ctxt)
-                _destroyFakeDoc(input_doc._c_doc, c_doc)
-                if use_write_lock:
-                    input_doc.unlock_write()
-                else:
-                    input_doc.unlock_fakedoc()
-                raise MemoryError()
-        else:
-            transform_ctxt.dict = self._c_style.doc.dict
-            tree.xmlDictReference(transform_ctxt.dict)
+        # libxslt gives each transformation a dict of its own that falls back to the stylesheet
+        # dict.  New names (and the parameter values) go into it, so that runs in different
+        # threads never modify the same dict.
+        if transform_ctxt.dict is NULL:
+            xslt.xsltFreeTransformContext(transform_ctxt)
+            run.release()
+            _destroyFakeDoc(input_doc._c_doc, c_doc)
+            if use_write_lock:
+                input_doc.unlock_write()
+            else:
+                input_doc.unlock_fakedoc()
+            raise MemoryError()
 
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
@@ -585,13 +651,16 @@ cdef class XSLT:
         try:
             try:
                 context = self._context._copy()
+                error_log = context._error_log = self._new_error_log()
             except:
                 xslt.xsltFreeTransformContext(transform_ctxt)
                 raise
 
+            context._run = error_log._run = run
             context.register_context(transform_ctxt, input_doc)
 
             resolver_context = self._xslt_resolver_context._copy()
+            resolver_context._run = run
             transform_ctxt._private = <python.PyObject*>resolver_context
 
             _convert_xslt_parameters(transform_ctxt, kw, &params)
@@ -614,12 +683,16 @@ cdef class XSLT:
                 python.lxml_free(params)
             if context is not None:
                 context.free_context()
+            run.release_if_held()
+            if error_log is not None:
+                error_log._run = None
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             if use_write_lock:
                 input_doc.unlock_write()
             else:
                 input_doc.unlock_fakedoc()
 
+        self._publish_error_log(error_log, c_result is not NULL)
         try:
             if resolver_context is not None and resolver_context._has_raised():
                 if c_result is not NULL:
@@ -635,7 +708,7 @@ cdef class XSLT:
 
             if c_result is NULL:
                 # last error seems to be the most accurate here
-                error = self._error_log.last_error
+                error = error_log.last_error
                 if error is not None and error.message:
                     if error.line > 0:
                         message = f"{error.message}, line {error.line}"
@@ -645,32 +718,23 @@ cdef class XSLT:
                     message = f"Error applying stylesheet, line {error.line}"
                 else:
                     message = "Error applying stylesheet"
-                raise XSLTApplyError(message, self._error_log)
+                raise XSLTApplyError(message, error_log)
         finally:
             if resolver_context is not None:
                 resolver_context.clear()
 
-        c_dict = c_result.dict
-        tree.xmlDictReference(c_dict)
-
+        # The result keeps the dict of the run, which falls back to the stylesheet dict.  Both
+        # are private to the stylesheet, as opposed to the dict of the input parser, which other
+        # threads may use while the result is being created.  Names that were copied from the
+        # input document are re-interned, since the input dict may go away before the result.
         result_doc = _documentFactory(c_result, input_doc._parser)
-        result_doc.initDict()
 
-        if self._c_style.doc.dict is not c_result.dict:
-            with nogil:
-                if self._c_style.doc.dict is not c_result.dict:
-                    fixThreadDictNames(<xmlNode*>c_result,
-                                       self._c_style.doc.dict, c_result.dict)
-
-        if input_doc._c_doc.dict is not c_result.dict:
+        if c_result.dict is not NULL and input_doc._c_doc.dict is not c_result.dict:
             input_doc.lock_read()
             with nogil:
-                if input_doc._c_doc.dict is not c_result.dict:
-                    fixThreadDictNames(<xmlNode*>c_result,
-                                       input_doc._c_doc.dict, c_result.dict)
+                fixThreadDictNames(<xmlNode*>c_result,
+                                   input_doc._c_doc.dict, c_result.dict)
             input_doc.unlock_read()
-
-        tree.xmlDictFree(c_dict)
 
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
@@ -678,11 +742,12 @@ cdef class XSLT:
                                 const_char** params, _XSLTContext context,
                                 xslt.xsltTransformContext* transform_ctxt) except? NULL:
         cdef xmlDoc* c_result
-        xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
+        cdef _ErrorLog error_log = context._error_log
+        xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>error_log,
                                        <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
-        with self._error_log, lxml_document_loader, nogil:
+        with error_log, lxml_document_loader, nogil:
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
         return c_result
@@ -747,7 +812,8 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
     new_xslt._xslt_resolver_context._c_style_doc = _copyDoc(
         stylesheet._xslt_resolver_context._c_style_doc, 1)
 
-    c_doc = _copyDoc(stylesheet._c_style.doc, 1)
+    c_doc = _copyStylesheetDoc(
+        stylesheet._c_style.doc, tree.xmlDocGetRootElement(stylesheet._c_style.doc))
     with nogil:
         new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
     if new_xslt._c_style is NULL:

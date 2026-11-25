@@ -436,3 +436,64 @@ cdef class RWLock:
         else:
             second_lock.unlock_write()
             self.unlock_write()
+
+
+@cython.final
+@cython.internal
+cdef class _RunLock:
+    """Serialises the libxml2/libxslt code of the runs of one compiled XSLT stylesheet or
+    Schematron schema.
+
+    libxml2 caches function lookups in the compiled XPath expressions when it first evaluates
+    them, and libxslt adds the profiling data of a run to the compiled templates, so different
+    threads must not run the same compiled object at the same time.
+    """
+    cdef cython.pymutex _mutex
+
+
+@cython.final
+@cython.internal
+@cython.freelist(8)
+cdef class _Run:
+    """One run of a compiled XSLT stylesheet or Schematron schema, holding its _RunLock.
+
+    The run releases the lock while it calls Python code (extension functions and elements,
+    resolvers, error logs), which can then wait for other threads that use the same object.
+    Only the thread that executes the run uses this object.
+    """
+    cdef _RunLock _lock
+    # A lock for state that the runs of all objects share, taken before '_lock', or None.
+    cdef _RunLock _outer_lock
+    cdef bint _held
+
+    @staticmethod
+    cdef _Run start(_RunLock lock, _RunLock outer_lock):
+        cdef _Run run = _Run.__new__(_Run)
+        run._lock = lock
+        run._outer_lock = outer_lock
+        run.acquire()
+        return run
+
+    cdef void acquire(self) noexcept:
+        if self._outer_lock is not None:
+            self._outer_lock._mutex.acquire()
+        self._lock._mutex.acquire()
+        self._held = True
+
+    cdef void release(self) noexcept:
+        self._held = False
+        self._lock._mutex.release()
+        if self._outer_lock is not None:
+            self._outer_lock._mutex.release()
+
+    cdef bint release_if_held(self) noexcept:
+        if not self._held:
+            return False
+        self.release()
+        return True
+
+    cdef bint acquire_if_released(self) noexcept:
+        if self._held:
+            return False
+        self.acquire()
+        return True

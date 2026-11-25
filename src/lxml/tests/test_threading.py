@@ -3,13 +3,15 @@ Tests for thread usage in lxml.etree.
 """
 
 
+import copy
 import re
 import sys
 import unittest
 import threading
+import warnings
 from queue import Queue, Empty
 
-from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON, IS_PYPY
+from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON, IS_PYPY, needs_feature
 
 
 class ThreadingTestCase(HelperTestCase):
@@ -274,6 +276,240 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(b'<root class="xyz"/>',
                           tostring(result[0]))
 
+    def test_thread_xslt_extension_waits_for_thread(self):
+        # An extension function that waits for stylesheets to be parsed and applied
+        # in another thread, e.g. in a thread pool.
+        XML = self.etree.XML
+        style = b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="text"/>
+  <xsl:template match="/">inner-<xsl:value-of select="name(*)"/></xsl:template>
+</xsl:stylesheet>'''
+        inner = self.etree.XSLT(XML(style))
+        threads = []
+        inner_results = []
+
+        def transform_in_thread(context):
+            done = threading.Event()
+
+            def run_thread():
+                # Parse in this thread: transformations with extension functions lock
+                # all documents of the parser of their input document for writing.
+                try:
+                    inner_results.append(str(inner(XML('<b/>'))))
+                    inner_results.append(str(self.etree.XSLT(XML(style))(XML('<c/>'))))
+                finally:
+                    done.set()
+
+            thread = threading.Thread(target=run_thread)
+            threads.append(thread)
+            thread.start()
+            # The time limit only bounds the time it takes to fail.
+            return 'done' if done.wait(60) else 'deadlock'
+
+        transform = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="test:transform-in-thread()"/></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'transform-in-thread'): transform_in_thread})
+
+        try:
+            result = str(transform(XML('<a/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('done', result)
+        self.assertEqual(['inner-b', 'inner-c'], inner_results)
+
+    def test_thread_xslt_shared_new_names(self):
+        # Concurrent runs of one stylesheet that copy names which the stylesheet does not contain.
+        XML = self.etree.XML
+        identity = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="@*|node()">
+    <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>'''))
+
+        def run_thread():
+            thread_id = threading.get_ident()
+            for i in range(50):
+                names = [f"t{thread_id}i{i}n{k}" for k in range(20)]
+                result = identity(XML(
+                    '<r>' + ''.join(f'<{name} {name}="v"/>' for name in names) + '</r>'))
+                self.assertEqual(names, [el.tag for el in result.getroot()])
+                self.assertEqual(names, [el.keys()[0] for el in result.getroot()])
+
+        self._run_threads(8, run_thread)
+
+    def test_thread_xslt_shared_function_calls(self):
+        # Concurrent runs of one stylesheet that calls XPath functions, extension functions
+        # and an extension element that applies templates.
+        XML = self.etree.XML
+
+        class Wrap(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                wrapper = etree.Element('wrapped')
+                wrapper.text = ''.join(self.process_children(context))
+                output_parent.append(wrapper)
+
+        stylesheet = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:ext="testns" extension-element-prefixes="ext">
+  <xsl:template match="/r">
+    <out count="{count(*)}"><xsl:apply-templates/></out>
+  </xsl:template>
+  <xsl:template match="item">
+    <ext:wrap><xsl:value-of select="concat(ext:double(string(@n)), '-', name())"/></ext:wrap>
+  </xsl:template>
+</xsl:stylesheet>'''), extensions={
+            ('testns', 'double'): lambda context, value: str(2 * int(value)),
+            ('testns', 'wrap'): Wrap(),
+        })
+
+        def run_thread():
+            for i in range(20):
+                values = [i * 10 + k for k in range(5)]
+                result = stylesheet(XML(
+                    '<r>' + ''.join(f'<item n="{n}"/>' for n in values) + '</r>'))
+                out = result.getroot()
+                self.assertEqual(str(len(values)), out.get('count'))
+                self.assertEqual([f'{2 * n}-item' for n in values],
+                                 [el.text for el in out.iterchildren('wrapped')])
+
+        self._run_threads(8, run_thread)
+
+    def test_thread_xslt_shared_profiled_runs(self):
+        # Profiled runs of one stylesheet add their profiles to the compiled templates.
+        XML = self.etree.XML
+        callers = 'abcdef'
+        stylesheet = self.etree.XSLT(XML(
+            '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">'
+            '<xsl:template match="/r"><out><xsl:apply-templates/></out></xsl:template>' +
+            ''.join(f'<xsl:template match="{name}"><xsl:call-template name="leaf"/></xsl:template>'
+                    for name in callers) +
+            '<xsl:template name="leaf"><leaf/></xsl:template>'
+            '</xsl:stylesheet>'))
+        source = '<r>' + ''.join(f'<{name}/>' for name in callers) + '</r>'
+
+        def run_thread(transform):
+            for _ in range(20):
+                result = transform(XML(source), profile_run=True)
+                self.assertEqual(['leaf'] * len(callers), [el.tag for el in result.getroot()])
+                self.assertEqual('profile', result.xslt_profile.getroot().tag)
+
+        self._run_threads(8, lambda: run_thread(stylesheet))
+        # Copies use separate templates, but the profiling timer of libxslt is global.
+        copies = [copy.copy(stylesheet) for _ in range(8)]
+        self._run_threads(8, lambda: run_thread(copies.pop()))
+
+    def test_thread_xslt_extension_waits_for_same_stylesheet(self):
+        # An extension function that waits for the same stylesheet to run in another thread.
+        XML = self.etree.XML
+        threads = []
+        inner_results = []
+
+        def transform_in_thread(context, name):
+            if name != 'outer':
+                return name
+            done = threading.Event()
+
+            def run_thread():
+                try:
+                    inner_results.append(str(transform(XML('<inner/>'))))
+                finally:
+                    done.set()
+
+            thread = threading.Thread(target=run_thread)
+            threads.append(thread)
+            thread.start()
+            # The time limit only bounds the time it takes to fail.
+            return 'done' if done.wait(60) else 'deadlock'
+
+        transform = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="test:transform-in-thread(name(*))"/></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'transform-in-thread'): transform_in_thread})
+
+        try:
+            result = str(transform(XML('<outer/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('done', result)
+        self.assertEqual(['inner'], inner_results)
+
+    def test_thread_schematron_shared(self):
+        # Concurrent validations with one Schematron schema that calls XPath functions.
+        XML = self.etree.XML
+        schematron = self.etree.Schematron(XML(b'''\
+<schema xmlns="http://purl.oclc.org/dsdl/schematron">
+  <pattern id="items">
+    <rule context="/r">
+      <assert test="count(item) = number(@expected)">wrong item count</assert>
+      <assert test="not(item[string-length(@n) = 0])">empty item</assert>
+    </rule>
+  </pattern>
+</schema>'''))
+
+        def run_thread():
+            for i in range(30):
+                valid = XML(f'<r expected="{i % 5}">' + '<item n="1"/>' * (i % 5) + '</r>')
+                invalid = XML(f'<r expected="{i % 5 + 1}"><item n=""/></r>')
+                self.assertTrue(schematron.validate(valid))
+                self.assertFalse(schematron.validate(invalid))
+
+        self._run_threads(8, run_thread)
+
+    _computed_name_stylesheet = b"""\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/*">
+    <out><xsl:element name="{concat('computed_', name())}"/></out>
+  </xsl:template>
+</xsl:stylesheet>"""
+
+    def test_thread_xslt_stylesheet_names(self):
+        # Runs look up names in the stylesheet while another thread adds names to the
+        # documents of the parser that parsed the stylesheet.
+        XML = self.etree.XML
+        parser = self.etree.XMLParser()
+        stylesheet = self.etree.XSLT(XML(self._computed_name_stylesheet, parser))
+        other = XML('<other/>', parser)
+
+        def add_names():
+            for i in range(1000):
+                other.set(f'name{i}', 'value')
+
+        def transform():
+            for i in range(100):
+                result = stylesheet(XML(f'<in{i}/>'))
+                self.assertEqual(f'computed_in{i}', result.getroot()[0].tag)
+
+        self._run_threads(4, transform, main_func=add_names)
+
+    def test_thread_xslt_result_names(self):
+        # The results of runs keep their names apart from the documents of the input's
+        # parser, to which another thread adds names meanwhile.
+        XML = self.etree.XML
+        parser = self.etree.XMLParser()
+        stylesheet = self.etree.XSLT(XML(self._computed_name_stylesheet))
+        inputs = [[XML(f'<in{thread}_{i}/>', parser) for i in range(100)] for thread in range(4)]
+        other = XML('<other/>', parser)
+
+        def add_names():
+            for i in range(1000):
+                other.set(f'name{i}', 'value')
+
+        def transform():
+            for doc in inputs.pop():
+                result = stylesheet(doc)
+                self.assertEqual('computed_' + doc.tag, result.getroot()[0].tag)
+
+        self._run_threads(4, transform, main_func=add_names)
+
     def test_thread_create_xslt(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
@@ -338,6 +574,191 @@ class ThreadingTestCase(HelperTestCase):
 
         for t in threads:
             t.join()
+
+    def _run_while_thread_paused(self, call_in_thread, exception_types, while_paused,
+                                 pause_at_error=1):
+        # Runs call_in_thread() in a thread, pauses that thread when it reports its
+        # 'pause_at_error'-th error, and runs while_paused() in this thread in the meantime.
+        # Returns the exception of the call in the thread and the result of while_paused().
+        error_reported = threading.Event()
+        resume = threading.Event()
+        reported = []
+
+        class PauseAtError(self.etree.PyErrorLog):
+            # As global error log of the thread, this receives each error before
+            # the error log of the called object receives it.
+            def receive(self, log_entry):
+                reported.append(log_entry)
+                if len(reported) == pause_at_error:
+                    error_reported.set()
+                    resume.wait()
+
+        thread_exceptions = []
+
+        def run_in_thread():
+            self.etree.use_global_python_log(PauseAtError())
+            try:
+                call_in_thread()
+            except exception_types as exc:
+                thread_exceptions.append(exc)
+            finally:
+                error_reported.set()
+
+        thread = threading.Thread(target=run_in_thread)
+        thread.start()
+        try:
+            error_reported.wait()
+            result = while_paused()
+        finally:
+            resume.set()
+            thread.join()
+
+        self.assertGreaterEqual(len(reported), pause_at_error)
+        self.assertEqual(1, len(thread_exceptions))
+        return thread_exceptions[0], result
+
+    def _call_while_other_thread_reports(self, call, exception_types):
+        # Runs call('in_thread') in a thread, pauses that thread when it reports
+        # its first error, and runs call('in_main') in this thread in the meantime.
+        # Returns the exceptions of both calls (thread first).
+        def call_in_main():
+            try:
+                call('in_main')
+            except exception_types as exc:
+                return exc
+            return None
+
+        return self._run_while_thread_paused(
+            lambda: call('in_thread'), exception_types, call_in_main)
+
+    def _assert_while_other_thread_reports(self, validator, assert_method):
+        # Calls 'assert_method' of the validator for invalid documents (see above).
+        return self._call_while_other_thread_reports(
+            lambda name: getattr(validator, assert_method)(self.etree.XML(f'<{name}/>')),
+            (self.etree.DocumentInvalid, AssertionError))
+
+    def _assert_own_validation_errors(self, validator):
+        thread_error, main_error = self._assert_while_other_thread_reports(
+            validator, 'assertValid')
+
+        for error, own, other in [(thread_error, 'in_thread', 'in_main'),
+                                  (main_error, 'in_main', 'in_thread')]:
+            self.assertIsInstance(error, self.etree.DocumentInvalid)
+            self.assertIn(own, str(error))
+            self.assertNotIn(other, str(error))
+            messages = [entry.message for entry in error.error_log]
+            self.assertTrue(messages)
+            for message in messages:
+                self.assertIn(own, message)
+
+        # The validation in the thread finished last.
+        self.assertEqual(
+            [entry.message for entry in thread_error.error_log],
+            [entry.message for entry in validator.error_log])
+
+    def test_thread_xmlschema_error_log(self):
+        self._assert_own_validation_errors(self.etree.XMLSchema(self.etree.XML(
+            '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+            '<xs:element name="a"/></xs:schema>')))
+
+    def test_thread_xmlschema_subclass_error_log(self):
+        class XMLSchemaSubclass(self.etree.XMLSchema):
+            def __call__(self, etree):
+                return super().__call__(etree)
+
+        self._assert_own_validation_errors(XMLSchemaSubclass(self.etree.XML(
+            '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+            '<xs:element name="a"/></xs:schema>')))
+
+    def test_thread_xmlschema_assert_(self):
+        schema = self.etree.XMLSchema(self.etree.XML(
+            '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+            '<xs:element name="a"/></xs:schema>'))
+        thread_error, main_error = self._assert_while_other_thread_reports(
+            schema, 'assert_')
+
+        self.assertIsInstance(thread_error, AssertionError)
+        self.assertIn('in_thread', str(thread_error))
+        self.assertNotIn('in_main', str(thread_error))
+        self.assertIsInstance(main_error, AssertionError)
+        self.assertIn('in_main', str(main_error))
+        self.assertNotIn('in_thread', str(main_error))
+
+    def test_thread_relaxng_error_log(self):
+        self._assert_own_validation_errors(self.etree.RelaxNG(self.etree.XML(
+            '<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">'
+            '<empty/></element>')))
+
+    def test_thread_dtd_error_log(self):
+        self._assert_own_validation_errors(
+            self.etree.DTD(BytesIO(b'<!ELEMENT a EMPTY>')))
+
+    @needs_feature("schematron")
+    def test_thread_schematron_error_log(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            schematron = self.etree.Schematron(self.etree.XML(
+                '<schema xmlns="http://purl.oclc.org/dsdl/schematron"><pattern name="p">'
+                '<rule context="/*"><assert test="false()">invalid <name/></assert></rule>'
+                '</pattern></schema>'))
+        self._assert_own_validation_errors(schematron)
+
+    def test_thread_isoschematron_error_log(self):
+        from lxml import isoschematron
+        self._assert_own_validation_errors(isoschematron.Schematron(self.etree.XML(
+            '<schema xmlns="http://purl.oclc.org/dsdl/schematron"><pattern>'
+            '<rule context="/*"><assert test="false()">invalid <value-of select="name()"/></assert></rule>'
+            '</pattern></schema>')))
+
+    def test_thread_xslt_error_log(self):
+        transform = self.etree.XSLT(self.etree.XML('''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/*">
+    <xsl:message>processing <xsl:value-of select="name()"/></xsl:message>
+    <xsl:message terminate="yes">failed <xsl:value-of select="name()"/></xsl:message>
+  </xsl:template>
+</xsl:stylesheet>'''))
+
+        def messages(error_log):
+            return [entry.message for entry in error_log]
+
+        self.assertRaises(self.etree.XSLTApplyError, transform, self.etree.XML('<in_main/>'))
+        self.assertEqual(['processing in_main', 'failed in_main'], messages(transform.error_log))
+
+        # While a transformation runs in another thread, 'error_log' shows the last
+        # finished one.
+        thread_error, messages_while_running = self._run_while_thread_paused(
+            lambda: transform(self.etree.XML('<in_thread/>')),
+            self.etree.XSLTApplyError,
+            lambda: messages(transform.error_log),
+            pause_at_error=2)
+        self.assertEqual(['processing in_main', 'failed in_main'], messages_while_running)
+
+        self.assertEqual('failed in_thread', str(thread_error))
+        self.assertEqual(['processing in_thread', 'failed in_thread'], messages(thread_error.error_log))
+        self.assertEqual(['processing in_thread', 'failed in_thread'], messages(transform.error_log))
+
+    def test_thread_xinclude_error_log(self):
+        xinclude = self.etree.XInclude()
+        thread_error, main_error = self._call_while_other_thread_reports(
+            lambda name: xinclude(self.etree.XML(
+                '<doc xmlns:xi="http://www.w3.org/2001/XInclude">'
+                f'<xi:include href="lxml-test-missing-{name}.xml"/></doc>')),
+            self.etree.XIncludeError)
+
+        for error, own, other in [(thread_error, 'in_thread', 'in_main'),
+                                  (main_error, 'in_main', 'in_thread')]:
+            self.assertIsInstance(error, self.etree.XIncludeError)
+            self.assertIn(own, str(error))
+            self.assertNotIn(other, str(error))
+            messages = [entry.message for entry in error.error_log]
+            self.assertTrue(any(own in message for message in messages), messages)
+            self.assertFalse(any(other in message for message in messages), messages)
+
+        # The XInclude processing in the thread finished last.
+        self.assertEqual(
+            [entry.message for entry in thread_error.error_log],
+            [entry.message for entry in xinclude.error_log])
 
     def test_thread_mix(self):
         XML = self.etree.XML

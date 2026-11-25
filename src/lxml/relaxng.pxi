@@ -121,10 +121,14 @@ cdef class RelaxNG(_Validator):
         Validate doc using Relax NG.
 
         Returns true if document is valid, false if not."""
+        return self._validate(etree) is None
+
+    cdef _ErrorLog _validate(self, etree):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
+        cdef _ErrorLog error_log
         cdef int ret
 
         assert self._c_schema is not NULL, "RelaxNG instance not initialised"
@@ -137,11 +141,11 @@ cdef class RelaxNG(_Validator):
 
         doc.lock_fakedoc()
         try:
-            self._error_log.clear()
+            error_log = self._new_validation_log()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             relaxng.xmlRelaxNGSetValidStructuredErrors(
-                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
-            _connectGenericErrorLog(self._error_log, xmlerror.XML_FROM_RELAXNGV)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>error_log)
+            _connectGenericErrorLog(error_log, xmlerror.XML_FROM_RELAXNGV)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
                 ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
@@ -151,14 +155,15 @@ cdef class RelaxNG(_Validator):
             _connectGenericErrorLog(None)
             relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
 
+        self._set_validation_log(error_log, ret == 0)
         if ret == -1:
             raise RelaxNGValidateError(
                 "Internal error in Relax NG validation",
-                self._error_log)
+                error_log)
         if ret == 0:
-            return True
+            return None
         else:
-            return False
+            return error_log
 
     @classmethod
     def from_rnc_string(cls, src, base_url=None):

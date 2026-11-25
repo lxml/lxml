@@ -56,6 +56,8 @@ cdef class _BaseContext:
     cdef _ErrorLog _error_log
     cdef _XPathExtensionFlags _flags
     cdef bint has_user_extensions
+    # The current XSLT run, which releases its lock while calling Python code.
+    cdef _Run _run
 
     def __init__(self, namespaces, extensions, error_log, enable_regexp,
                  build_smart_strings):
@@ -116,6 +118,14 @@ cdef class _BaseContext:
         if enable_regexp:
             _regexp = _ExsltRegExp()
             _regexp._register_in_context(self)
+
+    @cython.final
+    cdef bint _release_run_lock(self) noexcept:
+        return self._run is not None and self._run.release_if_held()
+
+    @cython.final
+    cdef bint _acquire_run_lock(self) noexcept:
+        return self._run is not None and self._run.acquire_if_released()
 
     cdef _BaseContext _copy(self):
         cdef _BaseContext context
@@ -887,6 +897,8 @@ cdef void _extension_function_call(_BaseContext context, function,
     cdef list args
     cdef int i
     doc = context._doc
+    # Nothing here evaluates the compiled XPath expressions of an XSLT run.
+    cdef bint released = context._release_run_lock()
     try:
         args = []
         for i in range(nargs):
@@ -908,6 +920,8 @@ cdef void _extension_function_call(_BaseContext context, function,
         xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
         context._exc._store_raised()
     finally:
+        if released:
+            context._run.acquire()
         return  # swallow any further exceptions
 
 

@@ -64,8 +64,11 @@ cdef class XSLTExtension:
 
         c_node = context._xsltCtxt.insert
         context._xsltCtxt.insert = c_parent
+        acquired = context._acquire_run_lock()
         xslt.xsltProcessOneNode(
             context._xsltCtxt, c_context_node, NULL)
+        if acquired:
+            context._run.release()
         context._xsltCtxt.insert = c_node
 
         if output_parent is not None:
@@ -116,8 +119,11 @@ cdef class XSLTExtension:
                 context._xsltCtxt.output, NULL, <unsigned char*>"fake-parent", NULL)
 
         c_ctxt.insert = c_parent
+        acquired = context._acquire_run_lock()
         xslt.xsltApplyOneTemplate(c_ctxt,
             c_ctxt.node, c_ctxt.inst.children, NULL, NULL)
+        if acquired:
+            context._run.release()
         c_ctxt.insert = c_old_output_parent
 
         if output_parent is not None:
@@ -220,7 +226,12 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
 
                 # run the XSLT extension
                 context._extension_element_proxy = self_node
-                extension.execute(context, self_node, context_node, output_parent)
+                released = context._release_run_lock()
+                try:
+                    extension.execute(context, self_node, context_node, output_parent)
+                finally:
+                    if released:
+                        context._run.acquire()
             finally:
                 context._extension_element_proxy = None
                 if self_node is not None:

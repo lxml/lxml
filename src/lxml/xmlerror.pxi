@@ -187,6 +187,9 @@ cdef class _LogEntry:
 cdef class _BaseErrorLog:
     cdef _LogEntry _first_error
     cdef readonly object last_error
+    # The XSLT or Schematron run that reports into this log, if any, which releases its
+    # lock while the global error log receives the entries.
+    cdef _Run _run
     def __init__(self, first_error, last_error):
         self._first_error = first_error
         self.last_error = last_error
@@ -211,12 +214,23 @@ cdef class _BaseErrorLog:
                    error.level == xmlerror.XML_ERR_FATAL
         global_log = _getThreadErrorLog(GLOBAL_ERROR_LOG)
         if global_log is not self:
-            global_log.receive(entry)
+            self._receive_global(global_log, entry)
             if is_error:
                 global_log.last_error = entry
         self.receive(entry)
         if is_error:
             self.last_error = entry
+
+    @cython.final
+    cdef int _receive_global(self, _BaseErrorLog global_log, _LogEntry entry) except -1:
+        # The global log can be a PyErrorLog, which calls Python code.
+        cdef bint released = self._run is not None and self._run.release_if_held()
+        try:
+            global_log.receive(entry)
+        finally:
+            if released:
+                self._run.acquire()
+        return 0
 
     @cython.final
     cdef int _receiveGeneric(self, int domain, int type, int level, long line,
@@ -230,7 +244,7 @@ cdef class _BaseErrorLog:
                    level == xmlerror.XML_ERR_FATAL
         global_log = _getThreadErrorLog(GLOBAL_ERROR_LOG)
         if global_log is not self:
-            global_log.receive(entry)
+            self._receive_global(global_log, entry)
             if is_error:
                 global_log.last_error = entry
         self.receive(entry)
@@ -400,8 +414,6 @@ cdef class _ErrorLogContext:
     """
     cdef xmlerror.xmlStructuredErrorFunc old_error_func
     cdef void* old_error_context
-    cdef xmlerror.xmlGenericErrorFunc old_xslt_error_func
-    cdef void* old_xslt_error_context
     cdef _BaseErrorLog old_xslt_error_log
 
     cdef int push_error_log(self, _BaseErrorLog log) except -1:
@@ -410,20 +422,15 @@ cdef class _ErrorLogContext:
         xmlerror.xmlSetStructuredErrorFunc(
             <void*>log, <xmlerror.xmlStructuredErrorFunc>_receiveError)
 
-        # xslt.xsltSetGenericErrorFunc() is not thread-local => keep error log in TLS
-        self.old_xslt_error_func = xslt.xsltGenericError
-        self.old_xslt_error_context = xslt.xsltGenericErrorContext
+        # xslt.xsltSetGenericErrorFunc() is not thread-local => keep error log in TLS.
+        # _initThreadLogging() set up the error function once for all threads.
         self.old_xslt_error_log = _getThreadErrorLog(XSLT_ERROR_LOG)
         _setThreadErrorLog(XSLT_ERROR_LOG, log)
-        xslt.xsltSetGenericErrorFunc(
-            NULL, <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
         return 0
 
     cdef int pop_error_log(self) except -1:
         xmlerror.xmlSetStructuredErrorFunc(
             self.old_error_context, self.old_error_func)
-        xslt.xsltSetGenericErrorFunc(
-            self.old_xslt_error_context, self.old_xslt_error_func)
         _setThreadErrorLog(XSLT_ERROR_LOG, self.old_xslt_error_log)
         self.old_xslt_error_log= None
         return 0
@@ -492,6 +499,14 @@ cdef class _ErrorLog(_ListErrorLog):
             if self._first_error is None and entry.level >= xmlerror.XML_ERR_ERROR:
                 self._first_error = entry
             self._entries.append(entry)
+
+
+cdef inline _ErrorLog _newErrorLog():
+    # Faster than calling '_ErrorLog()'.
+    cdef _ErrorLog error_log = _ErrorLog.__new__(_ErrorLog)
+    error_log._entries = []
+    return error_log
+
 
 cdef class _DomainErrorLog(_ErrorLog):
     def __init__(self, domains):

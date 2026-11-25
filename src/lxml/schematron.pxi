@@ -69,6 +69,10 @@ cdef class Schematron(_Validator):
     """
     cdef schematron.xmlSchematron* _c_schema
     cdef xmlDoc* _c_schema_doc
+    cdef _RunLock _run_lock
+
+    def __cinit__(self):
+        self._run_lock = _RunLock()
 
     def __init__(self, etree=None, *, file=None):
         if self._c_schema is not NULL:
@@ -138,40 +142,53 @@ cdef class Schematron(_Validator):
         Validate doc using Schematron.
 
         Returns true if document is valid, false if not."""
+        return self._validate(etree) is None
+
+    cdef _ErrorLog _validate(self, etree):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef schematron.xmlSchematronValidCtxt* valid_ctxt
+        cdef _ErrorLog error_log
         cdef int ret
 
         assert self._c_schema is not NULL, "Schematron instance not initialised"
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 
+        doc.lock_fakedoc()
+        # libxml2 caches function lookups in the compiled tests while evaluating them.
+        run = _Run.start(self._run_lock, None)
         valid_ctxt = schematron.xmlSchematronNewValidCtxt(
             self._c_schema, schematron.XML_SCHEMATRON_OUT_ERROR)
         if valid_ctxt is NULL:
+            run.release()
+            doc.unlock_fakedoc()
             raise MemoryError()
 
-        doc.lock_fakedoc()
         try:
-            self._error_log.clear()
+            error_log = self._new_validation_log()
+            error_log._run = run
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
             schematron.xmlSchematronSetValidStructuredErrors(
-                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>self._error_log)
+                valid_ctxt, <xmlerror.xmlStructuredErrorFunc> _receiveError, <void*>error_log)
             c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             with nogil:
                 ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
-            doc.unlock_fakedoc()
             schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
+            run.release_if_held()
+            doc.unlock_fakedoc()
+            if error_log is not None:
+                error_log._run = None
 
+        self._set_validation_log(error_log, ret == 0)
         if ret == -1:
             raise SchematronValidateError(
                 "Internal error in Schematron validation",
-                self._error_log)
+                error_log)
         if ret == 0:
-            return True
+            return None
         else:
-            return False
+            return error_log

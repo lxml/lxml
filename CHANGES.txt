@@ -34,6 +34,43 @@ Bugs fixed
 
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
+* LP#1222132: Validators that were used in several threads at the same time mixed up the errors
+  of concurrent validations, so that ``assertValid()`` and ``assert_()`` could report the errors
+  of a different document.  Each validation now collects its errors in a new log, which becomes
+  the validator's ``error_log`` when the validation finishes.  This also resets the
+  ``error_log.last_error`` of a ``DTD`` after a successful validation.
+
+* LP#1222132: ``XSLT`` and ``XInclude`` objects that were used in several threads at the same time
+  mixed up the errors of concurrent runs, so that ``XSLTApplyError`` and ``XIncludeError`` could
+  report the errors of a different document, or crash in free-threaded Python.  Each run now
+  collects its errors in a new log, which becomes the object's ``error_log`` when the run finishes.
+  This also resets ``error_log.last_error`` for each run, so that a transformation that fails
+  without an error message no longer reports the last error of a previous run.  XPath errors in
+  transformations of a copied ``XSLT`` object no longer end up in the error log of the original.
+
+* LP#2175778: XSLT extension functions and resolvers deadlocked since lxml 7.0 when they created or
+  applied an ``XSLT`` object, or created a ``DTD``, a ``Schematron`` schema or a ``RelaxNG`` schema
+  from a file.  XSLT processing in different threads also no longer waits on a global lock.
+  Instead, each run of an ``XSLT`` object adds new names to a dictionary of its own, which avoids
+  the crashes of lxml 6.x when several threads used the same ``XSLT`` object, and keeps the names
+  that a run with parameters creates valid (LP#2175569).
+
+* LP#2175778: Threads that ran the same ``XSLT`` object or libxml2 ``Schematron`` schema at the
+  same time wrote to the shared compiled stylesheet or schema: libxml2 caches the function lookups
+  of compiled XPath expressions in them, and libxslt adds the data of ``profile_run=True`` runs to
+  the templates, which could corrupt memory.  Runs of the same object now take turns while libxslt
+  and libxml2 execute them; their extension functions, resolvers and Python error logs still run in
+  parallel.  Use separate (e.g. copied) ``XSLT`` objects for parallel runs.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175778: An ``XSLT`` object shared the name dictionary of the parser of its stylesheet
+  document, and the results of transformations added their names to the dictionary of the parser of
+  their input document, without holding the lock of the documents that use these dictionaries.
+  Parsing or modifying documents in other threads at the same time could corrupt names.  The
+  stylesheet now has a dictionary of its own, and result documents keep the dictionary of their
+  transformation.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.

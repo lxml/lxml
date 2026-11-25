@@ -6,6 +6,7 @@ Test cases related to XSLT processing
 import copy
 import gzip
 import os.path
+import threading
 import unittest
 import contextlib
 
@@ -16,6 +17,30 @@ from tempfile import NamedTemporaryFile, mkdtemp
 from .common_imports import (
     etree, HelperTestCase, fileInTestDir, make_doctest, SimpleFSPath
 )
+
+
+def _run_in_thread(func):
+    """Calls func() in a separate thread and returns its result.
+
+    A deadlock in func() fails the test after a minute instead of blocking the test run.
+    """
+    outcome = []
+
+    def run():
+        try:
+            outcome.append((True, func()))
+        except BaseException as exc:
+            outcome.append((False, exc))
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    thread.join(60)
+    if thread.is_alive():
+        raise AssertionError("The call did not finish within a minute (deadlock?)")
+    succeeded, result = outcome[0]
+    if not succeeded:
+        raise result
+    return result
 
 
 class ETreeXSLTTestCase(HelperTestCase):
@@ -90,6 +115,21 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>B</foo>
 ''',
                           str(res))
+
+    def test_xslt_copy_error_log(self):
+        transform = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:f="urn:unregistered">
+  <xsl:template match="/"><foo><xsl:value-of select="f:missing()"/></foo></xsl:template>
+</xsl:stylesheet>'''))
+        transform_copy = copy.deepcopy(transform)
+        with self.assertRaises(etree.XSLTApplyError) as cm:
+            transform_copy(etree.XML('<a/>'))
+
+        # The unregistered function is reported by XPath.
+        self.assertTrue(cm.exception.error_log.filter_domains(etree.ErrorDomains.XPATH))
+        self.assertTrue(transform_copy.error_log.filter_domains(etree.ErrorDomains.XPATH))
+        self.assertFalse(transform.error_log)
 
     @contextlib.contextmanager
     def _xslt_setup(
@@ -348,6 +388,33 @@ class ETreeXSLTTestCase(HelperTestCase):
         for error in transform.error_log:
             self.assertTrue(':ERROR:XSLT:' in str(error))
 
+    def test_xslt_error_log_last_run(self):
+        transform = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:template match="/fail"><xsl:message terminate="yes">FAIL</xsl:message></xsl:template>
+    <xsl:template match="/silent"><xsl:message terminate="yes"/></xsl:template>
+    <xsl:template match="/ok"><ok/></xsl:template>
+</xsl:stylesheet>'''))
+        self.assertRaises(etree.XSLTApplyError, transform, etree.XML('<fail/>'))
+        self.assertEqual('FAIL', transform.error_log.last_error.message)
+
+        for _ in range(2):
+            transform(etree.XML('<ok/>'))
+            self.assertFalse(transform.error_log)
+            self.assertIsNone(transform.error_log.last_error)
+
+        with self.assertRaises(etree.XSLTApplyError) as cm:
+            transform(etree.XML('<fail/>'))
+        self.assertEqual(['FAIL'], [entry.message for entry in cm.exception.error_log])
+        self.assertEqual(['FAIL'], [entry.message for entry in transform.error_log])
+        # Terminating without a message does not report the error of the previous run.
+        with self.assertRaises(etree.XSLTApplyError) as cm:
+            transform(etree.XML('<silent/>'))
+        self.assertEqual('Error applying stylesheet', str(cm.exception))
+        self.assertIsNone(cm.exception.error_log.last_error)
+        self.assertIsNone(transform.error_log.last_error)
+
     def test_xslt_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -383,6 +450,42 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>it's me, "Bar"</foo>
 ''',
                           str(res))
+
+    def test_xslt_computed_names(self):
+        # Names that a run creates must stay valid in its result tree,
+        # with and without parameters.
+        tree = self.parse('<a/>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:param name="p" select="'x'"/>
+  <xsl:template match="/">
+    <out><xsl:element name="{concat('computed_', $p)}">
+      <xsl:attribute name="{concat('attr_', $p)}">v</xsl:attribute></xsl:element></out>
+  </xsl:template>
+</xsl:stylesheet>''')
+        st = etree.XSLT(style)
+        results = [st(tree)] + [st(tree, p=etree.XSLT.strparam(f"name{i}")) for i in range(5)]
+        self.assertEqual(
+            ['<out><computed_x attr_x="v"/></out>'] +
+            [f'<out><computed_name{i} attr_name{i}="v"/></out>' for i in range(5)],
+            [etree.tostring(res.getroot(), encoding='unicode') for res in results])
+
+    def test_xslt_parser_dicts_unchanged(self):
+        # Compiling a stylesheet and transforming a document must not add names to the
+        # dictionaries of their parsers, which other threads may use at the same time.
+        style_parser, input_parser = etree.XMLParser(), etree.XMLParser()
+        style = etree.XML('''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/"><result><xsl:element name="computed"/></result></xsl:template>
+</xsl:stylesheet>''', style_parser)
+        tree = etree.XML('<input/>', input_parser)
+        dict_sizes = (style_parser.dict_size, input_parser.dict_size)
+        st = etree.XSLT(style)
+        self.assertEqual(dict_sizes, (style_parser.dict_size, input_parser.dict_size))
+        result = st(tree)
+        self.assertEqual(dict_sizes, (style_parser.dict_size, input_parser.dict_size))
+        self.assertEqual(b'<result><computed/></result>', etree.tostring(result.getroot()))
 
     def test_xslt_parameter_invalid(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
@@ -526,6 +629,28 @@ class ETreeXSLTTestCase(HelperTestCase):
         tree = etree.parse(f)
         f.close()
         st = etree.XSLT(tree)
+
+    def test_xslt_include_resolver_parses_xslt(self):
+        # A resolver can parse stylesheets while the including stylesheet gets parsed.
+        included = b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="a"><A/></xsl:template>
+</xsl:stylesheet>'''
+
+        class TestResolver(etree.Resolver):
+            def resolve(self, url, id, context):
+                etree.XSLT(etree.XML(included))  # make sure it is a valid stylesheet
+                return self.resolve_string(included, context)
+
+        parser = etree.XMLParser()
+        parser.resolvers.add(TestResolver())
+        style = etree.XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:include href="included.xsl"/>
+</xsl:stylesheet>''', parser)
+
+        st = _run_in_thread(lambda: etree.XSLT(style))
+        self.assertEqual(b'<A/>', self._rootstring(st(etree.XML('<a/>'))))
 
     def test_xslt_multiple_transforms(self):
         xml = '<a/>'
@@ -1422,6 +1547,35 @@ class ETreeXSLTExtFuncTestCase(HelperTestCase):
         result = tree.xslt(style)
         self.assertEqual(self._rootstring(result),
                           b'<A>X</A>')
+
+    def test_extensions_nested_xslt(self):
+        # Extension functions can parse DTDs and stylesheets and run transformations.
+        inner_style = etree.XML('''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="text"/>
+  <xsl:template match="/">inner-<xsl:value-of select="name(*)"/></xsl:template>
+</xsl:stylesheet>''')
+        inner = etree.XSLT(inner_style)
+
+        def nested(ctxt):
+            dtd = etree.DTD(BytesIO(b'<!ELEMENT b EMPTY>'))
+            return ','.join([
+                str(inner(etree.XML('<b/>'))),
+                str(etree.XSLT(inner_style)(etree.XML('<c/>'))),
+                str(dtd.validate(etree.XML('<b/>'))),
+            ])
+
+        st = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a"><A><xsl:value-of select="myns:nested()"/></A></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'nested'): nested})
+
+        result = _run_in_thread(lambda: st(etree.XML('<a/>')))
+        self.assertEqual(self._rootstring(result),
+                          b'<A>inner-b,inner-c,True</A>')
 
     def test_variable_result_tree_fragment(self):
         tree = self.parse('<a><b>B</b><b/></a>')

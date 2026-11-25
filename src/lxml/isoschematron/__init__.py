@@ -306,7 +306,7 @@ class Schematron(_etree._Validator):
 
         Returns true if document is valid, false if not.
         """
-        self._clear_error_log()
+        error_log = self._clear_error_log()
         result = self._validator(etree)
         if self._store_report:
             self._validation_report = result
@@ -322,9 +322,10 @@ class Schematron(_etree._Validator):
                     domain=self._domain, type=self._error_type,
                     level=self._level, line=0,
                     message=_etree.tostring(error, encoding='unicode'),
-                    filename=fname)
-            return False
-        return True
+                    filename=fname, error_log=error_log)
+        # Publish the log again, other threads may have replaced it in the meantime.
+        self._set_error_log(error_log)
+        return not errors
 
     @property
     def schematron(self):
