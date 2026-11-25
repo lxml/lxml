@@ -185,17 +185,32 @@ class ETreeDtdTestCase(HelperTestCase):
                 self.assertEqual([], root.xpath("id('i1')"))
                 self.assertEqual(['i2'], root.xpath("id('i2')/@id"))
 
+    def _assert_ids_of_changed_attribute(self, validate_subelement):
+        # The validated attributes stay ID attributes: changing one replaces its ID.
+        for attlist, root in self._validated_documents_with_ids(validate_subelement):
+            with self.subTest(attlist=attlist):
+                root[0][0].set('id', 'x1')
+                self.assertEqual([], root.xpath("id('i1')"))
+                self.assertEqual([root[0][0]], root.xpath("id('x1')"))
+                self.assertEqual([root[0][1]], root.xpath("id('i2')"))
+
     def test_dtd_validation_keeps_ids(self):
         self._assert_ids_kept(validate_subelement=False)
 
     def test_dtd_validation_ids_of_removed_element(self):
         self._assert_ids_of_removed_element(validate_subelement=False)
 
+    def test_dtd_validation_ids_of_changed_attribute(self):
+        self._assert_ids_of_changed_attribute(validate_subelement=False)
+
     def test_dtd_validation_subelement_keeps_ids(self):
         self._assert_ids_kept(validate_subelement=True)
 
     def test_dtd_validation_subelement_ids_of_removed_element(self):
         self._assert_ids_of_removed_element(validate_subelement=True)
+
+    def test_dtd_validation_subelement_ids_of_changed_attribute(self):
+        self._assert_ids_of_changed_attribute(validate_subelement=True)
 
     def test_dtd_validation_subelement_with_ids(self):
         # The IDs and IDREFs of the descendants of a validated sub-element count,
