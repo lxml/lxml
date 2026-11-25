@@ -553,8 +553,12 @@ def main(argv):
         from coverage import Coverage
         cov = Coverage(omit=['test.py'])
 
-    # Configure tracemalloc.
-    if tracemalloc is not None:
+    # Configure tracemalloc, but not in free-threaded Python: there, its global
+    # lock serialises the memory allocations of all threads, which makes the
+    # threading tests much slower and less concurrent.  Use
+    # "python -X tracemalloc test.py" to trace allocations there anyway.
+    gil_enabled = getattr(sys, '_is_gil_enabled', lambda: True)()
+    if tracemalloc is not None and gil_enabled:
         tracemalloc.start()
 
     # Finding and importing
