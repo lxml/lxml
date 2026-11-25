@@ -180,6 +180,15 @@ class ETreeDtdTestCase(HelperTestCase):
                 self.assertEqual([], root.xpath("id('i1')"))
                 self.assertEqual(['i2'], root.xpath("id('i2')/@id"))
 
+    def test_dtd_validation_ids_of_changed_attribute(self):
+        # The validated attributes stay ID attributes: changing one replaces its ID.
+        for attlist, root in self._validated_documents_with_ids():
+            with self.subTest(attlist=attlist):
+                root[0].set('id', 'x1')
+                self.assertEqual([], root.xpath("id('i1')"))
+                self.assertEqual([root[0]], root.xpath("id('x1')"))
+                self.assertEqual([root[1]], root.xpath("id('i2')"))
+
     def test_dtd_api_internal(self):
         root = etree.XML(b'''
         <!DOCTYPE b SYSTEM "none" [
