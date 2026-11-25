@@ -99,6 +99,22 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #endif
 
 #ifdef WITHOUT_THREADING
+/* Do not release the GIL around library calls ("with nogil"), but still while waiting for another
+   thread, which may need the GIL to continue, e.g. for a lock that it holds while it runs Python
+   code, which can switch threads.  Cython's 'pymutex' waits for a lock between
+   Py_BEGIN_ALLOW_THREADS and Py_END_ALLOW_THREADS, and RWLock spins with them, so these keep
+   releasing the GIL. */
+static CYTHON_INLINE PyThreadState* __lxml_PyEval_SaveThread(void) {
+    return PyEval_SaveThread();
+}
+static CYTHON_INLINE void __lxml_PyEval_RestoreThread(PyThreadState *state) {
+    PyEval_RestoreThread(state);
+}
+#  undef  Py_BEGIN_ALLOW_THREADS
+#  define Py_BEGIN_ALLOW_THREADS  { PyThreadState *_save = __lxml_PyEval_SaveThread();
+#  undef  Py_END_ALLOW_THREADS
+#  define Py_END_ALLOW_THREADS  __lxml_PyEval_RestoreThread(_save); }
+
 #  undef PyEval_SaveThread
 #  define PyEval_SaveThread() (NULL)
 #  undef PyEval_RestoreThread
