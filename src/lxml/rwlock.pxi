@@ -303,6 +303,30 @@ static LXML_THREAD_LOCAL __lxml_read_holds __lxml_thread_read_holds;
         atomic_int update_acquired
         atomic_int write_wait_on_update
 
+cdef extern from *:
+    """
+#if defined(PYPY_VERSION) && !defined(_WIN32)
+#include <time.h>
+#endif
+
+/* Let other threads take the GIL while this one spins.  Unlike "with nogil", this also releases
+   the GIL where lxml does not release it around library calls (WITHOUT_THREADING, see
+   etree_defs.h), e.g. for readers that need it to continue. */
+static void __lxml_yield_gil(void) {
+    Py_BEGIN_ALLOW_THREADS
+#if defined(PYPY_VERSION) && !defined(_WIN32)
+    {
+        /* PyPy does not wake up the threads that wait for the GIL when it is released (except on
+           Windows), they look at it every 0.1 ms, so keep it free for that long. */
+        struct timespec pause = {0, 100000};
+        nanosleep(&pause, NULL);
+    }
+#endif
+    Py_END_ALLOW_THREADS
+}
+    """
+    void yield_gil "__lxml_yield_gil" () noexcept
+
 
 cdef const nonatomic_int max_lock_reader_count = 1 << 30
 
@@ -392,7 +416,7 @@ cdef class RWLock:
     cdef void _unblock_readers(self, nonatomic_int waiting_readers) noexcept:
         while atomic_load(&self._readers_waiting) == 0:
             # Wait for the first reader to acquire the lock.
-            with nogil: pass
+            yield_gil()
 
         # Signal to the reader that we noticed it taking the lock.
         waiting_already = atomic_add(&self._readers_waiting, waiting_readers)
@@ -404,7 +428,7 @@ cdef class RWLock:
     cdef void _wait_for_pending_readers_to_start(self):
         """Wait for any pending readers to start running after a writer unblocked them."""
         while atomic_load(&self._readers_waiting) > 0:
-            with nogil: pass
+            yield_gil()
 
     cdef void _wait_to_read(self) noexcept:
         # Guard against concurrent readers.
@@ -721,7 +745,7 @@ cdef class RWLock:
                 return 1
             # The last upgrade is ending, which does not wait for anything.
             state = UPGRADE_NONE
-            with nogil: pass
+            yield_gil()
 
         self._upgrade_lock.acquire()
 
@@ -825,8 +849,7 @@ cdef class RWLock:
                 self._upgrade_lock.acquire()
                 self._upgrade_lock.release()
             else:
-                with nogil:
-                    pass
+                yield_gil()
             state = UPGRADE_NONE
 
         # Nothing can claim the lock now, so the read lock does not wait.  It is not recorded
