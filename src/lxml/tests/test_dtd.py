@@ -2,6 +2,7 @@
 Test cases related to DTD parsing and validation
 """
 
+import gc
 import threading
 import unittest, sys
 from io import BytesIO
@@ -180,6 +181,7 @@ class ETreeDtdTestCase(HelperTestCase):
         for attlist, root in self._validated_documents_with_ids(validate_subelement):
             with self.subTest(attlist=attlist):
                 root[0].remove(root[0][0])  # also frees the element
+                gc.collect()  # which PyPy does only when it collects the element's proxy
                 self.assertEqual([], root.xpath("id('i1')"))
                 self.assertEqual(['i2'], root.xpath("id('i2')/@id"))
 
