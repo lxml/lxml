@@ -5307,6 +5307,25 @@ class ETreeXIncludeTestCase(_XIncludeTestCase):
     def include(self, tree):
         tree.xinclude()
 
+    def test_xinclude_error_log_last_run(self):
+        xinclude = etree.XInclude()
+        source = ('<doc xmlns:xi="http://www.w3.org/2001/XInclude">'
+                  '<xi:include href="lxml-test-missing.xml"/></doc>')
+        self.assertRaises(etree.XIncludeError, xinclude, etree.XML(source))
+        error_messages = [entry.message for entry in xinclude.error_log]
+        self.assertTrue(error_messages)
+        self.assertIsNotNone(xinclude.error_log.last_error)
+
+        for _ in range(2):
+            xinclude(etree.XML('<doc/>'))
+            self.assertFalse(xinclude.error_log)
+            self.assertIsNone(xinclude.error_log.last_error)
+
+        with self.assertRaises(etree.XIncludeError) as cm:
+            xinclude(etree.XML(source))
+        self.assertEqual(error_messages, [entry.message for entry in cm.exception.error_log])
+        self.assertEqual(error_messages, [entry.message for entry in xinclude.error_log])
+
 
 class ElementIncludeTestCase(_XIncludeTestCase):
     __test__ = True

@@ -425,6 +425,7 @@ cdef tuple LIBXML2_XPATH_ERROR_MESSAGES = (
 cdef void _forwardXPathError(void* c_ctxt, const xmlerror.xmlError* c_error) noexcept with gil:
     cdef xmlerror.xmlError error
     cdef int xpath_code
+    cdef _BaseContext context
     if c_error.message is not NULL:
         error.message = c_error.message
     else:
@@ -441,7 +442,11 @@ cdef void _forwardXPathError(void* c_ctxt, const xmlerror.xmlError* c_error) noe
     error.file = c_error.file
     error.node = NULL
 
-    (<_BaseContext>c_ctxt)._error_log._receive(&error)
+    context = <_BaseContext>c_ctxt
+    if context._error_log is None:
+        # XPath evaluators create the error log of an evaluation on its first error.
+        context._error_log = _newErrorLog()
+    context._error_log._receive(&error)
 
 
 cdef void _receiveXPathError(void* c_context, const xmlerror.xmlError* error) noexcept nogil:

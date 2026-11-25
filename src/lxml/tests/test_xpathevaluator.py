@@ -214,6 +214,51 @@ class ETreeXPathTestCase(HelperTestCase):
         xpath = etree.XPath("/fa:d")
         self.assertRaises(etree.XPathEvalError, xpath, tree)
 
+    def _assert_error_log_per_call(self, evaluator, count_x, node):
+        # 'count_x(**variables)' evaluates "count($x)" with the 'evaluator'.
+        # Each call reports its own errors and 'error_log' shows those of the last call.
+        def error_types(error_log):
+            return [entry.type for entry in error_log]
+
+        undefined_variable = etree.ErrorTypes.XPATH_UNDEF_VARIABLE_ERROR
+        invalid_type = etree.ErrorTypes.XPATH_INVALID_TYPE
+        self.assertEqual([], error_types(evaluator.error_log))
+
+        with self.assertRaises(etree.XPathEvalError) as cm:
+            count_x()
+        first_error = cm.exception
+        self.assertIn(undefined_variable, error_types(first_error.error_log))
+        self.assertEqual(error_types(first_error.error_log), error_types(evaluator.error_log))
+
+        with self.assertRaises(etree.XPathEvalError) as cm:
+            count_x(x='text')
+        second_error = cm.exception
+        self.assertNotEqual(str(first_error), str(second_error))
+        self.assertIn(invalid_type, error_types(second_error.error_log))
+        self.assertNotIn(undefined_variable, error_types(second_error.error_log))
+        self.assertEqual(error_types(second_error.error_log), error_types(evaluator.error_log))
+
+        self.assertEqual(1, count_x(x=[node]))
+        self.assertEqual([], error_types(evaluator.error_log))
+
+    def test_xpath_class_error_log(self):
+        root = etree.XML('<a/>')
+        xpath = etree.XPath('count($x)')
+        self._assert_error_log_per_call(
+            xpath, lambda **variables: xpath(root, **variables), root)
+
+    def test_xpath_evaluator_error_log(self):
+        root = etree.XML('<a/>')
+        evaluator = etree.XPathEvaluator(root)
+        self._assert_error_log_per_call(
+            evaluator, lambda **variables: evaluator('count($x)', **variables), root)
+
+    def test_xpath_evaluator_tree_error_log(self):
+        tree = self.parse('<a/>')
+        evaluator = etree.XPathEvaluator(tree)
+        self._assert_error_log_per_call(
+            evaluator, lambda **variables: evaluator('count($x)', **variables), tree.getroot())
+
     def test_elementtree_getpath(self):
         a  = etree.Element("a")
         b  = etree.SubElement(a, "b")

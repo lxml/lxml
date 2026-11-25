@@ -360,15 +360,20 @@ cdef class DTD(_Validator):
 
         Returns true if the document is valid, false if not.
         """
+        return self._validate(etree) is None
+
+    cdef _ErrorLog _validate(self, etree):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef dtdvalid.xmlValidCtxt* valid_ctxt
+        cdef _ErrorLog error_log
         cdef int ret = -1
 
         assert self._c_dtd is not NULL, "DTD not initialised"
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
+        error_log = self._new_validation_log()
 
         valid_ctxt = dtdvalid.xmlNewValidCtxt()
         if valid_ctxt is NULL:
@@ -381,18 +386,22 @@ cdef class DTD(_Validator):
 
         doc.lock_fakedoc()
         try:
-            with self._error_log:
+            error_log.connect()
+            try:
                 c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
                 ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
                 _destroyFakeDoc(doc._c_doc, c_doc)
+            finally:
+                error_log.disconnect()
         finally:
             doc.unlock_fakedoc()
             dtdvalid.xmlFreeValidCtxt(valid_ctxt)
 
+        self._set_validation_log(error_log, ret == 1)
         if ret == -1:
             raise DTDValidateError("Internal error in DTD validation",
-                                   self._error_log)
-        return ret == 1
+                                   error_log)
+        return None if ret == 1 else error_log
 
 
 cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:

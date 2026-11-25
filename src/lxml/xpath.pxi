@@ -117,22 +117,26 @@ cdef class _XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _XPathContext _context
     cdef cython.pymutex _eval_lock
+    # Each evaluation collects its errors in a new log, which the context creates on the
+    # first error.  The log of the last finished evaluation is published as 'error_log',
+    # None means that it did not report any errors.
     cdef _ErrorLog _error_log
-
-    def __cinit__(self):
-        self._error_log = _ErrorLog()
 
     def __init__(self, namespaces, extensions, enable_regexp,
                  smart_strings):
         if self._context is not None:
             raise RuntimeError("Repeated call to _XPathEvaluatorBase.__init__()")
-        self._context = _XPathContext(namespaces, extensions, self._error_log,
+        self._context = _XPathContext(namespaces, extensions, None,
                                       enable_regexp, None, smart_strings)
 
     @property
     def error_log(self):
-        assert self._error_log is not None, "XPath evaluator not initialised"
-        return self._error_log.copy()
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._error_log
+        if error_log is None:
+            return _ListErrorLog([], None, None)
+        return error_log.copy()
 
     def __dealloc__(self):
         if self._xpathCtxt is not NULL:
@@ -162,31 +166,49 @@ cdef class _XPathEvaluatorBase:
         if config.ENABLE_THREADING:
             self._eval_lock.release()
 
-    cdef _build_parse_error(self):
-        cdef _BaseErrorLog entries
-        entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
-        if entries:
-            message = entries._buildExceptionMessage(None)
-            if message is not None:
-                return XPathSyntaxError(message, self._error_log)
-        return XPathSyntaxError(
-            self._error_log._buildExceptionMessage("Error in xpath expression"),
-            self._error_log)
+    @cython.final
+    cdef _ErrorLog _publish_error_log(self):
+        """Publish the error log of the finished evaluation as 'error_log' and return it.
+        """
+        cdef _ErrorLog error_log = self._context._error_log
+        self._context._error_log = None
+        with cython.critical_section(self):
+            self._error_log = error_log
+        return error_log
 
-    cdef _build_eval_error(self):
+    cdef _build_parse_error(self, _ErrorLog error_log):
         cdef _BaseErrorLog entries
-        entries = self._error_log.filter_types(_XPATH_EVAL_ERRORS)
-        if not entries:
-            entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
+        if error_log is None:
+            error_log = _newErrorLog()
+        entries = error_log.filter_types(_XPATH_SYNTAX_ERRORS)
         if entries:
             message = entries._buildExceptionMessage(None)
             if message is not None:
-                return XPathEvalError(message, self._error_log)
+                return XPathSyntaxError(message, error_log)
+        return XPathSyntaxError(
+            error_log._buildExceptionMessage("Error in xpath expression"),
+            error_log)
+
+    cdef _build_eval_error(self, _ErrorLog error_log):
+        cdef _BaseErrorLog entries
+        if error_log is None:
+            error_log = _newErrorLog()
+        entries = error_log.filter_types(_XPATH_EVAL_ERRORS)
+        if not entries:
+            entries = error_log.filter_types(_XPATH_SYNTAX_ERRORS)
+        if entries:
+            message = entries._buildExceptionMessage(None)
+            if message is not None:
+                return XPathEvalError(message, error_log)
         return XPathEvalError(
-            self._error_log._buildExceptionMessage("Error in xpath expression"),
-            self._error_log)
+            error_log._buildExceptionMessage("Error in xpath expression"),
+            error_log)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
+        cdef _ErrorLog error_log = None
+        # Only evaluations, which '_eval_lock' serialises, change 'self._error_log'.
+        if self._context._error_log is not None or self._error_log is not None:
+            error_log = self._publish_error_log()
         if self._context._exc._has_raised():
             if xpathObj is not NULL:
                 _freeXPathObject(xpathObj)
@@ -196,7 +218,7 @@ cdef class _XPathEvaluatorBase:
 
         if xpathObj is NULL:
             self._context._release_temp_refs()
-            raise self._build_eval_error()
+            raise self._build_eval_error(error_log)
 
         try:
             result = _unwrapXPathObject(xpathObj, doc, self._context)
@@ -432,8 +454,9 @@ cdef class XPath(_XPathEvaluatorBase):
             raise MemoryError()
         self.set_context(xpathCtxt)
         self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _xcstr(self._path))
+        error_log = self._publish_error_log()
         if self._xpath is NULL:
-            raise self._build_parse_error()
+            raise self._build_parse_error(error_log)
 
     def __call__(self, _etree_or_element, **_variables):
         "__call__(self, _etree_or_element, **_variables)"
