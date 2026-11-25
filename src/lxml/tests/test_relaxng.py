@@ -3,6 +3,7 @@ Test cases related to RelaxNG parsing and validation
 """
 
 
+import gc
 import unittest
 
 from .common_imports import (
@@ -139,6 +140,7 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         root = etree.XML('<r><e id="i1"/><e id="i2" ref="i1"/></r>')
         self.assertTrue(idref_schema.validate(root))
         root.remove(root[0])  # removes the ID that 'ref' refers to
+        gc.collect()  # which PyPy does only when it collects the element's proxy
         self.assertTrue(text_schema.validate(root),
                         [error.message for error in text_schema.error_log])
         self.assertFalse(idref_schema.validate(root))

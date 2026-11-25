@@ -3,6 +3,7 @@ Test cases related to XML Schema parsing and validation
 """
 
 
+import gc
 import unittest
 
 from .common_imports import etree, BytesIO, HelperTestCase, fileInTestDir, make_doctest, SimpleFSPath
@@ -121,6 +122,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         root = etree.XML('<r><e id="i1"/><e id="i2" ref="i1"/></r>')
         self.assertTrue(schema.validate(root))
         root.remove(root[0])  # removes the ID that 'ref' refers to
+        gc.collect()  # which PyPy does only when it collects the element's proxy
         self.assertTrue(relaxng.validate(root), [error.message for error in relaxng.error_log])
 
     def test_xmlschema_default_attributes(self):
