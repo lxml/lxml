@@ -34,6 +34,8 @@ cdef class XInclude:
         # typed as elements.  The included fragment is added between the two,
         # i.e. as a sibling, which does not conflict with traversal.
         cdef xinclude.xmlXIncludeCtxt* xctxt = NULL
+        cdef xmlparser.xmlParserCtxt* c_parser_ctxt
+        cdef void* context_ptr
         cdef int result
         _assertValidNode(node)
         assert self._error_log is not None, "XInclude processor not initialised"
