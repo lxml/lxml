@@ -32,6 +32,10 @@ Bugs fixed
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.
 
+* LP#2175761: Resolvers that returned a string with a ``base_url`` leaked a copy of the URL with
+  libxml2 2.14 and later.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#546: ``lxml.html.diff`` is a bit more stable on PyPy.
   Patch by Matti Picus.
 
@@ -39,6 +43,11 @@ Bugs fixed
 
 * The parallel ``make`` execution during library build could fail
   when it tries to request more CPUs than available.
+
+* LP#2175761: The C code that Cython generates for ``lxml.etree`` no longer depends on ``PYTHONHASHSEED``.
+  The exact C types that Cython inferred for some untyped variables was not deterministic.
+  It is now statically declared.
+  Patch by Pierre-Yves Le Borgne.
 
 Other changes
 -------------

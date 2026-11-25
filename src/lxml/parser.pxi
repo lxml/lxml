@@ -480,7 +480,8 @@ cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_
                     filename = None
 
             if tree.LIBXML_VERSION >= 21400:
-                c_filename = <char *>tree.xmlStrdup(_xcstr(filename)) if filename is not None else NULL
+                # The input stores a copy of the URL.
+                c_filename = _cstr(filename) if filename is not None else NULL
                 c_input = xmlparser.xmlNewInputFromMemory(
                     c_filename, _xcstr(data), <size_t> python.PyBytes_GET_SIZE(data), 0)
             else:

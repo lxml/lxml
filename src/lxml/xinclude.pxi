@@ -33,6 +33,7 @@ cdef class XInclude:
         # siblings.  Tree traversal will simply ignore them as they are not
         # typed as elements.  The included fragment is added between the two,
         # i.e. as a sibling, which does not conflict with traversal.
+        cdef void* c_context
         cdef int result
         _assertValidNode(node)
         assert self._error_log is not None, "XInclude processor not initialised"
