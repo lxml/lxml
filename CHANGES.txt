@@ -38,6 +38,14 @@ Bugs fixed
   with ``IndexError``.  It is now kept as following sibling.
   Patch by cherith.
 
+* LP#2175570: ``Element.extend()`` with elements from several documents could release
+  the target's document lock too early or deadlock with other threads since lxml 7.0.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175570: Slice assignment of elements from other documents could deadlock with other threads,
+  or move elements without locking their document, since lxml 7.0.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#543: Repeated ElementPath searches could leak an index counter into the next run since lxml 7.0.
   Patch by Nayana-Naik73.
 
