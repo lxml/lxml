@@ -1,4 +1,5 @@
-cdef object _find_id_attributes
+# Created at import time: threads that called XMLID() first could replace each other's.
+cdef object _find_id_attributes = XPath('//*[string(@id)]')
 
 def XMLID(text, parser=None, *, base_url=None):
     """XMLID(text, parser=None, base_url=None)
@@ -10,9 +11,6 @@ def XMLID(text, parser=None, *, base_url=None):
     values.
     """
     cdef dict dic
-    global _find_id_attributes
-    if _find_id_attributes is None:
-        _find_id_attributes = XPath('//*[string(@id)]')
 
     # ElementTree compatible implementation: parse and look for 'id' attributes
     root = XML(text, parser, base_url=base_url)
@@ -65,13 +63,22 @@ cdef class _IDDict:
     that were created or modified 'by hand' are not supported.
     """
     cdef _Document _doc
+    # Snapshots of the keys and items, built on first use and then never changed.
+    # The flags tell that they are set, so that readers need no lock.
     cdef list _keys
     cdef list _items
+    cdef atomic_int _keys_set
+    cdef atomic_int _items_set
 
     def __cinit__(self, etree):
         cdef _Document doc
+        cdef bint has_ids
         doc = _documentOrRaise(etree)
-        if doc._c_doc.ids is NULL:
+        # The ID table is changed by tree modifications (under the write lock) => read lock.
+        doc.lock_read()
+        has_ids = doc._c_doc.ids is not NULL
+        doc.unlock_read()
+        if not has_ids:
             raise ValueError, "No ID dictionary available."
         self._doc = doc
         self._keys  = None
@@ -81,18 +88,21 @@ cdef class _IDDict:
         return _IDDict(self._doc)
 
     def __getitem__(self, id_name):
-        cdef tree.xmlHashTable* c_ids
         cdef tree.xmlID* c_id
         cdef xmlAttr* c_attr
-        c_ids = self._doc._c_doc.ids
         id_utf = _utf8(id_name)
-        c_id = <tree.xmlID*>tree.xmlHashLookup(c_ids, _xcstr(id_utf))
-        if c_id is NULL:
-            raise KeyError, "key not found."
-        c_attr = c_id.attr
-        if c_attr is NULL or c_attr.parent is NULL:
-            raise KeyError, "ID attribute not found."
-        return _elementFactory(self._doc, c_attr.parent)
+        doc = self._doc
+        doc.lock_read()
+        try:
+            c_id = <tree.xmlID*>tree.xmlHashLookup(doc._c_doc.ids, _xcstr(id_utf))
+            if c_id is NULL:
+                raise KeyError, "key not found."
+            c_attr = c_id.attr
+            if c_attr is NULL or c_attr.parent is NULL:
+                raise KeyError, "ID attribute not found."
+            return _elementFactory(doc, c_attr.parent)
+        finally:
+            doc.unlock_read()
 
     def get(self, id_name):
         return self[id_name]
@@ -100,8 +110,10 @@ cdef class _IDDict:
     def __contains__(self, id_name):
         cdef tree.xmlID* c_id
         id_utf = _utf8(id_name)
-        c_id = <tree.xmlID*>tree.xmlHashLookup(
-            self._doc._c_doc.ids, _xcstr(id_utf))
+        doc = self._doc
+        doc.lock_read()
+        c_id = <tree.xmlID*>tree.xmlHashLookup(doc._c_doc.ids, _xcstr(id_utf))
+        doc.unlock_read()
         return c_id is not NULL
 
     def has_key(self, id_name):
@@ -111,54 +123,74 @@ cdef class _IDDict:
         return repr(dict(self))
 
     def keys(self):
-        if self._keys is None:
-            self._keys = self._build_keys()
-        return self._keys[:]
+        return self._key_list()[:]
 
     def __iter__(self):
-        if self._keys is None:
-            self._keys = self._build_keys()
-        return iter(self._keys)
+        return iter(self._key_list())
 
     def iterkeys(self):
         return self
 
     def __len__(self):
-        if self._keys is None:
-            self._keys = self._build_keys()
-        return len(self._keys)
+        return len(self._key_list())
 
     def items(self):
-        if self._items is None:
-            self._items = self._build_items()
-        return self._items[:]
+        return self._item_list()[:]
 
     def iteritems(self):
-        if self._items is None:
-            self._items = self._build_items()
-        return iter(self._items)
+        return iter(self._item_list())
 
     def values(self):
-        if self._items is None:
-            self._items = self._build_items()
-        return [(<tuple> item)[1] for item in self._items]
+        return [(<tuple> item)[1] for item in self._item_list()]
 
     def itervalues(self):
         return iter(self.values())
 
     @cython.final
+    cdef list _key_list(self):
+        if not atomic_load(&self._keys_set):
+            keys = self._build_keys()
+            with cython.critical_section(self):
+                # The first thread that built the list sets it.
+                if self._keys is None:
+                    self._keys = keys
+                    atomic_add(&self._keys_set, 1)
+        return self._keys
+
+    @cython.final
+    cdef list _item_list(self):
+        if not atomic_load(&self._items_set):
+            items = self._build_items()
+            with cython.critical_section(self):
+                # The first thread that built the list sets it.
+                if self._items is None:
+                    self._items = items
+                    atomic_add(&self._items_set, 1)
+        return self._items
+
+    @cython.final
     cdef list _build_keys(self):
         keys = []
-        tree.xmlHashScan(<tree.xmlHashTable*>self._doc._c_doc.ids,
-                         <tree.xmlHashScanner>_collectIdHashKeys, <python.PyObject*>keys)
+        doc = self._doc
+        doc.lock_read()
+        try:
+            tree.xmlHashScan(<tree.xmlHashTable*>doc._c_doc.ids,
+                             <tree.xmlHashScanner>_collectIdHashKeys, <python.PyObject*>keys)
+        finally:
+            doc.unlock_read()
         return keys
 
     @cython.final
     cdef list _build_items(self):
         items = []
-        context = (items, self._doc)
-        tree.xmlHashScan(<tree.xmlHashTable*>self._doc._c_doc.ids,
-                         <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
+        doc = self._doc
+        context = (items, doc)
+        doc.lock_read()
+        try:
+            tree.xmlHashScan(<tree.xmlHashTable*>doc._c_doc.ids,
+                             <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
+        finally:
+            doc.unlock_read()
         return items
 
 
