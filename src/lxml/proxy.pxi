@@ -188,6 +188,35 @@ cdef int attemptDeallocation(xmlNode* c_node) noexcept:
     c_top = getDeallocationTop(c_node)
     return freeSubtree(c_top)
 
+# Number of ancestors to check before looking at the neighbours of a node.
+# Releases inside shallow trees mostly end here, in the document node or in
+# a proxied ancestor, without any further lookups.  The limit keeps releases
+# in deep trees from walking the whole ancestor chain before the cheap
+# neighbour checks get a chance to catch the common traversal case, which
+# would make descending through a tree one proxy at a time quadratic.
+cdef enum:
+    _EARLY_ANCESTOR_STEPS = 8
+
+cdef inline xmlNode* _walkUpUnattached(xmlNode* c_node, int max_steps) noexcept:
+    """Walk up through at most max_steps ancestors of c_node (all of them if
+    max_steps is negative) and return the node reached.  Return NULL if the
+    walk met the document node or an ancestor with a proxy, i.e. if the tree
+    must not be deallocated.
+    """
+    while max_steps != 0 and c_node.parent is not NULL:
+        max_steps -= 1
+        c_node = c_node.parent
+        #print "checking:", c_current.type
+        if c_node.type == tree.XML_DOCUMENT_NODE or \
+               c_node.type == tree.XML_HTML_DOCUMENT_NODE:
+            #print "not freeing: still in doc"
+            return NULL
+        # if we're still attached to the document, don't deallocate
+        if hasProxy(c_node):
+            #print "Not freeing: proxies still exist"
+            return NULL
+    return c_node
+
 cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
     """Return the left-most sibling at the top of the tree that can be deallocated, or NULL.
     """
@@ -200,30 +229,30 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node) noexcept:
         return NULL
 
     c_start_node = c_node
-    while c_node.parent is not NULL:
-        c_node = c_node.parent
-        #print "checking:", c_current.type
-        if c_node.type == tree.XML_DOCUMENT_NODE or \
-               c_node.type == tree.XML_HTML_DOCUMENT_NODE:
-            #print "not freeing: still in doc"
-            return NULL
-        # if we're still attached to the document, don't deallocate
-        if hasProxy(c_node):
-            #print "Not freeing: proxies still exist"
-            return NULL
+    c_node = _walkUpUnattached(c_node, _EARLY_ANCESTOR_STEPS)
+    if c_node is NULL:
+        return NULL
 
-    # Check the original node's nearby elements after the ancestor walk.
-    c_neighbour = _findChildForwards(c_start_node, 0)
-    if c_neighbour is not NULL and hasProxy(c_neighbour):
-        return NULL
+    # Check the original node's nearby elements before walking the remaining
+    # ancestors.  Entity references point their children at the entity
+    # declaration in the DTD, which is not part of this tree, so only
+    # elements have children here.
+    if c_start_node.type == tree.XML_ELEMENT_NODE:
+        c_neighbour = _findChildForwards(c_start_node, 0)
+        if c_neighbour is not NULL and hasProxy(c_neighbour):
+            return NULL
+        c_neighbour = _findChildBackwards(c_start_node, 0)
+        if c_neighbour is not NULL and hasProxy(c_neighbour):
+            return NULL
     c_neighbour = _nextElement(c_start_node)
-    if c_neighbour is not NULL and hasProxy(c_neighbour):
-        return NULL
-    c_neighbour = _findChildBackwards(c_start_node, 0)
     if c_neighbour is not NULL and hasProxy(c_neighbour):
         return NULL
     c_neighbour = _previousElement(c_start_node)
     if c_neighbour is not NULL and hasProxy(c_neighbour):
+        return NULL
+
+    c_node = _walkUpUnattached(c_node, -1)
+    if c_node is NULL:
         return NULL
 
     # see whether we have children to deallocate
