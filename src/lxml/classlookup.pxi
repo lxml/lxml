@@ -250,7 +250,7 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
     cdef void _setFallback(self, ElementClassLookup lookup):
         """Sets the fallback scheme for this lookup method.
         """
-        lookup_function = lookup._lookup_function
+        cdef _element_class_lookup_function lookup_function = lookup._lookup_function
         if lookup_function is NULL:
             lookup = None
             lookup_function = _lookupDefaultElementClassesOnly
