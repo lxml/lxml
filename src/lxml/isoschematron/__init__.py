@@ -287,10 +287,17 @@ class Schematron(_etree._Validator):
             schematron = self._include(schematron, **include_params)
         if expand:
             schematron = self._expand(schematron, **expand_params)
-        if validate_schema and not schematron_schema_valid(schematron):
-            raise _etree.SchematronParseError(
-                "invalid schematron schema: %s" %
-                schematron_schema_valid.error_log)
+        if validate_schema:
+            if not schematron_schema_valid_supported:
+                schematron_schema_valid(schematron)  # raises NotImplementedError
+            try:
+                schematron_schema_valid.assertValid(schematron)
+            except _etree.DocumentInvalid as exc:
+                # Report the errors of this validation, other threads may use
+                # the shared validator, too.
+                raise _etree.SchematronParseError(
+                    "invalid schematron schema: %s" % exc.error_log,
+                    exc.error_log) from None
         if store_schematron:
             self._schematron = schematron
         # add new compile keyword args here if exposing them
@@ -306,7 +313,7 @@ class Schematron(_etree._Validator):
 
         Returns true if document is valid, false if not.
         """
-        self._clear_error_log()
+        error_log = self._clear_error_log()
         result = self._validator(etree)
         if self._store_report:
             self._validation_report = result
@@ -322,9 +329,10 @@ class Schematron(_etree._Validator):
                     domain=self._domain, type=self._error_type,
                     level=self._level, line=0,
                     message=_etree.tostring(error, encoding='unicode'),
-                    filename=fname)
-            return False
-        return True
+                    filename=fname, error_log=error_log)
+        # Publish the log again, other threads may have replaced it in the meantime.
+        self._set_error_log(error_log)
+        return not errors
 
     @property
     def schematron(self):
