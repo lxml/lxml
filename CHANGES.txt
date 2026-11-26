@@ -32,6 +32,10 @@ Bugs fixed
   It now works correctly in PyPy 3.11 and 3.12.
   Patches by Matti Picus.
 
+* LP#2175569: Tag and attribute names that an XSLT transformation with parameters created
+  at runtime could point to freed memory in the result tree since lxml 7.0.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2164984: Returning non-element types from a parser target in ``XMLDTDID()`` could crash.
 
 * LP#2011542: A processing instruction after the root element crashed ``lxml.sax.ElementTreeContentHandler``
