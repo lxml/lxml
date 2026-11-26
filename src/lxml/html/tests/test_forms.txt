@@ -194,6 +194,17 @@ submit2: 'submit'
 text_field: 'text_value'
 textarea_field: 'some text'
 
+>>> form = fromstring('''<form>
+...   <input name="a" value="1">
+...   <input type="checkbox" name="c" value="x" checked>
+...   <input type="checkbox" name="c" value="y">
+...   <select name="m" multiple><option selected>p</option><option>q</option></select>
+...   <textarea name="t">text</textarea>
+... </form>''')
+>>> form.fields = {'a': '2'}
+>>> form.form_values()
+[('a', '2'), ('t', '')]
+
 >>> import lxml.html
 >>> tree = lxml.html.fromstring('''
 ... <html><body>
