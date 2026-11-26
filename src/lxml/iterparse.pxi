@@ -262,7 +262,7 @@ cdef class iterwalk:
     cdef _MultiTagMatcher _matcher
     cdef list   _node_stack
     cdef list   _events
-    cdef object _pop_event
+    cdef Py_ssize_t _event_index
     cdef object _include_siblings
     cdef int    _index
     cdef int    _event_filter
@@ -279,7 +279,7 @@ cdef class iterwalk:
             self._matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag)
         self._node_stack  = []
         self._events = []
-        self._pop_event = self._events.pop
+        self._event_index = 0
         self._skip_state = IWSKIP_CANNOT_SKIP  # ignore all skip requests by default
 
         if self._event_filter:
@@ -397,10 +397,23 @@ cdef class iterwalk:
 
     @cython.final
     cdef _next_event(self):
+        # Return the pending events in order without 'list.pop(0)', which would
+        # make long event batches (e.g. the 'end' events of a deep tree) quadratic.
+        cdef Py_ssize_t event_index = self._event_index
+        event = self._events[event_index]
         if self._skip_state == IWSKIP_NEXT_IS_START:
-            if self._events[0][0] in ('start', 'start-ns'):
+            if event[0] in ('start', 'start-ns'):
                 self._skip_state = IWSKIP_CAN_SKIP
-        return self._pop_event(0)
+        event_index += 1
+        if event_index >= len(self._events):
+            # All pending events were returned, start the next batch from an empty list.
+            self._events.clear()
+            event_index = 0
+        else:
+            # Do not keep returned events (and their elements) alive.
+            self._events[event_index - 1] = None
+        self._event_index = event_index
+        return event
 
     def skip_subtree(self):
         """Prevent descending into the current subtree.
