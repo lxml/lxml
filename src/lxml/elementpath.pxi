@@ -525,13 +525,6 @@ cdef class _PathEvaluator:
         """
         pass
 
-    cdef xmlNode* reset_nodeset(self):
-        """Inform the evaluator that the processing of a nodeset has ended.
-        May returns an xmlNode* if one is left for processing.
-        Otherwise, returns NULL.
-        """
-        return NULL
-
     cdef xmlNode* first_node(self, xmlNode* c_node):
         """Find the first node matched by this evaluator.
         `c_node` is the node that was matched by the previous evaluator in the path.
@@ -683,7 +676,7 @@ cdef class _ParentPathEvaluator(_PathEvaluator):
 @cython.internal
 cdef class _IndexPathEvaluator(_PathEvaluator):
     """Evaluator for index path expressions."""
-    cdef Py_ssize_t index, _counter
+    cdef Py_ssize_t index
 
     def __cinit__(self, Py_ssize_t index):
         self.index = index  # 0-based
@@ -691,18 +684,8 @@ cdef class _IndexPathEvaluator(_PathEvaluator):
     def __repr__(self):
         return f"[{self.index}]"
 
-    cdef _IndexPathEvaluator copy(self):
-        return <_IndexPathEvaluator> _IndexPathEvaluator.__new__(
-            _IndexPathEvaluator, self.index)
-
-    cdef xmlNode* reset_nodeset(self):
-        self._counter = 0
-        return NULL
-
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        cdef Py_ssize_t current = self._counter
-        self._counter = current + 1
-        return c_node if current == self.index else NULL
+        return c_node if _sameTagSiblingCount(c_node, self.index, _previousElement) == self.index else NULL
 
     cdef xmlNode* next_node(self, xmlNode* c_node):
         return NULL
@@ -712,44 +695,37 @@ cdef class _IndexPathEvaluator(_PathEvaluator):
 @cython.internal
 cdef class _NegIndexPathEvaluator(_PathEvaluator):
     """Evaluator for backwards index path expressions."""
-    cdef Py_ssize_t index, _counter
-    cdef xmlNode** node_window
+    cdef Py_ssize_t index
 
     def __cinit__(self, Py_ssize_t c_index):
         if c_index >= 0:
             raise ValueError(f"negative index must be < 0, got {c_index}")
-        c_index = -c_index
-        self.index = c_index  # 1-based for modulus
-        self.node_window = <xmlNode**> python.lxml_malloc(c_index, sizeof(xmlNode*))
-        if self.node_window is NULL:
-            raise MemoryError()
-
-    def __dealloc__(self):
-        python.lxml_free(self.node_window)
-        self.node_window = NULL
+        self.index = -c_index - 1  # 0-based from the end
 
     def __repr__(self):
-        return "[last()]" if self.index == 1 else f"[last()-{self.index-1}]"
-
-    cdef _NegIndexPathEvaluator copy(self):
-        return <_NegIndexPathEvaluator> _NegIndexPathEvaluator.__new__(
-            _NegIndexPathEvaluator, -self.index)
-
-    cdef xmlNode* reset_nodeset(self):
-        cdef xmlNode* last_match = NULL
-        if self._counter >= self.index:
-            # Counter points at the oldest entry, one after the newest.
-            last_match = self.node_window[self._counter % self.index]
-        self._counter = 0
-        return last_match
+        return "[last()]" if self.index == 0 else f"[last()-{self.index}]"
 
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        self.node_window[self._counter % self.index] = c_node
-        self._counter += 1
-        return NULL
+        return c_node if _sameTagSiblingCount(c_node, self.index, _nextElement) == self.index else NULL
 
     cdef xmlNode* next_node(self, xmlNode* c_node):
         return NULL
+
+
+cdef Py_ssize_t _sameTagSiblingCount(xmlNode* c_node, Py_ssize_t limit, xmlNode* (*next_element)(xmlNode*) noexcept) noexcept:
+    """Count the preceding (or following) siblings with the same tag as c_node,
+    like ElementTree does for its positions.  Stops counting after 'limit'.
+    """
+    cdef Py_ssize_t count = 0
+    c_href = _getNs(c_node)
+    if c_href is NULL:
+        c_href = <const_xmlChar*> b""
+    c_sibling = next_element(c_node)
+    while c_sibling is not NULL and count <= limit:
+        if _tagMatches(c_sibling, c_href, c_node.name):
+            count += 1
+        c_sibling = next_element(c_sibling)
+    return count
 
 
 @cython.internal
@@ -1159,16 +1135,6 @@ def _evaluate_path(path_selectors: list[_PathEvaluator], start_element: _Element
                 c_next = selector.first_node(c_node)
             else:
                 c_next = selector.next_node(c_node)
-
-            if c_next is NULL and i < end_of_path:
-                # Reset nodeset context when leaving it.
-                c_next = (<_PathEvaluator> path_selectors[i+1]).reset_nodeset()
-                if c_next is not NULL:
-                    # Continue with late nodeset result from negative indexing.
-                    c_node_stack[i] = NULL  # exhausted
-                    i += 1
-                    c_node_stack[i] = NULL  # exhausted after c_next (may write to index "end_of_path")
-                    next_first = i + 1
 
             if c_next is NULL:
                 # backtrack
