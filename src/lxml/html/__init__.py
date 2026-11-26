@@ -42,6 +42,7 @@ __all__ = [
 import copy
 import re
 
+from collections import defaultdict
 from collections.abc import MutableMapping, MutableSet
 from functools import partial
 from itertools import groupby
@@ -991,18 +992,22 @@ class FormElement(HtmlElement):
 
     @fields.setter
     def fields(self, value):
-        fields = self.fields
-        prev_keys = fields.keys()
+        # Look up all fields in one pass instead of searching the form for each name.
+        fields = dict(self.inputs.items())
+        unset_fields = fields.copy()
         for key, value in value.items():
-            if key in prev_keys:
-                prev_keys.remove(key)
-            fields[key] = value
-        for key in prev_keys:
+            try:
+                field = fields[key]
+            except KeyError:
+                raise KeyError("No input element with the name %r" % key) from None
+            unset_fields.pop(key, None)
+            field.value = value
+        for key, field in unset_fields.items():
             if key is None:
                 # Case of an unnamed input; these aren't really
                 # expressed in form_values() anyway.
                 continue
-            fields[key] = None
+            field.value = None
 
     def _name(self):
         if self.get('name'):
@@ -1204,7 +1209,10 @@ class InputGetter:
         fields = [field for field in self if field.name == name]
         if not fields:
             raise KeyError("No input element with the name %r" % name)
+        return self._group_fields(name, fields)
 
+    @staticmethod
+    def _group_fields(name, fields):
         input_type = fields[0].get('type')
         if input_type == 'radio' and len(fields) > 1:
             group = RadioGroup(fields)
@@ -1245,14 +1253,12 @@ class InputGetter:
 
         :return: A list of (name, field) tuples.
         """
-        items = []
-        seen = set()
+        # Group the fields in one pass instead of searching the form for each name.
+        fields_by_name = defaultdict(list)
         for el in self:
-            name = el.name
-            if name not in seen:
-                seen.add(name)
-                items.append((name, self[name]))
-        return items
+            fields_by_name[el.name].append(el)
+        return [(name, self._group_fields(name, fields))
+                for name, fields in fields_by_name.items()]
 
     def __iter__(self):
         return self.form.iter('select', 'input', 'textarea')

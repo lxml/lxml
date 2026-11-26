@@ -237,3 +237,25 @@ some <b>text<br>content</b> with tags
 abc<br>def
 >>> len(ta)
 0
+
+>>> form = fromstring('''<form>
+...   <input name="a" value="1">
+...   <input type="checkbox" name="c" value="x">
+...   <input type="checkbox" name="c" value="y" checked>
+...   <input type="radio" name="r" value="p">
+...   <input type="radio" name="r" value="q" checked>
+...   <select name="s"><option>o1</option><option>o2</option></select>
+...   <textarea name="t">text</textarea>
+...   <input type="submit">
+... </form>''')
+>>> [(name, type(field).__name__) for name, field in form.inputs.items()]
+[('a', 'InputElement'), ('c', 'CheckboxGroup'), ('r', 'RadioGroup'), ('s', 'SelectElement'), ('t', 'TextareaElement'), (None, 'InputElement')]
+>>> form.fields = {'a': 'A', 'c': ['x'], 's': 'o2'}
+>>> form.form_values()
+[('a', 'A'), ('c', 'x'), ('s', 'o2'), ('t', '')]
+>>> form.fields = {'a': 'B', 'unknown': '1'}
+Traceback (most recent call last):
+    ...
+KeyError: "No input element with the name 'unknown'"
+>>> form.form_values()
+[('a', 'B'), ('c', 'x'), ('s', 'o2'), ('t', '')]
