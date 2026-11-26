@@ -358,6 +358,28 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEqual('Dag',  r[1].text)
         self.assertEqual('Honk', r[2].text)
 
+    def test_xpath_global_extension_modifies_tree(self):
+        # Global extension functions may modify the tree, like local ones,
+        # also when called through Element.xpath() and XPathEvaluator(element).
+        ns_uri = 'urn:lxml-test:global-extension-modifies-tree'
+        ns = etree.FunctionNamespace(ns_uri)
+
+        def mark(context, nodes):
+            for node in nodes:
+                node.set('marked', '1')
+            return len(nodes)
+
+        ns['mark'] = mark
+        try:
+            root = etree.XML('<root><a/><b/><c/></root>')
+            nsmap = {'m': ns_uri}
+            self.assertEqual(1.0, root.xpath('m:mark(a)', namespaces=nsmap))
+            self.assertEqual(1.0, etree.XPathEvaluator(root, namespaces=nsmap)('m:mark(b)'))
+            self.assertEqual(b'<root><a marked="1"/><b marked="1"/><c/></root>',
+                             etree.tostring(root))
+        finally:
+            del ns['mark']
+
     def test_xpath_context_node(self):
         tree = self.parse('<root><a/><b><c/></b></root>')
 
