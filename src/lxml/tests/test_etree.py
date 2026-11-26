@@ -3296,6 +3296,56 @@ class ETreeOnlyTestCase(HelperTestCase):
             ('<root xmlns:ns="%s"><ns:baz/></root>' % ns_href).encode('utf-8'),
             self.etree.tostring(two))
 
+    def test_namespaces_move_replaces_outer_declaration_consistently(self):
+        # Elements that shared a namespace declaration from outside of the moved
+        # subtree must all use the same replacement, even if a prefixed attribute
+        # in between required an additional, prefixed declaration.
+        source = self.etree.fromstring(
+            '<r xmlns:p="urn:x"><p:box><p:a/><p:b p:attr="1"/><p:c/></p:box></r>')
+        target = self.etree.fromstring('<dst xmlns="urn:x"/>')
+        target.append(source[0])
+        self.assertEqual(
+            b'<dst xmlns="urn:x"><box xmlns:p="urn:x"><a/><b p:attr="1"/><c/></box></dst>',
+            self.etree.tostring(target))
+
+    def test_namespaces_move_subtree_with_many_declarations(self):
+        source = self.etree.fromstring(
+            '<r xmlns:p="urn:p"><box>' +
+            ''.join('<p:c xmlns:q{n}="urn:q{n}" q{n}:a="{n}">'
+                    '<p:d xmlns:p="urn:p"/></p:c>'.format(n=i) for i in range(30)) +
+            '</box></r>')
+        target = self.etree.fromstring('<dst xmlns:p="urn:p"/>')
+        target.append(source[0])
+        self.assertEqual(
+            ('<dst xmlns:p="urn:p"><box>' +
+             ''.join('<p:c xmlns:q{n}="urn:q{n}" q{n}:a="{n}"><p:d/></p:c>'.format(n=i)
+                     for i in range(30)) +
+             '</box></dst>').encode('utf8'),
+            self.etree.tostring(target))
+
+    def test_namespaces_move_many_declarations_replaces_outer_declaration_consistently(self):
+        source = self.etree.fromstring(
+            '<r xmlns:p="urn:p"><p:box>' +
+            ''.join('<p:c p:a="{n}" xmlns:q{n}="urn:q{n}"/>'.format(n=i) for i in range(30)) +
+            '</p:box></r>')
+        target = self.etree.fromstring('<dst xmlns="urn:p"/>')
+        target.append(source[0])
+        self.assertEqual(
+            ('<dst xmlns="urn:p"><box xmlns:p="urn:p">' +
+             ''.join('<c xmlns:q{n}="urn:q{n}" p:a="{n}"/>'.format(n=i) for i in range(30)) +
+             '</box></dst>').encode('utf8'),
+            self.etree.tostring(target))
+
+    def test_namespaces_remove_subtree_with_outer_declaration(self):
+        root = self.etree.fromstring(
+            '<r xmlns:p="urn:p"><p:box><p:a p:x="1"/><p:a p:x="2"/><p:a p:x="3"/></p:box></r>')
+        box = root[0]
+        root.remove(box)
+        self.assertEqual(
+            b'<p:box xmlns:p="urn:p"><p:a p:x="1"/><p:a p:x="2"/><p:a p:x="3"/></p:box>',
+            self.etree.tostring(box))
+        self.assertEqual(b'<r xmlns:p="urn:p"/>', self.etree.tostring(root))
+
     def test_namespace_cleanup(self):
         xml = (
             b'<foo xmlns="F" xmlns:x="x">'
