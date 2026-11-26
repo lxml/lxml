@@ -99,15 +99,6 @@ HTML Element Methods
 HTML elements have all the methods that come with ElementTree, but
 also include some extra methods:
 
-``.drop_tree()``:
-    Drops the element and all its children.  Unlike
-    ``el.getparent().remove(el)`` this does *not* remove the tail
-    text; with ``drop_tree`` the tail text is merged with the previous
-    element.
-
-``.drop_tag()``:
-    Drops the tag, but keeps its children and text.
-
 ``.find_class(class_name)``:
     Returns a list of all the elements with the given CSS class name.
     Note that class names are space separated in HTML, so

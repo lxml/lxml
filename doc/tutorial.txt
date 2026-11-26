@@ -378,6 +378,41 @@ not require any `special text nodes`_ in addition to the Element
 class, that tend to get in the way fairly often (as you might know
 from classic DOM_ APIs).
 
+The ElementTree-compatible ``parent.remove(element)`` detaches the element
+with its subtree and tail intact, so its following text leaves the parent
+tree with it:
+
+.. sourcecode:: pycon
+
+    >>> remove_parent = etree.XML(b'<p>Hello <em>beautiful <strong>world</strong></em>!</p>')
+    >>> removed_em = remove_parent[0]
+    >>> remove_parent.remove(removed_em)
+    >>> etree.tostring(remove_parent)
+    b'<p>Hello </p>'
+    >>> removed_em.tail
+    '!'
+
+The lxml-specific ``element.drop_tree()`` is a practical extension for editing
+document-style (mixed-content) XML: it removes an element and its children,
+merging the tail into the parent tree so the following text stays in place.
+
+.. sourcecode:: pycon
+
+    >>> drop_parent = etree.XML(b'<p>Hello <em>beautiful <strong>world</strong></em>!</p>')
+    >>> drop_parent[0].drop_tree() # lxml.etree only!
+    >>> etree.tostring(drop_parent)
+    b'<p>Hello !</p>'
+
+The lxml-specific ``element.drop_tag()`` removes the element's tag but keeps
+its text, children and tail in the tree:
+
+.. sourcecode:: pycon
+
+    >>> unwrap_parent = etree.XML(b'<p>Hello <em>beautiful <strong>world</strong></em>!</p>')
+    >>> unwrap_parent[0].drop_tag() # lxml.etree only!
+    >>> etree.tostring(unwrap_parent)
+    b'<p>Hello beautiful <strong>world</strong>!</p>'
+
 However, there are cases where the tail text also gets in the way.
 For example, when you serialise an Element from within the tree, you
 do not always want its tail text in the result (although you would

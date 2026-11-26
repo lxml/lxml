@@ -346,51 +346,40 @@ cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
             c_ns.next = c_del_ns_list
 
 
-cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
-                            xmlNode* c_element) except -1:
-    """Fix the xmlNs pointers of a node and its subtree that were moved.
+cdef size_t _reconcileNamespaces(_Document doc, xmlNode* c_element) except? -1:
+    """Reconcile namespace pointers in a node and its subtree.
 
-    Originally copied from libxml2's xmlReconciliateNs().  Expects
-    libxml2 doc pointers of node to be correct already, but fixes
-    _Document references.
+    This pass follows libxml2's xmlReconciliateNs() approach:
 
-    For each node in the subtree, we do this:
+    1) Remove namespace declarations that are redundant with declarations
+       on the node's ancestors.
 
-    1) Remove redundant declarations of namespace that are already
-       defined in its parents.
+    2) Replace namespace pointers not covered by declarations on the node
+       or its ancestors with equivalent in-tree declarations (which may
+       use a different prefix), declaring a namespace on the node when
+       needed.
 
-    2) Replace namespaces that are *not* defined on the node or its
-       parents by the equivalent namespace declarations that *are*
-       defined on the node or its parents (possibly using a different
-       prefix).  If a namespace is unknown, declare a new one on the
-       node.
+    Declarations removed in step 1 are freed only after the full subtree
+    has been traversed and all references to them have been replaced.
 
-    3) Reassign the names of tags and attribute from the dict of the
-       target document *iff* it is different from the dict used in the
-       source subtree.
-
-    4) Set the Document reference to the new Document (if different).
-       This is done on backtracking to keep the original Document
-       alive as long as possible, until all its elements are updated.
-
-    Note that the namespace declarations are removed from the tree in
-    step 1), but freed only after the complete subtree was traversed
-    and all occurrences were replaced by tree-internal pointers.
+    Return the number of proxies in the subtree so callers that also move
+    the node between documents can update document references without
+    traversing the subtree again.
     """
     if not tree._isElementOrXInclude(c_element):
         return 0
 
     doc.lock_proxies()
     try:
-        return moveNodeToDocument_locked(doc, c_source_doc, c_element)
+        return _reconcileNamespaces_locked(doc, c_element)
     finally:
         doc.unlock_proxies()
 
 
-cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode* c_element) except -1:
+cdef size_t _reconcileNamespaces_locked(_Document doc, xmlNode* c_element) except? -1:
+    """Namespace pass for callers holding the document's proxy lock."""
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
-    cdef xmlDoc* c_doc = doc._c_doc
     cdef tree.xmlAttr* c_attr
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_del_ns_list = NULL
@@ -433,22 +422,58 @@ cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc, xmlNode*
     if c_ns_cache.ns_map is not NULL:
         python.lxml_free(c_ns_cache.ns_map)
 
-    # 3) fix the names in the tree if we moved it from a different thread
-    if doc._c_doc.dict is not c_source_doc.dict:
-        fixThreadDictNames(c_start_node, c_source_doc.dict, doc._c_doc.dict)
+    return proxy_count
 
-    # 4) fix _Document references
+
+cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
+                            xmlNode* c_element) except -1:
+    """Update document-owned state after moving a node and its subtree.
+
+    Expects
+    libxml2 doc pointers of node to be correct already, but fixes
+    _Document references.
+
+    1) Reconcile namespaces with _reconcileNamespaces().
+
+    2) Reassign tag and attribute names from the target document's dict
+       only when it differs from the source subtree's dict.
+
+    3) Update _Document references to the target document.  This is done
+       on backtracking so the source Document stays alive until all its
+       elements have been updated.
+    """
+    if not tree._isElementOrXInclude(c_element):
+        return 0
+
+    doc.lock_proxies()
+    try:
+        return moveNodeToDocument_locked(doc, c_source_doc, c_element)
+    finally:
+        doc.unlock_proxies()
+
+
+cdef int moveNodeToDocument_locked(_Document doc, xmlDoc* c_source_doc,
+                                  xmlNode* c_element) except -1:
+    cdef size_t proxy_count
+    cdef _Element proxy
+    proxy_count = _reconcileNamespaces_locked(doc, c_element)
+
+    # 2) fix the names in the tree if we moved it from a different thread
+    if doc._c_doc.dict is not c_source_doc.dict:
+        fixThreadDictNames(c_element, c_source_doc.dict, doc._c_doc.dict)
+
+    # 3) fix _Document references
     #    (and potentially deallocate the source document)
     if proxy_count > 0:
-        if proxy_count == 1 and hasProxy(c_start_node):
-            proxy = getProxy(c_start_node)
+        if proxy_count == 1 and hasProxy(c_element):
+            proxy = getProxy(c_element)
             if proxy is not None:
                 if proxy._doc is not doc:
                     proxy._doc = doc
             else:
-                fixElementDocument(c_start_node, doc, proxy_count)
+                fixElementDocument(c_element, doc, proxy_count)
         else:
-            fixElementDocument(c_start_node, doc, proxy_count)
+            fixElementDocument(c_element, doc, proxy_count)
 
     return 0
 
