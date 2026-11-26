@@ -400,6 +400,9 @@ def download_libxml2(dest_dir, version=None):
         # Temporarily using the latest master (2.9.12+) until there is a release that supports lxml again.
         from_location = "https://gitlab.gnome.org/GNOME/libxml2/-/archive/dea91c97debeac7c1aaf9c19f79029809e23a353/"
         version = "dea91c97debeac7c1aaf9c19f79029809e23a353"
+    elif version and (existing_file := find_existing_download(dest_dir, 'libxml2', filename % version)):
+        # Already downloaded, no need to look up the download directory online.
+        return existing_file
     else:
         from_location = http_find_latest_version_directory(LIBXML2_LOCATION, version=version)
 
@@ -412,6 +415,9 @@ def download_libxslt(dest_dir, version=None):
     #version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9](?:-[abrc0-9]+)?)')
     version_re = re.compile(r'libxslt-([0-9.]+[0-9])[.]tar[.]xz')
     filename = 'libxslt-%s.tar.xz'
+    if version and (existing_file := find_existing_download(dest_dir, 'libxslt', filename % version)):
+        # Already downloaded, no need to look up the download directory online.
+        return existing_file
     from_location = http_find_latest_version_directory(LIBXSLT_LOCATION, version=version)
     return download_library(dest_dir, from_location, 'libxslt',
                             version_re, filename, version=version)
@@ -472,6 +478,15 @@ def file_exists(file_path: Path, size=None, digest=None):
     return True
 
 
+def find_existing_download(dest_dir, name, filename):
+    dest_filepath = Path(dest_dir) / filename
+    if not file_exists(dest_filepath, digest=ARCHIVE_HASHES.get(filename)):
+        return None
+    print(f'Using existing {name} downloaded into {dest_filepath} '
+          '(delete this file if you want to re-download the package)')
+    return dest_filepath
+
+
 def download_library(dest_dir, location, name, version_re, filename, version=None):
     if version is None:
         try:
@@ -499,13 +514,12 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
     if version:
         filename = filename % version
 
+    existing_file = find_existing_download(dest_dir, name, filename)
+    if existing_file:
+        return existing_file
+
     full_url = urljoin(location, filename)
     dest_filepath = Path(dest_dir) / filename
-    if file_exists(dest_filepath, digest=ARCHIVE_HASHES.get(filename)):
-        print(f'Using existing {name} downloaded into {dest_filepath} '
-              '(delete this file if you want to re-download the package)')
-        return dest_filepath
-
     print('Downloading %s into %s from %s' % (name, dest_filepath, full_url))
     for retry_after_seconds in (2, 5, 10, None):
         try:
