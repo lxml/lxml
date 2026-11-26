@@ -59,6 +59,12 @@ Bugs fixed
   if class names were duplicated.
   Patch by Huanyi Xie.
 
+* LP#2175691: Assigning to or clearing the ``.value`` of a checkbox group in ``lxml.html``,
+  also through ``form.fields``, never returned when a checked checkbox had the same value
+  as an earlier checkbox of the group, or when both had no ``value`` attribute.
+  A ``<select multiple>`` raised ``ValueError`` in the same case for repeated option values.
+  Patch by Pierre-Yves Le Borgne.
+
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
 

@@ -1469,20 +1469,23 @@ class MultipleSelectOptions(SetMixin):
                 "There is no option with the value %r" % item)
 
     def remove(self, item):
+        options = []
         for option in self.options:
             opt_value = option.get('value')
             if opt_value is None:
                 opt_value = (option.text or '').strip()
             if opt_value == item:
-                if 'selected' in option.attrib:
-                    del option.attrib['selected']
-                else:
-                    raise ValueError(
-                        "The option %r is not currently selected" % item)
-                break
-        else:
+                options.append(option)
+        if not options:
             raise ValueError(
                 "There is not option with the value %r" % item)
+        # Deselect all options with this value, otherwise it stays in the set.
+        selected = [option for option in options if 'selected' in option.attrib]
+        if not selected:
+            raise ValueError(
+                "The option %r is not currently selected" % item)
+        for option in selected:
+            del option.attrib['selected']
 
     def __repr__(self):
         return '<%s {%s} for select name=%r>' % (
@@ -1612,17 +1615,17 @@ class CheckboxValues(SetMixin):
             raise KeyError("No checkbox with value %r" % value)
 
     def remove(self, value):
-        for el in self.group:
-            if el.get('value') == value:
-                if 'checked' in el.attrib:
-                    del el.attrib['checked']
-                else:
-                    raise KeyError(
-                        "The checkbox with value %r was already unchecked" % value)
-                break
-        else:
+        checkboxes = [el for el in self.group if el.get('value') == value]
+        if not checkboxes:
             raise KeyError(
                 "No checkbox with value %r" % value)
+        # Uncheck all checkboxes with this value, otherwise it stays in the set.
+        checked = [el for el in checkboxes if 'checked' in el.attrib]
+        if not checked:
+            raise KeyError(
+                "The checkbox with value %r was already unchecked" % value)
+        for el in checked:
+            del el.attrib['checked']
 
     def __repr__(self):
         return '<%s {%s} for checkboxes name=%r>' % (

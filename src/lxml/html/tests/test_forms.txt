@@ -103,6 +103,18 @@ b'<input type="checkbox" name="check_group" value="1" checked>'
 Traceback (most recent call last):
     ...
 KeyError: "No checkbox with value 'doesnotexist'"
+>>> checkboxes = fromstring('''<form>
+...   <input type="checkbox" name="c" value="1">
+...   <input type="checkbox" name="c" value="1" checked>
+...   <input type="checkbox" name="c" checked>
+...   <input type="checkbox" name="c" checked>
+... </form>''').inputs['c']
+>>> checkboxes.value.remove('1')
+>>> [checkbox.checked for checkbox in checkboxes]
+[False, False, True, True]
+>>> checkboxes.value = ['1']
+>>> [checkbox.checked for checkbox in checkboxes]
+[True, False, False, False]
 >>> textarea = f.inputs['textarea_field']
 >>> textarea.value
 'some text'
@@ -153,6 +165,18 @@ ValueError: There is no option with the value 'asdf'
 >>> select.value.remove('number 4')
 >>> select.value_options
 ['1', '2', '3', 'number 4']
+>>> multi_select = fromstring('''<form><select name="s" multiple>
+...   <option value="1">one</option>
+...   <option value="1" selected>one again</option>
+...   <option selected>two</option>
+...   <option selected>two</option>
+... </select></form>''').inputs['s']
+>>> multi_select.value.remove('1')
+>>> ['selected' in option.attrib for option in multi_select]
+[False, False, True, True]
+>>> multi_select.value = ['1']
+>>> ['selected' in option.attrib for option in multi_select]
+[True, False, False, False]
 >>> select = f.inputs['select3']
 >>> select.value
 '01 '
