@@ -11,10 +11,11 @@ class SetMixin(MutableSet):
     """
 
     def __len__(self):
-        length = 0
+        # Elements can share a value, but a set counts each value once.
+        values = set()
         for item in self:
-            length += 1
-        return length
+            values.add(item)
+        return len(values)
 
     def __contains__(self, item):
         for has_item in self:

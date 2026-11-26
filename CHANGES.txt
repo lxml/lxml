@@ -28,6 +28,11 @@ Features added
 Bugs fixed
 ----------
 
+* LP#2175698: ``len()`` and the set comparisons of the value of a checkbox group or of a
+  ``<select multiple>`` in ``lxml.html`` counted a value that several checkboxes or options
+  share more than once.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#546: Usage in PyPy crashed since lxml 7.0.
   It now works correctly in PyPy 3.11 and 3.12.
   Patches by Matti Picus.
