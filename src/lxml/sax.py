@@ -47,12 +47,14 @@ class ElementTreeContentHandler(ContentHandler):
         self._default_ns = None
         self._ns_mapping = { None : [None] }
         self._new_mappings = {}
+        self._text = []
         if makeelement is None:
             makeelement = etree.Element
         self._makeelement = makeelement
 
     def _get_etree(self):
         "Contains the generated ElementTree after parsing is finished."
+        self._flush_text()
         return ElementTree(self._root)
 
     etree = property(_get_etree, doc=_get_etree.__doc__)
@@ -92,6 +94,7 @@ class ElementTreeContentHandler(ContentHandler):
         return el_tag
 
     def startElementNS(self, ns_name, qname, attributes=None):
+        self._flush_text()
         el_name = self._buildTag(ns_name)
         if attributes:
             attrs = {}
@@ -125,6 +128,7 @@ class ElementTreeContentHandler(ContentHandler):
         self._new_mappings.clear()
 
     def processingInstruction(self, target, data):
+        self._flush_text()
         pi = ProcessingInstruction(target, data)
         if self._root is None:
             self._root_siblings.append(pi)
@@ -140,6 +144,7 @@ class ElementTreeContentHandler(ContentHandler):
             sibling.addnext(pi)
 
     def endElementNS(self, ns_name, qname):
+        self._flush_text()
         element = self._element_stack.pop()
         el_tag = self._buildTag(ns_name)
         if el_tag != element.tag:
@@ -154,6 +159,15 @@ class ElementTreeContentHandler(ContentHandler):
         self.endElementNS((None, name), name)
 
     def characters(self, data):
+        self._element_stack[-1]  # raise IndexError outside of the root element, as before
+        # Collect the chunks and join them once, appending each one to .text is quadratic.
+        self._text.append(data)
+
+    def _flush_text(self):
+        if not self._text:
+            return
+        data = ''.join(self._text)
+        self._text.clear()
         last_element = self._element_stack[-1]
         try:
             # if there already is a child element, we must append to its tail

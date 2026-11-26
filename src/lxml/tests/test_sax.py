@@ -286,6 +286,32 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEqual('b', root[0].tag)
         self.assertEqual('c', root[1].tag)
 
+    def test_etree_sax_characters_chunks(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startElement('a', {})
+        for chunk in ['t', 'e', 'x', 't']:
+            handler.characters(chunk)
+        handler.startElement('b', {})
+        handler.characters('in')
+        handler.characters('ner')
+        handler.endElement('b')
+        handler.characters('ta')
+        handler.ignorableWhitespace(' ')
+        handler.characters('il')
+        handler.processingInstruction('pi', 'data')
+        handler.characters('end')
+        handler.endElement('a')
+        handler.endDocument()
+
+        self.assertEqual(b'<a>text<b>inner</b>ta il<?pi data?>end</a>',
+                         etree.tostring(handler.etree))
+
+    def test_etree_sax_characters_outside_root(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        self.assertRaises(IndexError, handler.characters, 'x')
+
     def test_etree_sax_no_ns_attributes(self):
         handler = sax.ElementTreeContentHandler()
         handler.startDocument()
