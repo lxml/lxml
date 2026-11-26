@@ -47,6 +47,10 @@ Bugs fixed
 
 * Parsing from a file path in the soupparser did not close the file it opened.
 
+* LP#2175761: Resolvers that returned a string with a ``base_url`` leaked a copy of the URL with
+  libxml2 2.14 and later.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
@@ -67,6 +71,10 @@ Other changes
   decompression with zlib, RelaxNG and the builtin (non-ISO) schematron.
 
 * The valgrind suppressions file was updated to match CPython 3.16a1.
+
+* LP#2175761: The C code that Cython generates for ``lxml.etree`` no longer depends on ``PYTHONHASHSEED``.
+  The C types that Cython inferred for some untyped variables depended on the string hash seed.
+  Patch by Pierre-Yves Le Borgne.
 
 
 7.0.0b1 (2026-08-22)

@@ -554,6 +554,7 @@ cdef int _resolve_doc_ref(
     cdef xmlparser.xmlParserInput* c_input
     cdef _FileReaderContext file_context
     cdef xmlerror.xmlParserErrors c_return_code = xmlerror.XML_ERR_OK
+    cdef const char* c_filename
 
     if doc_ref._type == PARSER_DATA_STRING:
         data_bytes = doc_ref._data_bytes
@@ -568,7 +569,8 @@ cdef int _resolve_doc_ref(
                 filename = None
 
         if tree.LIBXML_VERSION >= 21400:
-            c_filename = <char *>tree.xmlStrdup(_xcstr(filename)) if filename is not None else NULL
+            # The input stores a copy of the URL.
+            c_filename = _cstr(filename) if filename is not None else NULL
             c_input = xmlparser.xmlNewInputFromMemory(
                 c_filename, _xcstr(data_bytes), <size_t> len(data_bytes), 0)
         else:
