@@ -463,6 +463,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(b'<test>TEST<a>A<b>BCT</b>BT</a>AT<x>X<a>A<b></b>BTCT</a>AT</x>XT</test>',
                           self._writeElement(root))
 
+    def test_strip_tags_text_runs(self):
+        # strip_tags() leaves runs of adjacent text nodes that .text and .tail must join.
+        XML = self.etree.XML
+        root = XML(('<r><p>' + ''.join('<s>w%d </s>' % i for i in range(100)) + '</p>T' +
+                    ''.join('<s>t%d </s>' % i for i in range(100)) + '</r>').encode('ascii'))
+        self.etree.strip_tags(root, 's')
+        self.assertEqual(''.join('w%d ' % i for i in range(100)), root[0].text)
+        self.assertEqual('T' + ''.join('t%d ' % i for i in range(100)), root[0].tail)
+
     def test_strip_tags_pi_comment(self):
         XML = self.etree.XML
         PI = self.etree.ProcessingInstruction
@@ -2084,6 +2093,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual('test', root.text)
         self.assertEqual(b'<root><![CDATA[test]]></root>',
                           tostring(root))
+
+    def test_cdata_parser_adjacent_sections(self):
+        parser = self.etree.XMLParser(strip_cdata=False)
+        xml = '<root>' + ''.join('<![CDATA[c%d]]>' % i for i in range(100)) + '</root>'
+        root = self.etree.XML(xml.encode('ascii'), parser)
+        self.assertEqual(''.join('c%d' % i for i in range(100)), root.text)
 
     def test_cdata_xpath(self):
         tostring = self.etree.tostring
@@ -4558,6 +4573,26 @@ class ETreeOnlyTestCase(HelperTestCase):
             b'  </body>\n'
             b'</html>'
         )
+
+    def test_indent_text_runs(self):
+        # strip_tags() leaves runs of adjacent text nodes behind.
+        ET = self.etree
+        elem = ET.XML("<html><body>" + "<s> </s>" * 50 + "<p>text</p>" + "<s>\n</s>" * 50 +
+                      "</body></html>")
+        ET.strip_tags(elem, 's')
+        ET.indent(elem)
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n  <body>\n    <p>text</p>\n  </body>\n</html>')
+
+        elem = ET.XML("<html><body>" + "<s> </s>" * 50 + "<s>x</s>" + "<s> </s>" * 50 +
+                      "<p>text</p>" + "<s> </s>" * 50 + "<s>y</s>" + "</body></html>")
+        ET.strip_tags(elem, 's')
+        ET.indent(elem)
+        self.assertEqual(
+            ET.tostring(elem),
+            b'<html>\n  <body>' + b' ' * 50 + b'x' + b' ' * 50 + b'<p>text</p>' +
+            b' ' * 50 + b'y</body>\n</html>')
 
     def test_indent_space(self):
         ET = self.etree
