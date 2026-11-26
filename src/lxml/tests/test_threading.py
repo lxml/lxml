@@ -7,9 +7,10 @@ import re
 import sys
 import unittest
 import threading
+import warnings
 from queue import Queue, Empty
 
-from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON, IS_PYPY
+from .common_imports import etree, HelperTestCase, BytesIO, IS_FT_PYTHON, IS_PYPY, needs_feature
 
 
 class ThreadingTestCase(HelperTestCase):
@@ -338,6 +339,127 @@ class ThreadingTestCase(HelperTestCase):
 
         for t in threads:
             t.join()
+
+    def _assert_while_other_thread_reports(self, validator, assert_method):
+        # Calls 'assert_method' of the validator for an invalid document in a thread,
+        # pauses that thread when it reports its first validation error, and calls
+        # it for another invalid document in this thread in the meantime.
+        # Returns the exceptions of both calls (thread first).
+        error_reported = threading.Event()
+        resume = threading.Event()
+        paused = []
+
+        class PauseAtFirstError(self.etree.PyErrorLog):
+            # As global error log of the thread, this receives each error before
+            # the validator's error log receives it.
+            def receive(self, log_entry):
+                if not paused:
+                    paused.append(log_entry)
+                    error_reported.set()
+                    resume.wait()
+
+        thread_exceptions = []
+        validation_errors = (self.etree.DocumentInvalid, AssertionError)
+
+        def validate_in_thread():
+            self.etree.use_global_python_log(PauseAtFirstError())
+            try:
+                getattr(validator, assert_method)(self.etree.XML('<in_thread/>'))
+            except validation_errors as exc:
+                thread_exceptions.append(exc)
+            finally:
+                error_reported.set()
+
+        thread = threading.Thread(target=validate_in_thread)
+        thread.start()
+        try:
+            error_reported.wait()
+            try:
+                getattr(validator, assert_method)(self.etree.XML('<in_main/>'))
+            except validation_errors as exc:
+                main_exception = exc
+            else:
+                main_exception = None
+        finally:
+            resume.set()
+            thread.join()
+
+        self.assertTrue(paused)
+        self.assertEqual(1, len(thread_exceptions))
+        return thread_exceptions[0], main_exception
+
+    def _assert_own_validation_errors(self, validator):
+        thread_error, main_error = self._assert_while_other_thread_reports(
+            validator, 'assertValid')
+
+        for error, own, other in [(thread_error, 'in_thread', 'in_main'),
+                                  (main_error, 'in_main', 'in_thread')]:
+            self.assertIsInstance(error, self.etree.DocumentInvalid)
+            self.assertIn(own, str(error))
+            self.assertNotIn(other, str(error))
+            messages = [entry.message for entry in error.error_log]
+            self.assertTrue(messages)
+            for message in messages:
+                self.assertIn(own, message)
+
+        # The validation in the thread finished last.
+        self.assertEqual(
+            [entry.message for entry in thread_error.error_log],
+            [entry.message for entry in validator.error_log])
+
+    def test_thread_xmlschema_error_log(self):
+        self._assert_own_validation_errors(self.etree.XMLSchema(self.etree.XML(
+            '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+            '<xs:element name="a"/></xs:schema>')))
+
+    def test_thread_xmlschema_subclass_error_log(self):
+        class XMLSchemaSubclass(self.etree.XMLSchema):
+            def __call__(self, etree):
+                return super().__call__(etree)
+
+        self._assert_own_validation_errors(XMLSchemaSubclass(self.etree.XML(
+            '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+            '<xs:element name="a"/></xs:schema>')))
+
+    def test_thread_xmlschema_assert_(self):
+        schema = self.etree.XMLSchema(self.etree.XML(
+            '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+            '<xs:element name="a"/></xs:schema>'))
+        thread_error, main_error = self._assert_while_other_thread_reports(
+            schema, 'assert_')
+
+        self.assertIsInstance(thread_error, AssertionError)
+        self.assertIn('in_thread', str(thread_error))
+        self.assertNotIn('in_main', str(thread_error))
+        self.assertIsInstance(main_error, AssertionError)
+        self.assertIn('in_main', str(main_error))
+        self.assertNotIn('in_thread', str(main_error))
+
+    def test_thread_relaxng_error_log(self):
+        self._assert_own_validation_errors(self.etree.RelaxNG(self.etree.XML(
+            '<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">'
+            '<empty/></element>')))
+
+    def test_thread_dtd_error_log(self):
+        self._assert_own_validation_errors(
+            self.etree.DTD(BytesIO(b'<!ELEMENT a EMPTY>')))
+
+    @needs_feature("schematron")
+    def test_thread_schematron_error_log(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            schematron = self.etree.Schematron(self.etree.XML(
+                '<schema xmlns="http://purl.oclc.org/dsdl/schematron"><pattern name="p">'
+                '<rule context="/*"><assert test="false()">invalid <name/></assert></rule>'
+                '</pattern></schema>'))
+        self._assert_own_validation_errors(schematron)
+
+    def test_thread_isoschematron_error_log(self):
+        from lxml import isoschematron
+        self._assert_own_validation_errors(isoschematron.Schematron(self.etree.XML(
+            '<schema xmlns="http://purl.oclc.org/dsdl/schematron"><pattern>'
+            '<rule context="/*"><assert test="false()">invalid <value-of select="name()"/></assert></rule>'
+            '</pattern></schema>')))
 
     def test_thread_mix(self):
         XML = self.etree.XML

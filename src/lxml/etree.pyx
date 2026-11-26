@@ -4210,12 +4210,55 @@ class DocumentInvalid(LxmlError):
     """
 
 
+@cython.final
+@cython.internal
+cdef class _FailedValidationLog:
+    """Hands the error log of a failed validation run to the assertValid() call
+    in the same thread for validators that implement '__call__()' in Python.
+    There is one instance per thread.
+    """
+    cdef const void* validator  # only for identity checks, not a reference
+    cdef _ErrorLog error_log
+
+
+cdef _FailedValidationLog _getThreadFailedValidationLog():
+    thread_dict = python.PyThreadState_GetDict()
+    if thread_dict is NULL:
+        return None
+    d = <dict>thread_dict
+    result = python.PyDict_GetItem(d, "_FailedValidationLog")
+    if result is not NULL:
+        return <_FailedValidationLog>result
+    failed_log = _FailedValidationLog.__new__(_FailedValidationLog)
+    d["_FailedValidationLog"] = failed_log
+    return failed_log
+
+
+cdef inline _ErrorLog _newValidationErrorLog():
+    # Faster than calling '_ErrorLog()'.
+    cdef _ErrorLog error_log = _ErrorLog.__new__(_ErrorLog)
+    error_log._entries = []
+    return error_log
+
+
+cdef object _SlotWrapperType = type(object.__init__)
+
+
 cdef class _Validator:
     "Base class for XML validators."
+    # Each validation run collects its errors in a new log that other threads cannot
+    # clear or fill, and publishes it as 'error_log' when it finishes.
     cdef _ErrorLog _error_log
+    # An unused, empty log for the next validation run.  It was never published.
+    cdef _ErrorLog _spare_error_log
+    # '_error_log' comes from a successful validation run without messages.
+    cdef bint _error_log_is_empty
+    # '__call__()' is implemented in Python and not by '_validate()'.
+    cdef bint _python_call
 
     def __cinit__(self):
         self._error_log = _ErrorLog()
+        self._python_call = type(type(self).__call__) is not _SlotWrapperType
 
     def validate(self, etree):
         """validate(self, etree)
@@ -4231,33 +4274,129 @@ cdef class _Validator:
 
         Raises `DocumentInvalid` if the document does not comply with the schema.
         """
-        if not self(etree):
-            raise DocumentInvalid(self._error_log._buildExceptionMessage(
+        cdef _ErrorLog error_log = self._validate_get_errors(etree)
+        if error_log is not None:
+            raise DocumentInvalid(error_log._buildExceptionMessage(
                     "Document does not comply with schema"),
-                                  self._error_log)
+                                  error_log)
 
     def assert_(self, etree):
         """assert_(self, etree)
 
         Raises `AssertionError` if the document does not comply with the schema.
         """
-        if not self(etree):
-            raise AssertionError, self._error_log._buildExceptionMessage(
+        cdef _ErrorLog error_log = self._validate_get_errors(etree)
+        if error_log is not None:
+            raise AssertionError, error_log._buildExceptionMessage(
                 "Document does not comply with schema")
 
+    cdef _ErrorLog _validate(self, etree):
+        """Validate the document, publish the error log of this validation run
+        as 'self.error_log' and return None if the document is valid, otherwise the log.
+        """
+        raise NotImplementedError("Validation is not implemented.")
+
+    @cython.final
+    cdef _ErrorLog _validate_get_errors(self, etree):
+        """Validate the document and return None if it is valid, otherwise the error
+        log of this validation run (even if another thread replaced 'self.error_log'
+        in the meantime).
+        """
+        cdef _ErrorLog error_log = None
+        cdef _FailedValidationLog failed_log
+        if not self._python_call:
+            return self._validate(etree)
+
+        failed_log = _getThreadFailedValidationLog()
+        if failed_log is not None:
+            failed_log.validator = NULL
+            failed_log.error_log = None
+        if self(etree):
+            return None
+        if failed_log is not None and failed_log.validator == <void*>self:
+            error_log = failed_log.error_log
+            failed_log.error_log = None
+        if error_log is None:
+            # A '__call__()' implementation that does not publish its own log.
+            error_log = self._get_error_log()
+        return error_log
+
+    @cython.final
+    cdef _ErrorLog _get_error_log(self):
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._error_log
+        return error_log
+
+    @cython.final
+    cdef _ErrorLog _new_validation_log(self):
+        """Return an empty error log for a new validation run.
+        """
+        cdef _ErrorLog error_log
+        with cython.critical_section(self):
+            error_log = self._spare_error_log
+            self._spare_error_log = None
+        if error_log is None:
+            error_log = _newValidationErrorLog()
+        return error_log
+
+    @cython.final
+    cdef int _set_validation_log(self, _ErrorLog error_log, bint is_valid) except -1:
+        """Publish the error log of a finished validation run as 'self.error_log'.
+        """
+        cdef _FailedValidationLog failed_log
+        # Only this thread has seen the new log so far.
+        cdef bint is_empty = is_valid and not error_log._entries
+        with cython.critical_section(self):
+            if is_empty and self._error_log_is_empty:
+                # Publishing an empty log would not change anything => keep it for later.
+                self._spare_error_log = error_log
+            else:
+                self._error_log = error_log
+                self._error_log_is_empty = is_empty
+        if self._python_call and not is_valid:
+            # Hand the log over to '_validate_get_errors()'.
+            failed_log = _getThreadFailedValidationLog()
+            if failed_log is not None:
+                failed_log.validator = <void*>self
+                failed_log.error_log = error_log
+        return 0
+
     cpdef _append_log_message(self, int domain, int type, int level, int line,
-                              message, filename):
-        self._error_log._receiveGeneric(domain, type, level, line, message,
-                                        filename)
+                              message, filename, _ErrorLog error_log=None):
+        if error_log is None:
+            with cython.critical_section(self):
+                error_log = self._error_log
+                self._error_log_is_empty = False
+        error_log._receiveGeneric(domain, type, level, line, message,
+                                  filename)
 
     cpdef _clear_error_log(self):
-        self._error_log.clear()
+        """Replace the error log by a new, empty one and return the new log.
+        """
+        # Do not clear the current log, other threads might still be using it.
+        cdef _ErrorLog error_log = _newValidationErrorLog()
+        cdef _FailedValidationLog failed_log
+        with cython.critical_section(self):
+            self._error_log = error_log
+            self._error_log_is_empty = False
+        if self._python_call:
+            failed_log = _getThreadFailedValidationLog()
+            if failed_log is not None and failed_log.validator == <void*>self:
+                failed_log.error_log = error_log
+        return error_log
+
+    def _set_error_log(self, _ErrorLog error_log not None):
+        """Publish the error log of a finished validation run as 'self.error_log'.
+        """
+        self._set_validation_log(error_log, False)
 
     @property
     def error_log(self):
         """The log of validation errors and warnings."""
-        assert self._error_log is not None, "XPath evaluator not initialised"
-        return self._error_log.copy()
+        error_log = self._get_error_log()
+        assert error_log is not None, "XPath evaluator not initialised"
+        return error_log.copy()
 
 include "dtd.pxi"        # DTD
 include "relaxng.pxi"    # RelaxNG
