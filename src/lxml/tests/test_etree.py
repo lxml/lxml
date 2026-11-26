@@ -3401,6 +3401,21 @@ class ETreeOnlyTestCase(HelperTestCase):
             b'</root>',
             self.etree.tostring(root))
 
+    def test_namespace_cleanup_many_elements_with_declarations(self):
+        xml = ('<r xmlns:a="A" xmlns:keep="K" xmlns:unused="U">' +
+               ''.join('<a:c xmlns:u{n}="U{n}" xmlns:b{n}="B{n}" b{n}:x="{n}">'
+                       '<d xmlns:v{n}="V{n}"/></a:c>'.format(n=i) for i in range(50)) +
+               '</r>').encode('utf8')
+        root = self.etree.fromstring(xml)
+        self.assertEqual(xml, self.etree.tostring(root))
+        self.etree.cleanup_namespaces(root, keep_ns_prefixes=['keep'])
+        self.assertEqual(
+            ('<r xmlns:a="A" xmlns:keep="K">' +
+             ''.join('<a:c xmlns:b{n}="B{n}" b{n}:x="{n}"><d/></a:c>'.format(n=i)
+                     for i in range(50)) +
+             '</r>').encode('utf8'),
+            self.etree.tostring(root))
+
     def test_namespace_cleanup_replace_default_namespace(self):
         # LP#2148019, made xmlNewNs() return NULL in _setNodeNamespaces() due to prefix reuse.
         xml = b'<root xmlns="nsa"><child>childtext</child></root>'
