@@ -100,6 +100,20 @@ Example::
     </form>
 
 
+Errors can also be inserted after the fields, and labels of fields with
+an id are marked as well::
+
+    >>> from lxml.html.formfill import insert_errors, DefaultErrorCreator
+    >>> from lxml.html import fromstring, tostring
+    >>> form = fromstring('<form>' + ''.join(
+    ...     '<label for="f%d">l</label><input name="f%d" id="f%d">tail%d' % (i, i, i, i)
+    ...     for i in range(3)) + '<textarea name="t">x</textarea></form>')
+    >>> insert_errors(form, {'f0': 'e0', 'f2': 'e2', 't': 'et', 'missing': 'em'},
+    ...               error_creator=DefaultErrorCreator(insert_before=False))
+    >>> print(tostring(form, encoding='unicode'))
+    <form><label for="f0" class="error">l</label><input name="f0" id="f0" class="error"><div class="error-message">e0</div>tail0<label for="f1">l</label><input name="f1" id="f1">tail1<label for="f2" class="error">l</label><input name="f2" id="f2" class="error"><div class="error-message">e2</div>tail2<textarea name="t" class="error">x</textarea><div class="error-message">et</div></form>
+
+
 REGRESSION: When filling textareas, the "name" attribute used to
 be removed. The "name" attribute should be kept::
 

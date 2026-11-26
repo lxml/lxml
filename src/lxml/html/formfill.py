@@ -1,4 +1,4 @@
-from lxml.etree import XPath, ElementBase
+from lxml.etree import XPath, ElementBase, Element
 from lxml.html import fromstring, XHTML_NAMESPACE
 from lxml.html import _forms_xpath, _options_xpath, _nons, _transform_result
 from lxml.html import defs
@@ -210,17 +210,19 @@ class DefaultErrorCreator:
             else:
                 el.append(error_el)
         else:
-            parent = el.getparent()
-            pos = parent.index(el)
             if self.insert_before:
-                parent.insert(pos, error_el)
+                el.addprevious(error_el)
             else:
                 error_el.tail = el.tail
                 el.tail = None
-                parent.insert(pos+1, error_el)
+                el.addnext(error_el)
 
 default_error_creator = DefaultErrorCreator()
 
+
+# Up to this number of errors, searching the form for each name is faster
+# than collecting all named fields and labels first.
+_FEW_ERRORS = 2
 
 def insert_errors(
     el,
@@ -231,13 +233,29 @@ def insert_errors(
     error_creator=default_error_creator,
     ):
     el = _find_form(el, form_id=form_id, form_index=form_index)
+    fields_by_name = labels_by_id = None
+    if len(errors) > _FEW_ERRORS:
+        # Look up the named fields and the labels once, instead of searching for each name.
+        fields_by_name = {}
+        for field in el.iter(Element):
+            name = field.get('name')
+            if name is not None:
+                fields_by_name.setdefault(name, []).append(field)
     for name, error in errors.items():
         if error is None:
             continue
-        for error_el, message in _find_elements_for_name(el, name, error):
+        for error_el, message in _find_elements_for_name(
+                el, name, error, fields_by_name):
             assert isinstance(message, (str, type(None), ElementBase)), (
                 "Bad message: %r" % message)
-            _insert_error(error_el, message, error_class, error_creator)
+            if fields_by_name is not None and labels_by_id is None and error_el.get('id'):
+                labels_by_id = {}
+                label_tags = ('label', '{%s}label' % XHTML_NAMESPACE)
+                for label in error_el.getroottree().iter(label_tags):
+                    for_id = label.get('for')
+                    if for_id is not None:
+                        labels_by_id.setdefault(for_id, []).append(label)
+            _insert_error(error_el, message, error_class, error_creator, labels_by_id)
 
 def insert_errors_html(html, values, **kw):
     result_type = type(html)
@@ -248,7 +266,7 @@ def insert_errors_html(html, values, **kw):
     insert_errors(doc, values, **kw)
     return _transform_result(result_type, doc)
 
-def _insert_error(el, error, error_class, error_creator):
+def _insert_error(el, error, error_class, error_creator, labels_by_id=None):
     if _nons(el.tag) in defs.empty_tags or _nons(el.tag) == 'textarea':
         is_block = False
     else:
@@ -256,7 +274,10 @@ def _insert_error(el, error, error_class, error_creator):
     if _nons(el.tag) != 'form' and error_class:
         _add_class(el, error_class)
     if el.get('id'):
-        labels = _label_for_xpath(el, for_id=el.get('id'))
+        if labels_by_id is None:
+            labels = _label_for_xpath(el, for_id=el.get('id'))
+        else:
+            labels = labels_by_id.get(el.get('id'))
         if labels:
             for label in labels:
                 _add_class(label, error_class)
@@ -268,7 +289,7 @@ def _add_class(el, class_name):
     else:
         el.set('class', class_name)
 
-def _find_elements_for_name(form, name, error):
+def _find_elements_for_name(form, name, error, fields_by_name=None):
     if name is None:
         # An error for the entire form
         yield form, error
@@ -279,7 +300,10 @@ def _find_elements_for_name(form, name, error):
         if el is not None:
             yield el, error
         return
-    els = _name_xpath(form, name=name)
+    if fields_by_name is None:
+        els = _name_xpath(form, name=name)
+    else:
+        els = fields_by_name.get(name)
     if not els:
         # FIXME: should this raise an exception?
         return
