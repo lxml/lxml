@@ -1023,6 +1023,29 @@ class _ETreeTestCaseBase(helper_base):
         self.assertEqual(len(list(root.findall(".//b"))), 3)
         self.assertEqual(len(list(root.findall("b"))), 2)
 
+    @et_needs_pyversion(3, 10)  # [.!=...]
+    def test_findall_text_predicate_subtree(self):
+        # Text predicates compare all text inside the element, not just its first text node.
+        root = self.etree.XML('<r><p><b>Price</b></p><p>Pr<!--c-->ice</p><p>x<i>y</i>z</p></r>')
+
+        def count(path):
+            return len(root.findall(path))
+
+        self.assertEqual(count("p[.='Price']"), 2)
+        self.assertEqual(count("p[.='xyz']"), 1)
+        self.assertEqual(count("p[.='x']"), 0)
+        self.assertEqual(count("p[.='Pric']"), 0)
+        self.assertEqual(count("p[.='Prices']"), 0)
+        self.assertEqual(count("p[.='']"), 0)
+        self.assertEqual(count("p[.!='Price']"), 1)
+        self.assertEqual(count(".[p='Price']"), 1)
+        self.assertEqual(count(".[p='xyz']"), 1)
+        self.assertEqual(count("p[.='xyq']"), 0)
+
+        root = self.etree.XML('<r><p><b><i>x</i></b>y</p><p><b/></p><p/></r>')
+        self.assertEqual(count("p[.='xy']"), 1)
+        self.assertEqual(count("p[.='']"), 2)
+
     @et_needs_pyversion(3, 8, 0, 'alpha', 4)
     def test_findall_wildcard(self):
         def summarize_list(l):

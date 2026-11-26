@@ -856,7 +856,7 @@ cdef class _TextPredicatePathEvaluator(_PredicatePathEvaluator):
         return f"[. = {self.text.decode('utf8') if self.text else ''!r}]"
 
     cdef xmlNode* first_node(self, xmlNode* c_node):
-        has_text = _node_has_text(c_node, self.text, self.c_text)
+        has_text = _node_has_text(c_node, self.c_text)
         if self.negated:
             has_text = not has_text
         return c_node if has_text else NULL
@@ -902,7 +902,7 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
             if c_child is NULL:
                 return NULL
             if self._matcher.matches(c_child):
-                has_text = _node_has_text(c_child, self.text, self.c_text)
+                has_text = _node_has_text(c_child, self.c_text)
                 if self.negated:
                     has_text = not has_text
                 if has_text:
@@ -910,35 +910,70 @@ cdef class _ChildTextPredicatePathEvaluator(_PredicatePathEvaluator):
             c_child = c_child.next
 
 
-cdef bint _node_has_text(xmlNode* c_node, bytes text, const_xmlChar* c_text):
-    cdef const_xmlChar* c_node_text = NULL
-    cdef size_t scount = 0
-
-    c_text_node = c_first_text_node = _textNodeOrSkip(c_node.children)
-    while c_text_node is not NULL:
-        if c_text_node.content[0] != c'\0':
-            c_node_text = c_text_node.content
-        scount += 1
-        c_child = c_text_node.next  # skip over known text nodes
-        c_text_node = _textNodeOrSkip(c_text_node.next)
-
-    # handle quick cases first
-    if c_node_text is NULL:
-        return c_text is NULL
+cdef bint _node_has_text(xmlNode* c_node, const_xmlChar* c_text) noexcept:
+    cdef xmlNode* c_child = c_node.children
+    cdef int c_expansions = _MAX_ENTITY_EXPANSIONS
     if c_text is NULL:
-        return False
-    if scount == 1:
-        return tree.xmlStrEqual(c_node_text, c_text)
+        c_text = <const_xmlChar*> b""
+    if c_child is not NULL and c_child.next is NULL and (
+            c_child.type == tree.XML_TEXT_NODE or c_child.type == tree.XML_CDATA_SECTION_NODE):
+        return tree.xmlStrEqual(c_child.content, c_text)
+    c_text = _match_text_content(c_node, c_text, 0, &c_expansions)
+    return c_text is not NULL and c_text[0] == c'\0'
 
-    # Collecting multiple text nodes is costly either way, so let's not optimise it much.
-    result = b''
-    c_text_node = c_first_text_node
-    while c_text_node is not NULL:
-        result += <unsigned char*> c_text_node.content
-        if len(result) > len(text):
-            return False
-        c_text_node = _textNodeOrSkip(c_text_node.next)
-    return result == text
+
+cdef enum:
+    _MAX_ENTITY_DEPTH = 10
+    # Bounds the work for entities that expand to nothing, which consume none of the search text.
+    _MAX_ENTITY_EXPANSIONS = 1000
+
+
+cdef const_xmlChar* _match_text_content(xmlNode* c_parent, const_xmlChar* c_text,
+                                        int depth, int* c_expansions) noexcept:
+    """Match the text of the subtree (as ElementTree's itertext()) against the start of 'c_text',
+    walking the tree like libxml2's xmlBufGetChildContent() to fail on the first mismatch.
+    Returns the rest of 'c_text', or NULL if it does not match.
+    """
+    cdef xmlNode* c_child = c_parent.children
+    while c_child is not NULL:
+        if c_child.type == tree.XML_TEXT_NODE or c_child.type == tree.XML_CDATA_SECTION_NODE:
+            c_text = _match_chunk(c_child.content, c_text)
+        elif c_child.type == tree.XML_ENTITY_REF_NODE:
+            c_text = _match_entity_text(c_child, c_text, depth, c_expansions)
+        elif c_child.type == tree.XML_ELEMENT_NODE and c_child.children is not NULL:
+            c_child = c_child.children
+            continue
+        if c_text is NULL:
+            return NULL
+        while c_child.next is NULL:
+            c_child = c_child.parent
+            if c_child is c_parent:
+                return c_text
+        c_child = c_child.next
+    return c_text
+
+
+cdef const_xmlChar* _match_entity_text(xmlNode* c_ref, const_xmlChar* c_text,
+                                       int depth, int* c_expansions) noexcept:
+    """Match the text of an entity reference without expanding it in the tree.
+    Unknown, recursive or overly deep and large expansions do not match.
+    """
+    cdef tree.xmlEntity* c_entity = <tree.xmlEntity*> c_ref.children
+    if c_entity is NULL or depth >= _MAX_ENTITY_DEPTH or c_expansions[0] <= 0:
+        return NULL
+    c_expansions[0] -= 1
+    if c_entity.etype == tree.XML_INTERNAL_PREDEFINED_ENTITY:
+        return _match_chunk(c_entity.content, c_text)
+    return _match_text_content(<xmlNode*> c_entity, c_text, depth + 1, c_expansions)
+
+
+cdef inline const_xmlChar* _match_chunk(const_xmlChar* c_chunk, const_xmlChar* c_text) noexcept:
+    while c_chunk[0] != c'\0':
+        if c_chunk[0] != c_text[0]:
+            return NULL
+        c_chunk += 1
+        c_text += 1
+    return c_text
 
 
 cdef _prepare_path_descendant(token):

@@ -4047,6 +4047,31 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, root.findall, '//')  # absolute path on Element
         self.assertRaises(SyntaxError, root.findall, './//')
 
+    def test_findall_text_predicate_entities(self):
+        # Text predicates compare the text of unresolved entity references, not their names.
+        etree = self.etree
+        parser = etree.XMLParser(resolve_entities=False, huge_tree=True)
+        root = etree.XML(
+            '<!DOCTYPE r [<!ENTITY i "hu"><!ENTITY e "&i;&i;"><!ENTITY m "h<b>u</b>">'
+            '<!ENTITY z "">]><r><a>&e;</a><a>x&m;&z;y</a></r>', parser)
+        self.assertEqual(root[0][0].tag, etree.Entity)
+
+        def count(path):
+            return len(root.findall(path))
+
+        self.assertEqual(count("a[.='huhu']"), 1)
+        self.assertEqual(count("a[.='&e;']"), 0)
+        self.assertEqual(count("a[.='huh']"), 0)
+        self.assertEqual(count("a[.='huhux']"), 0)
+        self.assertEqual(count("a[.='xhuy']"), 1)
+        self.assertEqual(count(".[a='huhu']"), 1)
+
+        # Entities expanding to nothing must not make the search walk 10**9 references.
+        entities = ['<!ENTITY e0 "">'] + [
+            f'<!ENTITY e{i} "{f"&e{i-1};" * 10}">' for i in range(1, 10)]
+        root = etree.XML(f'<!DOCTYPE r [{"".join(entities)}]><r><a>&e9;</a></r>', parser)
+        self.assertEqual(count("a[.='']"), 0)
+
     def test_find_bytearray_tag_in_findall_iteration(self):
         etree = self.etree
         root = etree.XML('<r><a/><a/><c/></r>')
