@@ -1368,6 +1368,9 @@ class SelectElement(InputMixin, HtmlElement):
         if self.multiple:
             if isinstance(value, str):
                 raise TypeError("You must pass in a sequence")
+            if hasattr(value, '__iter__'):
+                # Copy the new values first, they may be this select's own value set.
+                value = list(value)
             values = self.value
             values.clear()
             values.update(value)
@@ -1564,6 +1567,9 @@ class CheckboxGroup(list):
 
     @value.setter
     def value(self, value):
+        if hasattr(value, '__iter__'):
+            # Copy the new values first, they may be this group's own value set.
+            value = list(value)
         values = self.value
         values.clear()
         if not hasattr(value, '__iter__'):
