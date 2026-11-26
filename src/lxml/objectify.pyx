@@ -1425,8 +1425,25 @@ cdef class _ObjectifyElementMakerCaller:
         pytype_name = None
         has_children = False
         has_string_value = False
+        # Pending string children: None, a string or a list of strings.
+        # Consecutive strings are joined before adding them, adding them one by one
+        # would copy the whole text or tail each time.
+        text = None
 
         for child in children:
+            if type(child) is str:
+                if text is None:
+                    text = child
+                elif type(text) is list:
+                    (<list> text).append(child)
+                else:
+                    text = [text, child]
+                has_string_value = True
+                continue
+            if text is not None:
+                _add_text(element, text if type(text) is not list else ''.join(text))
+                text = None
+
             if child is None:
                 if len(children) == 1:
                     cetree.setAttributeValue(
@@ -1479,6 +1496,9 @@ cdef class _ObjectifyElementMakerCaller:
                     has_string_value = True
                     child = str(child)
                     _add_text(element, child)
+
+        if text is not None:
+            _add_text(element, text if type(text) is not list else ''.join(text))
 
         if self._annotate and not has_children:
             if has_string_value:

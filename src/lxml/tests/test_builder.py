@@ -32,6 +32,19 @@ class BuilderTestCase(HelperTestCase):
     def test_cdata_solo(self):
         self.assertRaises(ValueError, E.b, 'Hello', etree.CDATA('World'))
 
+    def test_many_strings(self):
+        p = E.p(*['w%d ' % i for i in range(100)])
+        self.assertEqual(''.join('w%d ' % i for i in range(100)), p.text)
+
+    def test_strings_and_other_children(self):
+        class StringSubclass(str): pass
+        p = E.p('a', 'b', E.i('x'), 'c', StringSubclass('d'), lambda: 'e', 'f',
+                E.b(), 'g', 'h')
+        self.assertEqual(b'<p>ab<i>x</i>cdef<b/>gh</p>', etree.tostring(p))
+
+    def test_cdata_after_strings(self):
+        self.assertRaises(ValueError, E.b, 'Hello', 'World', etree.CDATA('!'))
+
     def test_html_builder(self):
         html = HE.html(
             HE.head(HE.title("H-T-M-L!")),

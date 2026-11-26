@@ -2604,6 +2604,21 @@ class ObjectifyTestCase(HelperTestCase):
         root = E.root(E.val(1, "foo", 2.0, "bar ", True, None))
         self.assertTrue(isinstance(root.val, objectify.StringElement))
 
+    def test_efactory_value_concatenation_text(self):
+        E = objectify.E
+        root = E.root(E.val(1, "foo", "bar", 2.0, "baz", True, "end"),
+                      "a", "b", E.x(), "c", "d")
+        self.assertEqual("1foobar2.0baztrueend", root.val.text)
+        self.assertEqual("str", root.val.get(objectify.PYTYPE_ATTRIBUTE))
+        self.assertEqual("ab", root.val.tail)
+        self.assertEqual("cd", root.x.tail)
+
+    def test_efactory_many_strings(self):
+        E = objectify.E
+        root = E.root(E.val(*['w%d ' % i for i in range(100)]))
+        self.assertEqual(''.join('w%d ' % i for i in range(100)), root.val.text)
+        self.assertEqual("str", root.val.get(objectify.PYTYPE_ATTRIBUTE))
+
     def test_efactory_attrib(self):
         E = objectify.E
         root = E.root(foo="bar")

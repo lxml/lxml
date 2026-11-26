@@ -9,3 +9,4 @@ cdef class ElementMaker:
     cdef readonly dict _typemap
     cdef readonly object _namespace
     cdef readonly object _makeelement
+    cdef object _add_text
