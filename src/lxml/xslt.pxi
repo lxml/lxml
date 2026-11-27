@@ -531,27 +531,22 @@ cdef class XSLT:
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
 
-        cdef bint use_write_lock = self._context._extensions
-        if use_write_lock:
-            input_doc.lock_write()
-        else:
-            input_doc.lock_fakedoc()
+        # libxslt modifies the input document: it removes the whitespace that xsl:strip-space
+        # strips, unlinks the DOCTYPE from the children of the document, numbers the elements
+        # for XPath and keeps the ids of generate-id() and the key flags in the nodes.  Extension
+        # functions may also modify the documents that share the lock of the input document.
+        input_doc.lock_write()
         try:
             c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
         except:
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            input_doc.unlock_write()
             raise
 
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
+            _resetDocumentOrder(c_doc)
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            input_doc.unlock_write()
             raise MemoryError()
 
         # using the stylesheet dict is safer than using a possibly
@@ -566,11 +561,9 @@ cdef class XSLT:
             transform_ctxt.dict = tree.xmlDictCreateSub(self._c_style.doc.dict)
             if transform_ctxt.dict is NULL:
                 xslt.xsltFreeTransformContext(transform_ctxt)
+                _resetDocumentOrder(c_doc)
                 _destroyFakeDoc(input_doc._c_doc, c_doc)
-                if use_write_lock:
-                    input_doc.unlock_write()
-                else:
-                    input_doc.unlock_fakedoc()
+                input_doc.unlock_write()
                 raise MemoryError()
         else:
             transform_ctxt.dict = self._c_style.doc.dict
@@ -614,11 +607,9 @@ cdef class XSLT:
                 python.lxml_free(params)
             if context is not None:
                 context.free_context()
+            _resetDocumentOrder(c_doc)
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            input_doc.unlock_write()
 
         try:
             if resolver_context is not None and resolver_context._has_raised():
@@ -686,6 +677,26 @@ cdef class XSLT:
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
         return c_result
+
+
+cdef void _resetDocumentOrder(xmlDoc* c_doc) noexcept nogil:
+    # libxslt numbers the elements of the input document in document order, which XPath uses
+    # to sort nodes (xmlXPathOrderDocElems() stores the negative numbers in the otherwise unused
+    # 'content' pointers).  They would be wrong after changes to the tree, and those of a fake
+    # root document only order the elements of the transformed subtree => remove them.
+    cdef xmlNode* c_node = c_doc.children
+    while c_node is not NULL:
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            if <Py_ssize_t> c_node.content < 0:
+                c_node.content = NULL
+            if c_node.children is not NULL:
+                c_node = c_node.children
+                continue
+        while c_node.next is NULL:
+            c_node = c_node.parent
+            if c_node is NULL or c_node is <xmlNode*> c_doc:
+                return
+        c_node = c_node.next
 
 
 cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,

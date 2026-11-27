@@ -527,6 +527,28 @@ class ETreeXSLTTestCase(HelperTestCase):
         f.close()
         st = etree.XSLT(tree)
 
+    _trivial_stylesheet = '''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/"><out/></xsl:template>
+</xsl:stylesheet>'''
+
+    def test_xslt_input_document_order_after_changes(self):
+        # libxslt numbers the elements of the input document for sorting nodes in XPath,
+        # which must not affect XPath on the input document after the tree changed.
+        root = etree.XML('<root><a/><b/><c/></root>')
+        etree.XSLT(etree.XML(self._trivial_stylesheet))(root)
+        root.append(root[0])
+        self.assertEqual(['root', 'b', 'c', 'a'], [el.tag for el in root.xpath('//*')])
+        self.assertEqual(['c', 'a'], [el.tag for el in root.xpath('//a | //c')])
+
+    def test_xslt_element_input_document_order(self):
+        # The numbers of the elements in transformed subtrees are local to the subtree.
+        root = etree.XML('<root><a><a1/><a2/></a><b><b1/><b2/></b></root>')
+        st = etree.XSLT(etree.XML(self._trivial_stylesheet))
+        st(root[0])
+        st(root[1])
+        self.assertEqual(['a2', 'b1'], [el.tag for el in root.xpath('//b1 | //a2')])
+
     def test_xslt_multiple_transforms(self):
         xml = '<a/>'
         xslt = '''\

@@ -53,11 +53,21 @@ Bugs fixed
 
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
+* XSLT transformations with ``regexp=False`` could run with only a read lock on their input
+  document, although libxslt modifies it, e.g. for ``xsl:strip-space``.  Concurrent readers
+  in other threads could see inconsistent trees or crash.
+  Patch by Pierre-Yves Le Borgne.
+
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
 
 * GH#535: ``element.classes.toggle()`` in ``lxml.html`` did not remove all occurrences
   if class names were duplicated.
   Patch by Huanyi Xie.
+
+* LP#2175780: XPath could return nodes in the wrong order after an XSLT transformation of their
+  document, when the tree changed after the transformation or when the transformation was applied
+  to subtrees.  libxslt left document order indices in the elements of the input tree.
+  Patch by Pierre-Yves Le Borgne.
 
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
