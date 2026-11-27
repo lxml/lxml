@@ -2341,7 +2341,7 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
 
         def __set__(self, value):
             _assertValidNode(self)
-            value = _utf8(value)
+            value = _as_pi_target(value)
             c_text = _xcstr(value)
             doc = self._doc
             doc.lock_write()
@@ -2407,9 +2407,7 @@ cdef class _Entity(__ContentOnlyElement):
 
         def __set__(self, value):
             _assertValidNode(self)
-            value_utf = _utf8(value)
-            if b'&' in value_utf or b';' in value_utf:
-                raise ValueError, f"Invalid entity name '{value}'"
+            value_utf = _as_entity_name(value)
             doc = self._doc
             doc.lock_write()
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
@@ -3627,12 +3625,7 @@ def ProcessingInstruction(target, text=None):
     ProcessingInstruction element factory. This factory function creates a
     special element that will be serialized as an XML processing instruction.
     """
-    target = _utf8(target)
-    if not _xmlTagNameIsValid(target):
-        raise _buildXmlTagInvalidError(target)
-    if target.lower() == b'xml':
-        raise ValueError, f"Invalid PI name '{target}'"
-
+    target = _as_pi_target(target)
     text = _as_pi_text(text)
 
     c_doc = _newXMLDoc()
@@ -3644,6 +3637,15 @@ def ProcessingInstruction(target, text=None):
     return _elementFactory(doc, c_node)
 
 PI = ProcessingInstruction
+
+
+cdef bytes _as_pi_target(target):
+    target = _utf8(target)
+    if not _xmlTagNameIsValid(target):
+        raise _buildXmlTagInvalidError(target)
+    if target.lower() == b'xml':
+        raise ValueError, f"Invalid PI name '{target}'"
+    return target
 
 
 cdef bytes _as_pi_text(str utext):
@@ -3696,6 +3698,18 @@ def Entity(name):
     declared in the document.  A document that uses entity references
     requires a DTD to define the entities.
     """
+    name_utf = _as_entity_name(name)
+
+    c_doc = _newXMLDoc()
+    doc = _documentFactory(c_doc, None)
+    doc.initDict()
+
+    c_node = _createEntity(c_doc, _xcstr(name_utf))
+    tree.xmlAddChild(<xmlNode*>c_doc, c_node)
+    return _elementFactory(doc, c_node)
+
+
+cdef bytes _as_entity_name(name):
     name_utf = _utf8(name)
     c_name = _xcstr(name_utf)
     if c_name[0] == c'#':
@@ -3703,14 +3717,7 @@ def Entity(name):
             raise ValueError, f"Invalid character reference: '{name}'"
     elif not _xmlNameIsValid(c_name):
         raise ValueError, f"Invalid entity reference: '{name}'"
-
-    c_doc = _newXMLDoc()
-    doc = _documentFactory(c_doc, None)
-    doc.initDict()
-
-    c_node = _createEntity(c_doc, c_name)
-    tree.xmlAddChild(<xmlNode*>c_doc, c_node)
-    return _elementFactory(doc, c_node)
+    return name_utf
 
 
 def SubElement(_Element _parent not None, _tag,
