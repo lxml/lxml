@@ -46,9 +46,8 @@ ElementTree_.
    5  Threading
      5.1  Can I use threads to concurrently access the lxml API?
      5.2  Does my program run faster if I use threads?
-     5.3  Would my single-threaded program run faster if I turned off threading?
-     5.4  Why can't I reuse XSLT stylesheets in other threads?
-     5.5  My program crashes when run with mod_python/Pyro/Zope/Plone/...
+     5.3  Why can't I reuse XSLT stylesheets in other threads?
+     5.4  My program crashes when run with mod_python/Pyro/Zope/Plone/...
    6  Parsing and Serialisation
      6.1  Why doesn't the ``pretty_print`` option reformat my XML output?
      6.2  Why can't lxml parse my XML from unicode strings?
@@ -797,18 +796,6 @@ See the question above to learn which operations free the GIL to support
 multi-threading.
 
 
-Would my single-threaded program run faster if I turned off threading?
-----------------------------------------------------------------------
-
-Possibly, yes.  You can see for yourself by compiling lxml entirely
-without threading support.  Pass the ``--without-threading`` option to
-setup.py when building lxml from source.  You can also build libxml2
-without pthread support (``--without-pthreads`` option), which may add
-another bit of performance.  Note that this will leave internal data
-structures entirely without thread protection, so make sure you really
-do not use lxml outside of the main application thread in this case.
-
-
 Why can't I reuse XSLT stylesheets in other threads?
 ----------------------------------------------------
 
@@ -865,12 +852,6 @@ for possible approaches to solve your specific problem:
   thread spawning of your web/application server, an import of
   ``lxml.etree`` in sitecustomize.py or usercustomize.py may still do
   the trick.
-
-* compile lxml without threading support by running ``setup.py`` with the
-  ``--without-threading`` option.  While this might be slower in certain
-  scenarios on multi-processor systems, it *might* also keep your application
-  from crashing, which should be worth more to you than peak performance.
-  Remember that lxml is fast anyway, so concurrency may not even be worth it.
 
 * look out for fancy XSLT stuff like foreign document access or
   passing in subtrees through XSLT variables.  This might or might not

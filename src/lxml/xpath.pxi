@@ -154,13 +154,11 @@ cdef class _XPathEvaluatorBase:
 
     @cython.final
     cdef void _lock(self) noexcept:
-        if config.ENABLE_THREADING:
-            self._eval_lock.acquire()
+        self._eval_lock.acquire()
 
     @cython.final
     cdef void _unlock(self) noexcept:
-        if config.ENABLE_THREADING:
-            self._eval_lock.release()
+        self._eval_lock.release()
 
     cdef _build_parse_error(self):
         cdef _BaseErrorLog entries

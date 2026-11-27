@@ -62,6 +62,13 @@ Bugs fixed
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
 
+* LP#2115529: In PyPy, lxml did not release the GIL around calls into libxml2 and libxslt
+  and did not lock parsers and XPath evaluators that are shared between threads.
+  Threads that wait for each other could deadlock, e.g. a thread that parses a URL or pipe
+  which another thread serves, or a thread that waits for a lock which another thread holds
+  while it runs Python code.
+  Patch by Pierre-Yves Le Borgne.
+
 Other changes
 -------------
 
@@ -74,6 +81,9 @@ Other changes
 
 * LP#2175761: The C code that Cython generates for ``lxml.etree`` no longer depends on ``PYTHONHASHSEED``.
   The C types that Cython inferred for some untyped variables depended on the string hash seed.
+  Patch by Pierre-Yves Le Borgne.
+
+* The ``--without-threading`` build option was removed.
   Patch by Pierre-Yves Le Borgne.
 
 

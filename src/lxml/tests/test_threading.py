@@ -3,8 +3,10 @@ Tests for thread usage in lxml.etree.
 """
 
 
+import os
 import re
 import sys
+import tempfile
 import unittest
 import threading
 from queue import Queue, Empty
@@ -274,6 +276,102 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(b'<root class="xyz"/>',
                           tostring(result[0]))
 
+    def test_thread_xslt_extension_with_waiting_writer(self):
+        # Another thread starts to wait for the lock of the input's parser while an extension
+        # function runs.  Its wait must let the extension function return, also where lxml
+        # does not release the GIL around calls into libxml2 and libxslt (PyPy).
+        XML = self.etree.XML
+        other = XML('<other/>')  # same parser (and lock) as the input document
+        writer_started = threading.Event()
+        threads = []
+
+        def write():
+            writer_started.set()
+            other.set('written', 'yes')  # waits for the transformation
+
+        def start_writer(context):
+            thread = threading.Thread(target=write)
+            threads.append(thread)
+            thread.start()
+            writer_started.wait()
+            return 'ok'
+
+        transform = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="test:start-writer()"/></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'start-writer'): start_writer})
+
+        try:
+            result = str(transform(XML('<a/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('ok', result)
+        self.assertEqual('yes', other.get('written'))
+
+    def test_thread_xpath_extension_with_waiting_reader(self):
+        # Same for a thread that starts to wait for the document while an XPath extension
+        # function runs, which holds the write lock of the document.
+        root = self.etree.XML('<root><child/></root>')
+        reader_started = threading.Event()
+        threads = []
+        result = []
+
+        def read():
+            reader_started.set()
+            result.append(root[0].tag)  # waits for the XPath evaluation
+
+        def start_reader(context):
+            thread = threading.Thread(target=read)
+            threads.append(thread)
+            thread.start()
+            reader_started.wait()
+            return 'ok'
+
+        try:
+            self.assertEqual('ok', root.xpath(
+                'test:start-reader()', namespaces={'test': 'testns'},
+                extensions={('testns', 'start-reader'): start_reader}))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual(['child'], result)
+
+    def test_thread_write_after_xpath_extension_with_waiting_readers(self):
+        # Two threads start to wait for the document while an XPath extension function runs.
+        # The evaluating thread modifies the document right afterwards, before both readers
+        # could continue, and waits for them, which must let them run (PyPy).
+        root = self.etree.XML('<root><child/></root>')
+        readers_started = [threading.Event() for _ in range(2)]
+        threads = []
+        result = []
+
+        def read(started):
+            started.set()
+            result.append(root[0].tag)  # waits for the XPath evaluation
+
+        def start_readers(context):
+            for started in readers_started:
+                thread = threading.Thread(target=read, args=(started,))
+                threads.append(thread)
+                thread.start()
+            for started in readers_started:
+                started.wait()
+            return 'ok'
+
+        try:
+            self.assertEqual('ok', root.xpath(
+                'test:start-readers()', namespaces={'test': 'testns'},
+                extensions={('testns', 'start-readers'): start_readers}))
+            root.set('written', 'yes')
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual(['child', 'child'], result)
+        self.assertEqual('yes', root.get('written'))
+
     def test_thread_create_xslt(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
@@ -471,6 +569,29 @@ class ThreadingTestCase(HelperTestCase):
                 el = root[i % child_count]
                 del el
         self._run_threads(10, testrun)
+
+    @unittest.skipUnless(hasattr(os, 'mkfifo'), "needs os.mkfifo()")
+    def test_parse_file_written_by_thread(self):
+        # The parser releases the GIL while libxml2 waits for its input,
+        # so that another Python thread can write it.
+        xml = b'<root><a>A</a><b>B</b></root>'
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fifo_path = os.path.join(temp_dir, 'input.xml')
+            os.mkfifo(fifo_path)
+
+            def write_document():
+                with open(fifo_path, 'wb') as f:
+                    f.write(xml)
+
+            writer = threading.Thread(target=write_document)
+            writer.start()
+            try:
+                tree = self.etree.parse(fifo_path)
+            finally:
+                # Let the writer finish if the parser did not open the pipe.
+                os.close(os.open(fifo_path, os.O_RDONLY | os.O_NONBLOCK))
+                writer.join()
+        self.assertEqual(xml, self.etree.tostring(tree))
 
 
 class ThreadPipelineTestCase(HelperTestCase):

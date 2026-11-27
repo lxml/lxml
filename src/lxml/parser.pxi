@@ -720,12 +720,11 @@ cdef class _ParserContext(_ResolverContext):
     cdef int prepare(self, bint set_document_loader=True) except -1:
         cdef int result
         cdef unsigned long current_tid
-        if config.ENABLE_THREADING:
-            current_tid = python.PyThread_get_thread_ident() + 1  # allow 0 == no thread
-            if self._lock_owner_tid == current_tid:
-                raise RuntimeError("Parser is already used by this thread. Raising to prevent deadlock.")
-            self._lock.acquire()
-            self._lock_owner_tid = current_tid
+        current_tid = python.PyThread_get_thread_ident() + 1  # allow 0 == no thread
+        if self._lock_owner_tid == current_tid:
+            raise RuntimeError("Parser is already used by this thread. Raising to prevent deadlock.")
+        self._lock.acquire()
+        self._lock_owner_tid = current_tid
         self._error_log.clear()
         self._doc = None
         # Connect the lxml error log with libxml2's error handling. In the case of parsing
@@ -741,9 +740,8 @@ cdef class _ParserContext(_ResolverContext):
             try:
                 self._validator.connect(self._c_ctxt, self._error_log)
             except:
-                if config.ENABLE_THREADING:
-                    self._lock_owner_tid = 0
-                    self._lock.release()
+                self._lock_owner_tid = 0
+                self._lock.release()
                 raise
         return 0
 
@@ -758,9 +756,8 @@ cdef class _ParserContext(_ResolverContext):
             self._doc = None
             self._c_ctxt.sax.serror = NULL
         finally:
-            if config.ENABLE_THREADING:
-                self._lock_owner_tid = 0
-                self._lock.release()
+            self._lock_owner_tid = 0
+            self._lock.release()
         return 0
 
     cdef object _handleParseResult(self, _BaseParser parser,
