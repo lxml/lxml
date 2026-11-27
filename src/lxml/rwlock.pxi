@@ -230,6 +230,19 @@ cdef extern from * nogil:
         atomic_int write_wait_on_writer
 
 
+cdef extern from *:
+    """
+    /* See RWLock._spin_while_locked().  With the GIL, spinning does not help. */
+    #ifndef LXML_LOCK_SPIN_COUNT
+        #ifdef Py_GIL_DISABLED
+            #define LXML_LOCK_SPIN_COUNT 1000
+        #else
+            #define LXML_LOCK_SPIN_COUNT 0
+        #endif
+    #endif
+    """
+    const int LOCK_SPIN_COUNT "LXML_LOCK_SPIN_COUNT"
+
 cdef const nonatomic_int max_lock_reader_count = 1 << 30
 
 
@@ -292,8 +305,23 @@ cdef class RWLock:
         while atomic_load(&self._readers_waiting) > 0:
             with nogil: pass
 
+    cdef void _spin_while_locked(self, cython.pymutex* mutex) noexcept:
+        """Spin a little while another thread holds the mutex, before acquiring it.
+
+        In the hand-offs between readers and writers, the other thread usually releases
+        the mutex soon.  Free-threaded CPython's PyMutex spins before it blocks, too, but
+        does not see the mutex being released while it spins (CPython gh-162421), so that
+        each hand-off would take the whole spin.
+        """
+        for _ in range(LOCK_SPIN_COUNT):
+            if not mutex[0].locked():
+                break
+            with nogil:
+                pass
+
     cdef void _wait_to_read(self) noexcept:
         # Guard against concurrent readers.
+        self._spin_while_locked(&self._readers_wait_guard)
         with self._readers_wait_guard:
             inc_perf_counter(&self._perf_counters.read_wait_on_writer)
 
@@ -305,6 +333,7 @@ cdef class RWLock:
                 if readers_waiting == 0:
                     # We acquired the lock first and notified the writer about it.
                     # Wait for the writer to release the lock to us.
+                    self._spin_while_locked(&self._readers_wait_lock)
                     self._readers_wait_lock.acquire()
 
             inc_perf_counter(&self._perf_counters.read_acquired)
@@ -359,6 +388,7 @@ cdef class RWLock:
         readers_departing = atomic_add(&self._readers_departing, readers) + readers
         if readers_departing > 0:
             # Wait for the readers to finish.
+            self._spin_while_locked(&self._writer_wait_lock)
             self._writer_wait_lock.acquire()
         self._writer_wait_lock.release()
 
