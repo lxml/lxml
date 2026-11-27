@@ -2684,13 +2684,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 raise ValueError("Cannot enable XML declaration in C14N")
 
             if method == 'c14n':
-                doc = self._context_node._doc
-                doc.lock_read()
-                try:
-                    _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
-                                    compression, inclusive_ns_prefixes)
-                finally:
-                    doc.unlock_read()
+                # _tofilelikeC14N() locks the document itself, for writing if the
+                # root of this tree is not the root element of the document.
+                _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
+                                compression, inclusive_ns_prefixes)
             else:  # c14n2
                 with _open_utf8_file(file, compression=compression) as f:
                     target = C14NWriterTarget(
@@ -3117,13 +3114,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if compression is None or compression < 0:
             compression = 0
 
-        doc = self._context_node._doc
-        doc.lock_read()
-        try:
-            _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
-                            compression, inclusive_ns_prefixes)
-        finally:
-            doc.unlock_read()
+        # _tofilelikeC14N() locks the document itself, for writing if the
+        # root of this tree is not the root element of the document.
+        _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
+                        compression, inclusive_ns_prefixes)
 
 
 cdef _ElementTree _elementTreeFactory(_Document doc, _Element context_node):

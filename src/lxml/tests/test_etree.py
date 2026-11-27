@@ -22,6 +22,7 @@ import platform
 import shutil
 import tempfile
 import textwrap
+import threading
 import zlib
 import gzip
 
@@ -5452,6 +5453,63 @@ class ETreeC14NTestCase(HelperTestCase):
         s = f.getvalue()
         self.assertEqual(b'<a><b></b></a>',
                           s)
+
+    def _run_bounded(self, function):
+        # Runs 'function' in a thread, so that a deadlock fails the test instead of the suite.
+        errors = []
+
+        def run():
+            try:
+                function()
+            except BaseException as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        thread.join(60)
+        self.assertFalse(thread.is_alive(), "deadlocked")
+        if errors:
+            raise errors[0]
+
+    def _c14n_subelement_tree(self, write):
+        # The root of the tree is a sub-element, which is the root of a fake root
+        # document during the serialisation (under the write lock of the document).
+        xml = b'<root xmlns:p="urn:p" xmlns:q="urn:q"><x/><p:a><!--c--><q:b/></p:a><y/></root>'
+        # Use a parser of its own, since documents share the lock of their parser,
+        # which a deadlock leaves locked.
+        root = etree.XML(xml, etree.XMLParser())
+        tree = etree.ElementTree(root[1])
+        results = []
+
+        def write_variants():
+            for options in [{}, {'exclusive': True},
+                            {'exclusive': True, 'inclusive_ns_prefixes': ['q']},
+                            {'with_comments': False}]:
+                f = BytesIO()
+                write(tree, f, **options)
+                results.append(f.getvalue())
+            with tmpfile() as filename:
+                write(tree, filename, compression=9)
+                with gzip.open(filename, 'rb') as f:
+                    results.append(f.read())
+
+        self._run_bounded(write_variants)
+        self.assertEqual([
+            b'<p:a xmlns:p="urn:p" xmlns:q="urn:q"><!--c--><q:b></q:b></p:a>',
+            b'<p:a xmlns:p="urn:p"><!--c--><q:b xmlns:q="urn:q"></q:b></p:a>',
+            b'<p:a xmlns:p="urn:p" xmlns:q="urn:q"><!--c--><q:b></q:b></p:a>',
+            b'<p:a xmlns:p="urn:p" xmlns:q="urn:q"><q:b></q:b></p:a>',
+            b'<p:a xmlns:p="urn:p" xmlns:q="urn:q"><!--c--><q:b></q:b></p:a>',
+        ], results)
+        self.assertEqual(xml, etree.tostring(root))
+
+    def test_write_c14n_subelement_tree(self):
+        self._c14n_subelement_tree(
+            lambda tree, file, **options: tree.write_c14n(file, **options))
+
+    def test_write_method_c14n_subelement_tree(self):
+        self._c14n_subelement_tree(
+            lambda tree, file, **options: tree.write(file, method='c14n', **options))
 
     def test_c14n_gzip(self):
         tree = self.parse(b'<a>'+b'<b/>'*200+b'</a>')
