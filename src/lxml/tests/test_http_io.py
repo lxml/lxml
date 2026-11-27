@@ -8,7 +8,7 @@ import textwrap
 import sys
 import gzip
 
-from .common_imports import etree, HelperTestCase, BytesIO, _bytes, IS_PYPY
+from .common_imports import etree, HelperTestCase, BytesIO, _bytes
 from .dummy_http_server import webserver, HTTPRequestCollector
 
 
@@ -130,8 +130,7 @@ class HttpIOTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    if not IS_PYPY:
-        suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(HttpIOTestCase)])
+    suite.addTests([unittest.defaultTestLoader.loadTestsFromTestCase(HttpIOTestCase)])
     return suite
 
 

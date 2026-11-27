@@ -235,9 +235,7 @@ cdef extern from *:
 #include <time.h>
 #endif
 
-/* Let other threads take the GIL while this one spins.  Unlike "with nogil", this also releases
-   the GIL where lxml does not release it around library calls (WITHOUT_THREADING, see
-   etree_defs.h), e.g. for readers that need it to continue. */
+/* Let other threads take the GIL while this one spins, e.g. readers that need it to continue. */
 static void __lxml_yield_gil(void) {
     Py_BEGIN_ALLOW_THREADS
 #if defined(PYPY_VERSION) && !defined(_WIN32)

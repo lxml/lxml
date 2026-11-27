@@ -46,13 +46,6 @@
 #  define PyWeakref_LockObject(obj)          (NULL)
 #endif
 
-/* Threading is not currently supported by PyPy */
-#if IS_PYPY
-#  ifndef WITHOUT_THREADING
-#    define WITHOUT_THREADING
-#  endif
-#endif
-
 #if IS_PYPY && PYPY_VERSION_NUM < 0x08000000
 #  ifndef PyUnicode_FromFormat
 #    define PyUnicode_FromFormat  PyString_FromFormat
@@ -96,43 +89,6 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #define PyUnicode_AS_DATA(ustr)  (NULL)
 #undef PyUnicode_IS_READY
 #define PyUnicode_IS_READY(ustr)  (1)
-#endif
-
-#ifdef WITHOUT_THREADING
-/* Do not release the GIL around library calls ("with nogil"), but still while waiting for another
-   thread, which may need the GIL to continue, e.g. for a lock that it holds while it runs Python
-   code, which can switch threads.  Cython's 'pymutex' waits for a lock between
-   Py_BEGIN_ALLOW_THREADS and Py_END_ALLOW_THREADS, and RWLock spins with them, so these keep
-   releasing the GIL. */
-static CYTHON_INLINE PyThreadState* __lxml_PyEval_SaveThread(void) {
-    return PyEval_SaveThread();
-}
-static CYTHON_INLINE void __lxml_PyEval_RestoreThread(PyThreadState *state) {
-    PyEval_RestoreThread(state);
-}
-#  undef  Py_BEGIN_ALLOW_THREADS
-#  define Py_BEGIN_ALLOW_THREADS  { PyThreadState *_save = __lxml_PyEval_SaveThread();
-#  undef  Py_END_ALLOW_THREADS
-#  define Py_END_ALLOW_THREADS  __lxml_PyEval_RestoreThread(_save); }
-
-#  undef PyEval_SaveThread
-#  define PyEval_SaveThread() (NULL)
-#  undef PyEval_RestoreThread
-#  define PyEval_RestoreThread(state)  if (state); else {}
-#  undef PyGILState_Ensure
-#  define PyGILState_Ensure() (PyGILState_UNLOCKED)
-#  undef PyGILState_Release
-#  define PyGILState_Release(state)  if (state); else {}
-#  undef  Py_UNBLOCK_THREADS
-#  define Py_UNBLOCK_THREADS  _save = NULL;
-#  undef  Py_BLOCK_THREADS
-#  define Py_BLOCK_THREADS  if (_save); else {}
-#endif
-
-#ifdef WITHOUT_THREADING
-#  define ENABLE_THREADING 0
-#else
-#  define ENABLE_THREADING 1
 #endif
 
 #if LIBXML_VERSION < 20704

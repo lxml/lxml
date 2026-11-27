@@ -3,8 +3,10 @@ Tests for thread usage in lxml.etree.
 """
 
 
+import os
 import re
 import sys
+import tempfile
 import unittest
 import threading
 from queue import Queue, Empty
@@ -567,6 +569,29 @@ class ThreadingTestCase(HelperTestCase):
                 el = root[i % child_count]
                 del el
         self._run_threads(10, testrun)
+
+    @unittest.skipUnless(hasattr(os, 'mkfifo'), "needs os.mkfifo()")
+    def test_parse_file_written_by_thread(self):
+        # The parser releases the GIL while libxml2 waits for its input,
+        # so that another Python thread can write it.
+        xml = b'<root><a>A</a><b>B</b></root>'
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fifo_path = os.path.join(temp_dir, 'input.xml')
+            os.mkfifo(fifo_path)
+
+            def write_document():
+                with open(fifo_path, 'wb') as f:
+                    f.write(xml)
+
+            writer = threading.Thread(target=write_document)
+            writer.start()
+            try:
+                tree = self.etree.parse(fifo_path)
+            finally:
+                # Let the writer finish if the parser did not open the pipe.
+                os.close(os.open(fifo_path, os.O_RDONLY | os.O_NONBLOCK))
+                writer.join()
+        self.assertEqual(xml, self.etree.tostring(tree))
 
 
 class ThreadPipelineTestCase(HelperTestCase):

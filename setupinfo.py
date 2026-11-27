@@ -349,8 +349,6 @@ def define_macros():
     macros = []
     if OPTION_WITHOUT_ASSERT:
         macros.append(('PYREX_WITHOUT_ASSERTIONS', None))
-    if OPTION_WITHOUT_THREADING:
-        macros.append(('WITHOUT_THREADING', None))
     if OPTION_LIMITED_API:
         if OPTION_LIMITED_API.count('.') != 1:
             raise RuntimeError(
@@ -562,7 +560,6 @@ staticbuild = bool(os.environ.get('STATICBUILD', ''))
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
 OPTION_WITH_UNICODE_STRINGS = has_option('with-unicode-strings')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
-OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_WITHOUT_CYTHON = has_option('without-cython')
 OPTION_WITH_CYTHON = has_option('with-cython')
 OPTION_WITH_CYTHON_GDB = has_option('cython-gdb')
