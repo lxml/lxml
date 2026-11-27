@@ -531,27 +531,21 @@ cdef class XSLT:
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
 
-        cdef bint use_write_lock = self._context._extensions
-        if use_write_lock:
-            input_doc.lock_write()
-        else:
-            input_doc.lock_fakedoc()
+        # libxslt modifies the input document: it removes the whitespace that xsl:strip-space
+        # strips, unlinks the DOCTYPE from the children of the document, numbers the elements
+        # for XPath and keeps the ids of generate-id() and the key flags in the nodes.  Extension
+        # functions may also modify the documents that share the lock of the input document.
+        input_doc.lock_write()
         try:
             c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
         except:
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            input_doc.unlock_write()
             raise
 
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            input_doc.unlock_write()
             raise MemoryError()
 
         # using the stylesheet dict is safer than using a possibly
@@ -567,10 +561,7 @@ cdef class XSLT:
             if transform_ctxt.dict is NULL:
                 xslt.xsltFreeTransformContext(transform_ctxt)
                 _destroyFakeDoc(input_doc._c_doc, c_doc)
-                if use_write_lock:
-                    input_doc.unlock_write()
-                else:
-                    input_doc.unlock_fakedoc()
+                input_doc.unlock_write()
                 raise MemoryError()
         else:
             transform_ctxt.dict = self._c_style.doc.dict
@@ -615,10 +606,7 @@ cdef class XSLT:
             if context is not None:
                 context.free_context()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            input_doc.unlock_write()
 
         try:
             if resolver_context is not None and resolver_context._has_raised():
