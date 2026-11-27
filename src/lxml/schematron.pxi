@@ -153,7 +153,7 @@ cdef class Schematron(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        doc.lock_fakedoc()
+        cdef bint write_locked = doc.lock_fakedoc(root_node._c_node)
         try:
             self._error_log.clear()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
@@ -164,7 +164,7 @@ cdef class Schematron(_Validator):
                 ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
             schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
 
         if ret == -1:
