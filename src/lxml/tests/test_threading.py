@@ -442,6 +442,40 @@ class ThreadingTestCase(HelperTestCase):
                 del el
         self._run_threads(10, testrun)
 
+    def test_concurrent_parsing_with_shared_parser(self):
+        parser = self.etree.XMLParser()
+
+        def parse():
+            thread_id = threading.get_ident()
+            for i in range(200):
+                root = self.etree.XML(f'<root thread="{thread_id}"><child>{i}</child></root>', parser)
+                self.assertEqual(str(thread_id), root.get('thread'))
+                self.assertEqual(str(i), root[0].text)
+
+        self._run_threads(8, parse)
+
+    def test_concurrent_navigation_while_moving(self):
+        root = self.etree.XML('<root><a><p1/><moving/><p2/></a><b><q1/><q2/></b></root>')
+        a, b = root
+        p1, moving, p2 = a
+        q1, q2 = b
+
+        def move():
+            for _ in range(1000):
+                b.insert(1, moving)
+                a.insert(1, moving)
+
+        def navigate():
+            # The element is never outside of 'a' or 'b' for other threads.
+            for _ in range(1000):
+                self.assertIn(moving.getparent(), (a, b))
+                self.assertIn(moving.getprevious(), (p1, q1))
+                self.assertIn(moving.getnext(), (p2, q2))
+
+        self._run_threads(4, navigate, main_func=move)
+        self.assertEqual([p1, moving, p2], list(a))
+        self.assertEqual([q1, q2], list(b))
+
     def test_concurrent_class_lookup(self):
         XML = self.etree.XML
 
@@ -471,6 +505,59 @@ class ThreadingTestCase(HelperTestCase):
                 el = root[i % child_count]
                 del el
         self._run_threads(10, testrun)
+
+    def test_concurrent_proxy_release_while_writing(self):
+        # A thread drops the last proxies of an element in a removed subtree and of an
+        # element in the tree while another thread modifies the document.  The release
+        # (which frees the removed subtree) must not wait for the writer, which here waits
+        # for it in an XPath extension function, i.e. while it holds the document lock.
+        root = self.etree.XML('<root><a><b/></a><c/></root>')
+        proxies = [root[0][0], root[1]]
+        removed = threading.Event()
+        released = threading.Event()
+
+        def release_proxies():
+            removed.wait()
+            proxies.clear()
+            released.set()
+
+        def remove_subtree(context):
+            del root[0]
+            removed.set()
+            released.wait()
+            return len(root)
+
+        thread = threading.Thread(target=release_proxies)
+        thread.start()
+        self.assertEqual(1, root.xpath('f()', extensions={(None, 'f'): remove_subtree}))
+        thread.join()
+
+        self.assertEqual(b'<root><c/></root>', self.etree.tostring(root))
+        self.assertEqual('c', root[0].tag)
+
+    def test_concurrent_moves_between_documents(self):
+        # Threads that use an element while another thread moves it between two documents
+        # with different locks (different parsers) must lock its current document.
+        SubElement = self.etree.SubElement
+        doc_a = self.etree.XML('<a/>', self.etree.XMLParser())
+        doc_b = self.etree.XML('<b/>', self.etree.XMLParser())
+        moved = SubElement(doc_a, 'x')
+        for i in range(5):
+            SubElement(moved, 'c').text = str(i)
+
+        def mover():
+            for i in range(3000):
+                (doc_b if i % 2 == 0 else doc_a).append(moved)
+
+        def user():
+            for i in range(3000):
+                SubElement(moved, 'c').text = str(i)
+                self.assertTrue(all(child.tag == 'c' for child in moved))
+                del moved[0]
+                moved.text = str(i)
+
+        self._run_threads(3, user, main_func=mover)
+        self.assertEqual(5, len(moved))
 
 
 class ThreadPipelineTestCase(HelperTestCase):

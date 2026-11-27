@@ -335,8 +335,7 @@ cdef class _ElementMatchIterator:
 
     @cython.final
     cdef int _storeNext(self, _Element node) except -1:
-        doc = node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(node)
         try:
             self._matcher.cacheTags(doc)
             c_node = self._next_element(node._c_node)
@@ -365,8 +364,7 @@ cdef class ElementChildIterator(_ElementMatchIterator):
         _assertValidNode(node)
         self._initTagMatcher(tag)
 
-        doc = node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(node)
         try:
             if reversed:
                 c_node = _findChildBackwards(node._c_node, 0)
@@ -441,8 +439,7 @@ cdef class ElementDepthFirstIterator:
         self._top_node  = node
         self._next_node = node
         self._matcher = _newMultiTagMatcher(tag)
-        doc = node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(node)
         try:
             self._matcher.cacheTags(node._doc)
             if inclusive and not self._matcher.matches(node._c_node):
@@ -462,8 +459,7 @@ cdef class ElementDepthFirstIterator:
         cdef _Element current_node = self._next_node
         if current_node is None:
             raise StopIteration
-        doc = current_node._doc
-        doc.lock_read()
+        doc = _readLockedDocument(current_node)
         try:
             c_node = current_node._c_node
             self._matcher.cacheTags(current_node._doc)

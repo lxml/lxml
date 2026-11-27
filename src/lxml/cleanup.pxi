@@ -21,13 +21,12 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None):
         {_utf8(prefix) for prefix in keep_ns_prefixes}
         if keep_ns_prefixes else None)
 
-    doc = element._doc
-    doc.lock_write()
+    doc = _writeLockedDocument(element)
     try:
         if top_nsmap:
             # declare namespaces from nsmap, then apply them to the subtree
             _setNodeNamespaces(c_element, doc, None, top_nsmap)
-            moveNodeToDocument(doc, c_element.doc, c_element)
+            moveNodeToDocument(doc, doc, c_element.doc, c_element)
 
         _removeUnusedNamespaceDeclarations(c_element, keep_ns_prefixes)
     finally:
@@ -54,8 +53,7 @@ def strip_attributes(tree_or_element, *attribute_names):
     if not attribute_names:
         return
 
-    doc = element._doc
-    doc.lock_write()
+    doc = _writeLockedDocument(element)
     try:
         matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, attribute_names)
         matcher.cacheTags(element._doc)
@@ -115,8 +113,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
 
     matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag_names)
 
-    doc = element._doc
-    doc.lock_write()
+    doc = _writeLockedDocument(element)
     try:
         matcher.cacheTags(doc)
         if matcher.rejectsAll():
@@ -194,8 +191,7 @@ def strip_tags(tree_or_element, *tag_names):
 
     matcher = _MultiTagMatcher.__new__(_MultiTagMatcher, tag_names)
 
-    doc = element._doc
-    doc.lock_write()
+    doc = _writeLockedDocument(element)
     try:
         matcher.cacheTags(doc)
         if matcher.rejectsAll():
@@ -234,7 +230,7 @@ cdef _strip_tags(_Document doc, xmlNode* c_node, _MultiTagMatcher matcher):
                 if not attemptDeallocation(c_child):
                     if c_child.nsDef is not NULL:
                         # make namespaces absolute
-                        moveNodeToDocument(doc, doc._c_doc, c_child)
+                        moveNodeToDocument(doc, doc, doc._c_doc, c_child)
                 c_child = c_next
             else:
                 c_next = _nextElement(c_child)

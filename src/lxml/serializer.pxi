@@ -99,8 +99,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
     _assertValidNode(element)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        doc = element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(element)
         try:
             return _textToString(element._c_node, encoding, with_tail)
         finally:
@@ -127,8 +126,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
         tree.xmlCharEncCloseFunc(enchandler)
         raise MemoryError()
 
-    doc = element._doc
-    doc.lock_read()
+    doc = _readLockedDocument(element)
     with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_doctype, c_method,
                         write_xml_declaration, write_complete_document,
@@ -171,8 +169,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
     if isinstance(element_or_tree, _Element):
         element = <_Element> element_or_tree
         _assertValidNode(element)
-        doc = element._doc
-        doc.lock_fakedoc()
+        doc = _fakedocLockedDocument(element)
         try:
             c_doc = _plainFakeRootDoc(doc._c_doc, element._c_node, 0)
         except:
@@ -712,8 +709,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        doc = element._doc
-        doc.lock_read()
+        doc = _readLockedDocument(element)
         try:
             data = _textToString(element._c_node, encoding, with_tail)
         finally:
@@ -744,8 +740,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         c_doctype = _xcstr(doctype)
 
     writer = _create_output_buffer(f, c_enc, compression, &c_buffer, close=False)
-    doc = element._doc
-    doc.lock_read()
+    doc = _readLockedDocument(element)
     try:
         if writer is None:
             with nogil:
@@ -864,8 +859,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
     cdef xmlDoc* c_doc = NULL
     cdef int bytes_count, error = 0
 
-    doc = element._doc
-    doc.lock_fakedoc()
+    doc = _fakedocLockedDocument(element)
     try:
         c_base_doc = element._c_node.doc
         c_doc = _fakeRootDoc(c_base_doc, element._c_node)
