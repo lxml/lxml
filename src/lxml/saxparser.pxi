@@ -93,7 +93,8 @@ cdef class _SaxParserContext(_ParserContext):
     # for event collecting
     cdef int _event_filter
     cdef list _ns_stack
-    cdef list _node_stack
+    cdef list _end_node_stack
+    cdef list _pending_events  # None after running empty
     cdef _ParseEventsIterator events_iterator
 
     # for iterparse
@@ -102,7 +103,8 @@ cdef class _SaxParserContext(_ParserContext):
 
     def __cinit__(self, _BaseParser parser):
         self._ns_stack = []
-        self._node_stack = []
+        self._end_node_stack = []
+        self._pending_events = None
         self._parser = parser
         self.events_iterator = _ParseEventsIterator()
 
@@ -204,6 +206,7 @@ cdef class _SaxParserContext(_ParserContext):
         if self._event_filter & PARSE_EVENT_FILTER_PI:
             sax.processingInstruction = <xmlparser.processingInstructionSAXFunc>_handleSaxPIEvent
 
+    @cython.final
     cdef _setEventFilter(self, events, tag):
         self._event_filter = _buildParseEventFilter(events)
         if not self._event_filter or tag is None or tag == '*':
@@ -220,26 +223,119 @@ cdef class _SaxParserContext(_ParserContext):
             self._matcher.cacheTags(self._doc, force_into_dict=True)
         return 0
 
-    cdef int pushEvent(self, event, xmlNode* c_node) except -1:
+    @cython.inline
+    cdef bint _isRetainingEvents(self):
+        cdef xmlparser.xmlParserCtxt* c_ctxt = self._c_ctxt
+        if c_ctxt.inputNr > 1 and c_ctxt.options & xmlparser.XML_PARSE_NOENT:
+            # libxml2 has started parsing a parsed (external) entity. Collect events until it's finished.
+            if self._pending_events is None:
+                self._pending_events = []
+            return True
+        else:
+            return False
+
+    @cython.final
+    cdef object _pushNodeEvent(self, event_name, xmlNode* c_node):
+        """Push a node event and return the corresponding Element or _PendingNodeEvent.
+        """
+        if self._isRetainingEvents():
+            # Postpone the Element creation until we know that the c_node will persist.
+            node = _nodeEventFactory(event_name, c_node)
+            self._pending_events.append(node)
+        else:
+            node = _elementFactory(self._doc, c_node)
+            if self._pending_events:
+                self._flushPendingEvents()
+            self.events_iterator.add_event( (event_name, node) )
+        return node
+
+    @cython.final
+    cdef int pushNodeEvent(self, event_name, xmlNode* c_node) except -1:
         cdef _Element root
         if self._root is None:
             root = self._doc.getroot()
             if root is not None and root._c_node.type == tree.XML_ELEMENT_NODE:
                 self._root = root
-        node = _elementFactory(self._doc, c_node)
-        self.events_iterator.add_event( (event, node) )
+        self._pushNodeEvent(event_name, c_node)
         return 0
 
+    @cython.final
+    cdef int pushStartEndEvents(self, xmlNode* c_node) except -1:
+        cdef bint needs_start_event = self._event_filter & PARSE_EVENT_FILTER_START
+        cdef bint needs_end_event = self._target is None and self._event_filter & PARSE_EVENT_FILTER_END
+
+        if not (needs_start_event | needs_end_event):
+            return 0
+
+        if self._isRetainingEvents():
+            # Postpone the Element creation until we know that the c_node will persist.
+            node = _nodeEventFactory('start', c_node)
+            if needs_start_event:
+                self._pending_events.append(node)
+        else:
+            node = _elementFactory(self._doc, c_node)
+            if self._pending_events:
+                self._flushPendingEvents()
+            if needs_start_event:
+                self.events_iterator.add_event( ('start', node) )
+
+        if needs_end_event:
+            self._end_node_stack.append(node)
+        return 0
+
+    @cython.final
+    cdef int pushEndEventFromStack(self) except -1:
+        node = self._end_node_stack.pop()
+        if self._isRetainingEvents():
+            self._pending_events.append(
+                (<_PendingNodeEvent> node).for_event('end') if type(node) is _PendingNodeEvent else ('end', node))
+            return 0
+        if type(node) is _PendingNodeEvent:
+            # Resolve only the node because we store _PendingNodeEvent('start') in self._end_node_stack
+            # to avoid the double allocation.
+            node = (<_PendingNodeEvent> node).resolve_node(self._doc)
+        if self._pending_events:
+            self._flushPendingEvents()
+        self.events_iterator.add_event( ('end', node) )
+        return 0
+
+    @cython.final
+    cdef int pushEvent(self, event_name, value) except -1:
+        if self._isRetainingEvents():
+            self._pending_events.append( (event_name, value) )
+        else:
+            if self._pending_events:
+                self._flushPendingEvents()
+            self.events_iterator.add_event( (event_name, value) )
+
+    @cython.final
+    cdef int _flushPendingEvents(self) except -1:
+        events_queue = self.events_iterator._events
+        # The pending events queue shouldn't change while processing it,
+        # but it shouldn't hurt to allow it to extend.
+        for event in self._pending_events:
+            events_queue.append(
+                (<_PendingNodeEvent> event).resolve(self._doc) if type(event) is _PendingNodeEvent else event)
+        self._pending_events = None
+        return 0
+
+    @cython.final
     cdef int flushEvents(self) except -1:
-        events = self.events_iterator._events
-        while self._node_stack:
-            events.append( ('end', self._node_stack.pop()) )
-            _pushSaxNsEndEvents(self)
+        while self._end_node_stack:
+            self.pushEndEventFromStack()
         while self._ns_stack:
             _pushSaxNsEndEvents(self)
+        if self._pending_events:
+            self._flushPendingEvents()
 
+    @cython.final
     cdef void _handleSaxException(self, xmlparser.xmlParserCtxt* c_ctxt) noexcept:
         _abortParser(c_ctxt)
+        # Delete pending events to prevent accessing incomplete state.
+        self.events_iterator.abort()
+        self._pending_events = None
+        del self._end_node_stack[:]
+        del self._ns_stack[:]
         self._store_raised()
 
 
@@ -282,6 +378,36 @@ cdef class _ParseEventsIterator:
         return item
 
 
+@cython.final
+@cython.internal
+@cython.freelist(16)
+cdef class _PendingNodeEvent:
+    """C node wrapper to postpone Element creation until we know we can safely refer to it.
+    libxml2 discards trees generated from parsed entity if the parsing fails.
+    """
+    cdef str event_name
+    cdef xmlNode *_c_node
+
+    cdef _PendingNodeEvent for_event(self, event_name):
+        return _nodeEventFactory(event_name, self._c_node)
+
+    cdef _Element resolve_node(self, _Document doc):
+        return _elementFactory(doc, self._c_node)
+
+    cdef tuple resolve(self, _Document doc):
+        return (self.event_name, _elementFactory(doc, self._c_node))
+
+
+cdef _PendingNodeEvent _nodeEventFactory(str name, xmlNode *c_node):
+    cdef _PendingNodeEvent event = _PendingNodeEvent.__new__(_PendingNodeEvent)
+    event.event_name = name
+    event._c_node = c_node
+    return event
+
+
+cdef list NO_SAX_NAMESPACES = []
+
+
 cdef list _build_prefix_uri_list(_SaxParserContext context, int c_nb_namespaces,
                                  const_xmlChar** c_namespaces):
     "Build [(prefix, uri)] list of declared namespaces."
@@ -307,14 +433,24 @@ cdef void _handleSaxStart(
     context = <_SaxParserContext>c_ctxt._private
     cdef int event_filter = context._event_filter
     try:
-        if (c_nb_namespaces and
-                event_filter & (PARSE_EVENT_FILTER_START_NS |
-                                PARSE_EVENT_FILTER_END_NS)):
-            declared_namespaces = _build_prefix_uri_list(
-                context, c_nb_namespaces, c_namespaces)
-            if event_filter & PARSE_EVENT_FILTER_START_NS:
-                for prefix_uri_tuple in declared_namespaces:
-                    context.events_iterator.add_event(("start-ns", prefix_uri_tuple))
+        if event_filter & (PARSE_EVENT_FILTER_START_NS |
+                           PARSE_EVENT_FILTER_END_NS):
+            if c_nb_namespaces:
+                declared_namespaces = _build_prefix_uri_list(
+                    context, c_nb_namespaces, c_namespaces)
+
+                if event_filter & PARSE_EVENT_FILTER_START_NS:
+                    for prefix_uri_tuple in declared_namespaces:
+                        context.pushEvent("start-ns", prefix_uri_tuple)
+
+                if not (event_filter & PARSE_EVENT_FILTER_END_NS):
+                    declared_namespaces = None
+
+            elif event_filter & PARSE_EVENT_FILTER_END_NS:
+                # Must push something to allow popping it.
+                declared_namespaces = NO_SAX_NAMESPACES
+            else:
+                declared_namespaces = None
         else:
             declared_namespaces = None
 
@@ -330,11 +466,10 @@ cdef void _handleSaxStart(
             if c_localname is NULL:
                 raise MemoryError()
 
-        if event_filter & PARSE_EVENT_FILTER_END_NS:
-            context._ns_stack.append(declared_namespaces)
-        if event_filter & (PARSE_EVENT_FILTER_END |
-                           PARSE_EVENT_FILTER_START):
-            _pushSaxStartEvent(context, c_ctxt, c_namespace, c_localname, None)
+        if event_filter & (PARSE_EVENT_FILTER_START |
+                           PARSE_EVENT_FILTER_END |
+                           PARSE_EVENT_FILTER_END_NS):
+            _pushSaxStartEvent(context, c_ctxt, c_namespace, c_localname, None, declared_namespaces)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -357,18 +492,34 @@ cdef void _handleSaxTargetStart(
     cdef int event_filter = context._event_filter
     cdef int sax_event_filter = context._target._sax_event_filter
     try:
-        if c_nb_namespaces:
-            declared_namespaces = _build_prefix_uri_list(
-                context, c_nb_namespaces, c_namespaces)
+        if (event_filter & PARSE_EVENT_FILTER_START_NS or
+                sax_event_filter & (SAX_EVENT_START_NS | SAX_EVENT_END_NS)):
+            if c_nb_namespaces:
+                declared_namespaces = _build_prefix_uri_list(
+                    context, c_nb_namespaces, c_namespaces)
 
-            if event_filter & PARSE_EVENT_FILTER_START_NS:
-                for prefix_uri_tuple in declared_namespaces:
-                    context.events_iterator.add_event(("start-ns", prefix_uri_tuple))
+                if event_filter & PARSE_EVENT_FILTER_START_NS:
+                    for prefix_uri_tuple in declared_namespaces:
+                        context.pushEvent("start-ns", prefix_uri_tuple)
 
-            if sax_event_filter & SAX_EVENT_START_NS:
-                for prefix, uri in declared_namespaces:
-                    context._target._handleSaxStartNs(prefix, uri)
+                if sax_event_filter & SAX_EVENT_START_NS:
+                    for prefix, uri in declared_namespaces:
+                        context._target._handleSaxStartNs(prefix, uri)
+
+                if not ((event_filter & PARSE_EVENT_FILTER_END_NS) | (sax_event_filter & SAX_EVENT_END_NS)):
+                    declared_namespaces = None
+
+            elif event_filter & PARSE_EVENT_FILTER_END_NS or sax_event_filter & SAX_EVENT_END_NS:
+                # Must push something to allow popping it.
+                declared_namespaces = NO_SAX_NAMESPACES
+            else:
+                declared_namespaces = None
+
+        elif event_filter & PARSE_EVENT_FILTER_END_NS:
+            # Must push something to allow popping it.
+            declared_namespaces = [None] * c_nb_namespaces if c_nb_namespaces else NO_SAX_NAMESPACES
         else:
+            c_nb_namespaces = 0
             declared_namespaces = None
 
         if sax_event_filter & SAX_EVENT_START:
@@ -380,7 +531,7 @@ cdef void _handleSaxTargetStart(
                 attrib = IMMUTABLE_EMPTY_MAPPING
             else:
                 attrib = {}
-                for i in xrange(c_nb_attributes):
+                for i in range(c_nb_attributes):
                     name = _namespacedNameFromNsName(
                         c_attributes[2], c_attributes[0])
                     if c_attributes[3] is NULL:
@@ -391,7 +542,7 @@ cdef void _handleSaxTargetStart(
                     attrib[name] = value
                     c_attributes += 5
 
-            nsmap = dict(declared_namespaces) if c_nb_namespaces else IMMUTABLE_EMPTY_MAPPING
+            nsmap = dict(declared_namespaces) if c_nb_namespaces and declared_namespaces is not None else IMMUTABLE_EMPTY_MAPPING
 
             element = _callTargetSaxStart(
                 context, c_ctxt,
@@ -400,13 +551,11 @@ cdef void _handleSaxTargetStart(
         else:
             element = None
 
-        if (event_filter & PARSE_EVENT_FILTER_END_NS or
-                sax_event_filter & SAX_EVENT_END_NS):
-            context._ns_stack.append(declared_namespaces)
-        if event_filter & (PARSE_EVENT_FILTER_END |
-                           PARSE_EVENT_FILTER_START):
+        if event_filter & (PARSE_EVENT_FILTER_START |
+                           PARSE_EVENT_FILTER_END |
+                           PARSE_EVENT_FILTER_END_NS) or declared_namespaces is not None:
             _pushSaxStartEvent(context, c_ctxt, c_namespace,
-                               c_localname, element)
+                               c_localname, element, declared_namespaces)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -431,7 +580,7 @@ cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
                 raise MemoryError()
         if context._event_filter & (PARSE_EVENT_FILTER_END |
                                     PARSE_EVENT_FILTER_START):
-            _pushSaxStartEvent(context, c_ctxt, NULL, c_name, None)
+            _pushSaxStartEvent(context, c_ctxt, NULL, c_name, None, None)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -458,7 +607,7 @@ cdef void _handleSaxTargetStartNoNs(void* ctxt, const_xmlChar* c_name,
             attrib, IMMUTABLE_EMPTY_MAPPING)
         if context._event_filter & (PARSE_EVENT_FILTER_END |
                                     PARSE_EVENT_FILTER_START):
-            _pushSaxStartEvent(context, c_ctxt, NULL, c_name, element)
+            _pushSaxStartEvent(context, c_ctxt, NULL, c_name, element, None)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -480,17 +629,24 @@ cdef _callTargetSaxStart(_SaxParserContext context,
 cdef int _pushSaxStartEvent(_SaxParserContext context,
                             xmlparser.xmlParserCtxt* c_ctxt,
                             const_xmlChar* c_href,
-                            const_xmlChar* c_name, node) except -1:
+                            const_xmlChar* c_name,
+                            node, declared_namespaces) except -1:
+    if declared_namespaces is not None:
+        context._ns_stack.append(declared_namespaces)
     if (context._matcher is None or
             context._matcher.matchesNsTag(c_href, c_name)):
-        if node is None and context._target is None:
+        if node is not None or context._target is not None:
+            # Trust whatever 'node' the target gave us.
+            if context._event_filter & PARSE_EVENT_FILTER_START:
+                context.pushEvent('start', node)
+            if (context._target is None and
+                    context._event_filter & PARSE_EVENT_FILTER_END):
+                context._end_node_stack.append(node)
+        else:
             assert context._doc is not None
-            node = _elementFactory(context._doc, c_ctxt.node)
-        if context._event_filter & PARSE_EVENT_FILTER_START:
-            context.events_iterator.add_event(('start', node))
-        if (context._target is None and
-                context._event_filter & PARSE_EVENT_FILTER_END):
-            context._node_stack.append(node)
+            if context._event_filter & (PARSE_EVENT_FILTER_START |
+                                        PARSE_EVENT_FILTER_END):
+                context.pushStartEndEvents(c_ctxt.node)
     return 0
 
 
@@ -512,7 +668,6 @@ cdef void _handleSaxEnd(void* ctxt, const_xmlChar* c_localname,
             context._origSaxEnd(c_ctxt, c_localname, c_prefix, c_namespace)
             node = None
         _pushSaxEndEvent(context, c_namespace, c_localname, node)
-        _pushSaxNsEndEvents(context)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -546,7 +701,7 @@ cdef int _pushSaxNsEndEvents(_SaxParserContext context) except -1:
         return 0
 
     cdef list declared_namespaces = context._ns_stack.pop()
-    if declared_namespaces is None:
+    if declared_namespaces is NO_SAX_NAMESPACES:
         return 0
 
     cdef tuple prefix_uri
@@ -554,7 +709,7 @@ cdef int _pushSaxNsEndEvents(_SaxParserContext context) except -1:
         if call_target:
             context._target._handleSaxEndNs(prefix_uri[0])
         if build_events:
-            context.events_iterator.add_event(('end-ns', None))
+            context.pushEvent('end-ns', None)
 
     return 0
 
@@ -565,9 +720,12 @@ cdef int _pushSaxEndEvent(_SaxParserContext context,
     if context._event_filter & PARSE_EVENT_FILTER_END:
         if (context._matcher is None or
                 context._matcher.matchesNsTag(c_href, c_name)):
-            if context._target is None:
-                node = context._node_stack.pop()
-            context.events_iterator.add_event(('end', node))
+            if context._target is not None:
+                # Trust whatever 'node' the target gave us.
+                context.pushEvent('end', node)
+            else:
+                context.pushEndEventFromStack()
+    _pushSaxNsEndEvents(context)
     return 0
 
 
@@ -632,7 +790,7 @@ cdef void _handleSaxTargetPI(void* ctxt, const_xmlChar* c_target,
             funicodeOrNone(c_target),
             funicodeOrEmpty(c_data))
         if context._event_filter & PARSE_EVENT_FILTER_PI:
-            context.events_iterator.add_event(('pi', pi))
+            context._pushEvent('pi', pi)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -651,7 +809,7 @@ cdef void _handleSaxPIEvent(void* ctxt, const_xmlChar* target,
     if c_node is NULL:
         return
     try:
-        context.pushEvent('pi', c_node)
+        context.pushNodeEvent('pi', c_node)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -667,7 +825,7 @@ cdef void _handleSaxTargetComment(void* ctxt, const_xmlChar* c_data) noexcept wi
     try:
         comment = context._target._handleSaxComment(funicodeOrEmpty(c_data))
         if context._event_filter & PARSE_EVENT_FILTER_COMMENT:
-            context.events_iterator.add_event(('comment', comment))
+            context._pushEvent('comment', comment)
     except:
         context._handleSaxException(c_ctxt)
     finally:
@@ -685,7 +843,7 @@ cdef void _handleSaxComment(void* ctxt, const_xmlChar* text) noexcept with gil:
     if c_node is NULL:
         return
     try:
-        context.pushEvent('comment', c_node)
+        context.pushNodeEvent('comment', c_node)
     except:
         context._handleSaxException(c_ctxt)
     finally:

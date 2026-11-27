@@ -976,6 +976,47 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(b'<root><![CDATA[test]]></root>',
                           tostring(context.root))
 
+    def test_iterparse_wellformed_entity(self):
+        xml_with_entity = b"""\
+        <!DOCTYPE r [ <!ENTITY e "<item a1='v1'><name>zz</name></item>"> ]>
+        <r>&e;</r>
+        """
+        found = []
+        for _event, elem in etree.iterparse(BytesIO(xml_with_entity), tag="item"):
+            found.append((elem.tag, elem.get("a1"), elem.findtext("name")))
+            elem.clear()
+        self.assertTrue(found)
+
+    def test_iterparse_nonwellformed_entity(self):
+        # https://github.com/lxml/lxml/security/advisories/GHSA-59qx-3jjv-x996
+        broken_entity_xml = b"""\
+        <!DOCTYPE r [ <!ENTITY e "<item a1='v1'><name>zz</name></item><x>"> ]>
+        <r>&e;</r>
+        """
+        found = []
+        with self.assertRaises(self.etree.XMLSyntaxError):
+            for _event, elem in etree.iterparse(BytesIO(broken_entity_xml), tag="item"):
+                # reads freed xmlNode/xmlAttr
+                found.append((elem.tag, elem.get("a1"), elem.findtext("name")))
+                # frees them again
+                elem.clear()
+        self.assertFalse(found)
+
+    def test_iterparse_nonwellformed_entity_large(self):
+        # https://github.com/lxml/lxml/security/advisories/GHSA-59qx-3jjv-x996
+        broken_entity_xml = b"""\
+        <!DOCTYPE r [ <!ENTITY e "<item a1='v1'>%s</item><x>"> ]>
+        <r>&e;</r>
+        """ % (b'<name>zz</name>' * 100)
+        found = []
+        with self.assertRaises(self.etree.XMLSyntaxError):
+            for _event, elem in etree.iterparse(BytesIO(broken_entity_xml), tag="item", chunk_size=100):
+                # reads freed xmlNode/xmlAttr
+                found.append((elem.tag, elem.get("a1"), elem.findtext("name")))
+                # frees them again
+                elem.clear()
+        self.assertFalse(found)
+
     def test_parser_encoding_unknown(self):
         self.assertRaises(
             LookupError, self.etree.XMLParser, encoding="hopefully unknown")

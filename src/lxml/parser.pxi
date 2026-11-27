@@ -1518,8 +1518,8 @@ cdef class _FeedParser(_BaseParser):
         else:
             xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
 
-        if (pctxt.recovery and not xmlparser.xmlCtxtIsStopped(pctxt) and
-                isinstance(context, _SaxParserContext)):
+        #if (pctxt.recovery and not xmlparser.xmlCtxtIsStopped(pctxt) and isinstance(context, _SaxParserContext)):
+        if isinstance(context, _SaxParserContext):
             # apply any left-over 'end' events
             (<_SaxParserContext>context).flushEvents()
 
