@@ -529,6 +529,10 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef RWLock _lock
     # Short-lived lock to guard proxy link changes.
     cdef cython.pymutex _proxy_lock
+    # Keeps out other RelaxNG validations of the document while one temporarily changes
+    # the 'psvi' fields of its elements, see _validateRelaxNGKeepingPsvi().
+    cdef cython.pymutex _psvi_lock
+    cdef thread_id _psvi_lock_owner  # read by other threads
 
     def __dealloc__(self):
         # If there are no more references to the document, it is safe
@@ -548,33 +552,69 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void unlock_proxies(self) noexcept:
         self._proxy_lock.release()
 
+    cdef bint lock_psvi(self) noexcept:
+        # Returns False if this thread holds the lock already, e.g. when a Python error log
+        # validates the document while it receives the errors of a validation.
+        cdef thread_id my_id = current_thread_id()
+        # Only this thread sets or clears its own id, so another value is stale at most.
+        if load_relaxed(&self._psvi_lock_owner) == my_id:
+            return False
+        self._psvi_lock.acquire()
+        store_relaxed(&self._psvi_lock_owner, my_id)
+        return True
+
+    cdef void unlock_psvi(self, bint locked) noexcept:
+        # Unlock after lock_psvi().
+        if locked:
+            store_relaxed(&self._psvi_lock_owner, 0)
+            self._psvi_lock.release()
+
     cdef void lock_read(self) noexcept:
         self._lock.lock_read()
 
     cdef void unlock_read(self) noexcept:
         self._lock.unlock_read()
 
-    cdef void lock_write(self) noexcept:
-        self._lock.lock_write()
+    cdef int lock_write(self) except -1:
+        # Raises RuntimeError if this thread holds the read lock and cannot upgrade it.
+        return self._lock.lock_write()
 
     cdef void unlock_write(self) noexcept:
         self._lock.unlock_write()
 
-    cdef void lock_fakedoc(self) noexcept:
-        # Explicit alias for locking when we create a 'fake root doc'.
+    cdef int lock_update(self) except -1:
+        # A read lock that keeps out writers, so that lock_write() can always upgrade it.
+        # Raises RuntimeError if this thread holds the read lock and cannot upgrade it.
+        return self._lock.lock_update()
+
+    cdef void unlock_update(self) noexcept:
+        self._lock.unlock_update()
+
+    cdef int lock_fakedoc(self, xmlNode* c_node, bint with_siblings=True) except -1:
+        # Lock for creating a 'fake root doc' for 'c_node' (see _plainFakeRootDoc()).
+        # The read lock is enough if no fake root doc is needed, i.e. for the root node.
+        # Otherwise, the fake root doc temporarily changes the tree, which needs the write lock.
+        # Returns 1 if it took the write lock.
         self._lock.lock_read()
-
-    cdef void unlock_fakedoc(self) noexcept:
-        # Explicit alias for locking when we create a 'fake root doc'.
+        if not _needsFakeRootDoc(self._c_doc, c_node, with_siblings):
+            return 0
         self._lock.unlock_read()
+        self._lock.lock_write()
+        return 1
 
-    cdef void lock_write_with(self, _Document second_doc) noexcept:
+    cdef void unlock_fakedoc(self, bint write_locked=False) noexcept:
+        # Unlock after lock_fakedoc().
+        if write_locked:
+            self._lock.unlock_write()
+        else:
+            self._lock.unlock_read()
+
+    cdef int lock_write_with(self, _Document second_doc) except -1:
         """Lock two documents for writing at the same time.
         """
         if second_doc is None or self._lock is second_doc._lock:
-            self._lock.lock_write()
-        else:
-            self._lock.lock_write_with(second_doc._lock)
+            return self._lock.lock_write()
+        return self._lock.lock_write_with(second_doc._lock)
 
     cdef void unlock_write_with(self, _Document second_doc) noexcept:
         """Unlock two documents for writing after locking them at the same time.
@@ -1272,11 +1312,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 element_doc = element._doc
                 if element_doc is not last_element_doc and element_doc is not locked_main_doc:
                     # Most likely, all elements will come from a single document, so try to lock it only once.
+                    # (Locking may raise, so remember the documents only once they are locked.)
                     if last_element_doc is not None:
                         last_element_doc.unlock_write()
+                        last_element_doc = None
                     if locked_main_doc is None:
+                        self._doc.lock_write_with(element_doc)
                         locked_main_doc = self._doc
-                        locked_main_doc.lock_write_with(element_doc)
                     else:
                         # FIXME: we do not follow the locking order in "lock_write_with()"" here.
                         element_doc.lock_write()
@@ -2289,7 +2331,7 @@ cdef _get_node_content(element: _Element):
         doc.unlock_read()
 
 
-cdef int _set_node_content(element: _Element, bytes value) noexcept:
+cdef int _set_node_content(element: _Element, bytes value) except -2:
     cdef const_xmlChar* c_text = NULL
     cdef Py_ssize_t length = 0
 
@@ -2757,13 +2799,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if element._doc is not doc:
             raise ValueError, "Element is not in this tree."
 
-        doc.lock_fakedoc()
+        cdef bint write_locked = doc.lock_fakedoc(root._c_node)
         try:
             c_doc = _fakeRootDoc(doc._c_doc, root._c_node)
             c_path = tree.xmlGetNodePath(element._c_node)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
 
         if c_path is NULL:
             raise MemoryError()

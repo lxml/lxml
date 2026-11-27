@@ -167,16 +167,17 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
     cdef _Document doc
     cdef _Element element
     cdef xmlChar **c_inclusive_ns_prefixes = NULL
+    cdef bint write_locked = False
 
     if isinstance(element_or_tree, _Element):
         element = <_Element> element_or_tree
         _assertValidNode(element)
         doc = element._doc
-        doc.lock_fakedoc()
+        write_locked = doc.lock_fakedoc(element._c_node, False)
         try:
             c_doc = _plainFakeRootDoc(doc._c_doc, element._c_node, 0)
         except:
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
             raise
     else:
         doc = _documentOrRaise(element_or_tree)
@@ -196,7 +197,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
             doc.unlock_read()
         else:
             _destroyFakeDoc(doc._c_doc, c_doc)
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
 
         if c_inclusive_ns_prefixes is not NULL:
            python.lxml_free(c_inclusive_ns_prefixes)
@@ -865,7 +866,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
     cdef int bytes_count, error = 0
 
     doc = element._doc
-    doc.lock_fakedoc()
+    cdef bint write_locked = doc.lock_fakedoc(element._c_node)
     try:
         c_base_doc = element._c_node.doc
         c_doc = _fakeRootDoc(c_base_doc, element._c_node)
@@ -908,7 +909,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
     finally:
         if c_doc is not NULL:
             _destroyFakeDoc(c_base_doc, c_doc)
-        doc.unlock_fakedoc()
+        doc.unlock_fakedoc(write_locked)
         if c_inclusive_ns_prefixes is not NULL:
             python.lxml_free(c_inclusive_ns_prefixes)
 

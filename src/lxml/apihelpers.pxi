@@ -1249,7 +1249,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     cdef xmlNode* c_next
     cdef xmlDoc*  c_source_doc
     cdef _Element element
-    cdef _Document doc
+    cdef _Document doc, element_doc
     cdef Py_ssize_t seqlength, i, c
     cdef _node_to_node_function next_element
     assert step > 0, step
@@ -1277,8 +1277,11 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 if doc is not element._doc and doc is not parent._doc:
                     if doc is not None:
                         doc.unlock_write()
-                    doc = element._doc
-                    doc.lock_write()
+                        doc = None
+                    # (Locking may raise, after which 'doc' must not be unlocked.)
+                    element_doc = element._doc
+                    element_doc.lock_write()
+                    doc = element_doc
 
                 add_child(parent, element)
 
@@ -1335,8 +1338,11 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 if doc is not element._doc and doc is not parent._doc:
                     if doc is not None:
                         doc.unlock_write()
-                    doc = element._doc
-                    doc.lock_write()
+                        doc = None
+                    # (Locking may raise, after which 'doc' must not be unlocked.)
+                    element_doc = element._doc
+                    element_doc.lock_write()
+                    doc = element_doc
 
                 _appendChild(parent, element)
                 c_node = element._c_node
@@ -1370,8 +1376,11 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
                 if doc is not element._doc and doc is not parent._doc:
                     if doc is not None:
                         doc.unlock_write()
-                    doc = element._doc
-                    doc.lock_write()
+                        doc = None
+                    # (Locking may raise, after which 'doc' must not be unlocked.)
+                    element_doc = element._doc
+                    element_doc.lock_write()
+                    doc = element_doc
 
                 # move element and tail over
                 c_source_doc = element._c_node.doc
@@ -1410,8 +1419,11 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
             if doc is not element._doc and doc is not parent._doc:
                 if doc is not None:
                     doc.unlock_write()
-                doc = element._doc
-                doc.lock_write()
+                    doc = None
+                # (Locking may raise, after which 'doc' must not be unlocked.)
+                element_doc = element._doc
+                element_doc.lock_write()
+                doc = element_doc
 
             add_child(parent, element)
 

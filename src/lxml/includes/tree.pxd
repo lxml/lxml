@@ -84,6 +84,10 @@ cdef extern from "libxml/hash.h":
     cdef int xmlHashSize(xmlHashTable* table) nogil
     cdef void xmlHashFree(xmlHashTable* table, xmlHashDeallocator f) nogil
 
+cdef extern from "libxml/list.h":
+    ctypedef struct xmlList
+    cdef void xmlListDelete(xmlList* l) nogil
+
 
 cdef extern from * nogil: # actually "libxml/dict.h"
     # libxml/dict.h appears to be broken to include in C
@@ -230,6 +234,7 @@ cdef extern from "libxml/tree.h" nogil:
         xmlAttr* properties
         xmlNs* ns
         xmlNs* nsDef
+        void* psvi
         unsigned short line
 
     ctypedef struct xmlElementContent:
@@ -324,6 +329,7 @@ cdef extern from "libxml/tree.h" nogil:
         xmlDoc* doc
         xmlDict* dict
         xmlHashTable* ids
+        xmlHashTable* refs
         int standalone
         const_xmlChar* version
         const_xmlChar* encoding

@@ -187,13 +187,18 @@ cdef public api void unlock_read(_Document doc) noexcept:
     doc.unlock_read()
 
 cdef public api void lock_write(_Document doc) noexcept:
-    doc.lock_write()
+    # Cannot raise => waits forever where lock_write() raises RuntimeError.
+    doc._lock.lock_write_blocking()
 
 cdef public api void unlock_write(_Document doc) noexcept:
     doc.unlock_write()
 
 cdef public api void lock_write2(_Document doc1, _Document doc2) noexcept:
-    doc1.lock_write_with(doc2)
+    # Cannot raise => waits forever where lock_write_with() raises RuntimeError.
+    if doc2 is None or doc1._lock is doc2._lock:
+        doc1._lock.lock_write_blocking()
+    else:
+        doc1._lock.lock_write_with_blocking(doc2._lock)
 
 cdef public api void unlock_write2(_Document doc1, _Document doc2) noexcept:
     doc1.unlock_write_with(doc2)

@@ -124,6 +124,11 @@ The semantics of ``_init()`` are as follows:
   call that led to the creation of the Element.  So be careful with the code
   you write here as its exceptions may turn up in various unexpected places.
 
+* In free-threaded Python, modifying the tree in ``_init()`` raises
+  ``RuntimeError`` if another thread is about to modify the same document
+  at the same time, since that thread cannot be allowed to change the tree
+  while lxml is still reading it in order to create the element.
+
 
 Setting up a class lookup scheme
 ================================

@@ -51,6 +51,66 @@ Bugs fixed
   libxml2 2.14 and later.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175572: ``DTD.validate()`` modified the validated document (its ID tables) while holding
+  only its read lock, which could crash concurrent readers or validations.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175572: Validation, C14N serialisation, XSLT and the ``xpath()`` and ``getpath()`` methods
+  of an ``ElementTree`` held only the read lock of the document while they temporarily modified
+  the tree to work on an element other than the root element.  Concurrent readers could see
+  wrong parents or crash.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175572: ``DTD.validate()`` replaced the ID table of the validated document with one for
+  the validating DTD, or removed it (libxml2 2.13+), so that XPath ``id()`` lost its elements.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175570: Python code that lxml runs while it reads a document, e.g. ``ElementBase._init()``,
+  deadlocked when it read the document while another thread waited to modify it.  The read lock
+  of a document is now re-entrant per thread.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175570: Python code that lxml runs while it reads a document, e.g. ``ElementBase._init()``,
+  deadlocked when it modified the document, or serialised or validated one of its elements other
+  than the root element.  It now takes the write lock without giving up its read lock, so that no
+  other thread can modify the document in between.  If another thread already waits to modify the
+  document, it raises ``RuntimeError`` instead (the C-API functions ``lock_write()`` and
+  ``lock_write2()`` keep waiting).
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175572: ``XMLSchema`` and ``RelaxNG`` validation added the ``ID`` and ``IDREF`` attributes
+  of the validated document to its ID tables while holding only its read lock, which could crash
+  concurrent validations or readers of the document, or make them report wrong errors.
+  Schemas that use the types ``ID``, ``IDREF``, ``IDREFS``, ``ENTITY`` or ``ENTITIES``,
+  or that cannot be checked for them (schemas from file names or with includes or imports),
+  now validate under the write lock.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175771: Each ``XMLSchema`` or ``RelaxNG`` validation added all ``IDREF`` attributes of the
+  document to its IDREF table again, which grew its memory use and made later ``RelaxNG``
+  validations check the IDREFs of earlier ones, even of attributes that had been deleted since
+  (reading freed memory).
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175779: XSLT transformations with extension functions or elements, including the regular
+  expression functions that are enabled by default, write-locked all documents of the parser of
+  their input document also while they called Python extensions or resolvers, so that callbacks
+  that waited for another thread that read one of these documents deadlocked.  Transformations
+  without extensions held only the read lock, although libxslt modifies the input document.  All
+  transformations now take an update lock, which they upgrade to the write lock while libxslt runs,
+  and which lets other threads read these documents while the Python callbacks run (except for an
+  input element other than the root element).  ``XSLTExtension.apply_templates()`` and
+  ``process_children()`` now raise ``RuntimeError`` when called in another thread than the one that
+  runs the transformation.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175779: ``RelaxNG`` validation cleared the ids of ``generate-id()`` that libxslt keeps in the
+  elements of the input document of an XSLT transformation, so that ``generate-id()`` returned
+  different ids for the same elements after an extension function validated the input document, or
+  waited for another thread that did.  RelaxNG validation now keeps them, for which RelaxNG
+  validations of the same document no longer run at the same time.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.

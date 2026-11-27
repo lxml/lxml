@@ -48,6 +48,9 @@ LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
     cdef _BaseParser _parser
+    # The extension context of the current XSLT run, which may return to the update lock
+    # of the input document while the resolvers run.
+    cdef _BaseContext _run_context
 
     @cython.final
     cdef _XSLTResolverContext _copy(self):
@@ -76,6 +79,8 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
 
     error[0] = 0
     context = <_XSLTResolverContext>c_context
+    cdef bint downgraded = (
+        context._run_context is not None and context._run_context._downgrade_doc_lock())
 
     # shortcut if we resolve the stylesheet itself
     c_doc = context._c_style_doc
@@ -111,6 +116,8 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
         error[0] = 1
         context._store_raised()
     finally:
+        if downgraded:
+            context._run_context._restore_doc_lock()
         return c_return_doc  # and swallow any further exceptions
 
 
@@ -530,28 +537,31 @@ cdef class XSLT:
         assert self._c_style is not NULL, "XSLT stylesheet not initialised"
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
+        cdef bint c_profile_run = profile_run
 
-        cdef bint use_write_lock = self._context._extensions
-        if use_write_lock:
+        # libxslt modifies the input document while it runs: it removes the whitespace that
+        # xsl:strip-space strips, unlinks the DOCTYPE from the children of the document, numbers
+        # the elements for XPath and keeps the ids of generate-id() and the key flags in the
+        # nodes.  Extension functions may also modify the documents that share the lock of the
+        # input document.  This needs the write lock, but Python callbacks (extensions and
+        # resolvers) return to the update lock below it (see _BaseContext._downgrade_doc_lock()),
+        # so that they can wait for other threads that read these documents.
+        input_doc.lock_update()
+        try:
             input_doc.lock_write()
-        else:
-            input_doc.lock_fakedoc()
+        except BaseException:
+            input_doc.unlock_update()
+            raise
         try:
             c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
         except:
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            _unlockXSLTInput(input_doc)
             raise
 
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            _unlockXSLTInput(input_doc)
             raise MemoryError()
 
         # using the stylesheet dict is safer than using a possibly
@@ -567,10 +577,7 @@ cdef class XSLT:
             if transform_ctxt.dict is NULL:
                 xslt.xsltFreeTransformContext(transform_ctxt)
                 _destroyFakeDoc(input_doc._c_doc, c_doc)
-                if use_write_lock:
-                    input_doc.unlock_write()
-                else:
-                    input_doc.unlock_fakedoc()
+                _unlockXSLTInput(input_doc)
                 raise MemoryError()
         else:
             transform_ctxt.dict = self._c_style.doc.dict
@@ -579,7 +586,7 @@ cdef class XSLT:
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
 
-        if profile_run:
+        if c_profile_run:
             transform_ctxt.profile = 1
 
         try:
@@ -590,8 +597,13 @@ cdef class XSLT:
                 raise
 
             context.register_context(transform_ctxt, input_doc)
+            context._run_thread = python.PyThread_get_thread_ident()
+            # (A fake root document changes the tree while the run lasts.)
+            if c_doc is input_doc._c_doc and input_doc._lock.owns_upgraded_update_lock():
+                context._update_doc = input_doc
 
             resolver_context = self._xslt_resolver_context._copy()
+            resolver_context._run_context = context
             transform_ctxt._private = <python.PyObject*>resolver_context
 
             _convert_xslt_parameters(transform_ctxt, kw, &params)
@@ -615,10 +627,7 @@ cdef class XSLT:
             if context is not None:
                 context.free_context()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            if use_write_lock:
-                input_doc.unlock_write()
-            else:
-                input_doc.unlock_fakedoc()
+            _unlockXSLTInput(input_doc)
 
         try:
             if resolver_context is not None and resolver_context._has_raised():
@@ -686,6 +695,11 @@ cdef class XSLT:
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
         return c_result
+
+
+cdef inline void _unlockXSLTInput(_Document input_doc) noexcept:
+    input_doc.unlock_write()
+    input_doc.unlock_update()
 
 
 cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,

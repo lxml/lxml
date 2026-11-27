@@ -3,6 +3,8 @@ Test cases related to RelaxNG parsing and validation
 """
 
 
+import gc
+import threading
 import unittest
 
 from .common_imports import (
@@ -120,6 +122,30 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertTrue([log for log in errors if "IDREF" in log.message])
         self.assertTrue([log for log in errors if "myref" in log.message])
 
+    def test_relaxng_idrefs_not_kept(self):
+        # The IDREFs that a validation finds do not stay in the document,
+        # where a later validation would check them.
+        def schema(ref_pattern):
+            return etree.RelaxNG(etree.XML('''\
+<element name="r" xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <zeroOrMore><element name="e">
+    <optional><attribute name="id"><data type="ID"/></attribute></optional>
+    <optional><attribute name="ref">%s</attribute></optional>
+    <optional><attribute name="other"><data type="IDREF"/></attribute></optional>
+  </element></zeroOrMore>
+</element>''' % ref_pattern))
+
+        idref_schema = schema('<data type="IDREF"/>')
+        text_schema = schema('<text/>')
+        root = etree.XML('<r><e id="i1"/><e id="i2" ref="i1"/></r>')
+        self.assertTrue(idref_schema.validate(root))
+        root.remove(root[0])  # removes the ID that 'ref' refers to
+        gc.collect()  # which PyPy does only when it collects the element's proxy
+        self.assertTrue(text_schema.validate(root),
+                        [error.message for error in text_schema.error_log])
+        self.assertFalse(idref_schema.validate(root))
+
     def test_relaxng_invalid_schema(self):
         schema = self.parse('''\
 <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
@@ -213,6 +239,36 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertEqual(self._rootstring(b_tree), b'<b>B</b>')
         self.assertTrue(schema.validate(b_tree))
         self.assertFalse(schema.error_log.filter_from_errors())
+
+    def test_relaxng_validate_in_python_error_log(self):
+        # A Python error log that validates the document while it receives the errors
+        # of a validation of the same document.
+        schema_tree = self.parse('''\
+<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore><element name="b"><empty/></element></zeroOrMore>
+</element>''')
+        schema = etree.RelaxNG(schema_tree)
+        inner_schema = etree.RelaxNG(schema_tree)
+        # (A parser of its own keeps a deadlock away from the documents of other tests.)
+        root = etree.XML('<a><b/><c/></a>', etree.XMLParser())
+        results = []
+
+        class ValidatingLog(etree.PyErrorLog):
+            def receive(self, entry):
+                if not results:
+                    results.append('receive')
+                    results.append(inner_schema.validate(root))
+
+        def validate():
+            # The global error log is local to this thread.
+            etree.use_global_python_log(ValidatingLog())
+            results.append(schema.validate(root))
+
+        thread = threading.Thread(target=validate, daemon=True)
+        thread.start()
+        # The time limit only bounds the time it takes to fail.
+        thread.join(60)
+        self.assertEqual(['receive', False, False], results)
 
 
 class RelaxNGCompactTestCase(HelperTestCase):

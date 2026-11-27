@@ -274,6 +274,353 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEqual(b'<root class="xyz"/>',
                           tostring(result[0]))
 
+    def test_thread_xslt_extension_waits_for_reader(self):
+        # An extension function that waits for another thread that reads a document of the
+        # parser of the input document (here: the default parser of this thread).
+        XML = self.etree.XML
+        other = XML('<other><child/></other>')
+        threads = []
+
+        def read_in_thread(context):
+            result = []
+            thread = threading.Thread(target=lambda: result.append(other[0].tag))
+            threads.append(thread)
+            thread.start()
+            # The time limit only bounds the time it takes to fail.
+            thread.join(60)
+            return result[0] if result else 'deadlock'
+
+        transform = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="test:read-in-thread()"/></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'read-in-thread'): read_in_thread})
+
+        try:
+            result = str(transform(XML('<a/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('child', result)
+
+    def test_thread_xslt_extension_element_waits_for_reader(self):
+        # Like an extension function, an extension element waits for another thread that reads
+        # a document of the parser of the input document.
+        etree = self.etree
+        other = etree.XML('<other><child/></other>')
+        threads = []
+
+        class ReadInThread(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                result = []
+                thread = threading.Thread(target=lambda: result.append(other[0].tag))
+                threads.append(thread)
+                thread.start()
+                # The time limit only bounds the time it takes to fail.
+                thread.join(60)
+                output_parent.append(etree.Element(result[0] if result else 'deadlock'))
+
+        transform = etree.XSLT(etree.XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns" extension-element-prefixes="test">
+  <xsl:template match="/"><out><test:read-in-thread/></out></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'read-in-thread'): ReadInThread()})
+
+        try:
+            result = transform(etree.XML('<a/>'))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual(['child'], [el.tag for el in result.getroot()])
+
+    def test_thread_xslt_resolver_waits_for_reader(self):
+        # A resolver that waits for another thread that reads a document of the parser of the
+        # input document.
+        etree = self.etree
+        other = etree.XML('<other><child/></other>')
+        threads = []
+
+        class ReadInThread(etree.Resolver):
+            def resolve(self, url, pubid, context):
+                result = []
+                thread = threading.Thread(target=lambda: result.append(other[0].tag))
+                threads.append(thread)
+                thread.start()
+                # The time limit only bounds the time it takes to fail.
+                thread.join(60)
+                return self.resolve_string(f'<{result[0] if result else "deadlock"}/>', context)
+
+        parser = etree.XMLParser()
+        parser.resolvers.add(ReadInThread())
+        transform = etree.XSLT(etree.XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="name(document('doc.xml')/*)"/></xsl:template>
+</xsl:stylesheet>''', parser))
+
+        try:
+            result = str(transform(etree.XML('<a/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('child', result)
+
+    def test_thread_xslt_extension_waits_for_relaxng_validations(self):
+        # An extension function that waits for other threads that validate the input document
+        # with RelaxNG at the same time, which must not change the ids of generate-id() that
+        # libxslt keeps in the nodes of the input document.
+        etree = self.etree
+        root = etree.XML('<r>' + '<a><b/></a>' * 500 + '</r>')
+        relaxng = etree.RelaxNG(etree.XML('''\
+<element name="r" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore><element name="a"><element name="b"><empty/></element></element></zeroOrMore>
+</element>'''))
+        thread_count = 4
+        threads = []
+
+        def validate_in_threads(context):
+            start = threading.Barrier(thread_count)
+            results = []
+
+            def validate():
+                start.wait(60)
+                results.append(all([relaxng.validate(root) for _ in range(20)]))
+
+            validators = [threading.Thread(target=validate) for _ in range(thread_count)]
+            threads.extend(validators)
+            for thread in validators:
+                thread.start()
+            for thread in validators:
+                # The time limit only bounds the time it takes to fail.
+                thread.join(60)
+            return str(results == [True] * thread_count)
+
+        transform = etree.XSLT(etree.XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:template match="/">
+    <out>
+      <xsl:for-each select="//*"><id><xsl:value-of select="generate-id()"/></id></xsl:for-each>
+      <valid><xsl:value-of select="test:validate-in-threads()"/></valid>
+      <xsl:for-each select="//*"><id><xsl:value-of select="generate-id()"/></id></xsl:for-each>
+    </out>
+  </xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'validate-in-threads'): validate_in_threads})
+
+        try:
+            # (Races between the validations show up more reliably in several runs.)
+            for _ in range(5):
+                result = transform(root).getroot()
+                self.assertEqual('True', result.findtext('valid'))
+                ids = [id_element.text for id_element in result.iterfind('id')]
+                self.assertEqual(1001, len(set(ids[:1001])))
+                self.assertEqual(ids[:1001], ids[1001:])
+        finally:
+            for thread in threads:
+                thread.join()
+
+    def test_thread_xslt_extensions_concurrent_readers(self):
+        # Transformations with extension functions let other threads read their input documents
+        # while the extension functions run, but not while libxslt changes the input documents
+        # (it unlinks the DOCTYPE, numbers the elements for sorting nodes in document order and
+        # keeps the ids of generate-id() in the nodes).
+        XML = self.etree.XML
+        tostring = self.etree.tostring
+        style = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:template match="/">
+    <out><xsl:value-of select="test:count(//b | //a)"/>
+      <xsl:for-each select="//a"><id><xsl:value-of select="generate-id()"/></id></xsl:for-each>
+    </out>
+  </xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'count'): lambda context, nodes: len(nodes)})
+
+        def make_doc():
+            return self.etree.ElementTree(XML(
+                '<?pi x?><!DOCTYPE r [<!ELEMENT r ANY>]><r>' + '<a><b/></a>' * 10 + '</r>'))
+
+        transformed = make_doc()
+        style(transformed)
+        serialised = {tostring(make_doc()), tostring(transformed)}
+        docs = [make_doc() for _ in range(10)]
+        done = threading.Event()
+
+        def read():
+            while not done.is_set():
+                for doc in docs:
+                    self.assertEqual(['a', 'b'] * 10, [el.tag for el in doc.xpath('//b | //a')])
+                    self.assertIn(tostring(doc), serialised)
+
+        def transform():
+            try:
+                for _ in range(5):
+                    for doc in docs:
+                        out = style(doc).getroot()
+                        self.assertEqual('20', out.text)
+                        self.assertEqual(10, len({id_element.text for id_element in out}))
+            finally:
+                done.set()
+
+        self._run_threads(4, read, main_func=transform)
+
+    def _run_xslt_modifying_with_writers(self, make_stylesheet):
+        # Transformations whose Python extensions modify a document of the parser of their input
+        # documents while other threads keep waiting to modify it.
+        XML = self.etree.XML
+        other = XML('<other n="0"/>')
+        docs = [XML('<a/>') for _ in range(20)]  # same parser (and lock) as 'other'
+        done = threading.Event()
+
+        def modify():
+            other.set('n', str(int(other.get('n')) + 1))
+
+        style = make_stylesheet(modify)
+
+        def write():
+            while not done.is_set():
+                other.set('w', 'x')
+
+        def transform():
+            try:
+                for doc in docs:
+                    self.assertEqual('out', style(doc).getroot().tag)
+            finally:
+                done.set()
+
+        self._run_threads(2, write, main_func=transform)
+        self.assertEqual('20', other.get('n'))
+
+    def test_thread_xslt_extension_element_modifies_with_writers(self):
+        etree = self.etree
+
+        def make_stylesheet(modify):
+            class Modify(etree.XSLTExtension):
+                def execute(self, context, self_node, input_node, output_parent):
+                    modify()
+
+            return etree.XSLT(etree.XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:ext="testns" extension-element-prefixes="ext">
+  <xsl:template match="/"><out><ext:modify/></out></xsl:template>
+</xsl:stylesheet>'''), regexp=False, extensions={('testns', 'modify'): Modify()})
+
+        self._run_xslt_modifying_with_writers(make_stylesheet)
+
+    def test_thread_xslt_global_function_modifies_with_writers(self):
+        etree = self.etree
+        namespace = etree.FunctionNamespace('testns-global-modify')
+
+        def make_stylesheet(modify):
+            namespace['modify'] = lambda context: modify() or 'ok'
+            return etree.XSLT(etree.XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:g="testns-global-modify">
+  <xsl:template match="/"><out><xsl:value-of select="g:modify()"/></out></xsl:template>
+</xsl:stylesheet>'''), regexp=False)
+
+        try:
+            self._run_xslt_modifying_with_writers(make_stylesheet)
+        finally:
+            del namespace['modify']
+
+    def test_thread_xslt_extension_with_waiting_writer(self):
+        # Another thread starts to wait for the lock of the input's parser while an extension
+        # function runs.  Its wait must let the extension function return, also where lxml
+        # does not release the GIL around calls into libxml2 and libxslt (PyPy).
+        XML = self.etree.XML
+        other = XML('<other/>')  # same parser (and lock) as the input document
+        writer_started = threading.Event()
+        threads = []
+
+        def write():
+            writer_started.set()
+            other.set('written', 'yes')  # waits for the transformation
+
+        def start_writer(context):
+            thread = threading.Thread(target=write)
+            threads.append(thread)
+            thread.start()
+            writer_started.wait()
+            return 'ok'
+
+        transform = self.etree.XSLT(XML(b'''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:test="testns">
+  <xsl:output method="text"/>
+  <xsl:template match="/"><xsl:value-of select="test:start-writer()"/></xsl:template>
+</xsl:stylesheet>'''), extensions={('testns', 'start-writer'): start_writer})
+
+        try:
+            result = str(transform(XML('<a/>')))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual('ok', result)
+        self.assertEqual('yes', other.get('written'))
+
+    def test_thread_xpath_extension_with_waiting_reader(self):
+        # Same for a thread that starts to wait for the document while an XPath extension
+        # function runs, which holds the write lock of the document.
+        root = self.etree.XML('<root><child/></root>')
+        reader_started = threading.Event()
+        threads = []
+        result = []
+
+        def read():
+            reader_started.set()
+            result.append(root[0].tag)  # waits for the XPath evaluation
+
+        def start_reader(context):
+            thread = threading.Thread(target=read)
+            threads.append(thread)
+            thread.start()
+            reader_started.wait()
+            return 'ok'
+
+        try:
+            self.assertEqual('ok', root.xpath(
+                'test:start-reader()', namespaces={'test': 'testns'},
+                extensions={('testns', 'start-reader'): start_reader}))
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual(['child'], result)
+
+    def test_thread_write_after_xpath_extension_with_waiting_readers(self):
+        # Two threads start to wait for the document while an XPath extension function runs.
+        # The evaluating thread modifies the document right afterwards, before both readers
+        # could continue, and waits for them, which must let them run (PyPy).
+        root = self.etree.XML('<root><child/></root>')
+        readers_started = [threading.Event() for _ in range(2)]
+        threads = []
+        result = []
+
+        def read(started):
+            started.set()
+            result.append(root[0].tag)  # waits for the XPath evaluation
+
+        def start_readers(context):
+            for started in readers_started:
+                thread = threading.Thread(target=read, args=(started,))
+                threads.append(thread)
+                thread.start()
+            for started in readers_started:
+                started.wait()
+            return 'ok'
+
+        try:
+            self.assertEqual('ok', root.xpath(
+                'test:start-readers()', namespaces={'test': 'testns'},
+                extensions={('testns', 'start-readers'): start_readers}))
+            root.set('written', 'yes')
+        finally:
+            for thread in threads:
+                thread.join()
+        self.assertEqual(['child', 'child'], result)
+        self.assertEqual('yes', root.get('written'))
+
     def test_thread_create_xslt(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
@@ -441,6 +788,54 @@ class ThreadingTestCase(HelperTestCase):
                 el = root[i % child_count]
                 del el
         self._run_threads(10, testrun)
+
+    def _validate_concurrently_with_ids(self, validator):
+        # Threads validate one document, which adds its ID attributes to the ID table of
+        # the document and its IDREFs to the IDREF table, while other threads look up IDs.
+        root = self.etree.XML('<r>' + ''.join(
+            f'<e id="i{k}" ref="i{(k + 1) % 50}"/>' for k in range(50)) + '</r>')
+        elements = list(root)
+        thread_count = 8
+        start = threading.Barrier(thread_count)
+        results = []
+
+        def validate():
+            start.wait()
+            results.append(all([validator.validate(root) for _ in range(30)]))
+
+        def look_up_ids():
+            start.wait()
+            # The IDs are only known after the first validation.
+            results.append(all([root.xpath(f"id('i{k % 50}')") in ([], [elements[k % 50]])
+                                for k in range(300)]))
+
+        threads = [threading.Thread(target=validate if i % 2 else look_up_ids)
+                   for i in range(thread_count)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual([True] * thread_count, results)
+
+    def test_concurrent_xmlschema_with_ids(self):
+        self._validate_concurrently_with_ids(self.etree.XMLSchema(self.etree.XML('''\
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="r"><xs:complexType><xs:sequence>
+    <xs:element name="e" maxOccurs="unbounded"><xs:complexType>
+      <xs:attribute name="id" type="xs:ID"/><xs:attribute name="ref" type="xs:IDREF"/>
+    </xs:complexType></xs:element>
+  </xs:sequence></xs:complexType></xs:element>
+</xs:schema>''')))
+
+    def test_concurrent_relaxng_with_ids(self):
+        self._validate_concurrently_with_ids(self.etree.RelaxNG(self.etree.XML('''\
+<element name="r" xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <oneOrMore><element name="e">
+    <attribute name="id"><data type="ID"/></attribute>
+    <attribute name="ref"><data type="IDREF"/></attribute>
+  </element></oneOrMore>
+</element>''')))
 
     def test_concurrent_class_lookup(self):
         XML = self.etree.XML
