@@ -51,6 +51,33 @@ Bugs fixed
   libxml2 2.14 and later.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175572: ``DTD.validate()`` modified the validated document (its ID tables) while holding
+  only its read lock, which could crash concurrent readers or validations.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175572: Validation, C14N serialisation, XSLT and the ``xpath()`` and ``getpath()`` methods
+  of an ``ElementTree`` held only the read lock of the document while they temporarily modified
+  the tree to work on an element other than the root element.  Concurrent readers could see
+  wrong parents or crash.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175572: ``DTD.validate()`` replaced the ID table of the validated document with one for
+  the validating DTD, or removed it (libxml2 2.13+), so that XPath ``id()`` lost its elements.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175570: Python code that lxml runs while it reads a document, e.g. ``ElementBase._init()``,
+  deadlocked when it read the document while another thread waited to modify it.  The read lock
+  of a document is now re-entrant per thread.
+  Patch by Pierre-Yves Le Borgne.
+
+* LP#2175570: Python code that lxml runs while it reads a document, e.g. ``ElementBase._init()``,
+  deadlocked when it modified the document, or serialised or validated one of its elements other
+  than the root element.  It now takes the write lock without giving up its read lock, so that no
+  other thread can modify the document in between.  If another thread already waits to modify the
+  document, it raises ``RuntimeError`` instead (the C-API functions ``lock_write()`` and
+  ``lock_write2()`` keep waiting).
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.

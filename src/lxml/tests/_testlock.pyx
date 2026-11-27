@@ -18,19 +18,24 @@ cdef class _RWLock:
 
     @property
     def reader_count(self):
-        return self._lock._reader_count & (2**30 - 1)
+        return atomic_load(&self._lock._reader_count) & (2**30 - 1)
 
     @property
     def writer_blocking_readers(self) -> bool:
-        return self._lock._reader_count < 0
+        return atomic_load(&self._lock._reader_count) < 0
 
     @property
     def writer_reentry(self):
         return self._lock._writer_reentry
 
     @property
+    def writers_waiting_for_upgrade(self):
+        # (A performance counter that other threads change.)
+        return atomic_load(&self._lock._perf_counters.write_wait_on_upgrade)
+
+    @property
     def lock_thread_id(self):
-        return self._lock._write_locked_id - 1
+        return load_relaxed(&self._lock._write_locked_id) - 1
 
     def get_perf_counters(self):
         return self._lock.get_perf_counters()

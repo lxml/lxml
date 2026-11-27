@@ -14,5 +14,6 @@ cdef extern from "libxml/valid.h" nogil:
     cdef void xmlFreeValidCtxt(xmlValidCtxt* cur)
 
     cdef int xmlValidateDtd(xmlValidCtxt* ctxt, xmlDoc* doc, xmlDtd* dtd)
+    cdef void xmlFreeIDTable(tree.xmlHashTable* table)
     cdef tree.xmlElement* xmlGetDtdElementDesc(
         xmlDtd* dtd, tree.const_xmlChar* name)
