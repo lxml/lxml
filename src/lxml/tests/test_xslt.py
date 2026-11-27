@@ -517,6 +517,27 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEqual('<html><body>B</body></html>',
                           str(res).strip())
 
+    def test_xslt_strip_space_element_input(self):
+        # libxslt removes the whitespace text nodes that xsl:strip-space strips from the input
+        # tree, here from the children of elements that are not the root element (LP#583249).
+        root = etree.XML('<root> <a> <b/> <c/> </a> <d> </d> </root>')
+        a, d = root
+        st = etree.XSLT(etree.XML('''\
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:strip-space elements="*"/>
+  <xsl:template match="/"><out><xsl:copy-of select="*"/></out></xsl:template>
+</xsl:stylesheet>'''))
+
+        self.assertEqual(b'<out><a><b/><c/></a></out>', etree.tostring(st(a)))
+        self.assertEqual(['b', 'c'], [child.tag for child in a])
+        self.assertEqual(['c', 'b'], [child.tag for child in reversed(a)])
+
+        self.assertEqual(b'<out><d/></out>', etree.tostring(st(d)))
+        self.assertEqual(0, len(d))
+        self.assertIsNone(d.text)
+
+        self.assertEqual(b'<root> <a><b/><c/></a> <d/> </root>', etree.tostring(root))
+
     def test_xslt_include(self):
         tree = etree.parse(fileInTestDir('test1.xslt'))
         st = etree.XSLT(tree)

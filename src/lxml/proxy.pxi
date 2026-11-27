@@ -141,6 +141,12 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc) noexcept:
         c_child.parent = c_parent
         c_child = c_child.next
 
+    # Children of the fake root may have been removed (e.g. whitespace by XSLT's xsl:strip-space).
+    if c_parent.children is not c_root.children:
+        c_parent.children = c_root.children
+    if c_parent.last is not c_root.last:
+        c_parent.last = c_root.last
+
     # prevent recursive removal of children
     c_root.children = c_root.last = NULL
     tree.xmlFreeDoc(c_doc)
