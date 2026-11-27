@@ -66,8 +66,7 @@ def _fill_form(el, values, _input_tags=('input', 'select', 'textarea', f'{XHTML_
 
 
 def _takes_multiple(input):
-    if _nons(input.tag) == 'select' and input.get('multiple'):
-        # FIXME: multiple="0"?
+    if _nons(input.tag) == 'select' and 'multiple' in input.attrib:
         return True
     type = input.get('type', '').lower()
     if type in ('radio', 'checkbox'):
