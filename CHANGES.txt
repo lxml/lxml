@@ -41,6 +41,12 @@ Bugs fixed
 * GH#543: Repeated ElementPath searches could leak an index counter into the next run since lxml 7.0.
   Patch by Nayana-Naik73.
 
+* LP#2175572: Parsing in one thread while another thread modified a document of the same parser
+  could corrupt the names of both documents or crash, since both added names to the parser's
+  shared name dictionary without a common lock.  Each parse now uses a new dictionary.
+  In free-threaded Python, ``Element()`` and other new documents also get their own dictionary.
+  Patch by Pierre-Yves Le Borgne.
+
 * GH#545: ``lxml.html.fill_form()`` now selects the matching ``<option>`` of a single-valued ``<select>``
   instead of setting a ``value`` attribute on the ``<select>`` element.
   Patch by Alex Castillo Gonzalez.

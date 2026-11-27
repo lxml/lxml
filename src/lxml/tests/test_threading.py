@@ -472,6 +472,46 @@ class ThreadingTestCase(HelperTestCase):
                 del el
         self._run_threads(10, testrun)
 
+    def _run_names_dict_test(self, create, parser):
+        # One thread creates new documents with the parser while other threads add and
+        # remove names in earlier documents of the parser.
+        docs = [create(f'shared{i}', parser) for i in range(3)]
+
+        def creator():
+            for i in range(1000):
+                root = create(f'p{i}', parser)
+                self.assertEqual(f'p{i}', root.tag)
+                child = self.etree.SubElement(root, f'q{i}', {f'a{i}': 'v'})
+                self.assertEqual(f'q{i}', child.tag)
+                self.assertEqual('v', child.get(f'a{i}'))
+
+        def modifier():
+            doc = docs.pop()
+            for i in range(1000):
+                doc.set(f'c{i}', 'v')
+                self.assertEqual('v', doc.get(f'c{i}'))
+                if i % 64 == 63:
+                    doc.attrib.clear()
+
+        self._run_threads(len(docs), modifier, main_func=creator)
+
+    def test_concurrent_parsing_and_names_of_parsed_documents(self):
+        # The documents of a parser must not share their names dictionary with later parses.
+        parser = self.etree.XMLParser()
+
+        def parse(tag, parser):
+            return self.etree.fromstring(f'<{tag}/>', parser)
+        self._run_names_dict_test(parse, parser)
+
+    def test_concurrent_element_creation_and_names_of_created_documents(self):
+        # New documents must not share their names dictionary with other documents that
+        # other threads may modify while this one adds names to it.
+        parser = self.etree.XMLParser()
+
+        def create(tag, parser):
+            return parser.makeelement(tag)
+        self._run_names_dict_test(create, parser)
+
 
 class ThreadPipelineTestCase(HelperTestCase):
     """Threading tests based on a thread worker pipeline.
