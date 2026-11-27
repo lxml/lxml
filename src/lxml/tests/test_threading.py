@@ -22,18 +22,15 @@ class ThreadingTestCase(HelperTestCase):
         thread.join()
 
     def _run_threads(self, count, func, main_func=None):
-        sync = threading.Event()
+        # No timeout: starting threads can take long on a busy machine.
+        sync = threading.Barrier(count + (main_func is not None))
         lock = threading.Lock()
         counter = dict(started=0, finished=0, failed=0)
 
         def sync_start(func):
             with lock:
-                started = counter['started'] + 1
-                counter['started'] = started
-            if started < count + (main_func is not None):
-                sync.wait(4)  # wait until the other threads have started up
-                assert sync.is_set()
-            sync.set()  # all waiting => go!
+                counter['started'] += 1
+            sync.wait()  # wait until the other threads have started up
             try:
                 func()
             except:
@@ -45,8 +42,15 @@ class ThreadingTestCase(HelperTestCase):
                     counter['finished'] += 1
 
         threads = [threading.Thread(target=sync_start, args=(func,)) for _ in range(count)]
-        for thread in threads:
-            thread.start()
+        for i, thread in enumerate(threads):
+            try:
+                thread.start()
+            except BaseException:
+                # Let the started threads fail instead of waiting for the others forever.
+                sync.abort()
+                for started_thread in threads[:i]:
+                    started_thread.join()
+                raise
         if main_func is not None:
             sync_start(main_func)
         for thread in threads:

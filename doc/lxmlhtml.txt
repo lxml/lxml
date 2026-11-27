@@ -11,7 +11,7 @@ but provides a special Element API for HTML elements, as well as a
 number of utilities for common HTML processing tasks.
 
 .. contents::
-.. 
+..
    1  Parsing HTML
      1.1  Parsing HTML fragments
      1.2  Really broken pages
@@ -279,7 +279,7 @@ the links in a document.
     This yields ``(element, attribute, link, pos)`` for every link in
     the document.  ``attribute`` may be None if the link is in the
     text (as will be the case with a ``<style>`` tag with
-    ``@import``).  
+    ``@import``).
 
     This finds any link in an ``action``, ``archive``, ``background``,
     ``cite``, ``classid``, ``codebase``, ``data``, ``href``,
@@ -349,7 +349,7 @@ attributes:
 
 ``.value``:
     The value of an input, the content of a textarea, the selected
-    option(s) of a select.  This attribute can be set.  
+    option(s) of a select.  This attribute can be set.
 
     In the case of a select that takes multiple options (``<select
     multiple>``) this will be a set of the selected options; you can
@@ -482,6 +482,14 @@ Example:
 
     >>> [a.attrib['href'] for a in result.xpath("//a[@target='_blank']")]
     ['http://tinyurl.com/2xae8s', 'http://preview.tinyurl.com/2xae8s']
+
+
+.. note:: The submission URI is taken from the document and may
+    refer to anything that ``urlopen()`` can handle:
+    a remote URL, a ``data:`` in-place result or a arbitrary local file
+    that will be read in.  Applications that do not have complete control
+    over the processed form should pass their own opener function and
+    thoroughly inspect the form submission before executing it.
 
 
 HTML Diff
