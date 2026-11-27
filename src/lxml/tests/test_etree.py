@@ -5071,6 +5071,135 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(len(root), 1)
         self.assertEqual(root[0].tag, 'child')
 
+    def test_child_proxy_release_with_cdata(self):
+        content = 'text<![CDATA[cdata]]>' * 8
+        root = etree.XML(
+            f'<root><child>{content}</child></root>',
+            etree.XMLParser(strip_cdata=False),
+        )
+
+        # Repeatedly create and release the child proxy.
+        for _ in range(3):
+            self.assertEqual(root[0].tag, 'child')
+
+        child = root[0]
+        del root
+
+        # The subtree must remain intact after releasing its root proxy.
+        self.assertEqual(child.getparent().tag, 'root')
+        self.assertEqual(
+            etree.tostring(child),
+            f'<child>{content}</child>'.encode(),
+        )
+
+    def _test_deep_tree_traversal(self, use_iter):
+        depth = 64
+        root = etree.Element('node')
+        node = root
+
+        for _ in range(depth):
+            node.text = 'text'
+            node = etree.SubElement(node, 'node')
+
+        node.tag = 'leaf'
+        del node
+
+        if use_iter:
+            for leaf in root.iter():
+                pass
+        else:
+            leaf = root[0]
+            root = None
+            for _ in range(depth - 1):
+                leaf = leaf[0]
+
+        self.assertEqual(leaf.tag, 'leaf')
+
+        # Releasing the root proxy must not invalidate the descendant.
+        root = None
+        root = leaf.getroottree().getroot()
+        self.assertEqual(root.tag, 'node')
+        self.assertEqual(leaf.getparent().text, 'text')
+        self.assertEqual(sum(1 for _ in leaf.iterancestors()), depth)
+
+    def test_deep_tree_child_traversal(self):
+        self._test_deep_tree_traversal(use_iter=False)
+
+    def test_deep_tree_iteration(self):
+        self._test_deep_tree_traversal(use_iter=True)
+
+    def test_deep_tree_proxy_release_is_linear(self):
+        # Releasing a parent proxy while its child keeps a live proxy must
+        # not walk the whole ancestor chain, or this becomes quadratic.
+        depth = 20_000
+        root = etree.Element('node')
+        node = root
+        for _ in range(depth):
+            node = etree.SubElement(node, 'node')
+
+        node = root
+        root = None
+        count = 0
+        while len(node):
+            node = node[0]
+            count += 1
+        self.assertEqual(count, depth)
+
+    def test_proxy_release_with_distant_ancestor_proxy(self):
+        # Releasing a proxy must find a proxied ancestor however far up it
+        # is, otherwise a still linked part of the tree gets freed.
+        for depth in range(1, 20):
+            for detach in (False, True):
+                with self.subTest(depth=depth, detach=detach):
+                    parent = etree.Element('parent')
+                    top = etree.SubElement(parent, 'top')
+                    node = top
+                    for _ in range(depth):
+                        node = etree.SubElement(node, 'node')
+                    node.tag = 'leaf'
+                    del node
+                    if detach:
+                        parent.remove(top)
+                        held = top
+                    else:
+                        held = parent
+                    del top, parent
+
+                    # 'held' is the only proxy, at least 'depth' levels above
+                    # the leaf, which gets released again right away.
+                    leaf = held.find('.//leaf')
+                    del leaf
+
+                    expected = (
+                        b'<top>' + b'<node>' * (depth - 1) + b'<leaf/>'
+                        + b'</node>' * (depth - 1) + b'</top>'
+                    )
+                    if not detach:
+                        expected = b'<parent>' + expected + b'</parent>'
+                    self.assertEqual(etree.tostring(held), expected)
+
+    def test_proxy_collect_sibling_traversal(self):
+        depth = 64
+        root = etree.Element('node')
+        node = root
+        for _ in range(depth):
+            leaf = etree.SubElement(node, 'leaf')
+            leaf.tail = 'text'
+            node = etree.SubElement(node, 'node')
+
+        parent = root
+        for _ in range(depth - 1):
+            parent = parent[1]
+        leaf = parent[0]
+        sibling = parent[1]
+
+        root = None
+        parent = None
+        leaf = None
+        self.assertEqual(sibling.tag, 'node')
+        self.assertEqual(sibling.getprevious().tag, 'leaf')
+        self.assertEqual(sibling.getparent().tag, 'node')
+
     def test_element_refcycle(self):
         class SubEl(etree.ElementBase):
             pass
