@@ -349,7 +349,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             if use_write_lock:
                 doc.lock_write()
             else:
-                doc.lock_fakedoc()
+                use_write_lock = doc.lock_fakedoc(self._element._c_node)
 
             try:
                 c_doc = _fakeRootDoc(doc._c_doc, self._element._c_node)

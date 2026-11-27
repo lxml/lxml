@@ -535,7 +535,7 @@ cdef class XSLT:
         if use_write_lock:
             input_doc.lock_write()
         else:
-            input_doc.lock_fakedoc()
+            use_write_lock = input_doc.lock_fakedoc(root_node._c_node)
         try:
             c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
         except:

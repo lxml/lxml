@@ -560,13 +560,24 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef void unlock_write(self) noexcept:
         self._lock.unlock_write()
 
-    cdef void lock_fakedoc(self) noexcept:
-        # Explicit alias for locking when we create a 'fake root doc'.
+    cdef bint lock_fakedoc(self, xmlNode* c_node, bint with_siblings=True) noexcept:
+        # Lock for creating a 'fake root doc' for 'c_node' (see _plainFakeRootDoc()).
+        # The read lock is enough if no fake root doc is needed, i.e. for the root node.
+        # Otherwise, the fake root doc temporarily changes the tree, which needs the write lock.
+        # Returns true if it took the write lock.
         self._lock.lock_read()
-
-    cdef void unlock_fakedoc(self) noexcept:
-        # Explicit alias for locking when we create a 'fake root doc'.
+        if not _needsFakeRootDoc(self._c_doc, c_node, with_siblings):
+            return False
         self._lock.unlock_read()
+        self._lock.lock_write()
+        return True
+
+    cdef void unlock_fakedoc(self, bint write_locked=False) noexcept:
+        # Unlock after lock_fakedoc().
+        if write_locked:
+            self._lock.unlock_write()
+        else:
+            self._lock.unlock_read()
 
     cdef void lock_write_with(self, _Document second_doc) noexcept:
         """Lock two documents for writing at the same time.
@@ -2673,13 +2684,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 raise ValueError("Cannot enable XML declaration in C14N")
 
             if method == 'c14n':
-                doc = self._context_node._doc
-                doc.lock_read()
-                try:
-                    _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
-                                    compression, inclusive_ns_prefixes)
-                finally:
-                    doc.unlock_read()
+                # _tofilelikeC14N() locks the document itself, for writing if the
+                # root of this tree is not the root element of the document.
+                _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
+                                compression, inclusive_ns_prefixes)
             else:  # c14n2
                 with _open_utf8_file(file, compression=compression) as f:
                     target = C14NWriterTarget(
@@ -2757,13 +2765,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if element._doc is not doc:
             raise ValueError, "Element is not in this tree."
 
-        doc.lock_fakedoc()
+        cdef bint write_locked = doc.lock_fakedoc(root._c_node)
         try:
             c_doc = _fakeRootDoc(doc._c_doc, root._c_node)
             c_path = tree.xmlGetNodePath(element._c_node)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
 
         if c_path is NULL:
             raise MemoryError()
@@ -3106,13 +3114,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         if compression is None or compression < 0:
             compression = 0
 
-        doc = self._context_node._doc
-        doc.lock_read()
-        try:
-            _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
-                            compression, inclusive_ns_prefixes)
-        finally:
-            doc.unlock_read()
+        # _tofilelikeC14N() locks the document itself, for writing if the
+        # root of this tree is not the root element of the document.
+        _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
+                        compression, inclusive_ns_prefixes)
 
 
 cdef _ElementTree _elementTreeFactory(_Document doc, _Element context_node):
