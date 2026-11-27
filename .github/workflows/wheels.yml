@@ -151,7 +151,7 @@ jobs:
           key: libs-${{ runner.os }}-${{ contains(matrix.only, 'win32') && 'i686' || runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.LIBICONV_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - name: Set up QEMU
-        if: runner.os == 'Linux' && !(endsWith(matrix.platform, 'x86_64') || endsWith(matrix.platform, 'i686') || endsWith(matrix.platform, 'aarch64'))
+        if: runner.os == 'Linux' && !(endsWith(matrix.platform, 'x86_64') || endsWith(matrix.platform, 'i686') || endsWith(matrix.platform, 'aarch64') || endsWith(matrix.platform, 'riscv64'))
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: all
@@ -234,6 +234,7 @@ jobs:
           - 'ubuntu-latest'
           - 'ubuntu-24.04'  # for emulated builds
           - 'ubuntu-24.04-arm'
+          - 'ubuntu-24.04-riscv'
           - 'windows-latest'
           - 'windows-11-arm'
           - 'macos-latest'
@@ -252,7 +253,7 @@ jobs:
           key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
 
       - name: Set up QEMU
-        if: runner.os == 'Linux' && !(endsWith(matrix.platform, 'x86_64') || endsWith(matrix.platform, 'i686') || endsWith(matrix.platform, 'aarch64'))
+        if: matrix.os == 'ubuntu-24.04'
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: all
@@ -265,7 +266,8 @@ jobs:
             ${{
                 matrix.os == 'ubuntu-latest' && 'cp312-*linux_i686 cp312-musllinux_x86_64' ||
                 matrix.os == 'ubuntu-24.04-arm' && 'cp312-*armv7l cp312-musllinux_aarch64' ||
-                matrix.os == 'ubuntu-24.04' && 'cp312-manylinux_ppc64le cp312-manylinux_riscv64' ||
+                matrix.os == 'ubuntu-24.04-riscv64' && 'cp312-manylinux_riscv64' ||
+                matrix.os == 'ubuntu-24.04' && 'cp312-manylinux_ppc64le' ||
                 matrix.os == 'windows-latest' && 'cp312-*win32' ||
                 matrix.os == 'windows-11-arm' && 'cp312-*win_arm64' ||
                 matrix.os == 'macos-latest' && 'cp312-*macosx_x86_64' ||
