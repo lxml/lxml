@@ -286,10 +286,10 @@ cdef list _build_prefix_uri_list(_SaxParserContext context, int c_nb_namespaces,
                                  const_xmlChar** c_namespaces):
     "Build [(prefix, uri)] list of declared namespaces."
     cdef int i
-    namespaces = []
-    for i in xrange(c_nb_namespaces):
-        namespaces.append((funicodeOrEmpty(c_namespaces[0]), funicode(c_namespaces[1])))
-        c_namespaces += 2
+    namespaces = [
+        (funicodeOrEmpty(c_namespaces[i]), funicode(c_namespaces[i+1]))
+       for i in range(0, c_nb_namespaces * 2, 2)
+    ]
     return namespaces
 
 
