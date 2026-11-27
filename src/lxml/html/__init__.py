@@ -1797,12 +1797,50 @@ def xhtml_to_html(xhtml):
         el.tag = el.tag[prefix_len:]
 
 
-# This isn't a general match, but it's a match for what libxml2
-# specifically serialises:
-__str_replace_meta_content_type = re.compile(
-    r'<meta http-equiv="Content-Type"[^>]*>').sub
-__bytes_replace_meta_content_type = re.compile(
-    br'<meta http-equiv="Content-Type"[^>]*>').sub
+_META_TAGS = ('meta', '{%s}meta' % XHTML_NAMESPACE)
+
+
+def _detach_meta_content_type(doc):
+    # Take the Content-Type meta tags out of the tree for the duration of the
+    # serialisation instead of deleting them from the serialised output, where
+    # a regex cannot tell a real tag from the same text inside a comment or a
+    # <script> or <style> element.  The elements are put back afterwards by
+    # _reattach_meta_content_type(), so the caller's tree ends up unchanged
+    # and no copy of it is needed.
+    if not isinstance(doc, (etree._Element, etree._ElementTree)):
+        return ()
+    detached = []
+    for meta in list(doc.iter(*_META_TAGS)):
+        if meta.get('http-equiv') != 'Content-Type':
+            continue
+        parent = meta.getparent()
+        if parent is None:
+            continue  # the root element cannot be removed
+        tail = meta.tail
+        previous = meta.getprevious()
+        if tail:
+            # The tag disappears but its tail text stays in the output.
+            if previous is not None:
+                previous.tail = (previous.tail or '') + tail
+            else:
+                parent.text = (parent.text or '') + tail
+            meta.tail = None
+        detached.append((parent, parent.index(meta), meta, tail, previous))
+        parent.remove(meta)
+    return detached
+
+
+def _reattach_meta_content_type(detached):
+    # Undo _detach_meta_content_type(), innermost removal first so that the
+    # remembered child indices still apply.
+    for parent, index, meta, tail, previous in reversed(detached):
+        parent.insert(index, meta)
+        if tail:
+            meta.tail = tail
+            if previous is not None:
+                previous.tail = previous.tail[:-len(tail)] or None
+            else:
+                parent.text = parent.text[:-len(tail)] or None
 
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
@@ -1868,15 +1906,16 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
         <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
         <html><body><p>Hello<br>world!</p></body></html>
     """
-    html = etree.tostring(doc, method=method, pretty_print=pretty_print,
-                          encoding=encoding, with_tail=with_tail,
-                          doctype=doctype)
     if method == 'html' and not include_meta_content_type:
-        if isinstance(html, str):
-            html = __str_replace_meta_content_type('', html)
-        else:
-            html = __bytes_replace_meta_content_type(b'', html)
-    return html
+        detached_meta = _detach_meta_content_type(doc)
+    else:
+        detached_meta = ()
+    try:
+        return etree.tostring(doc, method=method, pretty_print=pretty_print,
+                              encoding=encoding, with_tail=with_tail,
+                              doctype=doctype)
+    finally:
+        _reattach_meta_content_type(detached_meta)
 
 
 tostring.__doc__ = __fix_docstring(tostring.__doc__)
