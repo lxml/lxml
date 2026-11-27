@@ -431,6 +431,80 @@ class ThreadingTestCase(HelperTestCase):
         # then, additionally include the main thread (and its parent dict)
         self._run_threads(10, testrun, main_func=testrun)
 
+    def test_concurrent_iddict_while_ids_change(self):
+        # Threads use a shared ID dictionary while another thread adds and removes
+        # ID attributes, which changes the ID table of the document.
+        root, ids = self.etree.XMLDTDID(
+            '<!DOCTYPE r [<!ATTLIST e id ID #IMPLIED>]><r>' +
+            ''.join(f'<e id="i{k}">t{k}</e>' for k in range(40)) + '</r>')
+        reader_count = 8
+        start = threading.Barrier(reader_count + 1)
+        results = []
+
+        def change_ids():
+            start.wait()
+            for k in range(500):
+                element = self.etree.SubElement(root, 'e', id=f'n{k}')
+                del element.attrib['id']
+
+        def use_ids():
+            start.wait()
+            found = []
+            for k in range(500):
+                key = f'i{k % 40}'
+                found.append(key in ids and ids[key].get('id') == key)
+                if k % 10 == 0:
+                    # Snapshots, shared or new, which contain at least the parsed IDs.
+                    snapshot = ids if k % 100 == 0 else ids.copy()
+                    found.append(len(snapshot) >= 40 and len(snapshot.items()) >= 40)
+            results.append(all(found))
+
+        threads = [threading.Thread(target=change_ids)]
+        threads += [threading.Thread(target=use_ids) for _ in range(reader_count)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual([True] * reader_count, results)
+
+    def test_concurrent_iddict_first_items(self):
+        # Two threads list the items of a new ID dictionary at the same time, so both
+        # build the item list.  Both must then use the same list (the first one built).
+        both_building = threading.Barrier(2)
+        first_done = threading.Event()
+        role = threading.local()
+
+        class PauseWhileBuilding(self.etree.CustomElementClassLookup):
+            def lookup(self, node_type, document, namespace, name):
+                # Called for the ID element while the dictionary builds the list.
+                if getattr(role, 'name', None) is not None:
+                    both_building.wait()
+                    if role.name == 'second':
+                        first_done.wait()
+                    role.name = None
+                return None
+
+        parser = self.etree.XMLParser()
+        parser.set_element_class_lookup(PauseWhileBuilding())
+        root, ids = self.etree.XMLDTDID(
+            '<!DOCTYPE r [<!ATTLIST e id ID #IMPLIED>]><r><e id="a"/></r>', parser)
+        items = {}
+
+        def list_items(name):
+            role.name = name
+            items[name] = list(ids.iteritems())
+            if name == 'first':
+                first_done.set()
+
+        threads = [threading.Thread(target=list_items, args=(name,))
+                   for name in ('first', 'second')]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertIs(items['first'][0], items['second'][0])
+        self.assertIs(items['first'][0], ids.items()[0])
+
     @unittest.skipIf(IS_PYPY, "currently crashes PyPy")
     def test_concurrent_proxies(self):
         XML = self.etree.XML

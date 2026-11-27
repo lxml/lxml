@@ -62,6 +62,12 @@ Bugs fixed
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
 
+* LP#2175575: In free-threaded Python, the ID dictionaries of ``parseid()`` and ``XMLDTDID()``
+  read the ID table of the document without its lock, which could crash while other threads
+  changed IDs.  Their first concurrent ``keys()``, ``items()`` or ``len()`` calls, and the first
+  concurrent calls of ``XMLID()``, could also crash.
+  Patch by Pierre-Yves Le Borgne.
+
 Other changes
 -------------
 
