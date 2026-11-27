@@ -13,6 +13,12 @@ from .common_imports import HelperTestCase, etree
 DOC_NAME = b'libxml2:xmlDoc'
 DESTRUCTOR_NAME = b'destructor:xmlFreeDoc'
 
+# Exit status of the test subprocess if lxml.etree does not export the
+# libxml2 functions that the test calls.  Failed tests exit with 1, crashes
+# with negative statuses (POSIX) or NTSTATUS codes like 0xC0000005 (Windows),
+# sanitizer reports with 1, 23, 66 or (older MemorySanitizers) 77.
+SKIPPED_EXIT_STATUS = 42
+
 
 class ExternalDocumentTestCase(HelperTestCase):
     def setUp(self):
@@ -35,6 +41,8 @@ class ExternalDocumentTestCase(HelperTestCase):
              'lxml/tests/test_external_document.py'],
             cwd=basedir, env=env, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, universal_newlines=True)
+        if result.returncode == SKIPPED_EXIT_STATUS:
+            self.skipTest("lxml.etree does not export libxml2's functions")
         self.assertEqual(0, result.returncode, result.stdout)
 
     def _test_external_document_adoption(self):
@@ -71,6 +79,13 @@ class ExternalDocumentTestCase(HelperTestCase):
                                            ctypes.c_void_p)
         self.PyCapsule_Destructor = ctypes.CFUNCTYPE(None, ctypes.py_object)
         libxml2 = ctypes.CDLL(etree.__file__)
+        if not (hasattr(libxml2, 'xmlReadMemory')
+                and hasattr(libxml2, 'xmlFreeDoc')):
+            # Static builds do not export libxml2's functions when linked with
+            # "-Wl,--exclude-libs,ALL", which the Python builds of
+            # python-build-standalone (e.g. uv's) use for extension modules.
+            # os._exit(), since unittest would report SystemExit as an error.
+            os._exit(SKIPPED_EXIT_STATUS)
         self.create_doc = wrap(libxml2.xmlReadMemory, ctypes.c_void_p,
                                ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p,
                                ctypes.c_char_p, ctypes.c_int)
