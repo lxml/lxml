@@ -53,6 +53,9 @@ form of custom URL resolvers.
 from lxml import etree
 from urllib.parse import urljoin
 from urllib.request import urlopen
+from pathlib import Path
+
+import sys
 
 XINCLUDE = "{http://www.w3.org/2001/XInclude}"
 
@@ -62,6 +65,9 @@ XINCLUDE_ITER_TAG = XINCLUDE + "*"
 
 # For security reasons, the inclusion depth is limited to this read-only value by default.
 DEFAULT_MAX_INCLUSION_DEPTH = 6
+
+# Make absolute non-POSIX paths compatible with urllib
+LOAD_ABS_PATH_AS_URL = sys.platform == "win32"
 
 
 ##
@@ -185,6 +191,13 @@ def _include(elem, loader=None, base_url=None,
 
     for e in include_elements:
         if e.tag == XINCLUDE_INCLUDE:
+            # base_url can be non-POSIX on Windows here, in that case convert it to a URL
+            # to make it compatible with urljoin below.
+            if LOAD_ABS_PATH_AS_URL and base_url:
+                url_path = Path(base_url)
+                if url_path.is_absolute():
+                    base_url = url_path.as_uri()
+
             # process xinclude directive
             href = urljoin(base_url, e.get("href"))
             parse = e.get("parse", "xml")

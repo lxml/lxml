@@ -13,7 +13,7 @@ from ftplib import FTP
 from pathlib import Path
 
 import urllib.error
-from urllib.parse import urljoin, quote as urlquote, unquote, urlparse
+from urllib.parse import urljoin, unquote, urlparse
 from urllib.request import urlretrieve, urlopen, Request
 
 multi_make_options = []
@@ -32,174 +32,39 @@ except Exception:
 sys_platform = sys.platform
 
 
-# use pre-built libraries on Windows
-
-def windows_architecture(arch=None):
-    if arch:
-        return arch.replace('_', '-')
-    target = os.getenv('VSCMD_ARG_TGT_ARCH')
-    if target:
-        return {'x86': 'win32', 'x64': 'win64', 'arm64': 'win-arm64'}[target]
-    if platform.machine() == 'ARM64' and sys.maxsize > 2**32:
-        return 'win-arm64'
-    return 'win32' if sys.maxsize <= 2**32 else 'win64'
-
-
-def configure_windows_msvc(arch):
-    # Keep these toolset families in sync with libxml2-win-binaries/build.ps1.
-    # Archives are additionally qualified by _MSC_FULL_VER: servicing updates
-    # within a toolset family can also make /GL objects incompatible.
-    toolset = '14.52' if arch == 'win-arm64' else '14.44'
-    target = {'win32': 'x86', 'win64': 'x64', 'win-arm64': 'arm64'}[arch]
-    host = 'arm64' if platform.machine() == 'ARM64' else 'x64'
-    vcvars_arch = target if host == target else f'{host}_{target}'
-    vswhere = os.path.join(os.environ['ProgramFiles(x86)'],
-                           'Microsoft Visual Studio', 'Installer', 'vswhere.exe')
-    installations = subprocess.check_output(
-        [vswhere, '-all', '-prerelease', '-products', '*', '-utf8', '-property',
-         'installationPath'], encoding='utf-8').splitlines()
-    for installation in installations:
-        vc = Path(installation) / 'VC'
-        versions = sorted((vc / 'Tools' / 'MSVC').glob(toolset + '.*'),
-                          key=lambda path: tuple(map(int, path.name.split('.'))),
-                          reverse=True)
-        if not versions:
-            continue
-        version = versions[0].name
-        vcvars = vc / 'Auxiliary' / 'Build' / 'vcvarsall.bat'
-        output = subprocess.check_output(
-            f'cmd.exe /d /u /s /c ""{vcvars}" {vcvars_arch} '
-            f'-vcvars_ver={version} >nul && set"', encoding='utf-16le')
-        for line in output.splitlines():
-            key, sep, value = line.partition('=')
-            if sep and key:
-                os.environ[key] = value
-        if os.environ['VCToolsVersion'].rstrip('\\/') != version:
-            raise RuntimeError(f'Visual Studio did not select MSVC {version}')
-        # Prevent setuptools from replacing the selected compiler environment.
-        os.environ['DISTUTILS_USE_SDK'] = '1'
-        os.environ['MSSdk'] = '1'
-        with tempfile.TemporaryDirectory() as tmp:
-            probe = Path(tmp) / 'msvc-version.c'
-            probe.write_text('_MSC_FULL_VER\n', encoding='ascii')
-            compiler_version = subprocess.check_output(
-                ['cl.exe', '/nologo', '/EP', '/TC', str(probe)], text=True).strip()
-        if not compiler_version.isdecimal():
-            raise RuntimeError(f'Cannot determine _MSC_FULL_VER: {compiler_version!r}')
-        return compiler_version
-    raise RuntimeError(
-        f'MSVC {toolset} for {target} is required to use the Windows /GL libraries. '
-        'Install this toolset with the Visual Studio Installer; no newer compiler '
-        'will be substituted automatically.')
-
-
-def read_file_digest(file):
-    buffer = bytearray(2**18)
-    view = memoryview(buffer)
-
-    from hashlib import sha256
-    filehash = sha256()
-    with open(file, 'rb') as f:
-        while True:
-            size = f.readinto(buffer)
-            if not size:
-                break
-            filehash.update(view[:size])
-
-    return 'sha256:' + filehash.hexdigest()
-
-
-def download_and_extract_windows_binaries(destdir, arch=None):
-    arch = windows_architecture(arch)
-    msvc_version = configure_windows_msvc(arch)
-
-    def build_libzip_name(libname, version):
-        return f"{libname}-{version}.{arch}.msvc-{msvc_version}.zip"
-
-    def read_latest_release():
-        url = "https://api.github.com/repos/lxml/libxml2-win-binaries/releases?per_page=5"
-        releases, _ = read_url(
-            url,
-            accept="application/vnd.github+json",
-            as_json=True,
-            github_api_token=os.environ.get("GITHUB_API_TOKEN"),
+# use vcpkg libraries on Windows
+def build_libxml2xslt_via_vcpkg(download_dir, static_include_dirs, static_library_dirs, arch=None, download_only=False):
+    from shutil import which
+    if which("vcpkg") is None:
+        raise Exception(
+          'Building libxml on Windows needs vcpkg, please make sure that '
+          'vcpkg is available via PATH environment variable.'
         )
 
-        max_release = {'tag_name': ''}
-        for release in releases:
-            if max_release['tag_name'] < release.get('tag_name', ''):
-                max_release = release
+    # Check for native ARM64 build or the environment variable that is set by
+    # Visual Studio for cross-compilation (same variable as setuptools uses)
+    if platform.machine() == 'ARM64' or os.getenv('VSCMD_ARG_TGT_ARCH') == 'arm64':
+        vcpkg_arch = 'arm64'
+    elif arch == 'win32' or (arch != 'win64' and sys.maxsize <= 2**32):
+        vcpkg_arch = 'x86'
+    else:
+        vcpkg_arch = 'x64'
 
-        return max_release
+    triplet = f'{vcpkg_arch}-windows-static-md'
+    install_root = Path('build/vcpkg_installed')
+    command = ['vcpkg', 'install', f'--downloads-root={download_dir}', f'--triplet={triplet}', f'--x-install-root={install_root}']
+    if download_only:
+        command += ["--only-downloads"]
 
-    def find_local_lib(libname, version):
-        if not version:
-            return None
-        libfn = build_libzip_name(libname, version)
-        destfile = os.path.join(destdir, libfn)
-        return libfn if os.path.exists(destfile) else None
+    import subprocess
+    subprocess.run(command, check=True)
 
-    if not os.path.exists(destdir):
-        os.makedirs(destdir)
+    installed_path = Path('build/vcpkg_installed') / triplet
+    include = installed_path / 'include'
+    lib = installed_path / 'lib'
 
-    libs = {}
-    for libname in ['libxml2', 'libxslt', 'zlib', 'iconv']:
-        version = os.environ.get('LIBICONV_VERSION' if libname == 'iconv' else f"{libname.upper()}_VERSION")
-        libfn = find_local_lib(libname, version)
-        if libfn:
-            print(f'Using local copy of  "{libfn}"')
-        libs[libname] = libfn
-
-    if None in libs.values():
-        # Need to gather version and download URL from winlibs release.
-        latest_release = read_latest_release()
-        archive_suffix = f'.{arch}.msvc-{msvc_version}.zip'
-        asset_files = {
-            asset['name']: (asset['size'], asset['digest'])
-            for asset in latest_release.get('assets', ())
-            if asset['name'].endswith(archive_suffix)
-        }
-        release_tag = latest_release['tag_name']
-        download_url = f"https://github.com/lxml/libxml2-win-binaries/releases/download/{urlquote(release_tag)}/"
-
-        if not asset_files:
-            raise RuntimeError(
-                f'Windows libraries for {arch} with _MSC_FULL_VER={msvc_version} '
-                f'are missing from release {release_tag}. Rebuild and publish '
-                'libxml2-win-binaries with the same MSVC toolset as lxml.')
-
-        lib_file_names = list(asset_files)
-        for libname, libfn in libs.items():
-            if libfn:
-                continue
-            version = os.environ.get(
-                'LIBICONV_VERSION' if libname == 'iconv' else f'{libname.upper()}_VERSION'
-            ) or find_max_version(libname, lib_file_names)
-            libfn = find_local_lib(libname, version)
-            if libfn:
-                libs[libname] = libfn
-                srcfile = urljoin(download_url, libfn)
-                print(f'Using local copy of  "{srcfile}"')
-                continue
-
-            # Need to download lib.
-            libfn = build_libzip_name(libname, version)
-            if libfn not in asset_files:
-                raise RuntimeError(
-                    f'{libfn} is missing from release {release_tag}. Rebuild and '
-                    'publish libxml2-win-binaries with the same MSVC toolset as lxml.')
-            srcfile = urljoin(download_url, libfn)
-            destfile = os.path.join(destdir, libfn)
-
-            print(f'Retrieving "{srcfile}" to "{destfile}"')
-            urlretrieve(srcfile, destfile)
-            libs[libname] = libfn
-
-    lib_dirs = {
-        libname: unpack_zipfile(os.path.join(destdir, libfn), destdir)
-        for libname, libfn in libs.items()
-    }
-    return lib_dirs
+    static_include_dirs += [str(include), str(include / 'libxml2')]
+    static_library_dirs += [str(lib)]
 
 
 def find_top_dir_of_zipfile(zipfile):
@@ -231,18 +96,6 @@ def unpack_zipfile(zipfn, destdir):
 
     assert os.path.exists(extracted_dir), 'missing: %s' % extracted_dir
     return extracted_dir
-
-
-def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs, arch=None):
-    assert sys_platform.startswith('win')
-    libs = download_and_extract_windows_binaries(download_dir, arch=arch)
-    for libname, path in libs.items():
-        i = os.path.join(path, 'include')
-        l = os.path.join(path, 'lib')
-        assert os.path.exists(i), 'does not exist: %s' % i
-        assert os.path.exists(l), 'does not exist: %s' % l
-        static_include_dirs.append(i)
-        static_library_dirs.append(l)
 
 
 ## Routines to download and build libxml2/xslt from sources:
@@ -823,8 +676,13 @@ def main(with_zlib=True, download_only=False, platform=None):
         arch = platform
 
     if platform.startswith('win'):
-        return get_prebuilt_libxml2xslt(
-            download_dir, static_include_dirs, static_library_dirs, arch=arch)
+        return build_libxml2xslt_via_vcpkg(
+            download_dir,
+            static_include_dirs,
+            static_library_dirs,
+            arch=arch,
+            download_only=download_only
+        )
 
     get_env = os.environ.get
     zlib_version = get_env('ZLIB_VERSION')
@@ -856,10 +714,6 @@ def main(with_zlib=True, download_only=False, platform=None):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    if '--msvc-version' in args:
-        args.remove('--msvc-version')
-        print(configure_windows_msvc(windows_architecture(args[0] if args else None)))
-        sys.exit(0)
     download_only = '--download-only' in args
     if download_only:
         args.remove('--download-only')
