@@ -207,9 +207,9 @@ to build from sources, rather than using a binary installer.
 
 Static build uses vcpkg to build lxml itself and its dependencies. If unsure,
 install Visual Studio Build Tools and check "Desktop development with C++",
-which will include both MSVC and vcpkg by default. After installation, Run "x64
-Native Tools Command Prompt" (or corresponding to your build environment e.g.
-ARM64) which will make vcpkg available in PATH. vcpkg will then download all
+which will include both MSVC and vcpkg by default. After installation,
+run "x64 Native Tools Command Prompt" (or corresponding to your build environment
+e.g. ARM64) which will make vcpkg available in PATH. vcpkg will then download all
 extra required build dependencies.
 
 Further build instructions are in the `source build documentation <build.html>`_.

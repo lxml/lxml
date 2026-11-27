@@ -517,22 +517,20 @@ cdef _write_cdata_string(tree.xmlOutputBuffer* buf, bytes bstring):
     cdef const char* c_pos = c_data
     cdef bint nothing_written = True
 
-    while True:
-        c_pos = <const char*> cstring_h.memchr(c_pos, b']', c_end - c_pos)
+    while c_end > c_pos:
+        c_pos = <const char*> cstring_h.memchr(c_pos, b']', c_end - c_pos - 1)
         if not c_pos:
             break
-        c_pos += 1
+        c_pos += 1  # next char <= c_end (NUL)
         next_char = c_pos[0]
         c_pos += 1
         if next_char != b']':
             continue
-        # Found ']]', c_pos points to next character.
+        # Found ']]', c_pos points to next character (or NUL).
         while c_pos[0] == b']':
             c_pos += 1
         if c_pos[0] != b'>':
-            if c_pos == c_end:
-                break
-            # c_pos[0] is neither ']' nor '>', continue with next character.
+            # c_pos[0] is neither ']' nor '>', continue with next character (or terminate at string end).
             c_pos += 1
             continue
 

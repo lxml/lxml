@@ -1,0 +1,247 @@
+From aef94414c6ff31a6aef44e960b654b317c1f9d10 Mon Sep 17 00:00:00 2001
+From: Peter Fordham
+Date: Sun, 14 Dec 2025 21:09:21 -0800
+Subject: [PATCH] Initialize pointer incase we end up skipping the while loop
+ completely.
+
+ xpath.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xpath.c b/xpath.c
+index 9f92055dfa..b8e197cc95 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -8206,1 +8206,1 @@ void xmlXPathLangFunction(xmlXPathParserContext *ctxt, int nargs) {
+-    xmlChar *theLang;
++    xmlChar *theLang = NULL;
+From 41ba80b9493569f3311f58ba2201a8b15bd94e6e Mon Sep 17 00:00:00 2001
+From: ylwango613
+Date: Fri, 20 Feb 2026 20:04:43 +0800
+Subject: [PATCH] schematron: fix NULL pointer dereference in
+ xmlSchematronParseRule
+
+The return value of xmlMalloc at schematron.c:1007 was not checked for
+NULL before being dereferenced. A memory allocation failure would cause
+a write to address 0x8 (NULL + offset), resulting in a segmentation
+fault.
+
+Every other xmlMalloc call in schematron.c already has a proper NULL
+check. This patch adds the missing check and frees the name, value, and
+compiled XPath expression before returning to avoid memory leaks on the
+error path.
+
+Fix https://gitlab.gnome.org/GNOME/libxml2/-/issues/1059
+
+ schematron.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/schematron.c b/schematron.c
+index 0fd374617..32c0f571c 100644
+--- a/schematron.c
++++ b/schematron.c
+@@ -1051,1 +1051,8 @@ xmlSchematronParseRule(xmlSchematronParserCtxtPtr ctxt,
+-            let = (xmlSchematronLetPtr) xmlMalloc(sizeof(xmlSchematronLet));
++            let = (xmlSchematronLetPtr) xmlMalloc(sizeof(xmlSchematronLet));
++            if (let == NULL) {
++                xmlSchematronPErrMemory(ctxt);
++                xmlFree(name);
++                xmlFree(value);
++                xmlXPathFreeCompExpr(var_comp);
++                return;
++            }
+From f0e757a2a4e9e4da6ad522d7a389b7a06db8e9d0 Mon Sep 17 00:00:00 2001
+From: ylwango613
+Date: Fri, 20 Feb 2026 17:12:42 +0800
+Subject: [PATCH] uri: fix signed integer overflow in xmlBuildRelativeURISafe
+
+This patch changes the types of ix, nbslash, len, and pos from int to
+size_t in xmlBuildRelativeURISafe. These variables are used to index
+and measure path strings that can exceed INT_MAX bytes (~2.14 GB),
+causing two independent signed integer overflow vulnerabilities.
+
+1. The loop counter ix can overflow from INT_MAX to INT_MIN when
+   traversing a base path longer than INT_MAX bytes, leading to an
+   out-of-bounds read (CWE-125).
+
+2. The expression 3 * nbslash in the xmlMalloc size argument can
+   overflow int, resulting in an undersized allocation followed by
+   a heap buffer overflow in the write loop (CWE-122).
+
+An overflow check is also added before the xmlMalloc call to handle
+the case where the size_t arithmetic would itself overflow.
+
+Fix https://gitlab.gnome.org/GNOME/libxml2/-/issues/1062
+
+ uri.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/uri.c b/uri.c
+index cfeca1e01..f94473b43 100644
+--- a/uri.c
++++ b/uri.c
+@@ -2565,3 +2565,3 @@ xmlBuildRelativeURISafe(const xmlChar * URI, const xmlChar * base,
+-    int ix;
+-    int nbslash = 0;
+-    int len;
++    size_t ix = 0;
++    size_t nbslash = 0;
++    size_t len = 0;
+@@ -2648,1 +2648,1 @@ xmlBuildRelativeURISafe(const xmlChar * URI, const xmlChar * base,
+-        int pos = 0;
++        size_t pos = 0;
+@@ -2692,1 +2692,1 @@ xmlBuildRelativeURISafe(const xmlChar * URI, const xmlChar * base,
+-	len = xmlStrlen (uptr) + 1;
++	len = (size_t) xmlStrlen (uptr) + 1;
+@@ -2710,1 +2710,5 @@ xmlBuildRelativeURISafe(const xmlChar * URI, const xmlChar * base,
+-    val = (xmlChar *) xmlMalloc (len + 3 * nbslash);
++    if (len + 3 * nbslash > SIZE_MAX) {
++        ret = -1;
++        goto done;
++    }
++    val = (xmlChar *) xmlMalloc (len + 3 * nbslash);
+From df2ba65f661addfba50bdb7f280d594781249dfc Mon Sep 17 00:00:00 2001
+From: Jayakrishna Menon
+Date: Tue, 10 Feb 2026 14:24:15 -0700
+Subject: [PATCH] use duplicating variant in relaxng to mitigate UAF
+
+ relaxng.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/relaxng.c b/relaxng.c
+index c0e94a3cd..d399c4e30 100644
+--- a/relaxng.c
++++ b/relaxng.c
+@@ -8732,1 +8732,1 @@ xmlRelaxNGValidateValue(xmlRelaxNGValidCtxtPtr ctxt,
+-                    VALID_ERR2(XML_RELAXNG_ERR_LISTEXTRA,
++                    VALID_ERR2P(XML_RELAXNG_ERR_LISTEXTRA,
+From f879a0177b9f2c5f85b0bb6d30385e36c2f6e281 Mon Sep 17 00:00:00 2001
+From: Daniel Garcia Moreno
+Date: Tue, 18 Nov 2025 08:10:35 +0100
+Subject: [PATCH] Fix C14N type confusion
+
+Do not try to get nsDef with xmlDoc
+
+Fix https://gitlab.gnome.org/GNOME/libxml2/-/issues/1016
+
+ c14n.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/c14n.c b/c14n.c
+index 0057ae9aa..6d996d817 100644
+--- a/c14n.c
++++ b/c14n.c
+@@ -612,1 +612,1 @@ xmlC14NProcessNamespacesAxis(xmlC14NCtxPtr ctx, xmlNodePtr cur, int visible)
+-    for(n = cur; n != NULL; n = n->parent) {
++    for(n = cur; n != NULL && n->type == XML_ELEMENT_NODE; n = n->parent) {
+From 495c9451c541da25829ce321d2273da9fca72d25 Mon Sep 17 00:00:00 2001
+From: Daniel Garcia Moreno
+Date: Thu, 9 Apr 2026 14:11:48 +0200
+Subject: [PATCH] c14n: Fix Type confusion in xmlC14NProcessAttrsAxis
+
+Fix https://gitlab.gnome.org/GNOME/libxml2/-/issues/1096
+
+Thanks to Nick Wellnhofer for the report.
+
+ c14n.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/c14n.c b/c14n.c
+index 4dd54b96c..882e90387 100644
+--- a/c14n.c
++++ b/c14n.c
+@@ -1201,1 +1201,1 @@ xmlC14NProcessAttrsAxis(xmlC14NCtxPtr ctx, xmlNodePtr cur, int parent_visible)
+-            while (tmp != NULL) {
++            while (tmp != NULL && tmp->type == XML_ELEMENT_NODE) {
+From 90f293ba74d28b1d570920382e707586f68ebf35 Mon Sep 17 00:00:00 2001
+From: Daniel Garcia Moreno
+Date: Mon, 4 May 2026 09:54:34 +0200
+Subject: [PATCH] xmlIO: Check for int overflow before calling writecallback
+
+Fix https://gitlab.gnome.org/GNOME/libxml2/-/work_items/1111
+
+ xmlIO.c | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/xmlIO.c b/xmlIO.c
+index ebe9b7c4e..847fdca21 100644
+--- a/xmlIO.c
++++ b/xmlIO.c
+@@ -2439,3 +2439,8 @@ xmlOutputBufferWrite(xmlOutputBuffer *out, int len, const char *data) {
+-            if (nbchars < MINLEN)
+-                break;
+-
++            if (nbchars < MINLEN)
++                break;
++
++            if (nbchars >= INT_MAX) {
++                out->error = XML_ERR_INTERNAL_ERROR;
++                return(-1);
++            }
++
+@@ -2648,11 +2648,21 @@ xmlOutputBufferFlush(xmlOutputBuffer *out) {
+-    if ((out->conv != NULL) && (out->encoder != NULL) &&
+-	(out->writecallback != NULL)) {
+-	ret = out->writecallback(out->context,
+-                                 (const char *)xmlBufContent(out->conv),
+-                                 xmlBufUse(out->conv));
+-	if (ret >= 0)
+-	    xmlBufShrink(out->conv, ret);
+-    } else if (out->writecallback != NULL) {
+-	ret = out->writecallback(out->context,
+-                                 (const char *)xmlBufContent(out->buffer),
+-                                 xmlBufUse(out->buffer));
++    if ((out->conv != NULL) && (out->encoder != NULL) &&
++	(out->writecallback != NULL)) {
++        size_t bufsize = xmlBufUse(out->conv);
++        if (bufsize >= INT_MAX) {
++            out->error = XML_ERR_INTERNAL_ERROR;
++            return(-1);
++        }
++	ret = out->writecallback(out->context,
++                                 (const char *)xmlBufContent(out->conv),
++                                 bufsize);
++	if (ret >= 0)
++	    xmlBufShrink(out->conv, ret);
++    } else if (out->writecallback != NULL) {
++        size_t bufsize = xmlBufUse(out->buffer);
++        if (bufsize >= INT_MAX) {
++            out->error = XML_ERR_INTERNAL_ERROR;
++            return(-1);
++        }
++	ret = out->writecallback(out->context,
++                                 (const char *)xmlBufContent(out->buffer),
++                                 bufsize);
+From 5e278b5a3de51f625d1ea54d8906d9fa5b398f15 Mon Sep 17 00:00:00 2001
+From: rootvector2
+Date: Sat, 16 May 2026 02:44:36 +0530
+Subject: [PATCH] c14n: Check xmlGrowCapacity return in
+ xmlC14NVisibleNsStackAdd
+
+Commit 509d49812 ("c14n: Check reallocations for overflow") converted
+the namespace-stack growth in xmlC14NVisibleNsStackAdd to xmlGrowCapacity
+but omitted the `newSize < 0` check that every other xmlGrowCapacity
+caller in the tree uses. When xmlGrowCapacity returns -1 (capacity
+reached XML_MAX_ITEMS or would overflow size_t), the subsequent
+xmlRealloc is invoked with a sign-extended (size_t)-1 multiplied by
+the element size, falling back to the realloc OOM path instead of a
+clean -1 return.
+
+Add the check to match the convention used at the 59 other call sites
+in the tree.
+
+ c14n.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/c14n.c b/c14n.c
+index 882e90387..6414cc529 100644
+--- a/c14n.c
++++ b/c14n.c
+@@ -315,3 +315,5 @@ xmlC14NVisibleNsStackAdd(xmlC14NVisibleNsStackPtr cur, xmlNsPtr ns, xmlNodePtr n
+-        newSize = xmlGrowCapacity(cur->nsMax,
+-                                  sizeof(tmp1[0]) + sizeof(tmp2[0]),
+-                                  XML_NAMESPACES_DEFAULT, XML_MAX_ITEMS);
++        newSize = xmlGrowCapacity(cur->nsMax,
++                                  sizeof(tmp1[0]) + sizeof(tmp2[0]),
++                                  XML_NAMESPACES_DEFAULT, XML_MAX_ITEMS);
++        if (newSize < 0)
++            return (-1);

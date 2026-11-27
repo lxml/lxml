@@ -21,9 +21,9 @@ try:
     import multiprocessing
     cpus = multiprocessing.cpu_count()
     if cpus > 1:
-        if cpus > 5:
-            cpus = 5
-        multi_make_options = ['-j%d' % (cpus+1)]
+        if cpus > 6:
+            cpus = 6
+        multi_make_options = [f'-j{cpus:d}']
 except Exception:
     pass
 
@@ -227,6 +227,7 @@ ARCHIVE_HASHES = {
     # Prefix hash with e.g. "sha512:" for alternative algorithms.
     filename: digest
     for line in """
+    98087fd181d9070724f3fbc65c7377db03038eb92bd882374daff44940138821  libxml2-2.15.4.tar.xz
     c8b9bc81f8b590c33af8cc6c336dbff2f53409973588a351c95f1c621b13d09d  libxml2-2.15.2.tar.xz
     7ce458a0affeb83f0b55f1f4f9e0e55735dbfc1a9de124ee86fb4a66b597203a  libxml2-2.14.6.tar.xz
 
@@ -236,6 +237,7 @@ ARCHIVE_HASHES = {
     88dd96a8c0464eca144fc791ae60cd31cd8ee78321e67397e25fc095c4a19aa6  libiconv-1.19.tar.gz
     3b08f5f4f9b4eb82f151a7040bfd6fe6c6fb922efe4b1659c66ea933276965e8  libiconv-1.18.tar.gz
 
+    02dd159783677a749c04adbdd02b55b8a2bcc7e054f51b76b549199a916ad584  zlib-1.4.tar.gz
     bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16  zlib-1.3.2.tar.gz
     """.strip().splitlines()
     if len(line) > 64
@@ -543,6 +545,7 @@ def download_libs(
 
 
 LIBRARY_PATCHES = {
+    "libxml2-2.14.6": "libxml2-2.14.6-backport1.patch",
     "libxslt-1.1.43": "libxslt-1.1.43-backport1.patch",
 }
 

@@ -1469,6 +1469,7 @@ cdef tree.xmlEntity* _getInternalEntityOnly(void* ctxt, const_xmlChar* name) noe
         err_func(err_context, &c_error)
 
     c_ctxt.wellFormed = 0
+    c_ctxt.disableSAX = 1
     # The entity was looked up and does not need to be freed.
     return NULL
 
@@ -1532,6 +1533,14 @@ cdef int _detectBOMEncoding(const char* c_text, int c_len, const char** c_encodi
     if c_encoding is not NULL:
         c_encoding[0] = c_enc
     return offset
+
+
+cdef void _abortParser(xmlparser.xmlParserCtxt* c_ctxt) noexcept nogil:
+    if c_ctxt.errNo == xmlerror.XML_ERR_OK:
+        c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+    # stop parsing immediately
+    xmlparser.xmlStopParser(c_ctxt)
+    c_ctxt.instate = xmlparser.XML_PARSER_EOF
 
 
 ############################################################
@@ -1709,8 +1718,8 @@ cdef class _FeedParser(_BaseParser):
         else:
             xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
 
-        if (pctxt.recovery and not xmlparser.xmlCtxtIsStopped(pctxt) and
-                isinstance(context, _SaxParserContext)):
+        #if (pctxt.recovery and not xmlparser.xmlCtxtIsStopped(pctxt) and isinstance(context, _SaxParserContext)):
+        if isinstance(context, _SaxParserContext):
             # apply any left-over 'end' events
             (<_SaxParserContext>context).flushEvents()
 

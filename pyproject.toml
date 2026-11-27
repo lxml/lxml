@@ -1,9 +1,9 @@
 [build-system]
-requires = ["Cython>=3.3.0", "setuptools"]
+requires = ["Cython>=3.3.2", "setuptools"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.4", LIBICONV_VERSION = "1.19", LIBXML2_VERSION = "2.15.4", LIBXSLT_VERSION = "1.1.45", LXML_CSTD = "c11"}
+environment = {LXML_WITH_CYTHON="true", STATIC_DEPS="true", ZLIB_VERSION = "1.4", LIBICONV_VERSION = "1.19", LIBXML2_VERSION = "2.15.4", LIBXSLT_VERSION = "1.1.45", LXML_CSTD = "c11"}
 enable = [
     "pypy",
     "pypy-eol",
@@ -43,6 +43,8 @@ environment.AR = "gcc-ar"
 environment.NM = "gcc-nm"
 environment.RANLIB = "gcc-ranlib"
 environment.LDFLAGS = "-fPIC -flto"
+environment.STATIC_DEPS = "true"
+environment.LXML_WITH_CYTHON = "true"
 
 [[tool.cibuildwheel.overrides]]
 select = "*linux_i686"
@@ -70,7 +72,7 @@ environment.CFLAGS = "-O3 -g1 -pipe -fPIC -flto -march=armv8-a -mtune=cortex-a72
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "x86", "ARM64"]
-environment = {STATIC_DEPS="true", ZLIB_VERSION = "1.4", LIBICONV_VERSION = "1.19", LIBXML2_VERSION = "2.11.9", LIBXSLT_VERSION = "1.1.45", LXML_CSTD = "c11"}
+environment = {LXML_WITH_CYTHON="true", STATIC_DEPS="true", ZLIB_VERSION = "1.4", LIBICONV_VERSION = "1.19", LIBXML2_VERSION = "2.11.9", LIBXSLT_VERSION = "1.1.45", LXML_CSTD = "c11"}
 
 [tool.cibuildwheel.macos]
 # https://cibuildwheel.readthedocs.io/en/stable/faq/#what-to-provide suggests to provide

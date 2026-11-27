@@ -92,8 +92,8 @@ jobs:
           - { STATIC_DEPS: false }
 
         include:
-          #- os: ubuntu-22.04
-          #  python-version: "3.15-dev"
+          #- os: ubuntu-latest
+          #  python-version: "3.16-dev"
           #  allowed_failure: true
 
           - os: ubuntu-24.04
@@ -120,7 +120,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.27,
             }
             extra_hash: "-oldlibs29"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -128,7 +128,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs210"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -136,7 +136,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs211"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -144,7 +144,7 @@ jobs:
               LIBXSLT_VERSION: 1.1.37,
             }
             extra_hash: "-oldlibs212"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             env: {
               STATIC_DEPS: true,
@@ -208,15 +208,6 @@ jobs:
           # ==============
           #- os: macos-latest
           #  allowed_failure: true   # Unicode parsing fails in Py3
-
-          # Legacy jobs
-          # ===========
-          #- os: ubuntu-22.04
-          #  python-version: "3.7"
-          #  env: { STATIC_DEPS: true }
-          #- os: ubuntu-22.04
-          #  python-version: "3.7"
-          #  env: { STATIC_DEPS: false }
 
         exclude:
           # Windows sub-jobs

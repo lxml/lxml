@@ -66,7 +66,7 @@ cdef class iterparse:
     """
     cdef _FeedParser _parser
     cdef object _tag
-    cdef object _events
+    cdef _ParseEventsIterator _events
     cdef readonly object root
     cdef object _source
     cdef object _filename
@@ -206,11 +206,9 @@ cdef class iterparse:
                     pass  # no events yet
                 except Exception as e:
                     self._error = e
+                    self._events.abort()
                     self._close_source()
-                    try:
-                        return next(self._events)
-                    except StopIteration:
-                        break
+                    break
         # nothing left to read or return
         if self._error is not None:
             error = self._error
