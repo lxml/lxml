@@ -48,15 +48,16 @@ cdef class RelaxNG(_Validator):
         cdef _Element root_node
         cdef xmlDoc* fake_c_doc = NULL
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt = NULL
+        cdef bint write_locked = False
         _Validator.__init__(self)
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            doc.lock_fakedoc()
+            write_locked = doc.lock_fakedoc(root_node._c_node)
             try:
                 fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             except:
-                doc.unlock_fakedoc()
+                doc.unlock_fakedoc(write_locked)
                 raise
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
@@ -86,7 +87,7 @@ cdef class RelaxNG(_Validator):
         if parser_ctxt is NULL:
             if fake_c_doc is not NULL:
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
-                doc.unlock_fakedoc()
+                doc.unlock_fakedoc(write_locked)
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
                     "Document is not parsable as Relax NG"),
@@ -104,7 +105,7 @@ cdef class RelaxNG(_Validator):
         relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
         if fake_c_doc is not NULL:
             _destroyFakeDoc(doc._c_doc, fake_c_doc)
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
 
         if self._c_schema is NULL:
             raise RelaxNGParseError(
@@ -135,7 +136,7 @@ cdef class RelaxNG(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        doc.lock_fakedoc()
+        cdef bint write_locked = doc.lock_fakedoc(root_node._c_node)
         try:
             self._error_log.clear()
             # Need a cast here because older libxml2 releases do not use 'const' in the functype.
@@ -147,7 +148,7 @@ cdef class RelaxNG(_Validator):
                 ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
-            doc.unlock_fakedoc()
+            doc.unlock_fakedoc(write_locked)
             _connectGenericErrorLog(None)
             relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
 

@@ -87,20 +87,25 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
 cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node) except NULL:
     return _plainFakeRootDoc(c_base_doc, c_node, 1)
 
+cdef bint _needsFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node, bint with_siblings) noexcept:
+    # A fake root doc is not needed for the root node, unless it has unwanted siblings.
+    if with_siblings or (c_node.prev is NULL and c_node.next is NULL):
+        return tree.xmlDocGetRootElement(c_base_doc) is not c_node
+    return True
+
 cdef xmlDoc* _plainFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node,
                                bint with_siblings) except NULL:
     # build a temporary document that has the given node as root node
     # note that copy and original must not be modified during its lifetime!!
     # always call _destroyFakeDoc() after use!
+    # This changes the parent pointers of the children of 'c_node', which requires
+    # the write lock of the document, see _Document.lock_fakedoc().
     cdef xmlNode* c_child
-    cdef xmlNode* c_root
     cdef xmlNode* c_new_root
     cdef xmlDoc*  c_doc
-    if with_siblings or (c_node.prev is NULL and c_node.next is NULL):
-        c_root = tree.xmlDocGetRootElement(c_base_doc)
-        if c_root is c_node:
-            # already the root node, no siblings
-            return c_base_doc
+    if not _needsFakeRootDoc(c_base_doc, c_node, with_siblings):
+        # already the root node, no siblings
+        return c_base_doc
 
     c_doc  = _copyDoc(c_base_doc, 0)                   # non recursive!
     c_new_root = tree.xmlDocCopyNode(c_node, c_doc, 2) if c_doc is not NULL else NULL # non recursive!

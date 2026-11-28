@@ -2,6 +2,8 @@
 Test cases related to DTD parsing and validation
 """
 
+import gc
+import threading
 import unittest, sys
 from io import BytesIO
 from unittest import skipIf
@@ -145,6 +147,105 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertTrue(dtd.error_log)
         self.assertTrue([error for error in dtd.error_log
                          if 'id1' in error.message])
+
+    def _validated_documents_with_ids(self, validate_subelement=False):
+        # The documents declare 'id' as ID.  Validate one against a DTD that declares the same,
+        # and one against a DTD that declares 'key' as ID instead.  Validate the root element
+        # or the sub-element 'c' that contains the elements with IDs.
+        xml = b'''
+        <!DOCTYPE a [
+        <!ELEMENT a (c)>
+        <!ELEMENT c (b*)>
+        <!ELEMENT b EMPTY>
+        <!ATTLIST b id ID #REQUIRED key CDATA #IMPLIED>
+        ]>
+        <a><c><b id="i1" key="k1"/><b id="i2" key="k2"/></c></a>
+        '''
+        documents = []
+        for attlist in (b'id ID #REQUIRED key CDATA #IMPLIED', b'id CDATA #REQUIRED key ID #IMPLIED'):
+            dtd = etree.DTD(BytesIO(b"<!ELEMENT a (c)><!ELEMENT c (b*)><!ELEMENT b EMPTY>"
+                                    b"<!ATTLIST b " + attlist + b">"))
+            root = etree.XML(xml)
+            self.assertTrue(dtd.validate(root[0] if validate_subelement else root),
+                            [error.message for error in dtd.error_log])
+            documents.append((attlist, root))
+        return documents
+
+    def _assert_ids_kept(self, validate_subelement):
+        for attlist, root in self._validated_documents_with_ids(validate_subelement):
+            with self.subTest(attlist=attlist):
+                self.assertEqual([root[0][0]], root.xpath("id('i1')"))
+                self.assertEqual([], root.xpath("id('k1')"))
+
+    def _assert_ids_of_removed_element(self, validate_subelement):
+        for attlist, root in self._validated_documents_with_ids(validate_subelement):
+            with self.subTest(attlist=attlist):
+                root[0].remove(root[0][0])  # also frees the element
+                gc.collect()  # which PyPy does only when it collects the element's proxy
+                self.assertEqual([], root.xpath("id('i1')"))
+                self.assertEqual(['i2'], root.xpath("id('i2')/@id"))
+
+    def _assert_ids_of_changed_attribute(self, validate_subelement):
+        # The validated attributes stay ID attributes: changing one replaces its ID.
+        for attlist, root in self._validated_documents_with_ids(validate_subelement):
+            with self.subTest(attlist=attlist):
+                root[0][0].set('id', 'x1')
+                self.assertEqual([], root.xpath("id('i1')"))
+                self.assertEqual([root[0][0]], root.xpath("id('x1')"))
+                self.assertEqual([root[0][1]], root.xpath("id('i2')"))
+
+    def test_dtd_validation_keeps_ids(self):
+        self._assert_ids_kept(validate_subelement=False)
+
+    def test_dtd_validation_ids_of_removed_element(self):
+        self._assert_ids_of_removed_element(validate_subelement=False)
+
+    def test_dtd_validation_ids_of_changed_attribute(self):
+        self._assert_ids_of_changed_attribute(validate_subelement=False)
+
+    def test_dtd_validation_subelement_keeps_ids(self):
+        self._assert_ids_kept(validate_subelement=True)
+
+    def test_dtd_validation_subelement_ids_of_removed_element(self):
+        self._assert_ids_of_removed_element(validate_subelement=True)
+
+    def test_dtd_validation_subelement_ids_of_changed_attribute(self):
+        self._assert_ids_of_changed_attribute(validate_subelement=True)
+
+    def test_dtd_validation_subelement_with_ids(self):
+        # The IDs and IDREFs of the descendants of a validated sub-element count,
+        # but not those outside of it.
+        dtd = etree.DTD(BytesIO(b'<!ELEMENT s (e*)><!ELEMENT e EMPTY>'
+                                b'<!ATTLIST e id ID #REQUIRED ref IDREF #IMPLIED>'))
+        root = etree.XML(b'<r><s><e id="i1"/><e id="i2" ref="i1"/></s></r>')
+        self.assertTrue(dtd.validate(root[0]), [error.message for error in dtd.error_log])
+
+        for xml, message in [(b'<r><s><e id="i1"/><e id="i1"/></s></r>', 'ID i1 already defined'),
+                             (b'<r><s><e id="i1" ref="i2"/></s><e id="i2"/></r>',
+                              'IDREF attribute ref references an unknown ID "i2"')]:
+            with self.subTest(xml=xml):
+                self.assertFalse(dtd.validate(etree.XML(xml)[0]))
+                self.assertEqual([message], [error.message for error in dtd.error_log])
+
+    def test_dtd_validation_subelement_keeps_other_parents(self):
+        # Python code that runs while a sub-element is validated (here a global error log)
+        # finds the elements outside of it in their places.
+        dtd = etree.DTD(BytesIO(b'<!ELEMENT s (e*)><!ELEMENT e EMPTY><!ATTLIST e id ID #REQUIRED>'))
+        root = etree.XML(b'<r><s><e/></s><t><u/></t></r>')
+        results = []
+
+        class ParentLog(etree.PyErrorLog):
+            def receive(self, entry):
+                results.append(root[1][0].getparent().getparent())
+
+        def validate():
+            etree.use_global_python_log(ParentLog())  # only for this thread
+            results.append(dtd.validate(root[0]))
+
+        thread = threading.Thread(target=validate)
+        thread.start()
+        thread.join()
+        self.assertEqual([root, False], results)
 
     def test_dtd_api_internal(self):
         root = etree.XML(b'''
