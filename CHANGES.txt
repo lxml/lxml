@@ -45,6 +45,10 @@ Bugs fixed
   instead of setting a ``value`` attribute on the ``<select>`` element.
   Patch by Alex Castillo Gonzalez.
 
+* LP#2175572: ``XMLSchema(attribute_defaults=True)`` added the default attributes to the
+  validated document while holding only its read lock, racing with concurrent readers.
+  Patch by Pierre-Yves Le Borgne.
+
 * Parsing from a file path in the soupparser did not close the file it opened.
 
 * LP#2175761: Resolvers that returned a string with a ``base_url`` leaked a copy of the URL with

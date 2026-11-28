@@ -124,6 +124,7 @@ cdef class XMLSchema(_Validator):
         cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef int ret
+        cdef bint add_attribute_defaults = self._add_attribute_defaults
 
         assert self._c_schema is not NULL, "Schema instance not initialised"
         doc = _documentOrRaise(etree)
@@ -133,9 +134,13 @@ cdef class XMLSchema(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        doc.lock_fakedoc()
+        # Adding the default attributes modifies the document.
+        if add_attribute_defaults:
+            doc.lock_write()
+        else:
+            doc.lock_fakedoc()
         try:
-            if self._add_attribute_defaults:
+            if add_attribute_defaults:
                 xmlschema.xmlSchemaSetValidOptions(
                     valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
 
@@ -149,7 +154,10 @@ cdef class XMLSchema(_Validator):
                 ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
-            doc.unlock_fakedoc()
+            if add_attribute_defaults:
+                doc.unlock_write()
+            else:
+                doc.unlock_fakedoc()
             xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
 
         if ret == -1:
