@@ -368,9 +368,11 @@ cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,
     if tag in seen_tags:
         return 0
     seen_tags.add(tag)
-    if not is_html:
-        if not _attributeNameIsValid(name_utf):
-            raise _buildAttributeNameInvalidError(name_utf)
+    if is_html:
+        if not _htmlAttributeNameIsValid(_xcstr(name_utf)):
+            raise _buildHtmlAttributeNameInvalidError(name_utf)
+    elif not _attributeNameIsValid(name_utf):
+        raise _buildAttributeNameInvalidError(name_utf)
     value_utf = _utf8(value)
     if ns_utf is None:
         new_attr = tree.xmlNewProp(c_node, _xcstr(name_utf), _xcstr(value_utf))
@@ -623,9 +625,11 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef xmlNs* c_ns
     ns, tag = _getNsTag(key)
     is_html = element._doc.ishtml()
-    if not is_html:
-        if not _attributeNameIsValid(tag):
-            raise _buildAttributeNameInvalidError(tag)
+    if is_html:
+        if not _htmlAttributeNameIsValid(_xcstr(tag)):
+            raise _buildHtmlAttributeNameInvalidError(tag)
+    elif not _attributeNameIsValid(tag):
+        raise _buildAttributeNameInvalidError(tag)
     c_tag = _xcstr(tag)
     if value is None and is_html:
         c_value = NULL
@@ -1807,6 +1811,12 @@ cdef int _htmlNameIsValid(const_xmlChar* c_name) noexcept:
         c_name += 1
     return 1
 
+cdef int _htmlAttributeNameIsValid(const_xmlChar* c_name) noexcept:
+    # HTML attribute names are written unquoted, so '=' would start the value.
+    if not _htmlNameIsValid(c_name):
+        return 0
+    return cstring_h.strchr(<const char*> c_name, c'=') is NULL
+
 cdef bint _characterReferenceIsValid(const_xmlChar* c_name) noexcept:
     cdef bint is_hex
     if c_name[0] == c'x':
@@ -1846,6 +1856,9 @@ cdef bint _attributeNameIsValid(name_utf):
 
 cdef ValueError _buildAttributeNameInvalidError(name_utf):
     return ValueError(f"Invalid attribute name {(<bytes> name_utf).decode('utf8')!r}")
+
+cdef ValueError _buildHtmlAttributeNameInvalidError(name_utf):
+    return ValueError(f"Invalid HTML attribute name {(<bytes> name_utf).decode('utf8')!r}")
 
 
 cdef bint _prefixNameIsValid(tag_utf):

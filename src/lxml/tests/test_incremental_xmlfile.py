@@ -669,6 +669,7 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             self.assertRaisesRegex(ValueError, "Invalid HTML tag name 'p><script'", xf.element, 'p><script')
             self.assertRaisesRegex(ValueError, "Invalid HTML attribute name 'a><script'", xf.element, 'p', {'a><script': 'v'})
             self.assertRaisesRegex(ValueError, "Invalid HTML attribute name 'a onclick'", xf.element, 'p', {'a onclick': 'v'})
+            self.assertRaisesRegex(ValueError, "Invalid HTML attribute name 'onclick=alert'", xf.element, 'p', {'onclick=alert': 'v'})
             with xf.element('p', {'@click': 'v'}):
                 pass
         self.assertXml('<p @click="v"></p>')

@@ -62,6 +62,10 @@ Bugs fixed
 * Tag and attribute names passed into ``xmlfile.element()`` and ``htmlfile.element()``
   were not validated and could inject arbitrary markup into the output.
 
+* Attribute names set on HTML elements (``.set()``, ``.attrib`` and the ``attrib`` argument of
+  ``Element()``/``SubElement()``) were not validated and could inject arbitrary markup into the
+  serialised output.  HTML attribute names containing ``=`` are also rejected now, here and in ``htmlfile``.
+
 Other changes
 -------------
 
