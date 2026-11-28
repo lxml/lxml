@@ -51,6 +51,10 @@ Bugs fixed
   libxml2 2.14 and later.
   Patch by Pierre-Yves Le Borgne.
 
+* LP#2175572: ``DTD.validate()`` modified the validated document (its ID tables) while holding
+  only its read lock, which could crash concurrent readers or validations.
+  Patch by Pierre-Yves Le Borgne.
+
 * LP#2165904: Content of PIs and comments set through their ``.text`` property was not validated.
 
 * A few out-of-memory cases now raise ``MemoryError`` with libxml2 2.13+.
